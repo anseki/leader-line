@@ -1,0 +1,14 @@
+{
+  "name": "leader-line",
+  "version": "%version%",
+  "title": "LeaderLine",
+  "description": "%description%",
+  "keywords": [
+  ],
+  "main": "dist/%main%",
+  "license": "MIT",
+  "author": {
+    "name": "anseki",
+    "url": "https://github.com/anseki"
+  }
+}

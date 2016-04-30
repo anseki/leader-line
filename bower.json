@@ -1,0 +1,12 @@
+{
+  "name": "leader-line",
+  "version": "%version%",
+  "description": "%description%",
+  "keywords": [
+  ],
+  "main": "dist/%main%",
+  "license": "MIT",
+  "authors": [
+    "anseki <AnSeki.aff@gmail.com>"
+  ]
+}
