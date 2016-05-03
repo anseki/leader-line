@@ -119,9 +119,17 @@
    * @param {Element} elmTo - A line is terminated at this element.
    * @param {SVGSVGElement} svg - <svg> element.
    * @param {Window} baseWindow - Window that contains `svg`.
+   * @param {{left: number, top: number}} bodyOffset - Distance between `left/top` of element and its bBox.
    */
   function LeaderLine(elmFrom, elmTo) {
-    var baseWindow, fromFrames, toFrames;
+    var fromFrames, toFrames, baseWindow, baseDocument, stylesHtml, stylesBody;
+
+    if (!elmFrom || !elmTo || elmFrom === elmTo) {
+      throw new Error('Cannot get elmFrom and elmTo.');
+    }
+    this.elmFrom = elmFrom;
+    this.elmTo = elmTo;
+
     // Get a common ancestor window
     if (!(fromFrames = getFrames(elmFrom)) || !(toFrames = getFrames(elmTo))) {
       throw new Error('Cannot get frames.');
@@ -129,7 +137,7 @@
     if (fromFrames.length && toFrames.length) {
       fromFrames.reverse();
       toFrames.reverse();
-      this.baseWindow = fromFrames.some(function(fromFrame) {
+      fromFrames.some(function(fromFrame) {
         return toFrames.some(function(toFrame) {
           if (toFrame === fromFrame) {
             baseWindow = toFrame.contentWindow;
@@ -137,12 +145,57 @@
           }
           return false;
         });
-      }) ? baseWindow : window;
-    } else {
-      this.baseWindow = window;
+      });
     }
-  }
+    this.baseWindow = baseWindow = baseWindow || window;
+    baseDocument = baseWindow.document;
 
+    this.bodyOffset = {left: 0, top: 0};
+    stylesHtml = baseWindow.getComputedStyle(baseDocument.documentElement);
+    stylesBody = baseWindow.getComputedStyle(baseDocument.body);
+    if (stylesBody.position !== 'static') {
+      // When `<body>` has `position:(non-static)`,
+      // `element{position:absolute}` is positioned relative to inside `<body>` border.
+      this.bodyOffset.left -=
+        [stylesHtml.marginLeft, stylesHtml.borderLeftWidth, stylesHtml.paddingLeft,
+          stylesBody.marginLeft, stylesBody.borderLeftWidth]
+        .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
+      this.bodyOffset.top -=
+        [stylesHtml.marginTop, stylesHtml.borderTopWidth, stylesHtml.paddingTop,
+          stylesBody.marginTop, stylesBody.borderTopWidth]
+        .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
+    } else if (stylesHtml.position !== 'static') {
+      // When `<body>` has `position:static` and `<html>` has `position:(non-static)`
+      // `element{position:absolute}` is positioned relative to inside `<html>` border.
+      this.bodyOffset.left -=
+        [stylesHtml.marginLeft, stylesHtml.borderLeftWidth]
+        .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
+      this.bodyOffset.top -=
+        [stylesHtml.marginTop, stylesHtml.borderTopWidth]
+        .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
+    }
+
+    this.elm1 = baseDocument.createElement('div');
+    this.elm2 = baseDocument.createElement('div');
+    this.elm1.className = 'pt1';
+    this.elm2.className = 'pt2';
+    this.elm1.style.position = this.elm2.style.position = 'absolute';
+    this.elm1.style.width = this.elm2.style.width = this.elm1.style.height = this.elm2.style.height = '10px';
+    this.elm1.style.backgroundColor = '#acecea';
+    this.elm2.style.backgroundColor = '#12d3f1';
+    baseDocument.body.appendChild(this.elm1);
+    baseDocument.body.appendChild(this.elm2);
+    this.update();
+  }
   global.LeaderLine = LeaderLine;
+
+  LeaderLine.prototype.update = function() {
+    var crd = getBBoxNest(this.elmFrom, this.baseWindow);
+    this.elm1.style.left = (crd.left + this.bodyOffset.left) + 'px';
+    this.elm1.style.top = (crd.top + this.bodyOffset.top) + 'px';
+    crd = getBBoxNest(this.elmTo, this.baseWindow);
+    this.elm2.style.left = (crd.left + this.bodyOffset.left) + 'px';
+    this.elm2.style.top = (crd.top + this.bodyOffset.top) + 'px';
+  };
 
 })(Function('return this')()); // eslint-disable-line no-new-func
