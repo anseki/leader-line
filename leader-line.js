@@ -12,7 +12,7 @@
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
    * @param {Element} element - target element.
-   * @param {boolean} [relWindow] - The coordinates relative to the element's window.
+   * @param {boolean} [relWindow] - The coordinates relative to the element's window or document (i.e. <html>).
    * @returns {DOMRect|null} - A bounding-box or null when failed.
    */
   function getBBox(element, relWindow) {
@@ -113,7 +113,34 @@
   }
   global.getBBoxNest = getBBoxNest; // [DEBUG/]
 
-  function LeaderLine() {
+  /**
+   * @class
+   * @param {Element} elmFrom - A line is started from this element.
+   * @param {Element} elmTo - A line is terminated at this element.
+   * @param {SVGSVGElement} svg - <svg> element.
+   * @param {Window} baseWindow - Window that contains `svg`.
+   */
+  function LeaderLine(elmFrom, elmTo) {
+    var baseWindow, fromFrames, toFrames;
+    // Get a common ancestor window
+    if (!(fromFrames = getFrames(elmFrom)) || !(toFrames = getFrames(elmTo))) {
+      throw new Error('Cannot get frames.');
+    }
+    if (fromFrames.length && toFrames.length) {
+      fromFrames.reverse();
+      toFrames.reverse();
+      this.baseWindow = fromFrames.some(function(fromFrame) {
+        return toFrames.some(function(toFrame) {
+          if (toFrame === fromFrame) {
+            baseWindow = toFrame.contentWindow;
+            return true;
+          }
+          return false;
+        });
+      }) ? baseWindow : window;
+    } else {
+      this.baseWindow = window;
+    }
   }
 
   global.LeaderLine = LeaderLine;
