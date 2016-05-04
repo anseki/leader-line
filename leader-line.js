@@ -40,7 +40,6 @@
 
     return bBox;
   }
-  global.getBBox = getBBox; // [DEBUG/]
 
   /**
    * Get distance between an element and its content (<iframe> element and its document).
@@ -54,7 +53,6 @@
       top: element.clientTop + parseFloat(styles.paddingTop)
     };
   }
-  global.getFrameOffset = getContentOffset; // [DEBUG/]
 
   /**
    * Get <iframe> elements in path to an element.
@@ -83,7 +81,6 @@
     }
     return frames;
   }
-  global.getFrames = getFrames; // [DEBUG/]
 
   /**
    * Get an element's bounding-box that contains coordinates relative to document of specified window.
@@ -111,7 +108,6 @@
     bBox.top += top;
     return bBox;
   }
-  global.getBBoxNest = getBBoxNest; // [DEBUG/]
 
   /**
    * @class
@@ -175,16 +171,16 @@
         .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
     }
 
-    this.elm1 = baseDocument.createElement('div');
-    this.elm2 = baseDocument.createElement('div');
-    this.elm1.className = 'pt1';
-    this.elm2.className = 'pt2';
-    this.elm1.style.position = this.elm2.style.position = 'absolute';
-    this.elm1.style.width = this.elm2.style.width = this.elm1.style.height = this.elm2.style.height = '10px';
-    this.elm1.style.backgroundColor = '#acecea';
-    this.elm2.style.backgroundColor = '#12d3f1';
-    baseDocument.body.appendChild(this.elm1);
-    baseDocument.body.appendChild(this.elm2);
+    // this.elm1 = baseDocument.createElement('div');
+    // this.elm2 = baseDocument.createElement('div');
+    // this.elm1.className = 'pt1';
+    // this.elm2.className = 'pt2';
+    // this.elm1.style.position = this.elm2.style.position = 'absolute';
+    // this.elm1.style.width = this.elm2.style.width = this.elm1.style.height = this.elm2.style.height = '10px';
+    // this.elm1.style.backgroundColor = '#acecea';
+    // this.elm2.style.backgroundColor = '#12d3f1';
+    // baseDocument.body.appendChild(this.elm1);
+    // baseDocument.body.appendChild(this.elm2);
     this.update();
   }
   global.LeaderLine = LeaderLine;
