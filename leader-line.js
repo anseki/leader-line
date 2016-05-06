@@ -13,6 +13,14 @@
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
     SOCKET_KEY_2_ID = {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
+
+    DEFAULT_OPTIONS = {
+      socketFrom: 'auto',
+      socketTo: 'auto',
+      color: 'coral',
+      width: 3
+    },
+
     STYLE_ID = 'leader-line-styles',
     /* [DEBUG/]
     CSS_TEXT = '@INCLUDE[leader-line.css]@]';
@@ -128,48 +136,14 @@
   }
 
   /**
-   * @class
-   * @property {Element} elmFrom - A line is started from this element.
-   * @property {Element} elmTo - A line is terminated at this element.
-   * @property {SVGSVGElement} elmSvg - <svg> element.
-   * @property {SVGPathElement} elmPath - <path> element.
-   * @property {Window} baseWindow - Window that contains `svg`.
-   * @property {{x: number, y: number}} bodyOffset - Distance between `left/top` of element and its bBox.
-   * @property {{socketId: number, x: number, y: number}} socketFrom
-   * @property {{socketId: number, x: number, y: number}} socketTo
-   * @param {Element} [elmFrom] - 'elmFrom' property.
-   * @param {Element} [elmTo] - 'elmTo' property.
-   * @param {Object} [options] - Options of an instance.
+   * Get a common ancestor `window`.
+   * @param {Element} elm1 - A contained element.
+   * @param {Element} elm2 - A contained element.
+   * @returns {Window} commonWindow - A common ancestor `window`.
    */
-  function LeaderLine(elmFrom, elmTo, options) {
-    var fromFrames, toFrames, baseWindow, baseDocument,
-      sheet, stylesHtml, stylesBody, elmSvg, elmPath;
-
-    if (arguments.length < 3) {
-      if (!elmFrom || elmFrom.nodeType == null) { // eslint-disable-line eqeqeq
-        options = elmFrom;
-        elmFrom = elmTo = null;
-      } else if (!elmTo || elmTo.nodeType == null) { // eslint-disable-line eqeqeq
-        options = elmTo;
-        elmTo = null;
-      }
-    }
-    options = options ?
-      Object.keys(options).reduce(function(optionsCopy, optionName) {
-        optionsCopy[optionName] = options[optionName];
-        return optionsCopy;
-      }, {}) : {};
-    if (elmFrom && elmFrom.nodeType != null) { options.elmFrom = elmFrom; } // eslint-disable-line eqeqeq
-    if (elmTo && elmTo.nodeType != null) { options.elmTo = elmTo; } // eslint-disable-line eqeqeq
-    if (!options.elmFrom || !options.elmTo || options.elmFrom === options.elmTo) {
-      throw new Error('`elmFrom` and `elmTo` are required.');
-    }
-    // Reset to initialize.
-    elmFrom = options.elmFrom;
-    elmTo = options.elmTo;
-
-    // Get a common ancestor window
-    if (!(fromFrames = getFrames(elmFrom)) || !(toFrames = getFrames(elmTo))) {
+  function getCommonWindow(elm1, elm2) {
+    var fromFrames, toFrames, commonWindow;
+    if (!(fromFrames = getFrames(elm1)) || !(toFrames = getFrames(elm2))) {
       throw new Error('Cannot get frames.');
     }
     if (fromFrames.length && toFrames.length) {
@@ -178,15 +152,30 @@
       fromFrames.some(function(fromFrame) {
         return toFrames.some(function(toFrame) {
           if (toFrame === fromFrame) {
-            baseWindow = toFrame.contentWindow;
+            commonWindow = toFrame.contentWindow;
             return true;
           }
           return false;
         });
       });
     }
-    this.baseWindow = baseWindow = baseWindow || window;
-    baseDocument = baseWindow.document;
+    return commonWindow || window;
+  }
+
+  /**
+   * Setup `elmSvg`, `elmPath`, `baseWindow` and `bodyOffset`.
+   * @param {LeaderLine} leaderLine - `LeaderLine` instance that is parent.
+   * @param {Window} newWindow - A common ancestor `window`.
+   * @returns {void}
+   */
+  function bindWindow(leaderLine, newWindow) {
+    var baseDocument = newWindow.document, bodyOffset = {x: 0, y: 0},
+      sheet, stylesHtml, stylesBody, elmSvg, elmPath;
+
+    if (leaderLine.baseWindow && leaderLine.elmSvg) {
+      leaderLine.baseWindow.document.body.removeChild(leaderLine.elmSvg);
+    }
+    leaderLine.baseWindow = newWindow;
 
     if (!baseDocument.getElementById(STYLE_ID)) { // Add style rules
       if (baseDocument.createStyleSheet) { // IE
@@ -202,55 +191,188 @@
       }
     }
 
-    this.bodyOffset = {x: 0, y: 0};
-    stylesHtml = baseWindow.getComputedStyle(baseDocument.documentElement);
-    stylesBody = baseWindow.getComputedStyle(baseDocument.body);
+    // Get `bodyOffset`.
+    stylesHtml = newWindow.getComputedStyle(baseDocument.documentElement);
+    stylesBody = newWindow.getComputedStyle(baseDocument.body);
     if (stylesBody.position !== 'static') {
       // When `<body>` has `position:(non-static)`,
-      // `element{position:absolute}` is positioned relative to inside `<body>` border.
-      this.bodyOffset.x -=
+      // `element{position:absolute}` is positioned relative to border-box of `<body>`.
+      bodyOffset.x -=
         [stylesHtml.marginLeft, stylesHtml.borderLeftWidth, stylesHtml.paddingLeft,
           stylesBody.marginLeft, stylesBody.borderLeftWidth]
         .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
-      this.bodyOffset.y -=
+      bodyOffset.y -=
         [stylesHtml.marginTop, stylesHtml.borderTopWidth, stylesHtml.paddingTop,
           stylesBody.marginTop, stylesBody.borderTopWidth]
         .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
     } else if (stylesHtml.position !== 'static') {
       // When `<body>` has `position:static` and `<html>` has `position:(non-static)`
-      // `element{position:absolute}` is positioned relative to inside `<html>` border.
-      this.bodyOffset.x -=
+      // `element{position:absolute}` is positioned relative to border-box of `<html>`.
+      bodyOffset.x -=
         [stylesHtml.marginLeft, stylesHtml.borderLeftWidth]
         .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
-      this.bodyOffset.y -=
+      bodyOffset.y -=
         [stylesHtml.marginTop, stylesHtml.borderTopWidth]
         .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
     }
-
-    // socket
-    ['socketFrom', 'socketTo'].forEach(function(key) {
-      var socket;
-      options[key] = options[key] &&
-        SOCKET_KEY_2_ID[(socket = (options[key] + '').toLowerCase())] ? socket : 'auto';
-    });
+    leaderLine.bodyOffset = bodyOffset;
 
     // svg
     elmSvg = baseDocument.createElementNS(SVG_NS, 'svg');
     elmSvg.setAttribute('class', 'leader-line');
     if (!elmSvg.viewBox.baseVal) { elmSvg.setAttribute('viewBox', '0 0 0 0'); }
     elmPath = baseDocument.createElementNS(SVG_NS, 'path');
-    this.elmPath = elmSvg.appendChild(elmPath);
-    this.elmSvg = baseDocument.body.appendChild(elmSvg);
+    leaderLine.elmPath = elmSvg.appendChild(elmPath);
+    leaderLine.elmSvg = baseDocument.body.appendChild(elmSvg);
+  }
 
-    this.elmFrom = elmFrom;
-    this.elmTo = elmTo;
-    this.options = options;
+  /**
+   * @param {LeaderLine} leaderLine - `LeaderLine` instance.
+   * @param {LeaderLineOptions} leaderLineOptions - `LeaderLineOptions` instance.
+   * @param {Array} [props] - To limit properties.
+   * @returns {void}
+   */
+  function updateStyles(leaderLine, leaderLineOptions, props) {
+    
+  }
+
+  /**
+   * @param {LeaderLineOptions} leaderLineOptions - `LeaderLineOptions` instance.
+   * @param {Object} options - New options.
+   * @param {LeaderLine} [leaderLine] - `LeaderLine` instance that its `update()` may be called.
+   * @returns {boolean} toUpdate - Whether `update()` must be called.
+   */
+  function updateOptions(leaderLineOptions, options, leaderLine) {
+    var toUpdate = false, toUpdateWindow = false, toUpdateStyles = false, newWindow;
+
+    ['elmFrom', 'elmTo'].forEach(function(key) {
+      if (options[key] && options[key].nodeType != null && // eslint-disable-line eqeqeq
+          leaderLineOptions[key] !== options[key]) {
+        leaderLineOptions[key] = options[key];
+        toUpdate = toUpdateWindow = true;
+      }
+    });
+    if (leaderLineOptions.elmFrom && leaderLineOptions.elmFrom === leaderLineOptions.elmTo) {
+      throw new Error('`elmFrom` and `elmTo` are the same element.');
+    }
+
+    // Check window.
+    if (toUpdateWindow && leaderLine) {
+      newWindow = getCommonWindow(leaderLineOptions.elmFrom, leaderLineOptions.elmTo);
+      if (leaderLine.baseWindow !== newWindow) {
+        bindWindow(leaderLine, newWindow);
+        toUpdateStyles = true;
+      }
+    }
+
+    ['socketFrom', 'socketTo'].forEach(function(key) {
+      var socket;
+      if (options[key] && SOCKET_KEY_2_ID[(socket = (options[key] + '').toLowerCase())] &&
+          leaderLineOptions[key] !== options[key]) {
+        leaderLineOptions[key] = socket;
+        toUpdate = true;
+      }
+    });
+
+    if (options.color && typeof options.color === 'string' &&
+        leaderLineOptions.color !== options.color) {
+      leaderLineOptions.color = options.color;
+      if (!toUpdateStyles) {
+        toUpdateStyles = ['color'];
+      } else if (Array.isArray(toUpdateStyles)) {
+        toUpdateStyles.push('color');
+      }
+    }
+
+    if (options.width && typeof options.width === 'number' &&
+        leaderLineOptions.width !== options.width) {
+      leaderLineOptions.width = options.width;
+      toUpdate = true; // `socketXY` must be changed.
+      if (!toUpdateStyles) {
+        toUpdateStyles = ['width'];
+      } else if (Array.isArray(toUpdateStyles)) {
+        toUpdateStyles.push('width');
+      }
+    }
+
+    // Update styles.
+    if (toUpdateStyles && leaderLine) {
+      updateStyles(leaderLine, leaderLineOptions, Array.isArray(toUpdateStyles) ? toUpdateStyles : null);
+    }
+
+    // `update()`.
+    if (toUpdate && leaderLine) {
+      leaderLine.update();
+      toUpdate = false;
+    }
+
+    return toUpdate;
+  }
+
+  /**
+   * @class
+   * @property {Element} elmFrom - A line is started from this element.
+   * @property {Element} elmTo - A line is terminated at this element.
+   * @property {string} socketFrom - `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
+   * @property {string} socketTo - `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
+   * @property {string} color - `stroke` of `<path>` element.
+   * @property {number} width - `stroke-width` of `<path>` element.
+   * @param {Object} options - Initial options.
+   * @param {LeaderLine} leaderLine - `LeaderLine` instance that is parent.
+   */
+  function LeaderLineOptions(options, leaderLine) {
+    var that = this;
+    that.leaderLine = leaderLine;
+
+    if (!options.elmFrom || !options.elmTo ||
+        options.elmFrom.nodeType == null || options.elmTo.nodeType == null || // eslint-disable-line eqeqeq
+        options.elmFrom === options.elmTo) {
+      throw new Error('`elmFrom` and `elmTo` are required.');
+    }
+    this.elmFrom = options.elmFrom;
+    this.elmTo = options.elmTo;
+
+    ['socketFrom', 'socketTo'].forEach(function(key) {
+      var socket;
+      that[key] = options[key] &&
+        SOCKET_KEY_2_ID[(socket = (options[key] + '').toLowerCase())] ? socket : DEFAULT_OPTIONS[key];
+    });
+
+    that.color = typeof options.color === 'string' ? options.color : DEFAULT_OPTIONS.color;
+    that.width = typeof options.width === 'number' ? options.width : DEFAULT_OPTIONS.width;
+  }
+
+  /**
+   * @class
+   * @property {LeaderLineOptions} options - Options of an instance.
+   * @property {SVGSVGElement} elmSvg - '<svg>' element.
+   * @property {SVGPathElement} elmPath - '<path>' element.
+   * @property {Window} baseWindow - Window that contains `elmSvg`.
+   * @property {{x: number, y: number}} bodyOffset - Distance between `left/top` of element and its bBox.
+   * @property {{socketId: number, x: number, y: number}} socketFromXY
+   * @property {{socketId: number, x: number, y: number}} socketToXY
+   * @param {Element} [elmFrom] - Alternative to `options.elmFrom`.
+   * @param {Element} [elmTo] - Alternative to `options.elmTo`.
+   * @param {Object} [options] - Initial options.
+   */
+  function LeaderLine(elmFrom, elmTo, options) {
+    if (arguments.length === 1) {
+      options = elmFrom;
+      elmFrom = null;
+    }
+    options = options || {};
+    if (elmFrom) { options.elmFrom = elmFrom; }
+    if (elmTo) { options.elmTo = elmTo; }
+    this.options = options = new LeaderLineOptions(options, this);
+
+    bindWindow(this, getCommonWindow(options.elmFrom, options.elmTo));
     this.update();
   }
   global.LeaderLine = LeaderLine;
 
   LeaderLine.prototype.update = function() {
-    var that = this, bBox1, bBox2, socketXYs1, socketXYs2,
+    var that = this, options = that.options,
+      bBox1, bBox2, socketXYs1, socketXYs2,
       socketsLenMin = -1, autoSideKey, fixSideKey, fixSideSocketXY,
       viewX, viewY, viewW, viewH, styles;
 
@@ -266,62 +388,62 @@
     }
 
     // Decide each socket.
-    if (that.options.socketFrom !== 'auto' && that.options.socketTo !== 'auto') {
-      that.socketFrom = getSocketXY(
-        getBBoxNest(that.elmFrom, that.baseWindow), SOCKET_KEY_2_ID[that.options.socketFrom]);
-      that.socketTo = getSocketXY(
-        getBBoxNest(that.elmTo, that.baseWindow), SOCKET_KEY_2_ID[that.options.socketTo]);
-    } else if (that.options.socketFrom === 'auto' && that.options.socketTo === 'auto') {
-      bBox1 = getBBoxNest(that.elmFrom, that.baseWindow);
-      bBox2 = getBBoxNest(that.elmTo, that.baseWindow);
+    if (options.socketFrom !== 'auto' && options.socketTo !== 'auto') {
+      that.socketFromXY = getSocketXY(
+        getBBoxNest(options.elmFrom, that.baseWindow), SOCKET_KEY_2_ID[options.socketFrom]);
+      that.socketToXY = getSocketXY(
+        getBBoxNest(options.elmTo, that.baseWindow), SOCKET_KEY_2_ID[options.socketTo]);
+    } else if (options.socketFrom === 'auto' && options.socketTo === 'auto') {
+      bBox1 = getBBoxNest(options.elmFrom, that.baseWindow);
+      bBox2 = getBBoxNest(options.elmTo, that.baseWindow);
       socketXYs1 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox1, socketId); });
       socketXYs2 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox2, socketId); });
       socketXYs1.forEach(function(socketFromXY) {
         socketXYs2.forEach(function(socketToXY) {
           var len = pointsLen(socketFromXY, socketToXY);
           if (len < socketsLenMin || socketsLenMin === -1) {
-            that.socketFrom = socketFromXY;
-            that.socketTo = socketToXY;
+            that.socketFromXY = socketFromXY;
+            that.socketToXY = socketToXY;
             socketsLenMin = len;
           }
         });
       });
     } else {
-      if (that.options.socketFrom === 'auto') {
+      if (options.socketFrom === 'auto') {
         fixSideKey = 'To';
         autoSideKey = 'From';
       } else {
         fixSideKey = 'From';
         autoSideKey = 'To';
       }
-      fixSideSocketXY = that['socket' + fixSideKey] = getSocketXY(
-        getBBoxNest(that['elm' + fixSideKey], that.baseWindow),
-        SOCKET_KEY_2_ID[that.options['socket' + fixSideKey]]);
-      bBox1 = getBBoxNest(that['elm' + autoSideKey], that.baseWindow);
+      fixSideSocketXY = that['socket' + fixSideKey + 'XY'] = getSocketXY(
+        getBBoxNest(options['elm' + fixSideKey], that.baseWindow),
+        SOCKET_KEY_2_ID[options['socket' + fixSideKey]]);
+      bBox1 = getBBoxNest(options['elm' + autoSideKey], that.baseWindow);
       socketXYs1 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox1, socketId); });
       socketXYs1.forEach(function(socketXY) {
         var len = pointsLen(socketXY, fixSideSocketXY);
         if (len < socketsLenMin || socketsLenMin === -1) {
-          that['socket' + autoSideKey] = socketXY;
+          that['socket' + autoSideKey + 'XY'] = socketXY;
           socketsLenMin = len;
         }
       });
     }
 
     // Position svg.
-    if (that.socketFrom.x < that.socketTo.x) {
-      viewX = that.socketFrom.x;
-      viewW = that.socketTo.x - viewX;
+    if (that.socketFromXY.x < that.socketToXY.x) {
+      viewX = that.socketFromXY.x;
+      viewW = that.socketToXY.x - viewX;
     } else {
-      viewX = that.socketTo.x;
-      viewW = that.socketFrom.x - viewX;
+      viewX = that.socketToXY.x;
+      viewW = that.socketFromXY.x - viewX;
     }
-    if (that.socketFrom.y < that.socketTo.y) {
-      viewY = that.socketFrom.y;
-      viewH = that.socketTo.y - viewY;
+    if (that.socketFromXY.y < that.socketToXY.y) {
+      viewY = that.socketFromXY.y;
+      viewH = that.socketToXY.y - viewY;
     } else {
-      viewY = that.socketTo.y;
-      viewH = that.socketFrom.y - viewY;
+      viewY = that.socketToXY.y;
+      viewH = that.socketFromXY.y - viewY;
     }
     styles = that.elmSvg.style;
     styles.left = (viewX + that.bodyOffset.x) + 'px';
@@ -331,8 +453,8 @@
     that.elmSvg.viewBox.baseVal.width = viewW;
     that.elmSvg.viewBox.baseVal.height = viewH;
 
-    that.elmPath.setAttribute('d', 'M' + (that.socketFrom.x - viewX) + ',' + (that.socketFrom.y - viewY) +
-      'L' + (that.socketTo.x - viewX) + ',' + (that.socketTo.y - viewY));
+    that.elmPath.setAttribute('d', 'M' + (that.socketFromXY.x - viewX) + ',' + (that.socketFromXY.y - viewY) +
+      'L' + (that.socketToXY.x - viewX) + ',' + (that.socketToXY.y - viewY));
   };
 
 })(Function('return this')()); // eslint-disable-line no-new-func
