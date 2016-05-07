@@ -6,19 +6,23 @@
  * Licensed under the MIT license.
  */
 
-;(function(global) { // eslint-disable-line no-extra-semi
+/* exported LeaderLine */
+/* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
+
+;var LeaderLine = (function() { // eslint-disable-line no-extra-semi
   'use strict';
 
   var
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
-    SOCKET_KEY_2_ID = {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
+    SOCKET_KEY_2_ID =
+      {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
 
     DEFAULT_OPTIONS = {
       socketFrom: 'auto',
       socketTo: 'auto',
       color: 'coral',
-      width: 3
+      width: '3px'
     },
 
     STYLE_ID = 'leader-line-styles',
@@ -26,9 +30,12 @@
     CSS_TEXT = '@INCLUDE[leader-line.css]@]';
     [DEBUG/] */
     // [DEBUG]
-    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line path{stroke-width:30;stroke:red;}',
+    CSS_TEXT = '.leader-line{position:absolute;overflow:visible}',
     // [/DEBUG]
-    SVG_NS = 'http://www.w3.org/2000/svg';
+    SVG_NS = 'http://www.w3.org/2000/svg',
+    PROP_2_CSSPROP = {color: 'stroke', width: 'strokeWidth'},
+
+    insProps = {}, insId = 0;
 
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
@@ -82,7 +89,7 @@
    * @returns {Element[]|null} - An Array of <iframe> elements or null when `baseWindow` was not found in the path.
    */
   function getFrames(element, baseWindow) {
-    var frames = [], doc, win, curElement = element;
+    var frames = [], curElement = element, doc, win;
     baseWindow = baseWindow || window;
     while (true) {
       if (!(doc = curElement.ownerDocument)) {
@@ -164,18 +171,19 @@
 
   /**
    * Setup `elmSvg`, `elmPath`, `baseWindow` and `bodyOffset`.
-   * @param {LeaderLine} leaderLine - `LeaderLine` instance that is parent.
+   * @param {Object} props - `insProps[id]` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
    */
-  function bindWindow(leaderLine, newWindow) {
-    var baseDocument = newWindow.document, bodyOffset = {x: 0, y: 0},
+  function bindWindow(props, newWindow) {
+    var baseDocument = newWindow.document,
+      bodyOffset = {x: 0, y: 0},
       sheet, stylesHtml, stylesBody, elmSvg, elmPath;
 
-    if (leaderLine.baseWindow && leaderLine.elmSvg) {
-      leaderLine.baseWindow.document.body.removeChild(leaderLine.elmSvg);
+    if (props.baseWindow && props.elmSvg) {
+      props.baseWindow.document.body.removeChild(props.elmSvg);
     }
-    leaderLine.baseWindow = newWindow;
+    props.baseWindow = newWindow;
 
     if (!baseDocument.getElementById(STYLE_ID)) { // Add style rules
       if (baseDocument.createStyleSheet) { // IE
@@ -215,95 +223,93 @@
         [stylesHtml.marginTop, stylesHtml.borderTopWidth]
         .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
     }
-    leaderLine.bodyOffset = bodyOffset;
+    props.bodyOffset = bodyOffset;
 
     // svg
     elmSvg = baseDocument.createElementNS(SVG_NS, 'svg');
     elmSvg.setAttribute('class', 'leader-line');
     if (!elmSvg.viewBox.baseVal) { elmSvg.setAttribute('viewBox', '0 0 0 0'); }
     elmPath = baseDocument.createElementNS(SVG_NS, 'path');
-    leaderLine.elmPath = elmSvg.appendChild(elmPath);
-    leaderLine.elmSvg = baseDocument.body.appendChild(elmSvg);
+    props.elmPath = elmSvg.appendChild(elmPath);
+    props.elmSvg = baseDocument.body.appendChild(elmSvg);
   }
 
   /**
-   * @param {LeaderLine} leaderLine - `LeaderLine` instance.
-   * @param {LeaderLineOptions} leaderLineOptions - `LeaderLineOptions` instance.
-   * @param {Array} [props] - To limit properties.
+   * @param {Object} props - `insProps[id]` of `LeaderLine` instance.
+   * @param {Array} [styleProps] - To limit properties.
    * @returns {void}
    */
-  function updateStyles(leaderLine, leaderLineOptions, props) {
-    
+  function updateStyles(props, styleProps) {
+    var optProps = props.optProps, styles = props.elmPath.style;
+    (styleProps || ['color', 'width']).forEach(function(styleProp) {
+      styles[PROP_2_CSSPROP[styleProp]] = optProps[styleProp];
+    });
   }
 
   /**
-   * @param {LeaderLineOptions} leaderLineOptions - `LeaderLineOptions` instance.
+   * @param {Object} optProps - `insProps[id].optProps` of `LeaderLineOptions` instance.
    * @param {Object} options - New options.
    * @param {LeaderLine} [leaderLine] - `LeaderLine` instance that its `update()` may be called.
    * @returns {boolean} toUpdate - Whether `update()` must be called.
    */
-  function updateOptions(leaderLineOptions, options, leaderLine) {
-    var toUpdate = false, toUpdateWindow = false, toUpdateStyles = false, newWindow;
+  function updateOptions(optProps, options, leaderLine) {
+    var props, toUpdate, toUpdateWindow, toUpdateStyles, newWindow;
 
     ['elmFrom', 'elmTo'].forEach(function(key) {
       if (options[key] && options[key].nodeType != null && // eslint-disable-line eqeqeq
-          leaderLineOptions[key] !== options[key]) {
-        leaderLineOptions[key] = options[key];
+          optProps[key] !== options[key]) {
+        optProps[key] = options[key];
         toUpdate = toUpdateWindow = true;
       }
     });
-    if (leaderLineOptions.elmFrom && leaderLineOptions.elmFrom === leaderLineOptions.elmTo) {
+    if (optProps.elmFrom && optProps.elmFrom === optProps.elmTo) {
       throw new Error('`elmFrom` and `elmTo` are the same element.');
     }
 
     // Check window.
-    if (toUpdateWindow && leaderLine) {
-      newWindow = getCommonWindow(leaderLineOptions.elmFrom, leaderLineOptions.elmTo);
-      if (leaderLine.baseWindow !== newWindow) {
-        bindWindow(leaderLine, newWindow);
+    if (leaderLine && toUpdateWindow) {
+      newWindow = getCommonWindow(optProps.elmFrom, optProps.elmTo);
+      props = insProps[leaderLine._id];
+      if (props.baseWindow !== newWindow) {
+        bindWindow(props, newWindow);
         toUpdateStyles = true;
       }
     }
 
     ['socketFrom', 'socketTo'].forEach(function(key) {
       var socket;
-      if (options[key] && SOCKET_KEY_2_ID[(socket = (options[key] + '').toLowerCase())] &&
-          leaderLineOptions[key] !== options[key]) {
-        leaderLineOptions[key] = socket;
+      if (options[key] && (
+            (socket = (options[key] + '').toLowerCase()) === DEFAULT_OPTIONS[key] ||
+            SOCKET_KEY_2_ID[socket]
+          ) && optProps[key] !== options[key]) {
+        optProps[key] = socket;
         toUpdate = true;
       }
     });
 
-    if (options.color && typeof options.color === 'string' &&
-        leaderLineOptions.color !== options.color) {
-      leaderLineOptions.color = options.color;
-      if (!toUpdateStyles) {
-        toUpdateStyles = ['color'];
-      } else if (Array.isArray(toUpdateStyles)) {
-        toUpdateStyles.push('color');
+    ['color', 'width'].forEach(function(key) {
+      if (options[key] && typeof options[key] === typeof DEFAULT_OPTIONS[key] &&
+          optProps[key] !== options[key]) {
+        optProps[key] = options[key];
+        if (!toUpdateStyles) {
+          toUpdateStyles = [key];
+        } else if (Array.isArray(toUpdateStyles)) {
+          toUpdateStyles.push(key);
+        }
+        if (key === 'width') {
+          toUpdate = true; // `socketXY` must be changed.
+        }
       }
-    }
+    });
 
-    if (options.width && typeof options.width === 'number' &&
-        leaderLineOptions.width !== options.width) {
-      leaderLineOptions.width = options.width;
-      toUpdate = true; // `socketXY` must be changed.
-      if (!toUpdateStyles) {
-        toUpdateStyles = ['width'];
-      } else if (Array.isArray(toUpdateStyles)) {
-        toUpdateStyles.push('width');
+    if (leaderLine) {
+      if (toUpdateStyles) { // Update styles.
+        updateStyles(insProps[leaderLine._id], Array.isArray(toUpdateStyles) ? toUpdateStyles : null);
       }
-    }
-
-    // Update styles.
-    if (toUpdateStyles && leaderLine) {
-      updateStyles(leaderLine, leaderLineOptions, Array.isArray(toUpdateStyles) ? toUpdateStyles : null);
-    }
-
-    // `update()`.
-    if (toUpdate && leaderLine) {
-      leaderLine.update();
-      toUpdate = false;
+      if (toUpdate) { // Call `update()`.
+        leaderLine.update();
+        toUpdate = false;
+      }
     }
 
     return toUpdate;
@@ -311,6 +317,7 @@
 
   /**
    * @class
+   * @property {LeaderLine} leaderLine - `LeaderLine` instance that is parent.
    * @property {Element} elmFrom - A line is started from this element.
    * @property {Element} elmTo - A line is terminated at this element.
    * @property {string} socketFrom - `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
@@ -318,33 +325,26 @@
    * @property {string} color - `stroke` of `<path>` element.
    * @property {number} width - `stroke-width` of `<path>` element.
    * @param {Object} options - Initial options.
-   * @param {LeaderLine} leaderLine - `LeaderLine` instance that is parent.
+   * @param {LeaderLine} leaderLine - `leaderLine` option.
    */
   function LeaderLineOptions(options, leaderLine) {
-    var that = this;
-    that.leaderLine = leaderLine;
+    var optProps = (insProps[leaderLine._id].optProps = {});
+    Object.defineProperty(this, '_id', { value: leaderLine._id });
 
-    if (!options.elmFrom || !options.elmTo ||
-        options.elmFrom.nodeType == null || options.elmTo.nodeType == null || // eslint-disable-line eqeqeq
-        options.elmFrom === options.elmTo) {
+    updateOptions(optProps, options);
+    optProps.leaderLine = leaderLine;
+
+    if (!optProps.elmFrom || !optProps.elmTo) {
       throw new Error('`elmFrom` and `elmTo` are required.');
     }
-    this.elmFrom = options.elmFrom;
-    this.elmTo = options.elmTo;
-
-    ['socketFrom', 'socketTo'].forEach(function(key) {
-      var socket;
-      that[key] = options[key] &&
-        SOCKET_KEY_2_ID[(socket = (options[key] + '').toLowerCase())] ? socket : DEFAULT_OPTIONS[key];
+    ['socketFrom', 'socketTo', 'color', 'width'].forEach(function(key) {
+      optProps[key] = optProps[key] || DEFAULT_OPTIONS[key];
     });
-
-    that.color = typeof options.color === 'string' ? options.color : DEFAULT_OPTIONS.color;
-    that.width = typeof options.width === 'number' ? options.width : DEFAULT_OPTIONS.width;
   }
 
   /**
    * @class
-   * @property {LeaderLineOptions} options - Options of an instance.
+   * @property {LeaderLineOptions} options - `LeaderLineOptions` instance.
    * @property {SVGSVGElement} elmSvg - '<svg>' element.
    * @property {SVGPathElement} elmPath - '<path>' element.
    * @property {Window} baseWindow - Window that contains `elmSvg`.
@@ -356,6 +356,10 @@
    * @param {Object} [options] - Initial options.
    */
   function LeaderLine(elmFrom, elmTo, options) {
+    var props = {};
+    Object.defineProperty(this, '_id', { value: insId++ });
+    insProps[this._id] = props;
+
     if (arguments.length === 1) {
       options = elmFrom;
       elmFrom = null;
@@ -363,15 +367,15 @@
     options = options || {};
     if (elmFrom) { options.elmFrom = elmFrom; }
     if (elmTo) { options.elmTo = elmTo; }
-    this.options = options = new LeaderLineOptions(options, this);
+    Object.defineProperty(this, 'options', { value: new LeaderLineOptions(options, this) });
 
-    bindWindow(this, getCommonWindow(options.elmFrom, options.elmTo));
+    bindWindow(props, getCommonWindow(props.optProps.elmFrom, props.optProps.elmTo));
+    updateStyles(props);
     this.update();
   }
-  global.LeaderLine = LeaderLine;
 
   LeaderLine.prototype.update = function() {
-    var that = this, options = that.options,
+    var props = insProps[this._id], optProps = props.optProps,
       bBox1, bBox2, socketXYs1, socketXYs2,
       socketsLenMin = -1, autoSideKey, fixSideKey, fixSideSocketXY,
       viewX, viewY, viewW, viewH, styles;
@@ -388,73 +392,74 @@
     }
 
     // Decide each socket.
-    if (options.socketFrom !== 'auto' && options.socketTo !== 'auto') {
-      that.socketFromXY = getSocketXY(
-        getBBoxNest(options.elmFrom, that.baseWindow), SOCKET_KEY_2_ID[options.socketFrom]);
-      that.socketToXY = getSocketXY(
-        getBBoxNest(options.elmTo, that.baseWindow), SOCKET_KEY_2_ID[options.socketTo]);
-    } else if (options.socketFrom === 'auto' && options.socketTo === 'auto') {
-      bBox1 = getBBoxNest(options.elmFrom, that.baseWindow);
-      bBox2 = getBBoxNest(options.elmTo, that.baseWindow);
+    if (optProps.socketFrom !== 'auto' && optProps.socketTo !== 'auto') {
+      props.socketFromXY = getSocketXY(
+        getBBoxNest(optProps.elmFrom, props.baseWindow), SOCKET_KEY_2_ID[optProps.socketFrom]);
+      props.socketToXY = getSocketXY(
+        getBBoxNest(optProps.elmTo, props.baseWindow), SOCKET_KEY_2_ID[optProps.socketTo]);
+    } else if (optProps.socketFrom === 'auto' && optProps.socketTo === 'auto') {
+      bBox1 = getBBoxNest(optProps.elmFrom, props.baseWindow);
+      bBox2 = getBBoxNest(optProps.elmTo, props.baseWindow);
       socketXYs1 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox1, socketId); });
       socketXYs2 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox2, socketId); });
       socketXYs1.forEach(function(socketFromXY) {
         socketXYs2.forEach(function(socketToXY) {
           var len = pointsLen(socketFromXY, socketToXY);
           if (len < socketsLenMin || socketsLenMin === -1) {
-            that.socketFromXY = socketFromXY;
-            that.socketToXY = socketToXY;
+            props.socketFromXY = socketFromXY;
+            props.socketToXY = socketToXY;
             socketsLenMin = len;
           }
         });
       });
     } else {
-      if (options.socketFrom === 'auto') {
+      if (optProps.socketFrom === 'auto') {
         fixSideKey = 'To';
         autoSideKey = 'From';
       } else {
         fixSideKey = 'From';
         autoSideKey = 'To';
       }
-      fixSideSocketXY = that['socket' + fixSideKey + 'XY'] = getSocketXY(
-        getBBoxNest(options['elm' + fixSideKey], that.baseWindow),
-        SOCKET_KEY_2_ID[options['socket' + fixSideKey]]);
-      bBox1 = getBBoxNest(options['elm' + autoSideKey], that.baseWindow);
+      fixSideSocketXY = props['socket' + fixSideKey + 'XY'] = getSocketXY(
+        getBBoxNest(optProps['elm' + fixSideKey], props.baseWindow),
+        SOCKET_KEY_2_ID[optProps['socket' + fixSideKey]]);
+      bBox1 = getBBoxNest(optProps['elm' + autoSideKey], props.baseWindow);
       socketXYs1 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox1, socketId); });
       socketXYs1.forEach(function(socketXY) {
         var len = pointsLen(socketXY, fixSideSocketXY);
         if (len < socketsLenMin || socketsLenMin === -1) {
-          that['socket' + autoSideKey + 'XY'] = socketXY;
+          props['socket' + autoSideKey + 'XY'] = socketXY;
           socketsLenMin = len;
         }
       });
     }
 
     // Position svg.
-    if (that.socketFromXY.x < that.socketToXY.x) {
-      viewX = that.socketFromXY.x;
-      viewW = that.socketToXY.x - viewX;
+    if (props.socketFromXY.x < props.socketToXY.x) {
+      viewX = props.socketFromXY.x;
+      viewW = props.socketToXY.x - viewX;
     } else {
-      viewX = that.socketToXY.x;
-      viewW = that.socketFromXY.x - viewX;
+      viewX = props.socketToXY.x;
+      viewW = props.socketFromXY.x - viewX;
     }
-    if (that.socketFromXY.y < that.socketToXY.y) {
-      viewY = that.socketFromXY.y;
-      viewH = that.socketToXY.y - viewY;
+    if (props.socketFromXY.y < props.socketToXY.y) {
+      viewY = props.socketFromXY.y;
+      viewH = props.socketToXY.y - viewY;
     } else {
-      viewY = that.socketToXY.y;
-      viewH = that.socketFromXY.y - viewY;
+      viewY = props.socketToXY.y;
+      viewH = props.socketFromXY.y - viewY;
     }
-    styles = that.elmSvg.style;
-    styles.left = (viewX + that.bodyOffset.x) + 'px';
-    styles.top = (viewY + that.bodyOffset.y) + 'px';
+    styles = props.elmSvg.style;
+    styles.left = (viewX + props.bodyOffset.x) + 'px';
+    styles.top = (viewY + props.bodyOffset.y) + 'px';
     styles.width = viewW + 'px';
     styles.height = viewH + 'px';
-    that.elmSvg.viewBox.baseVal.width = viewW;
-    that.elmSvg.viewBox.baseVal.height = viewH;
+    props.elmSvg.viewBox.baseVal.width = viewW;
+    props.elmSvg.viewBox.baseVal.height = viewH;
 
-    that.elmPath.setAttribute('d', 'M' + (that.socketFromXY.x - viewX) + ',' + (that.socketFromXY.y - viewY) +
-      'L' + (that.socketToXY.x - viewX) + ',' + (that.socketToXY.y - viewY));
+    props.elmPath.setAttribute('d', 'M' + (props.socketFromXY.x - viewX) + ',' + (props.socketFromXY.y - viewY) +
+      'L' + (props.socketToXY.x - viewX) + ',' + (props.socketToXY.y - viewY));
   };
 
-})(Function('return this')()); // eslint-disable-line no-new-func
+  return LeaderLine;
+})();
