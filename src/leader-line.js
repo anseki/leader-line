@@ -12,6 +12,23 @@
 ;var LeaderLine = (function() { // eslint-disable-line no-extra-semi
   'use strict';
 
+  /**
+   * Properties of a `LeaderLine` instance. (P): public
+   * @typedef {Object} props
+   * @property {Window} baseWindow - Window that contains `LeaderLine` contents.
+   * @property {{x: number, y: number}} bodyOffset - Distance between `baseWindow` and its `<body>`.
+   * @property {{socketId: number, x: number, y: number}} startSocketXY
+   * @property {{socketId: number, x: number, y: number}} endSocketXY
+   * @property {SVGSVGElement} elmSvg - '<svg>' element.
+   * @property {SVGPathElement} elmPath - '<path>' element.
+   * @property {Element} start - (P) A line is started at this element.
+   * @property {Element} end - (P) A line is terminated at this element.
+   * @property {string} startSocket - (P) `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
+   * @property {string} endSocket - (P) `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
+   * @property {string} color - (P) `stroke` of `<path>` element.
+   * @property {number} width - (P) `stroke-width` of `<path>` element.
+   */
+
   var
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
@@ -19,8 +36,8 @@
       {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
 
     DEFAULT_OPTIONS = {
-      socketFrom: 'auto',
-      socketTo: 'auto',
+      startSocket: 'auto',
+      endSocket: 'auto',
       color: 'coral',
       width: '3px'
     },
@@ -35,12 +52,15 @@
     SVG_NS = 'http://www.w3.org/2000/svg',
     PROP_2_CSSPROP = {color: 'stroke', width: 'strokeWidth'},
 
+    /**
+     * @typedef {Object.<_id: number, props>} insProps
+     */
     insProps = {}, insId = 0;
 
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
-   * @param {Element} element - target element.
-   * @param {boolean} [relWindow] - The coordinates relative to the element's window or document (i.e. <html>).
+   * @param {Element} element - Target element.
+   * @param {boolean} [relWindow] - Whether it's relative to the element's window, or document (i.e. `<html>`).
    * @returns {DOMRect|null} - A bounding-box or null when failed.
    */
   function getBBox(element, relWindow) {
@@ -70,9 +90,9 @@
   }
 
   /**
-   * Get distance between an element and its content (<iframe> element and its document).
-   * @param {Element} element - target element.
-   * @returns {{left: number, top: number}} - An Object has `left` and `top`.
+   * Get distance between an element's bounding-box and its content (`<iframe>` element and its document).
+   * @param {Element} element - Target element.
+   * @returns {{left: number, top: number}} - An object has `left` and `top`.
    */
   function getContentOffset(element) {
     var styles = element.ownerDocument.defaultView.getComputedStyle(element);
@@ -83,10 +103,10 @@
   }
 
   /**
-   * Get <iframe> elements in path to an element.
-   * @param {Element} element - target element.
-   * @param {Window} [baseWindow] - Start window. This is excluded.
-   * @returns {Element[]|null} - An Array of <iframe> elements or null when `baseWindow` was not found in the path.
+   * Get `<iframe>` elements in path to an element.
+   * @param {Element} element - Target element.
+   * @param {Window} [baseWindow] - Start searching at this window. This is excluded from result.
+   * @returns {Element[]|null} - An array of `<iframe>` elements or null when `baseWindow` was not found in the path.
    */
   function getFrames(element, baseWindow) {
     var frames = [], curElement = element, doc, win;
@@ -112,12 +132,12 @@
 
   /**
    * Get an element's bounding-box that contains coordinates relative to document of specified window.
-   * @param {Element} element - target element.
+   * @param {Element} element - Target element.
    * @param {Window} [baseWindow] - Window that is base of coordinates.
    * @returns {DOMRect|null} - A bounding-box or null when failed.
    */
   function getBBoxNest(element, baseWindow) {
-    var bBox, frames, left = 0, top = 0;
+    var left = 0, top = 0, bBox, frames;
     baseWindow = baseWindow || window;
     if (!(frames = getFrames(element, baseWindow))) { return null; }
     if (!frames.length) { // no frame
@@ -143,23 +163,23 @@
   }
 
   /**
-   * Get a common ancestor `window`.
+   * Get a common ancestor window.
    * @param {Element} elm1 - A contained element.
    * @param {Element} elm2 - A contained element.
-   * @returns {Window} commonWindow - A common ancestor `window`.
+   * @returns {Window} commonWindow - A common ancestor window.
    */
   function getCommonWindow(elm1, elm2) {
-    var fromFrames, toFrames, commonWindow;
-    if (!(fromFrames = getFrames(elm1)) || !(toFrames = getFrames(elm2))) {
+    var frames1, frames2, commonWindow;
+    if (!(frames1 = getFrames(elm1)) || !(frames2 = getFrames(elm2))) {
       throw new Error('Cannot get frames.');
     }
-    if (fromFrames.length && toFrames.length) {
-      fromFrames.reverse();
-      toFrames.reverse();
-      fromFrames.some(function(fromFrame) {
-        return toFrames.some(function(toFrame) {
-          if (toFrame === fromFrame) {
-            commonWindow = toFrame.contentWindow;
+    if (frames1.length && frames2.length) {
+      frames1.reverse();
+      frames2.reverse();
+      frames1.some(function(frame1) {
+        return frames2.some(function(frame2) {
+          if (frame2 === frame1) {
+            commonWindow = frame2.contentWindow;
             return true;
           }
           return false;
@@ -170,8 +190,8 @@
   }
 
   /**
-   * Setup `elmSvg`, `elmPath`, `baseWindow` and `bodyOffset`.
-   * @param {Object} props - `insProps[id]` of `LeaderLine` instance.
+   * Setup `baseWindow`, `bodyOffset`, `elmSvg` and `elmPath`.
+   * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
    */
@@ -235,149 +255,116 @@
   }
 
   /**
-   * @param {Object} props - `insProps[id]` of `LeaderLine` instance.
+   * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Array} [styleProps] - To limit properties.
    * @returns {void}
    */
-  function updateStyles(props, styleProps) {
-    var optProps = props.optProps, styles = props.elmPath.style;
+  function setStyles(props, styleProps) {
+    var styles = props.elmPath.style;
     (styleProps || ['color', 'width']).forEach(function(styleProp) {
-      styles[PROP_2_CSSPROP[styleProp]] = optProps[styleProp];
-    });
-  }
-
-  /**
-   * @param {Object} optProps - `insProps[id].optProps` of `LeaderLineOptions` instance.
-   * @param {Object} options - New options.
-   * @param {LeaderLine} [leaderLine] - `LeaderLine` instance that its `update()` may be called.
-   * @returns {boolean} toUpdate - Whether `update()` must be called.
-   */
-  function updateOptions(optProps, options, leaderLine) {
-    var props, toUpdate, toUpdateWindow, toUpdateStyles, newWindow;
-
-    ['elmFrom', 'elmTo'].forEach(function(key) {
-      if (options[key] && options[key].nodeType != null && // eslint-disable-line eqeqeq
-          optProps[key] !== options[key]) {
-        optProps[key] = options[key];
-        toUpdate = toUpdateWindow = true;
-      }
-    });
-    if (optProps.elmFrom && optProps.elmFrom === optProps.elmTo) {
-      throw new Error('`elmFrom` and `elmTo` are the same element.');
-    }
-
-    // Check window.
-    if (leaderLine && toUpdateWindow) {
-      newWindow = getCommonWindow(optProps.elmFrom, optProps.elmTo);
-      props = insProps[leaderLine._id];
-      if (props.baseWindow !== newWindow) {
-        bindWindow(props, newWindow);
-        toUpdateStyles = true;
-      }
-    }
-
-    ['socketFrom', 'socketTo'].forEach(function(key) {
-      var socket;
-      if (options[key] && (
-            (socket = (options[key] + '').toLowerCase()) === DEFAULT_OPTIONS[key] ||
-            SOCKET_KEY_2_ID[socket]
-          ) && optProps[key] !== options[key]) {
-        optProps[key] = socket;
-        toUpdate = true;
-      }
-    });
-
-    ['color', 'width'].forEach(function(key) {
-      if (options[key] && typeof options[key] === typeof DEFAULT_OPTIONS[key] &&
-          optProps[key] !== options[key]) {
-        optProps[key] = options[key];
-        if (!toUpdateStyles) {
-          toUpdateStyles = [key];
-        } else if (Array.isArray(toUpdateStyles)) {
-          toUpdateStyles.push(key);
-        }
-        if (key === 'width') {
-          toUpdate = true; // `socketXY` must be changed.
-        }
-      }
-    });
-
-    if (leaderLine) {
-      if (toUpdateStyles) { // Update styles.
-        updateStyles(insProps[leaderLine._id], Array.isArray(toUpdateStyles) ? toUpdateStyles : null);
-      }
-      if (toUpdate) { // Call `update()`.
-        leaderLine.update();
-        toUpdate = false;
-      }
-    }
-
-    return toUpdate;
-  }
-
-  /**
-   * @class
-   * @property {LeaderLine} leaderLine - `LeaderLine` instance that is parent.
-   * @property {Element} elmFrom - A line is started from this element.
-   * @property {Element} elmTo - A line is terminated at this element.
-   * @property {string} socketFrom - `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
-   * @property {string} socketTo - `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
-   * @property {string} color - `stroke` of `<path>` element.
-   * @property {number} width - `stroke-width` of `<path>` element.
-   * @param {Object} options - Initial options.
-   * @param {LeaderLine} leaderLine - `leaderLine` option.
-   */
-  function LeaderLineOptions(options, leaderLine) {
-    var optProps = (insProps[leaderLine._id].optProps = {});
-    Object.defineProperty(this, '_id', { value: leaderLine._id });
-
-    updateOptions(optProps, options);
-    optProps.leaderLine = leaderLine;
-
-    if (!optProps.elmFrom || !optProps.elmTo) {
-      throw new Error('`elmFrom` and `elmTo` are required.');
-    }
-    ['socketFrom', 'socketTo', 'color', 'width'].forEach(function(key) {
-      optProps[key] = optProps[key] || DEFAULT_OPTIONS[key];
+      styles[PROP_2_CSSPROP[styleProp]] = props[styleProp];
     });
   }
 
   /**
    * @class
-   * @property {LeaderLineOptions} options - `LeaderLineOptions` instance.
-   * @property {SVGSVGElement} elmSvg - '<svg>' element.
-   * @property {SVGPathElement} elmPath - '<path>' element.
-   * @property {Window} baseWindow - Window that contains `elmSvg`.
-   * @property {{x: number, y: number}} bodyOffset - Distance between `left/top` of element and its bBox.
-   * @property {{socketId: number, x: number, y: number}} socketFromXY
-   * @property {{socketId: number, x: number, y: number}} socketToXY
-   * @param {Element} [elmFrom] - Alternative to `options.elmFrom`.
-   * @param {Element} [elmTo] - Alternative to `options.elmTo`.
+   * @param {Element} [start] - Alternative to `options.start`.
+   * @param {Element} [end] - Alternative to `options.end`.
    * @param {Object} [options] - Initial options.
    */
-  function LeaderLine(elmFrom, elmTo, options) {
+  function LeaderLine(start, end, options) {
     var props = {};
     Object.defineProperty(this, '_id', { value: insId++ });
     insProps[this._id] = props;
 
     if (arguments.length === 1) {
-      options = elmFrom;
-      elmFrom = null;
+      options = start;
+      start = null;
     }
     options = options || {};
-    if (elmFrom) { options.elmFrom = elmFrom; }
-    if (elmTo) { options.elmTo = elmTo; }
-    Object.defineProperty(this, 'options', { value: new LeaderLineOptions(options, this) });
+    if (start) { options.start = start; }
+    if (end) { options.end = end; }
 
-    bindWindow(props, getCommonWindow(props.optProps.elmFrom, props.optProps.elmTo));
-    updateStyles(props);
-    this.update();
+    this.option(options);
   }
 
-  LeaderLine.prototype.update = function() {
-    var props = insProps[this._id], optProps = props.optProps,
-      bBox1, bBox2, socketXYs1, socketXYs2,
-      socketsLenMin = -1, autoSideKey, fixSideKey, fixSideSocketXY,
+  /**
+   * @param {Object} options - New options.
+   * @returns {void}
+   */
+  LeaderLine.prototype.option = function(options) {
+    var props = insProps[this._id],
+      needsCheckWindow, needsUpdateStyles, needsPosition, newWindow;
+
+    ['start', 'end'].forEach(function(key) {
+      if (options[key] && options[key].nodeType != null && // eslint-disable-line eqeqeq
+          props[key] !== options[key]) {
+        props[key] = options[key];
+        needsCheckWindow = needsPosition = true;
+      }
+    });
+    if (!props.start || !props.end || props.start === props.end) {
+      throw new Error('`start` and `end` are required.');
+    }
+
+    // Check window.
+    if (needsCheckWindow) {
+      newWindow = getCommonWindow(props.start, props.end);
+      if (props.baseWindow !== newWindow) {
+        bindWindow(props, newWindow);
+        needsUpdateStyles = true;
+      }
+    }
+
+    ['startSocket', 'endSocket'].forEach(function(key) {
+      var socket;
+      if (options[key] && (
+            (socket = (options[key] + '').toLowerCase()) === DEFAULT_OPTIONS[key] ||
+            SOCKET_KEY_2_ID[socket]
+          ) && props[key] !== options[key]) {
+        props[key] = socket;
+        needsPosition = true;
+      }
+      if (!props[key]) {
+        props[key] = DEFAULT_OPTIONS[key];
+        needsPosition = true;
+      }
+    });
+
+    ['color', 'width'].forEach(function(key) {
+      function addStyleProp() {
+        if (!needsUpdateStyles) {
+          needsUpdateStyles = [key];
+        } else if (Array.isArray(needsUpdateStyles)) {
+          needsUpdateStyles.push(key);
+        } // Otherwise `needsUpdateStyles` is `true`.
+        if (key === 'width') { needsPosition = true; } // `*socketXY` must be changed.
+      }
+
+      if (options[key] && typeof options[key] === typeof DEFAULT_OPTIONS[key] &&
+          props[key] !== options[key]) {
+        props[key] = options[key];
+        addStyleProp();
+      }
+      if (!props[key]) {
+        props[key] = DEFAULT_OPTIONS[key];
+        addStyleProp();
+      }
+    });
+
+    if (needsUpdateStyles) { // Update styles.
+      setStyles(props, Array.isArray(needsUpdateStyles) ? needsUpdateStyles : null);
+    }
+    if (needsPosition) { // Call `position()`.
+      this.position();
+    }
+
+    return this;
+  };
+
+  LeaderLine.prototype.position = function() {
+    var props = insProps[this._id],
+      newSocketXY = {}, bBox1, bBox2, socketXYs1, socketXYs2, socketsLenMin = -1, autoKey, fixKey,
       viewX, viewY, viewW, viewH, styles;
 
     function getSocketXY(bBox, socketId) {
@@ -385,69 +372,79 @@
         socketId === SOCKET_TOP ? {x: bBox.left + bBox.width / 2, y: bBox.top} :
         socketId === SOCKET_RIGHT ? {x: bBox.right, y: bBox.top + bBox.height / 2} :
         socketId === SOCKET_BOTTOM ? {x: bBox.left + bBox.width / 2, y: bBox.bottom} :
-        socketId === SOCKET_LEFT ? {x: bBox.left, y: bBox.top + bBox.height / 2} :
-        null);
-      if (socketXY) { socketXY.socketId = socketId; }
+                    /* SOCKET_LEFT */ {x: bBox.left, y: bBox.top + bBox.height / 2});
+      socketXY.socketId = socketId;
       return socketXY;
     }
 
     // Decide each socket.
-    if (optProps.socketFrom !== 'auto' && optProps.socketTo !== 'auto') {
-      props.socketFromXY = getSocketXY(
-        getBBoxNest(optProps.elmFrom, props.baseWindow), SOCKET_KEY_2_ID[optProps.socketFrom]);
-      props.socketToXY = getSocketXY(
-        getBBoxNest(optProps.elmTo, props.baseWindow), SOCKET_KEY_2_ID[optProps.socketTo]);
-    } else if (optProps.socketFrom === 'auto' && optProps.socketTo === 'auto') {
-      bBox1 = getBBoxNest(optProps.elmFrom, props.baseWindow);
-      bBox2 = getBBoxNest(optProps.elmTo, props.baseWindow);
+    if (props.startSocket !== 'auto' && props.endSocket !== 'auto') {
+      newSocketXY.start = getSocketXY(
+        getBBoxNest(props.start, props.baseWindow), SOCKET_KEY_2_ID[props.startSocket]);
+      newSocketXY.end = getSocketXY(
+        getBBoxNest(props.end, props.baseWindow), SOCKET_KEY_2_ID[props.endSocket]);
+
+    } else if (props.startSocket === 'auto' && props.endSocket === 'auto') {
+      bBox1 = getBBoxNest(props.start, props.baseWindow);
+      bBox2 = getBBoxNest(props.end, props.baseWindow);
       socketXYs1 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox1, socketId); });
       socketXYs2 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox2, socketId); });
-      socketXYs1.forEach(function(socketFromXY) {
-        socketXYs2.forEach(function(socketToXY) {
-          var len = pointsLen(socketFromXY, socketToXY);
+      socketXYs1.forEach(function(socketXY1) {
+        socketXYs2.forEach(function(socketXY2) {
+          var len = pointsLen(socketXY1, socketXY2);
           if (len < socketsLenMin || socketsLenMin === -1) {
-            props.socketFromXY = socketFromXY;
-            props.socketToXY = socketToXY;
+            newSocketXY.start = socketXY1;
+            newSocketXY.end = socketXY2;
             socketsLenMin = len;
           }
         });
       });
+
     } else {
-      if (optProps.socketFrom === 'auto') {
-        fixSideKey = 'To';
-        autoSideKey = 'From';
+      if (props.startSocket === 'auto') {
+        fixKey = 'end';
+        autoKey = 'start';
       } else {
-        fixSideKey = 'From';
-        autoSideKey = 'To';
+        fixKey = 'start';
+        autoKey = 'end';
       }
-      fixSideSocketXY = props['socket' + fixSideKey + 'XY'] = getSocketXY(
-        getBBoxNest(optProps['elm' + fixSideKey], props.baseWindow),
-        SOCKET_KEY_2_ID[optProps['socket' + fixSideKey]]);
-      bBox1 = getBBoxNest(optProps['elm' + autoSideKey], props.baseWindow);
+      newSocketXY[fixKey] = getSocketXY(
+        getBBoxNest(props[fixKey], props.baseWindow), SOCKET_KEY_2_ID[props[fixKey + 'Socket']]);
+      bBox1 = getBBoxNest(props[autoKey], props.baseWindow);
       socketXYs1 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox1, socketId); });
       socketXYs1.forEach(function(socketXY) {
-        var len = pointsLen(socketXY, fixSideSocketXY);
+        var len = pointsLen(socketXY, newSocketXY[fixKey]);
         if (len < socketsLenMin || socketsLenMin === -1) {
-          props['socket' + autoSideKey + 'XY'] = socketXY;
+          newSocketXY[autoKey] = socketXY;
           socketsLenMin = len;
         }
       });
     }
 
+    ['start', 'end'].forEach(function(key) {
+      var socketXY1 = newSocketXY[key], socketXY2 = props[key + 'SocketXY'];
+      if (socketXY1.x !== socketXY2.x || socketXY1.y !== socketXY2.y ||
+          socketXY1.socketId !== socketXY2.socketId) {
+        props[key + 'SocketXY'] = newSocketXY[key];
+      } else {
+        newSocketXY[key] = null;
+      }
+    });
+
     // Position svg.
-    if (props.socketFromXY.x < props.socketToXY.x) {
-      viewX = props.socketFromXY.x;
-      viewW = props.socketToXY.x - viewX;
+    if (props.startSocketXY.x < props.endSocketXY.x) {
+      viewX = props.startSocketXY.x;
+      viewW = props.endSocketXY.x - viewX;
     } else {
-      viewX = props.socketToXY.x;
-      viewW = props.socketFromXY.x - viewX;
+      viewX = props.endSocketXY.x;
+      viewW = props.startSocketXY.x - viewX;
     }
-    if (props.socketFromXY.y < props.socketToXY.y) {
-      viewY = props.socketFromXY.y;
-      viewH = props.socketToXY.y - viewY;
+    if (props.startSocketXY.y < props.endSocketXY.y) {
+      viewY = props.startSocketXY.y;
+      viewH = props.endSocketXY.y - viewY;
     } else {
-      viewY = props.socketToXY.y;
-      viewH = props.socketFromXY.y - viewY;
+      viewY = props.endSocketXY.y;
+      viewH = props.startSocketXY.y - viewY;
     }
     styles = props.elmSvg.style;
     styles.left = (viewX + props.bodyOffset.x) + 'px';
@@ -457,8 +454,8 @@
     props.elmSvg.viewBox.baseVal.width = viewW;
     props.elmSvg.viewBox.baseVal.height = viewH;
 
-    props.elmPath.setAttribute('d', 'M' + (props.socketFromXY.x - viewX) + ',' + (props.socketFromXY.y - viewY) +
-      'L' + (props.socketToXY.x - viewX) + ',' + (props.socketToXY.y - viewY));
+    props.elmPath.setAttribute('d', 'M' + (props.startSocketXY.x - viewX) + ',' + (props.startSocketXY.y - viewY) +
+      'L' + (props.endSocketXY.x - viewX) + ',' + (props.endSocketXY.y - viewY));
   };
 
   return LeaderLine;
