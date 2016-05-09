@@ -17,27 +17,52 @@
    * @typedef {Object} props
    * @property {Window} baseWindow - Window that contains `LeaderLine` contents.
    * @property {{x: number, y: number}} bodyOffset - Distance between `baseWindow` and its `<body>`.
+   * @property {DOMRect} viewBBox - A bounding-box (includes `x` and `y`) of a part that should be shown.
    * @property {{socketId: number, x: number, y: number}} startSocketXY
    * @property {{socketId: number, x: number, y: number}} endSocketXY
+   * @property {{line, startPlug, endPlug}} shape - Current values.
+   * @property {Array} pathData - Sequence of path segments of current `elmPath`.
+   * @property {DOMRect} startMaskBBox - A bounding-box of current `elmStartMask`.
+   * @property {DOMRect} endMaskBBox - A bounding-box of current `elmEndMask`.
    * @property {SVGSVGElement} elmSvg - '<svg>' element.
    * @property {SVGPathElement} elmPath - '<path>' element.
-   * @property {Element} start - (P) A line is started at this element.
-   * @property {Element} end - (P) A line is terminated at this element.
-   * @property {string} startSocket - (P) `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
-   * @property {string} endSocket - (P) `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
+   * @property {SVGRectElement} elmStartMask - A mask for `start`.
+   * @property {SVGRectElement} elmEndMask - A mask for `end`.
+   * @property {Element} start - (P) An element that is starting point of a line.
+   * @property {Element} end - (P) An element that is end point of a line.
+   * @property {number} startSocket - (P) `socketId`.
+   * @property {number} endSocket - (P) `socketId`.
+   * @property {number} line - (P) `lineId`.
+   * @property {Array} startGravity - (P) Pixels as gravity. `[distance]` or offset `[x, y]` (`[]` as auto).
+   * @property {Array} endGravity - (P) Pixels as gravity. `[distance]` or offset `[x, y]` (`[]` as auto).
+   * @property {number} startPlug - (P) `plugId`.
+   * @property {number} endPlug - (P) `plugId`.
    * @property {string} color - (P) `stroke` of `<path>` element.
-   * @property {number} width - (P) `stroke-width` of `<path>` element.
+   * @property {string} width - (P) `stroke-width` of `<path>` element.
    */
 
   var
-    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
-    SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
+    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4, SOCKET_AUTO = 5,
     SOCKET_KEY_2_ID =
-      {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
+      {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT, auto: SOCKET_AUTO},
+    SOCKET_FIX_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
+
+    LINE_STRAIGHT = 1, LINE_ARC = 2, LINE_FLUID = 3, LINE_GRID = 4,
+    LINE_KEY_2_ID = {straight: LINE_STRAIGHT, arc: LINE_ARC, fluid: LINE_FLUID, grid: LINE_GRID},
+
+    PLUG_DISC = 1, PLUG_SQUARE = 2, PLUG_BEHIND = 3, PLUG_ARROW = 4,
+    PLUG_KEY_2_ID = {disc: PLUG_DISC, square: PLUG_SQUARE, behind: PLUG_BEHIND, arrow: PLUG_ARROW},
+
+    MIN_GRAVITY = 50,
 
     DEFAULT_OPTIONS = {
-      startSocket: 'auto',
-      endSocket: 'auto',
+      startSocket: SOCKET_AUTO,
+      endSocket: SOCKET_AUTO,
+      line: LINE_FLUID,
+      startGravity: [],
+      endGravity: [],
+      startPlug: PLUG_BEHIND,
+      endPlug: PLUG_ARROW,
       color: 'coral',
       width: '3px'
     },
@@ -47,7 +72,7 @@
     CSS_TEXT = '@INCLUDE[leader-line.css]@]';
     [DEBUG/] */
     // [DEBUG]
-    CSS_TEXT = '.leader-line{position:absolute;overflow:visible}',
+    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line .line{fill:none}',
     // [/DEBUG]
     SVG_NS = 'http://www.w3.org/2000/svg',
     PROP_2_CSSPROP = {color: 'stroke', width: 'strokeWidth'},
@@ -190,7 +215,8 @@
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`, `elmSvg` and `elmPath`.
+   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `shape`, `pathData`,
+   *    `startMaskBBox`, `endMaskBBox`, `elmSvg`, `elmPath`, `elmStartMask`, `elmEndMask`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -198,7 +224,7 @@
   function bindWindow(props, newWindow) {
     var baseDocument = newWindow.document,
       bodyOffset = {x: 0, y: 0},
-      sheet, stylesHtml, stylesBody, elmSvg, elmPath;
+      sheet, stylesHtml, stylesBody, elmSvg, elmPath, elmStartMask, elmEndMask;
 
     if (props.baseWindow && props.elmSvg) {
       props.baseWindow.document.body.removeChild(props.elmSvg);
@@ -250,8 +276,23 @@
     elmSvg.setAttribute('class', 'leader-line');
     if (!elmSvg.viewBox.baseVal) { elmSvg.setAttribute('viewBox', '0 0 0 0'); }
     elmPath = baseDocument.createElementNS(SVG_NS, 'path');
+    elmPath.setAttribute('class', 'line');
+    elmStartMask = baseDocument.createElementNS(SVG_NS, 'rect');
+    elmStartMask.setAttribute('class', 'leader-line-mask');
+    elmEndMask = baseDocument.createElementNS(SVG_NS, 'rect');
+    elmEndMask.setAttribute('class', 'leader-line-mask');
     props.elmPath = elmSvg.appendChild(elmPath);
+    props.elmStartMask = elmSvg.appendChild(elmStartMask);
+    props.elmEndMask = elmSvg.appendChild(elmEndMask);
     props.elmSvg = baseDocument.body.appendChild(elmSvg);
+
+    props.viewBBox = {};
+    props.startSocketXY = {};
+    props.endSocketXY = {};
+    props.shape = {};
+    props.pathData = [];
+    props.startMaskBBox = {};
+    props.endMaskBBox = {};
   }
 
   /**
@@ -296,6 +337,20 @@
     var props = insProps[this._id],
       needsCheckWindow, needsUpdateStyles, needsPosition, newWindow;
 
+    function matchArray(array1, array2) {
+      return array1.legth === array2.legth &&
+        array1.every(function(value1, i) { return value1 === array2[i]; });
+    }
+
+    function addStyleProp(key) {
+      if (!needsUpdateStyles) {
+        needsUpdateStyles = [key];
+      } else if (Array.isArray(needsUpdateStyles)) {
+        needsUpdateStyles.push(key);
+      } // Otherwise `needsUpdateStyles` is `true`.
+      if (key === 'width') { needsPosition = true; } // `*socketXY` must be changed.
+    }
+
     ['start', 'end'].forEach(function(key) {
       if (options[key] && options[key].nodeType != null && // eslint-disable-line eqeqeq
           props[key] !== options[key]) {
@@ -316,13 +371,12 @@
       }
     }
 
-    ['startSocket', 'endSocket'].forEach(function(key) {
-      var socket;
-      if (options[key] && (
-            (socket = (options[key] + '').toLowerCase()) === DEFAULT_OPTIONS[key] ||
-            SOCKET_KEY_2_ID[socket]
-          ) && props[key] !== options[key]) {
-        props[key] = socket;
+    ['startSocket', 'endSocket', 'line', 'startPlug', 'endPlug'].forEach(function(key) {
+      var id,
+        key2Id = key === 'startSocket' || key === 'endSocket' ? SOCKET_KEY_2_ID :
+          key === 'line' ? LINE_KEY_2_ID : PLUG_KEY_2_ID;
+      if (options[key] && (id = key2Id[(options[key] + '').toLowerCase()]) && props[key] !== id) {
+        props[key] = id;
         needsPosition = true;
       }
       if (!props[key]) {
@@ -331,24 +385,38 @@
       }
     });
 
-    ['color', 'width'].forEach(function(key) {
-      function addStyleProp() {
-        if (!needsUpdateStyles) {
-          needsUpdateStyles = [key];
-        } else if (Array.isArray(needsUpdateStyles)) {
-          needsUpdateStyles.push(key);
-        } // Otherwise `needsUpdateStyles` is `true`.
-        if (key === 'width') { needsPosition = true; } // `*socketXY` must be changed.
-      }
-
-      if (options[key] && typeof options[key] === typeof DEFAULT_OPTIONS[key] &&
-          props[key] !== options[key]) {
-        props[key] = options[key];
-        addStyleProp();
+    ['startGravity', 'endGravity'].forEach(function(key) {
+      var value;
+      if (options[key]) {
+        if (typeof options[key] === 'number') {
+          if (options[key] >= 0) { value = [options[key]]; }
+        } else if (Array.isArray(options[key])) {
+          if (typeof options[key][0] === 'number' && typeof options[key][1] === 'number') {
+            value = [options[key][0], options[key][1]];
+          }
+        } else if ((options[key] + '').toLowerCase() === 'auto') {
+          value = [];
+        }
+        if (value && (!props[key] || !matchArray(value, props[key]))) {
+          props[key] = value;
+          needsPosition = true;
+        }
       }
       if (!props[key]) {
         props[key] = DEFAULT_OPTIONS[key];
-        addStyleProp();
+        needsPosition = true;
+      }
+    });
+
+    ['color', 'width'].forEach(function(key) {
+      if (options[key] && typeof options[key] === typeof DEFAULT_OPTIONS[key] &&
+          props[key] !== options[key]) {
+        props[key] = options[key];
+        addStyleProp(key);
+      }
+      if (!props[key]) {
+        props[key] = DEFAULT_OPTIONS[key];
+        addStyleProp(key);
       }
     });
 
@@ -364,8 +432,9 @@
 
   LeaderLine.prototype.position = function() {
     var props = insProps[this._id],
-      newSocketXY = {}, bBox1, bBox2, socketXYs1, socketXYs2, socketsLenMin = -1, autoKey, fixKey,
-      viewX, viewY, viewW, viewH, styles;
+      newBBox = {}, newSocketXY = {}, newPathData, newViewBBox = {},
+      socketXYsWk, socketsLenMin = -1, autoKey, fixKey,
+      cx = {}, cy = {}, baseVal, styles;
 
     function getSocketXY(bBox, socketId) {
       var socketXY = (
@@ -377,42 +446,39 @@
       return socketXY;
     }
 
-    // Decide each socket.
-    if (props.startSocket !== 'auto' && props.endSocket !== 'auto') {
-      newSocketXY.start = getSocketXY(
-        getBBoxNest(props.start, props.baseWindow), SOCKET_KEY_2_ID[props.startSocket]);
-      newSocketXY.end = getSocketXY(
-        getBBoxNest(props.end, props.baseWindow), SOCKET_KEY_2_ID[props.endSocket]);
+    newBBox.start = getBBoxNest(props.start, props.baseWindow);
+    newBBox.end = getBBoxNest(props.end, props.baseWindow);
 
-    } else if (props.startSocket === 'auto' && props.endSocket === 'auto') {
-      bBox1 = getBBoxNest(props.start, props.baseWindow);
-      bBox2 = getBBoxNest(props.end, props.baseWindow);
-      socketXYs1 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox1, socketId); });
-      socketXYs2 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox2, socketId); });
-      socketXYs1.forEach(function(socketXY1) {
-        socketXYs2.forEach(function(socketXY2) {
-          var len = pointsLen(socketXY1, socketXY2);
-          if (len < socketsLenMin || socketsLenMin === -1) {
-            newSocketXY.start = socketXY1;
-            newSocketXY.end = socketXY2;
-            socketsLenMin = len;
-          }
+    // Decide each socket.
+    if (props.startSocket !== SOCKET_AUTO && props.endSocket !== SOCKET_AUTO) {
+      newSocketXY.start = getSocketXY(newBBox.start, props.startSocket);
+      newSocketXY.end = getSocketXY(newBBox.end, props.endSocket);
+
+    } else if (props.startSocket === SOCKET_AUTO && props.endSocket === SOCKET_AUTO) {
+      socketXYsWk = SOCKET_FIX_IDS.map(function(socketId) { return getSocketXY(newBBox.end, socketId); });
+      SOCKET_FIX_IDS.map(function(socketId) { return getSocketXY(newBBox.start, socketId); })
+        .forEach(function(startSocketXY) {
+          socketXYsWk.forEach(function(endSocketXY) {
+            var len = pointsLen(startSocketXY, endSocketXY);
+            if (len < socketsLenMin || socketsLenMin === -1) {
+              newSocketXY.start = startSocketXY;
+              newSocketXY.end = endSocketXY;
+              socketsLenMin = len;
+            }
+          });
         });
-      });
 
     } else {
-      if (props.startSocket === 'auto') {
+      if (props.startSocket === SOCKET_AUTO) {
         fixKey = 'end';
         autoKey = 'start';
       } else {
         fixKey = 'start';
         autoKey = 'end';
       }
-      newSocketXY[fixKey] = getSocketXY(
-        getBBoxNest(props[fixKey], props.baseWindow), SOCKET_KEY_2_ID[props[fixKey + 'Socket']]);
-      bBox1 = getBBoxNest(props[autoKey], props.baseWindow);
-      socketXYs1 = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBox1, socketId); });
-      socketXYs1.forEach(function(socketXY) {
+      newSocketXY[fixKey] = getSocketXY(newBBox[fixKey], props[fixKey + 'Socket']);
+      socketXYsWk = SOCKET_FIX_IDS.map(function(socketId) { return getSocketXY(newBBox[autoKey], socketId); });
+      socketXYsWk.forEach(function(socketXY) {
         var len = pointsLen(socketXY, newSocketXY[fixKey]);
         if (len < socketsLenMin || socketsLenMin === -1) {
           newSocketXY[autoKey] = socketXY;
@@ -421,6 +487,7 @@
       });
     }
 
+    // To limit updated `SocketXY`.
     ['start', 'end'].forEach(function(key) {
       var socketXY1 = newSocketXY[key], socketXY2 = props[key + 'SocketXY'];
       if (socketXY1.x !== socketXY2.x || socketXY1.y !== socketXY2.y ||
@@ -431,31 +498,118 @@
       }
     });
 
-    // Position svg.
-    if (props.startSocketXY.x < props.endSocketXY.x) {
-      viewX = props.startSocketXY.x;
-      viewW = props.endSocketXY.x - viewX;
-    } else {
-      viewX = props.endSocketXY.x;
-      viewW = props.startSocketXY.x - viewX;
-    }
-    if (props.startSocketXY.y < props.endSocketXY.y) {
-      viewY = props.startSocketXY.y;
-      viewH = props.endSocketXY.y - viewY;
-    } else {
-      viewY = props.endSocketXY.y;
-      viewH = props.startSocketXY.y - viewY;
-    }
-    styles = props.elmSvg.style;
-    styles.left = (viewX + props.bodyOffset.x) + 'px';
-    styles.top = (viewY + props.bodyOffset.y) + 'px';
-    styles.width = viewW + 'px';
-    styles.height = viewH + 'px';
-    props.elmSvg.viewBox.baseVal.width = viewW;
-    props.elmSvg.viewBox.baseVal.height = viewH;
+    // Set `shape` and generate path data.
+    if (newSocketXY.start || newSocketXY.end || props.shape.line !== props.line ||
+        props.shape.startPlug !== props.startPlug || props.shape.endPlug !== props.endPlug) {
+      switch (props.line) {
 
-    props.elmPath.setAttribute('d', 'M' + (props.startSocketXY.x - viewX) + ',' + (props.startSocketXY.y - viewY) +
-      'L' + (props.endSocketXY.x - viewX) + ',' + (props.endSocketXY.y - viewY));
+        case LINE_STRAIGHT:
+          newPathData = [
+            {type: 'M', values: [props.startSocketXY.x, props.startSocketXY.y]},
+            {type: 'L', values: [props.endSocketXY.x, props.endSocketXY.y]}
+          ];
+          props.shape.line = props.line;
+          break;
+
+        case LINE_FLUID:
+          ['start', 'end'].forEach(function(key) {
+            var gravity = props[key + 'Gravity'], socketXY = props[key + 'SocketXY'],
+              offset = {}, anotherSocketXY, len;
+            if (gravity.length === 2) { // offset
+              offset = {x: gravity[0], y: gravity[1]};
+            } else if (gravity.length === 1) { // distance
+              offset =
+                socketXY.socketId === SOCKET_TOP ? {x: 0, y: -gravity[0]} :
+                socketXY.socketId === SOCKET_RIGHT ? {x: gravity[0], y: 0} :
+                socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity[0]} :
+                                    /* SOCKET_LEFT */ {x: -gravity[0], y: 0};
+            } else { // auto
+              anotherSocketXY = props[(key === 'start' ? 'end' : 'start') + 'SocketXY'];
+              if (socketXY.socketId === SOCKET_TOP) {
+                len = (socketXY.y - anotherSocketXY.y) / 2;
+                if (len < MIN_GRAVITY) { len = MIN_GRAVITY; }
+                offset = {x: 0, y: -len};
+              } else if (socketXY.socketId === SOCKET_RIGHT) {
+                len = (anotherSocketXY.x - socketXY.x) / 2;
+                if (len < MIN_GRAVITY) { len = MIN_GRAVITY; }
+                offset = {x: len, y: 0};
+              } else if (socketXY.socketId === SOCKET_BOTTOM) {
+                len = (anotherSocketXY.y - socketXY.y) / 2;
+                if (len < MIN_GRAVITY) { len = MIN_GRAVITY; }
+                offset = {x: 0, y: len};
+              } else { // SOCKET_LEFT
+                len = (socketXY.x - anotherSocketXY.x) / 2;
+                if (len < MIN_GRAVITY) { len = MIN_GRAVITY; }
+                offset = {x: -len, y: 0};
+              }
+            }
+            cx[key] = socketXY.x + offset.x;
+            cy[key] = socketXY.y + offset.y;
+          });
+          newPathData = [
+            {type: 'M', values: [props.startSocketXY.x, props.startSocketXY.y]},
+            {type: 'C', values: [
+              cx.start, cy.start, cx.end, cy.end,
+              props.endSocketXY.x, props.endSocketXY.y]}
+          ];
+          props.shape.line = props.line;
+          break;
+
+        // no default
+      }
+
+      ['startPlug', 'endPlug'].forEach(function(key) {
+        switch (props[key]) {
+
+          case PLUG_DISC:
+            
+            props.shape[key] = props[key];
+            break;
+
+          // no default
+        }
+      });
+
+      // Apply path data.
+      if (newPathData.length !== props.pathData.length ||
+          newPathData.some(function(newPathSeg, i) {
+            var pathSeg = props.pathData[i];
+            return newPathSeg.type !== pathSeg.type ||
+              newPathSeg.values.some(function(newPathSegValue, i) {
+                return newPathSegValue !== pathSeg.values[i];
+              });
+          })) {
+        props.elmPath.setPathData(newPathData);
+        props.pathData = newPathData;
+
+        // Position svg element and set its `viewBox`.
+        if (props.startSocketXY.x < props.endSocketXY.x) {
+          newViewBBox.x = props.startSocketXY.x;
+          newViewBBox.width = props.endSocketXY.x - newViewBBox.x;
+        } else {
+          newViewBBox.x = props.endSocketXY.x;
+          newViewBBox.width = props.startSocketXY.x - newViewBBox.x;
+        }
+        if (props.startSocketXY.y < props.endSocketXY.y) {
+          newViewBBox.y = props.startSocketXY.y;
+          newViewBBox.height = props.endSocketXY.y - newViewBBox.y;
+        } else {
+          newViewBBox.y = props.endSocketXY.y;
+          newViewBBox.height = props.startSocketXY.y - newViewBBox.y;
+        }
+        baseVal = props.elmSvg.viewBox.baseVal;
+        styles = props.elmSvg.style;
+        [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
+          var boxKey = keys[0], cssKey = keys[1];
+          if (newViewBBox[boxKey] !== props.viewBBox[boxKey]) {
+            props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
+            styles[cssKey] =
+              (boxKey === 'x' || boxKey === 'y' ? newViewBBox[boxKey] + props.bodyOffset[boxKey] :
+                newViewBBox[boxKey]) + 'px';
+          }
+        });
+      }
+    }
   };
 
   return LeaderLine;
