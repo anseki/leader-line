@@ -28,6 +28,12 @@
    * @property {SVGPathElement} elmPath - '<path>' element.
    * @property {SVGRectElement} elmStartMask - A mask for `start`.
    * @property {SVGRectElement} elmEndMask - A mask for `end`.
+   * @property {SVGMarkerElement} elmStartMarker - A marker for `start`.
+   * @property {SVGMarkerElement} elmEndMarker - A marker for `end`.
+   * @property {SVGUseElement} elmStartMarkerUse - `<use>` element of `elmStartMarker`.
+   * @property {SVGUseElement} elmEndMarkerUse - `<use>` element of `elmEndMarker`.
+   * @property {string} startMarkerId - ID of `elmStartMarker`.
+   * @property {string} endMarkerId - ID of `elmEndMarker`.
    * @property {Element} start - (P) An element that is starting point of a line.
    * @property {Element} end - (P) An element that is end point of a line.
    * @property {number} startSocket - (P) `socketId`.
@@ -50,8 +56,10 @@
     LINE_STRAIGHT = 1, LINE_ARC = 2, LINE_FLUID = 3, LINE_GRID = 4,
     LINE_KEY_2_ID = {straight: LINE_STRAIGHT, arc: LINE_ARC, fluid: LINE_FLUID, grid: LINE_GRID},
 
-    PLUG_DISC = 1, PLUG_SQUARE = 2, PLUG_BEHIND = 3, PLUG_ARROW = 4,
-    PLUG_KEY_2_ID = {disc: PLUG_DISC, square: PLUG_SQUARE, behind: PLUG_BEHIND, arrow: PLUG_ARROW},
+    PLUG_BEHIND = 1, PLUG_DISC = 2, PLUG_SQUARE = 3,
+    PLUG_ARROW1 = 4, PLUG_ARROW2 = 5, PLUG_ARROW3 = 6,
+    PLUG_KEY_2_ID = {behind: PLUG_BEHIND, disc: PLUG_DISC, square: PLUG_SQUARE,
+      arrow1: PLUG_ARROW1, arrow2: PLUG_ARROW2, arrow3: PLUG_ARROW3},
 
     MIN_GRAVITY = 50,
 
@@ -62,20 +70,30 @@
       startGravity: [],
       endGravity: [],
       startPlug: PLUG_BEHIND,
-      endPlug: PLUG_ARROW,
+      endPlug: PLUG_ARROW1,
       color: 'coral',
       width: '4px'
     },
 
     STYLE_ID = 'leader-line-styles',
     /* [DEBUG/]
-    CSS_TEXT = '@INCLUDE[leader-line.css]@]';
+    CSS_TEXT = '@INCLUDE[file:leader-line.css]@',
     [DEBUG/] */
     // [DEBUG]
-    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line .line{fill:none}',
+    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line .line{fill:none} #leader-line-defs{width:0;height:0;}',
     // [/DEBUG]
     SVG_NS = 'http://www.w3.org/2000/svg',
     PROP_2_CSSPROP = {color: 'stroke', width: 'strokeWidth'},
+
+    DEFS_ID = 'leader-line-defs',
+    /* [DEBUG/]
+    DEFS_HTML = @INCLUDE[code:DEFS_HTML]@,
+    SYMBOLS = @INCLUDE[code:SYMBOLS]@,
+    [DEBUG/] */
+    // [DEBUG]
+    DEFS_HTML = window.DEFS_HTML,
+    SYMBOLS = window.SYMBOLS,
+    // [/DEBUG]
 
     /**
      * @typedef {Object.<_id: number, props>} insProps
@@ -287,15 +305,17 @@
 
   /**
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `shape`, `pathData`,
-   *    `startMaskBBox`, `endMaskBBox`, `elmSvg`, `elmPath`, `elmStartMask`, `elmEndMask`.
+   *    `startMaskBBox`, `endMaskBBox`, `elmSvg`, `elmPath`, `elmStartMask`, `elmEndMask`,
+   *    `elmStartMarker`, `elmEndMarker`, `elmStartMarkerUse`, `elmEndMarkerUse`, `startMarkerId`, `endMarkerId`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
+   * @param {number} id - ID of instance.
    * @returns {void}
    */
-  function bindWindow(props, newWindow) {
+  function bindWindow(props, newWindow, id) {
     var baseDocument = newWindow.document,
       bodyOffset = {x: 0, y: 0},
-      sheet, stylesHtml, stylesBody, elmSvg, elmPath, elmStartMask, elmEndMask;
+      sheet, defs, stylesHtml, stylesBody, elmSvg, elmDefs;
 
     if (props.baseWindow && props.elmSvg) {
       props.baseWindow.document.body.removeChild(props.elmSvg);
@@ -314,6 +334,12 @@
         sheet.id = STYLE_ID;
         sheet.textContent = CSS_TEXT;
       }
+    }
+
+    if (!baseDocument.getElementById(DEFS_ID)) { // Add svg defs
+      defs = baseDocument.body.appendChild(baseDocument.createElement('div'));
+      defs.id = DEFS_ID;
+      defs.innerHTML = DEFS_HTML;
     }
 
     // Get `bodyOffset`.
@@ -346,15 +372,24 @@
     elmSvg = baseDocument.createElementNS(SVG_NS, 'svg');
     elmSvg.setAttribute('class', 'leader-line');
     if (!elmSvg.viewBox.baseVal) { elmSvg.setAttribute('viewBox', '0 0 0 0'); }
-    elmPath = baseDocument.createElementNS(SVG_NS, 'path');
-    elmPath.setAttribute('class', 'line');
-    elmStartMask = baseDocument.createElementNS(SVG_NS, 'rect');
-    elmStartMask.setAttribute('class', 'leader-line-mask');
-    elmEndMask = baseDocument.createElementNS(SVG_NS, 'rect');
-    elmEndMask.setAttribute('class', 'leader-line-mask');
-    props.elmPath = elmSvg.appendChild(elmPath);
-    props.elmStartMask = elmSvg.appendChild(elmStartMask);
-    props.elmEndMask = elmSvg.appendChild(elmEndMask);
+
+    props.startMarkerId = 'start-marker-' + id;
+    props.endMarkerId = 'end-marker-' + id;
+    elmDefs = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
+    props.elmStartMarker = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
+    props.elmEndMarker = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
+    props.elmStartMarker.setAttribute('id', props.startMarkerId);
+    props.elmEndMarker.setAttribute('id', props.endMarkerId);
+    props.elmStartMarkerUse = props.elmStartMarker.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.elmEndMarkerUse = props.elmEndMarker.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+
+    props.elmPath = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+    props.elmPath.setAttribute('class', 'line');
+    props.elmStartMask = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
+    props.elmEndMask = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
+    props.elmStartMask.setAttribute('class', 'leader-line-mask');
+    props.elmEndMask.setAttribute('class', 'leader-line-mask');
+
     props.elmSvg = baseDocument.body.appendChild(elmSvg);
 
     props.viewBBox = {};
@@ -437,7 +472,7 @@
     if (needsCheckWindow) {
       newWindow = getCommonWindow(props.start, props.end);
       if (props.baseWindow !== newWindow) {
-        bindWindow(props, newWindow);
+        bindWindow(props, newWindow, this._id);
         needsUpdateStyles = true;
       }
     }

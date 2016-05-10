@@ -9,5 +9,11 @@
   "author": {
     "name": "anseki",
     "url": "https://github.com/anseki"
+  },
+  "devDependencies": {
+    "cheerio": "^0.20.0",
+    "grunt": "^1.0.1",
+    "grunt-task-helper": "^0.3.8",
+    "htmlclean": "^2.7.7"
   }
 }
