@@ -43,8 +43,12 @@
    * @property {Array} endGravity - (P) Pixels as gravity. `[distance]` or offset `[x, y]` (`[]` as auto).
    * @property {number} startPlug - (P) `plugId`.
    * @property {number} endPlug - (P) `plugId`.
+   * @property {string} startPlugColor - (P) `fill` of symbol.
+   * @property {string} endPlugColor - (P) `fill` of symbol.
+   * @property {number} startPlugSize - (P) Ratio of symbol size.
+   * @property {number} endPlugSize - (P) Ratio of symbol size.
    * @property {string} color - (P) `stroke` of `<path>` element.
-   * @property {string} width - (P) `stroke-width` of `<path>` element.
+   * @property {number} size - (P) `stroke-width` of `<path>` element.
    */
 
   var
@@ -72,7 +76,7 @@
       startPlug: PLUG_BEHIND,
       endPlug: PLUG_ARROW1,
       color: 'coral',
-      width: '4px'
+      size: 4
     },
 
     STYLE_ID = 'leader-line-styles',
@@ -83,7 +87,7 @@
     CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line .line{fill:none} #leader-line-defs{width:0;height:0;}',
     // [/DEBUG]
     SVG_NS = 'http://www.w3.org/2000/svg',
-    PROP_2_CSSPROP = {color: 'stroke', width: 'strokeWidth'},
+    PROP_2_CSSPROP = {color: 'stroke', size: 'strokeWidth'},
 
     DEFS_ID = 'leader-line-defs',
     /* [DEBUG/]
@@ -408,9 +412,18 @@
    */
   function setStyles(props, styleProps) {
     var styles = props.elmPath.style;
-    (styleProps || ['color', 'width']).forEach(function(styleProp) {
+    (styleProps || ['color', 'size']).forEach(function(styleProp) {
       styles[PROP_2_CSSPROP[styleProp]] = props[styleProp];
     });
+  }
+
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {Array} [plugProps] - To limit properties.
+   * @returns {void}
+   */
+  function setPlugs(props, plugProps) {
+    
   }
 
   /**
@@ -454,7 +467,7 @@
       } else if (Array.isArray(needsUpdateStyles)) {
         needsUpdateStyles.push(key);
       } // Otherwise `needsUpdateStyles` is `true`.
-      if (key === 'width') { needsPosition = true; } // `*socketXY` must be changed.
+      if (key === 'size') { needsPosition = true; } // `*socketXY` must be changed.
     }
 
     ['start', 'end'].forEach(function(key) {
@@ -514,7 +527,7 @@
       }
     });
 
-    ['color', 'width'].forEach(function(key) {
+    ['color', 'size'].forEach(function(key) {
       if (options[key] && typeof options[key] === typeof DEFAULT_OPTIONS[key] &&
           props[key] !== options[key]) {
         props[key] = options[key];
