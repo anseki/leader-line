@@ -64,7 +64,7 @@
       startPlug: PLUG_BEHIND,
       endPlug: PLUG_ARROW,
       color: 'coral',
-      width: '3px'
+      width: '4px'
     },
 
     STYLE_ID = 'leader-line-styles',
@@ -185,6 +185,77 @@
   function pointsLen(point1, point2) {
     return Math.sqrt(
       Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
+  }
+
+  function getPointOnPath(p0, p1, p2, p3, t) {
+    var
+      t1 = 1 - t,
+      t13 = Math.pow(t1, 3),
+      t12 = Math.pow(t1, 2),
+      t2 = t * t,
+      t3 = t2 * t,
+      x = t13 * p0.x + t12 * 3 * t * p1.x + t1 * 3 * t * t * p2.x + t3 * p3.x,
+      y = t13 * p0.y + t12 * 3 * t * p1.y + t1 * 3 * t * t * p2.y + t3 * p3.y,
+      mx = p0.x + 2 * t * (p1.x - p0.x) + t2 * (p2.x - 2 * p1.x + p0.x),
+      my = p0.y + 2 * t * (p1.y - p0.y) + t2 * (p2.y - 2 * p1.y + p0.y),
+      nx = p1.x + 2 * t * (p2.x - p1.x) + t2 * (p3.x - 2 * p2.x + p1.x),
+      ny = p1.y + 2 * t * (p2.y - p1.y) + t2 * (p3.y - 2 * p2.y + p1.y),
+      ax = t1 * p0.x + t * p1.x,
+      ay = t1 * p0.y + t * p1.y,
+      cx = t1 * p2.x + t * p3.x,
+      cy = t1 * p2.y + t * p3.y,
+      angle = (90 - Math.atan2(mx - nx, my - ny) * 180 / Math.PI);
+
+    angle += angle > 180 ? -180 : 180;
+    // from:  new path of side to p0
+    // to:    new path of side to p3
+    /* eslint-disable key-spacing */
+    return {x: x, y: y,
+      fromP2: {x: mx, y: my},
+      toP1:   {x: nx, y: ny},
+      fromP1: {x: ax, y: ay},
+      toP2:   {x: cx, y: cy},
+      angle:  angle
+    };
+    /* eslint-enable key-spacing */
+  }
+
+  function getLength(p0, p1, p2, p3, z) {
+    function base3(t, p0v, p1v, p2v, p3v) {
+      var t1 = -3 * p0v + 9 * p1v - 9 * p2v + 3 * p3v,
+        t2 = t * t1 + 6 * p0v - 12 * p1v + 6 * p2v;
+      return t * t2 - 3 * p0v + 3 * p1v;
+    }
+
+    var
+      TVALUES = [-0.1252, 0.1252, -0.3678, 0.3678, -0.5873, 0.5873,
+        -0.7699, 0.7699, -0.9041, 0.9041, -0.9816, 0.9816],
+      CVALUES = [0.2491, 0.2491, 0.2335, 0.2335, 0.2032, 0.2032,
+        0.1601, 0.1601, 0.1069, 0.1069, 0.0472, 0.0472],
+      sum = 0, n = 12, z2, ct, xbase, ybase, comb, i;
+
+    if (z == null) { z = 1; } // eslint-disable-line eqeqeq
+    z = z > 1 ? 1 : z < 0 ? 0 : z;
+    z2 = z / 2;
+    for (i = 0; i < n; i++) {
+      ct = z2 * TVALUES[i] + z2;
+      xbase = base3(ct, p0.x, p1.x, p2.x, p3.x);
+      ybase = base3(ct, p0.y, p1.y, p2.y, p3.y);
+      comb = xbase * xbase + ybase * ybase;
+      sum += CVALUES[i] * Math.sqrt(comb);
+    }
+    return z2 * sum;
+  }
+
+  function getT(p0, p1, p2, p3, ll) {
+    var e = 0.01, step = 1 / 2, t2 = 1 - step,
+      l = getLength(p0, p1, p2, p3, t2);
+    while (Math.abs(l - ll) > e) {
+      step /= 2;
+      t2 += (l < ll ? 1 : -1) * step;
+      l = getLength(p0, p1, p2, p3, t2);
+    }
+    return t2;
   }
 
   /**

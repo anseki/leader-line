@@ -1,10 +1,9 @@
 {
   "name": "leader-line",
-  "version": "%version%",
+  "version": "0.0.1",
   "title": "LeaderLine",
   "description": "%description%",
-  "keywords": [
-  ],
+  "keywords": [],
   "main": "dist/%main%",
   "license": "MIT",
   "author": {
