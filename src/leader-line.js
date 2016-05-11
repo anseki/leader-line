@@ -25,6 +25,13 @@
     PLUG_ARROW1 = 4, PLUG_ARROW2 = 5, PLUG_ARROW3 = 6,
     PLUG_KEY_2_ID = {behind: PLUG_BEHIND, disc: PLUG_DISC, square: PLUG_SQUARE,
       arrow1: PLUG_ARROW1, arrow2: PLUG_ARROW2, arrow3: PLUG_ARROW3},
+    PLUG_2_SYMBOL = (function() {
+      var PLUG_2_SYMBOL = {};
+      PLUG_2_SYMBOL[PLUG_BEHIND] = 'behind'; PLUG_2_SYMBOL[PLUG_DISC] = 'disc';
+      PLUG_2_SYMBOL[PLUG_SQUARE] = 'square'; PLUG_2_SYMBOL[PLUG_ARROW1] = 'arrow1';
+      PLUG_2_SYMBOL[PLUG_ARROW2] = 'arrow2'; PLUG_2_SYMBOL[PLUG_ARROW3] = 'arrow3';
+      return PLUG_2_SYMBOL;
+    })(),
 
     KEY_AUTO = 'auto',
     DEFAULT_OPTIONS = {
@@ -368,6 +375,7 @@
   }
 
   /**
+   * Apply `color`, `size`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Array} [styleProps] - To limit properties.
    * @returns {void}
@@ -380,6 +388,7 @@
   }
 
   /**
+   * Apply `startPlug`, `endPlug`, `startPlugColor`, `endPlugColor`, `startPlugSize`, `endPlugSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Array} [plugProps] - To limit properties.
    * @returns {void}
@@ -394,7 +403,8 @@
 
     ['start', 'end'].forEach(function(key) {
       var ucKey = key === 'start' ? 'Start' : 'End',
-        plugId = props[key + 'Plug'], elm;
+        plugId = props[key + 'Plug'], symbolId = PLUG_2_SYMBOL[plugId],
+        symbolConf = SYMBOLS[symbolId], elm;
 
       if (plugId === PLUG_BEHIND) {
         if (plugProps[key + 'Plug']) {
@@ -402,7 +412,8 @@
         }
       } else {
         if (plugProps[key + 'Plug']) {
-          props['elm' + ucKey + 'MarkerUse'].href.baseVal = '#' + SYMBOLS[plugId].elmId;
+          props['elm' + ucKey + 'MarkerUse'].href.baseVal = '#' + symbolId;
+          // SVG2 SVG_MARKER_ORIENT_AUTO
           props['elm' + ucKey + 'Marker'].orientType.baseVal =
             SYMBOLS[plugId].noRotate ? SVGMarkerElement.SVG_MARKER_ORIENT_ANGLE : SVGMarkerElement.SVG_MARKER_ORIENT_AUTO;
             
@@ -413,8 +424,8 @@
         }
         if (plugProps[key + 'PlugSize']) {
           elm = props['elm' + ucKey + 'Marker'];
-          elm.markerWidth.baseVal.value = SYMBOLS[plugId].widthR * (props[key + 'PlugSize'] || 1);
-          elm.markerHeight.baseVal.value = SYMBOLS[plugId].heightR * (props[key + 'PlugSize'] || 1);
+          elm.markerWidth.baseVal.value = symbolConf.widthR * (props[key + 'PlugSize'] || 1);
+          elm.markerHeight.baseVal.value = symbolConf.heightR * (props[key + 'PlugSize'] || 1);
         }
       }
     });

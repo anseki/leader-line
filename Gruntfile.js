@@ -61,12 +61,11 @@ module.exports = grunt => {
           handlerByContent: content => {
             let cheerio = require('cheerio');
             var $ = cheerio.load(content), defsSrc = '', defsConf = {};
+
             $('svg').each((i, elm) => {
               var symbol = $('.symbol', elm), size = $('.size', elm),
-                elmId, id, props, noOverhead;
-              if (symbol.length && size.length &&
-                  (elmId = symbol.attr('id')) &&
-                  (id = PLUG_KEY_2_ID[elmId])) {
+                id, props, noOverhead;
+              if (symbol.length && size.length && (id = symbol.attr('id'))) {
                 props = (symbol.attr('class') + '').split(' ');
 
                 defsSrc += $.xml(symbol.removeAttr('class'));
@@ -77,7 +76,6 @@ module.exports = grunt => {
                   return conf;
                 }, {});
 
-                defsConf[id].elmId = elmId;
                 defsConf[id].widthR = parseFloat(size.attr('width')) / DEFAULT_LINE_SIZE;
                 defsConf[id].heightR = parseFloat(size.attr('height')) / DEFAULT_LINE_SIZE;
                 if (!noOverhead) {
@@ -85,6 +83,7 @@ module.exports = grunt => {
                 }
               }
             });
+
             svgDefsCode = '\'' +
               htmlclean(`<svg version="1.1" width="0" height="0"><defs>${defsSrc}</defs></svg>`)
                 .replace(/\'/g, '\\\'') + '\'';
