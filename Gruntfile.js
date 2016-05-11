@@ -10,7 +10,14 @@ module.exports = grunt => {
     htmlclean = require('htmlclean'),
 
     ROOT_PATH = __dirname,
-    SRC_PATH = pathUtil.join(ROOT_PATH, 'src');
+    SRC_PATH = pathUtil.join(ROOT_PATH, 'src'),
+
+    // from leader-line.js
+    PLUG_BEHIND = 1, PLUG_DISC = 2, PLUG_SQUARE = 3,
+    PLUG_ARROW1 = 4, PLUG_ARROW2 = 5, PLUG_ARROW3 = 6,
+    PLUG_KEY_2_ID = {behind: PLUG_BEHIND, disc: PLUG_DISC, square: PLUG_SQUARE,
+      arrow1: PLUG_ARROW1, arrow2: PLUG_ARROW2, arrow3: PLUG_ARROW3},
+    DEFAULT_LINE_SIZE = 4; // DEFAULT_OPTIONS.size
 
   var embeddedAssets = [], referredAssets = [], protectedText = [], packages,
     svgDefsCode, svgDefsConfCode;
@@ -55,18 +62,25 @@ module.exports = grunt => {
             let cheerio = require('cheerio');
             var $ = cheerio.load(content), defsSrc = '', defsConf = {};
             $('svg').each((i, elm) => {
-              var symbol = $('.symbol', elm), id, props, size;
-              if (symbol.length && (id = symbol.attr('id'))) {
+              var symbol = $('.symbol', elm), size = $('.size', elm),
+                elmId, id, props, noOverhead;
+              if (symbol.length && size.length &&
+                  (elmId = symbol.attr('id')) &&
+                  (id = PLUG_KEY_2_ID[elmId])) {
                 props = (symbol.attr('class') + '').split(' ');
-                size = $('.size', elm);
 
                 defsSrc += $.xml(symbol.removeAttr('class'));
                 defsConf[id] = props.reduce((conf, prop) => {
                   var matches = prop.match(/prop\-([^\s]+)/);
                   if (matches) { conf[matches[1]] = true; }
+                  if (/ *no\-overhead */.test(prop)) { noOverhead = true; }
                   return conf;
                 }, {});
-                if (size.length) {
+
+                defsConf[id].elmId = elmId;
+                defsConf[id].widthR = parseFloat(size.attr('width')) / DEFAULT_LINE_SIZE;
+                defsConf[id].heightR = parseFloat(size.attr('height')) / DEFAULT_LINE_SIZE;
+                if (!noOverhead) {
                   defsConf[id].overhead = parseFloat(size.attr('x')) + parseFloat(size.attr('width'));
                 }
               }
@@ -76,7 +90,9 @@ module.exports = grunt => {
                 .replace(/\'/g, '\\\'') + '\'';
             svgDefsConfCode = `{${
               Object.keys(defsConf).map(id => `${id}:{${
-                Object.keys(defsConf[id]).map(prop => `${prop}:${defsConf[id][prop]}`).join(',')
+                Object.keys(defsConf[id]).map(prop => `${prop}:${
+                  typeof defsConf[id][prop] === 'string' ? `'${defsConf[id][prop]}'` : defsConf[id][prop]
+                }`).join(',')
               }}`).join(',')}}`;
             return `var DEFS_HTML=${svgDefsCode},SYMBOLS=${svgDefsConfCode};`;
           }

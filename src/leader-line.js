@@ -12,50 +12,11 @@
 ;var LeaderLine = (function() { // eslint-disable-line no-extra-semi
   'use strict';
 
-  /**
-   * Properties of a `LeaderLine` instance. (P): public
-   * @typedef {Object} props
-   * @property {Window} baseWindow - Window that contains `LeaderLine` contents.
-   * @property {{x: number, y: number}} bodyOffset - Distance between `baseWindow` and its `<body>`.
-   * @property {DOMRect} viewBBox - A bounding-box (includes `x` and `y`) of a part that should be shown.
-   * @property {{socketId: number, x: number, y: number}} startSocketXY
-   * @property {{socketId: number, x: number, y: number}} endSocketXY
-   * @property {{line, startPlug, endPlug}} shape - Current values.
-   * @property {Array} pathData - Sequence of path segments of current `elmPath`.
-   * @property {DOMRect} startMaskBBox - A bounding-box of current `elmStartMask`.
-   * @property {DOMRect} endMaskBBox - A bounding-box of current `elmEndMask`.
-   * @property {SVGSVGElement} elmSvg - '<svg>' element.
-   * @property {SVGPathElement} elmPath - '<path>' element.
-   * @property {SVGRectElement} elmStartMask - A mask for `start`.
-   * @property {SVGRectElement} elmEndMask - A mask for `end`.
-   * @property {SVGMarkerElement} elmStartMarker - A marker for `start`.
-   * @property {SVGMarkerElement} elmEndMarker - A marker for `end`.
-   * @property {SVGUseElement} elmStartMarkerUse - `<use>` element of `elmStartMarker`.
-   * @property {SVGUseElement} elmEndMarkerUse - `<use>` element of `elmEndMarker`.
-   * @property {string} startMarkerId - ID of `elmStartMarker`.
-   * @property {string} endMarkerId - ID of `elmEndMarker`.
-   * @property {Element} start - (P) An element that is starting point of a line.
-   * @property {Element} end - (P) An element that is end point of a line.
-   * @property {number} startSocket - (P) `socketId`.
-   * @property {number} endSocket - (P) `socketId`.
-   * @property {number} line - (P) `lineId`.
-   * @property {Array} startGravity - (P) Pixels as gravity. `[distance]` or offset `[x, y]` (`[]` as auto).
-   * @property {Array} endGravity - (P) Pixels as gravity. `[distance]` or offset `[x, y]` (`[]` as auto).
-   * @property {number} startPlug - (P) `plugId`.
-   * @property {number} endPlug - (P) `plugId`.
-   * @property {string} startPlugColor - (P) `fill` of symbol.
-   * @property {string} endPlugColor - (P) `fill` of symbol.
-   * @property {number} startPlugSize - (P) Ratio of symbol size.
-   * @property {number} endPlugSize - (P) Ratio of symbol size.
-   * @property {string} color - (P) `stroke` of `<path>` element.
-   * @property {number} size - (P) `stroke-width` of `<path>` element.
-   */
-
   var
-    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4, SOCKET_AUTO = 5,
+    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_KEY_2_ID =
-      {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT, auto: SOCKET_AUTO},
-    SOCKET_FIX_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
+      {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
+    SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
 
     LINE_STRAIGHT = 1, LINE_ARC = 2, LINE_FLUID = 3, LINE_GRID = 4,
     LINE_KEY_2_ID = {straight: LINE_STRAIGHT, arc: LINE_ARC, fluid: LINE_FLUID, grid: LINE_GRID},
@@ -65,19 +26,18 @@
     PLUG_KEY_2_ID = {behind: PLUG_BEHIND, disc: PLUG_DISC, square: PLUG_SQUARE,
       arrow1: PLUG_ARROW1, arrow2: PLUG_ARROW2, arrow3: PLUG_ARROW3},
 
-    MIN_GRAVITY = 50,
-
+    KEY_AUTO = 'auto',
     DEFAULT_OPTIONS = {
-      startSocket: SOCKET_AUTO,
-      endSocket: SOCKET_AUTO,
       line: LINE_FLUID,
-      startGravity: [],
-      endGravity: [],
+      startSocketGravity: [],
+      endSocketGravity: [],
       startPlug: PLUG_BEHIND,
       endPlug: PLUG_ARROW1,
       color: 'coral',
       size: 4
     },
+
+    MIN_GRAVITY = 50,
 
     STYLE_ID = 'leader-line-styles',
     /* [DEBUG/]
@@ -308,7 +268,7 @@
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `shape`, `pathData`,
+   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionedShape`, `pathData`,
    *    `startMaskBBox`, `endMaskBBox`, `elmSvg`, `elmPath`, `elmStartMask`, `elmEndMask`,
    *    `elmStartMarker`, `elmEndMarker`, `elmStartMarkerUse`, `elmEndMarkerUse`, `startMarkerId`, `endMarkerId`.
    * @param {props} props - `props` of `LeaderLine` instance.
@@ -374,7 +334,7 @@
 
     // svg
     elmSvg = baseDocument.createElementNS(SVG_NS, 'svg');
-    elmSvg.setAttribute('class', 'leader-line');
+    elmSvg.className.baseVal = 'leader-line';
     if (!elmSvg.viewBox.baseVal) { elmSvg.setAttribute('viewBox', '0 0 0 0'); }
 
     props.startMarkerId = 'start-marker-' + id;
@@ -382,24 +342,26 @@
     elmDefs = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
     props.elmStartMarker = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
     props.elmEndMarker = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
-    props.elmStartMarker.setAttribute('id', props.startMarkerId);
-    props.elmEndMarker.setAttribute('id', props.endMarkerId);
+    props.elmStartMarker.id = props.startMarkerId;
+    props.elmEndMarker.id = props.endMarkerId;
+    props.elmStartMarker.markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
+    props.elmEndMarker.markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
     props.elmStartMarkerUse = props.elmStartMarker.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.elmEndMarkerUse = props.elmEndMarker.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
 
     props.elmPath = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-    props.elmPath.setAttribute('class', 'line');
+    props.elmPath.className.baseVal = 'line';
     props.elmStartMask = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
     props.elmEndMask = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
-    props.elmStartMask.setAttribute('class', 'leader-line-mask');
-    props.elmEndMask.setAttribute('class', 'leader-line-mask');
+    props.elmStartMask.className.baseVal = 'leader-line-mask';
+    props.elmEndMask.className.baseVal = 'leader-line-mask';
 
     props.elmSvg = baseDocument.body.appendChild(elmSvg);
 
     props.viewBBox = {};
     props.startSocketXY = {};
     props.endSocketXY = {};
-    props.shape = {};
+    props.positionedShape = {};
     props.pathData = [];
     props.startMaskBBox = {};
     props.endMaskBBox = {};
@@ -423,7 +385,39 @@
    * @returns {void}
    */
   function setPlugs(props, plugProps) {
-    
+    plugProps = (plugProps || ['startPlug', 'endPlug',
+        'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize'])
+      .reduce(function(plugProps, prop) {
+        plugProps[prop] = true;
+        return plugProps;
+      }, {});
+
+    ['start', 'end'].forEach(function(key) {
+      var ucKey = key === 'start' ? 'Start' : 'End',
+        plugId = props[key + 'Plug'], elm;
+
+      if (plugId === PLUG_BEHIND) {
+        if (plugProps[key + 'Plug']) {
+          props.elmPath.style['marker' + ucKey] = 'none';
+        }
+      } else {
+        if (plugProps[key + 'Plug']) {
+          props['elm' + ucKey + 'MarkerUse'].href.baseVal = '#' + SYMBOLS[plugId].elmId;
+          props['elm' + ucKey + 'Marker'].orientType.baseVal =
+            SYMBOLS[plugId].noRotate ? SVGMarkerElement.SVG_MARKER_ORIENT_ANGLE : SVGMarkerElement.SVG_MARKER_ORIENT_AUTO;
+            
+          props.elmPath.style['marker' + ucKey] = 'url(#' + props[key + 'MarkerId'] + ')';
+        }
+        if (plugProps[key + 'PlugColor']) {
+          props['elm' + ucKey + 'MarkerUse'].style.fill = props[key + 'PlugColor'] || props.color;
+        }
+        if (plugProps[key + 'PlugSize']) {
+          elm = props['elm' + ucKey + 'Marker'];
+          elm.markerWidth.baseVal.value = SYMBOLS[plugId].widthR * (props[key + 'PlugSize'] || 1);
+          elm.markerHeight.baseVal.value = SYMBOLS[plugId].heightR * (props[key + 'PlugSize'] || 1);
+        }
+      }
+    });
   }
 
   /**
@@ -456,24 +450,57 @@
     var props = insProps[this._id],
       needsCheckWindow, needsUpdateStyles, needsPosition, newWindow;
 
+    function setValidId(prop, key2Id, setDefault, acceptsAuto) {
+      var key, id, update;
+      if (options[prop] != null && // eslint-disable-line eqeqeq
+          (key = (options[prop] + '').toLowerCase()) && (
+            acceptsAuto && key === KEY_AUTO ||
+            (id = key2Id[key])
+          ) && id !== props[prop]) {
+        props[prop] = id; // `undefined` when `KEY_AUTO`
+        update = true;
+      }
+      if (setDefault && props[prop] == null) { // eslint-disable-line eqeqeq
+        props[prop] = DEFAULT_OPTIONS[prop];
+        update = true;
+      }
+      return update;
+    }
+
+    function setValidType(prop, setDefault, type, acceptsAuto) {
+      var value, update;
+      type = type || typeof DEFAULT_OPTIONS[prop];
+      if ((acceptsAuto && (options[prop] + '').toLowerCase() === KEY_AUTO ||
+            typeof (value = options[prop]) === type
+          ) && value !== props[prop]) {
+        props[prop] = value; // `undefined` when `KEY_AUTO`
+        update = true;
+      }
+      if (setDefault && props[prop] == null) { // eslint-disable-line eqeqeq
+        props[prop] = DEFAULT_OPTIONS[prop];
+        update = true;
+      }
+      return update;
+    }
+
     function matchArray(array1, array2) {
       return array1.legth === array2.legth &&
         array1.every(function(value1, i) { return value1 === array2[i]; });
     }
 
-    function addStyleProp(key) {
-      if (!needsUpdateStyles) {
-        needsUpdateStyles = [key];
-      } else if (Array.isArray(needsUpdateStyles)) {
-        needsUpdateStyles.push(key);
-      } // Otherwise `needsUpdateStyles` is `true`.
-      if (key === 'size') { needsPosition = true; } // `*socketXY` must be changed.
+    function addPropList(prop, list) {
+      if (!list) {
+        list = [prop];
+      } else if (Array.isArray(list)) {
+        list.push(prop);
+      } // Otherwise `list` is `true`.
+      return list;
     }
 
-    ['start', 'end'].forEach(function(key) {
-      if (options[key] && options[key].nodeType != null && // eslint-disable-line eqeqeq
-          props[key] !== options[key]) {
-        props[key] = options[key];
+    ['start', 'end'].forEach(function(prop) {
+      if (options[prop] && options[prop].nodeType != null && // eslint-disable-line eqeqeq
+          options[prop] !== props[prop]) {
+        props[prop] = options[prop];
         needsCheckWindow = needsPosition = true;
       }
     });
@@ -482,62 +509,47 @@
     }
 
     // Check window.
-    if (needsCheckWindow) {
-      newWindow = getCommonWindow(props.start, props.end);
-      if (props.baseWindow !== newWindow) {
-        bindWindow(props, newWindow, this._id);
-        needsUpdateStyles = true;
-      }
+    if (needsCheckWindow &&
+        (newWindow = getCommonWindow(props.start, props.end)) !== props.baseWindow) {
+      bindWindow(props, newWindow, this._id);
+      needsUpdateStyles = true;
     }
 
-    ['startSocket', 'endSocket', 'line', 'startPlug', 'endPlug'].forEach(function(key) {
-      var id,
-        key2Id = key === 'startSocket' || key === 'endSocket' ? SOCKET_KEY_2_ID :
-          key === 'line' ? LINE_KEY_2_ID : PLUG_KEY_2_ID;
-      if (options[key] && (id = key2Id[(options[key] + '').toLowerCase()]) && props[key] !== id) {
-        props[key] = id;
-        needsPosition = true;
-      }
-      if (!props[key]) {
-        props[key] = DEFAULT_OPTIONS[key];
-        needsPosition = true;
-      }
-    });
+    needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
+    needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
 
-    ['startGravity', 'endGravity'].forEach(function(key) {
+    needsPosition = setValidId('line', LINE_KEY_2_ID, true) || needsPosition;
+    needsPosition = setValidId('startPlug', PLUG_KEY_2_ID, true) || needsPosition;
+    needsPosition = setValidId('endPlug', PLUG_KEY_2_ID, true) || needsPosition;
+
+    ['startSocketGravity', 'endSocketGravity'].forEach(function(prop) {
       var value;
-      if (options[key]) {
-        if (typeof options[key] === 'number') {
-          if (options[key] >= 0) { value = [options[key]]; }
-        } else if (Array.isArray(options[key])) {
-          if (typeof options[key][0] === 'number' && typeof options[key][1] === 'number') {
-            value = [options[key][0], options[key][1]];
+      if (options[prop]) {
+        if (typeof options[prop] === 'number') {
+          if (options[prop] >= 0) { value = [options[prop]]; }
+        } else if (Array.isArray(options[prop])) {
+          if (typeof options[prop][0] === 'number' && typeof options[prop][1] === 'number') {
+            value = [options[prop][0], options[prop][1]];
           }
-        } else if ((options[key] + '').toLowerCase() === 'auto') {
+        } else if ((options[prop] + '').toLowerCase() === KEY_AUTO) {
           value = [];
         }
-        if (value && (!props[key] || !matchArray(value, props[key]))) {
-          props[key] = value;
+        if (value && (!props[prop] || !matchArray(value, props[prop]))) {
+          props[prop] = value;
           needsPosition = true;
         }
       }
-      if (!props[key]) {
-        props[key] = DEFAULT_OPTIONS[key];
+      if (!props[prop]) {
+        props[prop] = DEFAULT_OPTIONS[prop];
         needsPosition = true;
       }
     });
 
-    ['color', 'size'].forEach(function(key) {
-      if (options[key] && typeof options[key] === typeof DEFAULT_OPTIONS[key] &&
-          props[key] !== options[key]) {
-        props[key] = options[key];
-        addStyleProp(key);
-      }
-      if (!props[key]) {
-        props[key] = DEFAULT_OPTIONS[key];
-        addStyleProp(key);
-      }
-    });
+    if (setValidType('color', true)) { needsUpdateStyles = addPropList('color', needsUpdateStyles); }
+    if (setValidType('size', true)) {
+      needsUpdateStyles = addPropList('color', needsUpdateStyles);
+      needsPosition = true; // `*socketXY` must be changed.
+    }
 
     if (needsUpdateStyles) { // Update styles.
       setStyles(props, Array.isArray(needsUpdateStyles) ? needsUpdateStyles : null);
@@ -569,13 +581,13 @@
     newBBox.end = getBBoxNest(props.end, props.baseWindow);
 
     // Decide each socket.
-    if (props.startSocket !== SOCKET_AUTO && props.endSocket !== SOCKET_AUTO) {
+    if (props.startSocket && props.endSocket) {
       newSocketXY.start = getSocketXY(newBBox.start, props.startSocket);
       newSocketXY.end = getSocketXY(newBBox.end, props.endSocket);
 
-    } else if (props.startSocket === SOCKET_AUTO && props.endSocket === SOCKET_AUTO) {
-      socketXYsWk = SOCKET_FIX_IDS.map(function(socketId) { return getSocketXY(newBBox.end, socketId); });
-      SOCKET_FIX_IDS.map(function(socketId) { return getSocketXY(newBBox.start, socketId); })
+    } else if (!props.startSocket && !props.endSocket) {
+      socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(newBBox.end, socketId); });
+      SOCKET_IDS.map(function(socketId) { return getSocketXY(newBBox.start, socketId); })
         .forEach(function(startSocketXY) {
           socketXYsWk.forEach(function(endSocketXY) {
             var len = pointsLen(startSocketXY, endSocketXY);
@@ -588,15 +600,15 @@
         });
 
     } else {
-      if (props.startSocket === SOCKET_AUTO) {
-        fixKey = 'end';
-        autoKey = 'start';
-      } else {
+      if (props.startSocket) {
         fixKey = 'start';
         autoKey = 'end';
+      } else {
+        fixKey = 'end';
+        autoKey = 'start';
       }
       newSocketXY[fixKey] = getSocketXY(newBBox[fixKey], props[fixKey + 'Socket']);
-      socketXYsWk = SOCKET_FIX_IDS.map(function(socketId) { return getSocketXY(newBBox[autoKey], socketId); });
+      socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(newBBox[autoKey], socketId); });
       socketXYsWk.forEach(function(socketXY) {
         var len = pointsLen(socketXY, newSocketXY[fixKey]);
         if (len < socketsLenMin || socketsLenMin === -1) {
@@ -617,9 +629,10 @@
       }
     });
 
-    // Set `shape` and generate path data.
-    if (newSocketXY.start || newSocketXY.end || props.shape.line !== props.line ||
-        props.shape.startPlug !== props.startPlug || props.shape.endPlug !== props.endPlug) {
+    // Set `positionedShape` and generate path data.
+    if (newSocketXY.start || newSocketXY.end || props.positionedShape.line !== props.line ||
+        props.positionedShape.startPlug !== props.startPlug ||
+        props.positionedShape.endPlug !== props.endPlug) {
       switch (props.line) {
 
         case LINE_STRAIGHT:
@@ -627,12 +640,12 @@
             {type: 'M', values: [props.startSocketXY.x, props.startSocketXY.y]},
             {type: 'L', values: [props.endSocketXY.x, props.endSocketXY.y]}
           ];
-          props.shape.line = props.line;
+          props.positionedShape.line = props.line;
           break;
 
         case LINE_FLUID:
           ['start', 'end'].forEach(function(key) {
-            var gravity = props[key + 'Gravity'], socketXY = props[key + 'SocketXY'],
+            var gravity = props[key + 'SocketGravity'], socketXY = props[key + 'SocketXY'],
               offset = {}, anotherSocketXY, len;
             if (gravity.length === 2) { // offset
               offset = {x: gravity[0], y: gravity[1]};
@@ -671,18 +684,18 @@
               cx.start, cy.start, cx.end, cy.end,
               props.endSocketXY.x, props.endSocketXY.y]}
           ];
-          props.shape.line = props.line;
+          props.positionedShape.line = props.line;
           break;
 
         // no default
       }
 
-      ['startPlug', 'endPlug'].forEach(function(key) {
-        switch (props[key]) {
+      ['startPlug', 'endPlug'].forEach(function(prop) {
+        switch (props[prop]) {
 
           case PLUG_DISC:
             
-            props.shape[key] = props[key];
+            props.positionedShape[prop] = props[prop];
             break;
 
           // no default
