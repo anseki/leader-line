@@ -12,6 +12,15 @@
 ;var LeaderLine = (function() { // eslint-disable-line no-extra-semi
   'use strict';
 
+  /**
+   * An object that simulates `DOMRect` to indicate a bounding-box.
+   * @typedef {Object} BBox
+   * @property {number} left
+   * @property {number} top
+   * @property {number} width
+   * @property {number} height
+   */
+
   var
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_KEY_2_ID =
@@ -33,15 +42,14 @@
       return PLUG_2_SYMBOL;
     })(),
 
-    KEY_AUTO = 'auto',
     DEFAULT_OPTIONS = {
       line: LINE_FLUID,
-      startSocketGravity: [],
-      endSocketGravity: [],
+      color: 'coral',
+      size: 4,
       startPlug: PLUG_BEHIND,
       endPlug: PLUG_ARROW1,
-      color: 'coral',
-      size: 4
+      startPlugSize: 1,
+      endPlugSize: 1
     },
 
     MIN_GRAVITY = 50,
@@ -53,8 +61,19 @@
     // [DEBUG]
     CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line .line{fill:none} #leader-line-defs{width:0;height:0;}',
     // [/DEBUG]
-    SVG_NS = 'http://www.w3.org/2000/svg',
-    PROP_2_CSSPROP = {color: 'stroke', size: 'strokeWidth'},
+
+    /**
+     * @typedef {Object} SymbolConf
+     * @property {BBox} bBox
+     * @property {number} widthR
+     * @property {number} heightR
+     * @property {number} overhead
+     * @property {boolean} noRotate
+     */
+
+    /**
+     * @typedef {{symbolId: number, SymbolConf}} SYMBOLS
+     */
 
     DEFS_ID = 'leader-line-defs',
     /* [DEBUG/]
@@ -75,7 +94,7 @@
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
    * @param {Element} element - Target element.
    * @param {boolean} [relWindow] - Whether it's relative to the element's window, or document (i.e. `<html>`).
-   * @returns {DOMRect|null} - A bounding-box or null when failed.
+   * @returns {BBox|null} - A bounding-box or null when failed.
    */
   function getBBox(element, relWindow) {
     var bBox = {}, rect, prop, doc, win;
@@ -148,7 +167,7 @@
    * Get an element's bounding-box that contains coordinates relative to document of specified window.
    * @param {Element} element - Target element.
    * @param {Window} [baseWindow] - Window that is base of coordinates.
-   * @returns {DOMRect|null} - A bounding-box or null when failed.
+   * @returns {BBox|null} - A bounding-box or null when failed.
    */
   function getBBoxNest(element, baseWindow) {
     var left = 0, top = 0, bBox, frames;
@@ -169,6 +188,33 @@
     bBox.left += left;
     bBox.top += top;
     return bBox;
+  }
+
+  /**
+   * Get a common ancestor window.
+   * @param {Element} elm1 - A contained element.
+   * @param {Element} elm2 - A contained element.
+   * @returns {Window} commonWindow - A common ancestor window.
+   */
+  function getCommonWindow(elm1, elm2) {
+    var frames1, frames2, commonWindow;
+    if (!(frames1 = getFrames(elm1)) || !(frames2 = getFrames(elm2))) {
+      throw new Error('Cannot get frames.');
+    }
+    if (frames1.length && frames2.length) {
+      frames1.reverse();
+      frames2.reverse();
+      frames1.some(function(frame1) {
+        return frames2.some(function(frame2) {
+          if (frame2 === frame1) {
+            commonWindow = frame2.contentWindow;
+            return true;
+          }
+          return false;
+        });
+      });
+    }
+    return commonWindow || window;
   }
 
   function pointsLen(point1, point2) {
@@ -248,48 +294,22 @@
   }
 
   /**
-   * Get a common ancestor window.
-   * @param {Element} elm1 - A contained element.
-   * @param {Element} elm2 - A contained element.
-   * @returns {Window} commonWindow - A common ancestor window.
-   */
-  function getCommonWindow(elm1, elm2) {
-    var frames1, frames2, commonWindow;
-    if (!(frames1 = getFrames(elm1)) || !(frames2 = getFrames(elm2))) {
-      throw new Error('Cannot get frames.');
-    }
-    if (frames1.length && frames2.length) {
-      frames1.reverse();
-      frames2.reverse();
-      frames1.some(function(frame1) {
-        return frames2.some(function(frame2) {
-          if (frame2 === frame1) {
-            commonWindow = frame2.contentWindow;
-            return true;
-          }
-          return false;
-        });
-      });
-    }
-    return commonWindow || window;
-  }
-
-  /**
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionedShape`, `pathData`,
-   *    `startMaskBBox`, `endMaskBBox`, `elmSvg`, `elmPath`, `elmStartMask`, `elmEndMask`,
-   *    `elmStartMarker`, `elmEndMarker`, `elmStartMarkerUse`, `elmEndMarkerUse`, `startMarkerId`, `endMarkerId`.
+   *    `startMarkerOverhead`, `endMarkerOverhead`, `startMaskBBox`, `endMaskBBox`,
+   *    `svg`, `path`, `startMask`, `endMask`, `startMarker`, `endMarker`, `startMarkerUse`, `endMarkerUse`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @param {number} id - ID of instance.
    * @returns {void}
    */
-  function bindWindow(props, newWindow, id) {
-    var baseDocument = newWindow.document,
+  function bindWindow(props, newWindow) {
+    var SVG_NS = 'http://www.w3.org/2000/svg',
+      baseDocument = newWindow.document,
       bodyOffset = {x: 0, y: 0},
-      sheet, defs, stylesHtml, stylesBody, elmSvg, elmDefs;
+      sheet, defs, stylesHtml, stylesBody, svg, elmDefs;
 
-    if (props.baseWindow && props.elmSvg) {
-      props.baseWindow.document.body.removeChild(props.elmSvg);
+    if (props.baseWindow && props.svg) {
+      props.baseWindow.document.body.removeChild(props.svg);
     }
     props.baseWindow = newWindow;
 
@@ -340,36 +360,31 @@
     props.bodyOffset = bodyOffset;
 
     // svg
-    elmSvg = baseDocument.createElementNS(SVG_NS, 'svg');
-    elmSvg.className.baseVal = 'leader-line';
-    if (!elmSvg.viewBox.baseVal) { elmSvg.setAttribute('viewBox', '0 0 0 0'); }
-
-    props.startMarkerId = 'start-marker-' + id;
-    props.endMarkerId = 'end-marker-' + id;
-    elmDefs = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
-    props.elmStartMarker = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
-    props.elmEndMarker = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
-    props.elmStartMarker.id = props.startMarkerId;
-    props.elmEndMarker.id = props.endMarkerId;
-    props.elmStartMarker.markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
-    props.elmEndMarker.markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
-    props.elmStartMarkerUse = props.elmStartMarker.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.elmEndMarkerUse = props.elmEndMarker.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-
-    props.elmPath = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-    props.elmPath.className.baseVal = 'line';
-    props.elmStartMask = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
-    props.elmEndMask = elmSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
-    props.elmStartMask.className.baseVal = 'leader-line-mask';
-    props.elmEndMask.className.baseVal = 'leader-line-mask';
-
-    props.elmSvg = baseDocument.body.appendChild(elmSvg);
+    svg = baseDocument.createElementNS(SVG_NS, 'svg');
+    svg.className.baseVal = 'leader-line';
+    if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
+    elmDefs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
+    ['start', 'end'].forEach(function(key) {
+      props[key + 'Marker'] = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
+      props[key + 'Marker'].id = props[key + 'MarkerId'];
+      props[key + 'Marker'].markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
+      if (!props[key + 'Marker'].viewBox.baseVal) {
+        props[key + 'Marker'].setAttribute('viewBox', '0 0 0 0'); // for Firefox bug
+      }
+      props[key + 'MarkerUse'] = props[key + 'Marker'].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      props[key + 'Mask'] = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
+      props[key + 'Mask'].className.baseVal = 'leader-line-mask';
+    });
+    props.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+    props.path.className.baseVal = 'line';
+    props.svg = baseDocument.body.appendChild(svg);
 
     props.viewBBox = {};
     props.startSocketXY = {};
     props.endSocketXY = {};
     props.positionedShape = {};
     props.pathData = [];
+    props.startMarkerOverhead = props.endMarkerOverhead = 0;
     props.startMaskBBox = {};
     props.endMaskBBox = {};
   }
@@ -381,7 +396,8 @@
    * @returns {void}
    */
   function setStyles(props, styleProps) {
-    var styles = props.elmPath.style;
+    var PROP_2_CSSPROP = {color: 'stroke', size: 'strokeWidth'},
+      styles = props.path.style;
     (styleProps || ['color', 'size']).forEach(function(styleProp) {
       styles[PROP_2_CSSPROP[styleProp]] = props[styleProp];
     });
@@ -394,38 +410,47 @@
    * @returns {void}
    */
   function setPlugs(props, plugProps) {
-    plugProps = (plugProps || ['startPlug', 'endPlug',
-        'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize'])
+    plugProps = (plugProps ||
+        ['startPlug', 'endPlug', 'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize'])
       .reduce(function(plugProps, prop) {
         plugProps[prop] = true;
         return plugProps;
       }, {});
 
     ['start', 'end'].forEach(function(key) {
-      var ucKey = key === 'start' ? 'Start' : 'End',
+      var ucKey = key.substr(0, 1).toUpperCase() + key.substr(1),
         plugId = props[key + 'Plug'], symbolId = PLUG_2_SYMBOL[plugId],
-        symbolConf = SYMBOLS[symbolId], elm;
+        symbolConf = SYMBOLS[symbolId], baseVal;
 
       if (plugId === PLUG_BEHIND) {
         if (plugProps[key + 'Plug']) {
-          props.elmPath.style['marker' + ucKey] = 'none';
+          props.path.style['marker' + ucKey] = 'none';
+          props[key + 'MarkerOverhead'] = -props.size;
         }
       } else {
         if (plugProps[key + 'Plug']) {
-          props['elm' + ucKey + 'MarkerUse'].href.baseVal = '#' + symbolId;
+          props[key + 'MarkerUse'].href.baseVal = '#' + symbolId;
           // SVG2 SVG_MARKER_ORIENT_AUTO
-          props['elm' + ucKey + 'Marker'].orientType.baseVal =
-            SYMBOLS[plugId].noRotate ? SVGMarkerElement.SVG_MARKER_ORIENT_ANGLE : SVGMarkerElement.SVG_MARKER_ORIENT_AUTO;
+          props[key + 'Marker'].orientType.baseVal =
+            symbolConf.noRotate ? SVGMarkerElement.SVG_MARKER_ORIENT_ANGLE : SVGMarkerElement.SVG_MARKER_ORIENT_AUTO;
             
-          props.elmPath.style['marker' + ucKey] = 'url(#' + props[key + 'MarkerId'] + ')';
+          baseVal = props[key + 'Marker'].viewBox.baseVal;
+          baseVal.x = symbolConf.bBox.left;
+          baseVal.y = symbolConf.bBox.top;
+          baseVal.width = symbolConf.bBox.width;
+          baseVal.height = symbolConf.bBox.height;
+          props.path.style['marker' + ucKey] = 'url(#' + props[key + 'MarkerId'] + ')';
+          props[key + 'MarkerOverhead'] =
+            props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
         }
         if (plugProps[key + 'PlugColor']) {
-          props['elm' + ucKey + 'MarkerUse'].style.fill = props[key + 'PlugColor'] || props.color;
+          props[key + 'MarkerUse'].style.fill = props[key + 'PlugColor'] || props.color;
         }
         if (plugProps[key + 'PlugSize']) {
-          elm = props['elm' + ucKey + 'Marker'];
-          elm.markerWidth.baseVal.value = symbolConf.widthR * (props[key + 'PlugSize'] || 1);
-          elm.markerHeight.baseVal.value = symbolConf.heightR * (props[key + 'PlugSize'] || 1);
+          props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * props[key + 'PlugSize'];
+          props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * props[key + 'PlugSize'];
+          props[key + 'MarkerOverhead'] =
+            props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
         }
       }
     });
@@ -441,6 +466,8 @@
     var props = {};
     Object.defineProperty(this, '_id', { value: insId++ });
     insProps[this._id] = props;
+    props.startMarkerId = 'leader-line-start-marker-' + this._id;
+    props.endMarkerId = 'leader-line-end-marker-' + this._id;
 
     if (arguments.length === 1) {
       options = start;
@@ -458,8 +485,9 @@
    * @returns {void}
    */
   LeaderLine.prototype.option = function(options) {
-    var props = insProps[this._id],
-      needsCheckWindow, needsUpdateStyles, needsPosition, newWindow;
+    var KEY_AUTO = 'auto',
+      props = insProps[this._id],
+      needsWindow, needsStyles, needsPlugs, needsPosition, newWindow;
 
     function setValidId(prop, key2Id, setDefault, acceptsAuto) {
       var key, id, update;
@@ -481,7 +509,8 @@
     function setValidType(prop, setDefault, type, acceptsAuto) {
       var value, update;
       type = type || typeof DEFAULT_OPTIONS[prop];
-      if ((acceptsAuto && (options[prop] + '').toLowerCase() === KEY_AUTO ||
+      if (options[prop] != null && ( // eslint-disable-line eqeqeq
+            acceptsAuto && (options[prop] + '').toLowerCase() === KEY_AUTO ||
             typeof (value = options[prop]) === type
           ) && value !== props[prop]) {
         props[prop] = value; // `undefined` when `KEY_AUTO`
@@ -512,7 +541,7 @@
       if (options[prop] && options[prop].nodeType != null && // eslint-disable-line eqeqeq
           options[prop] !== props[prop]) {
         props[prop] = options[prop];
-        needsCheckWindow = needsPosition = true;
+        needsWindow = needsPosition = true;
       }
     });
     if (!props.start || !props.end || props.start === props.end) {
@@ -520,50 +549,64 @@
     }
 
     // Check window.
-    if (needsCheckWindow &&
+    if (needsWindow &&
         (newWindow = getCommonWindow(props.start, props.end)) !== props.baseWindow) {
-      bindWindow(props, newWindow, this._id);
-      needsUpdateStyles = true;
+      bindWindow(props, newWindow);
+      needsStyles = needsPlugs = true;
     }
 
+    needsPosition = setValidId('line', LINE_KEY_2_ID, true) || needsPosition;
     needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
     needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
 
-    needsPosition = setValidId('line', LINE_KEY_2_ID, true) || needsPosition;
-    needsPosition = setValidId('startPlug', PLUG_KEY_2_ID, true) || needsPosition;
-    needsPosition = setValidId('endPlug', PLUG_KEY_2_ID, true) || needsPosition;
+    if (setValidType('color', true)) { needsStyles = addPropList('color', needsStyles); }
+    if (setValidType('size', true)) {
+      needsStyles = addPropList('size', needsStyles);
+      needsPosition = true;
+    }
 
     ['startSocketGravity', 'endSocketGravity'].forEach(function(prop) {
-      var value;
-      if (options[prop]) {
-        if (typeof options[prop] === 'number') {
-          if (options[prop] >= 0) { value = [options[prop]]; }
-        } else if (Array.isArray(options[prop])) {
+      var value = false; // means no-update input.
+      if (options[prop] != null) { // eslint-disable-line eqeqeq
+        if (Array.isArray(options[prop])) {
           if (typeof options[prop][0] === 'number' && typeof options[prop][1] === 'number') {
             value = [options[prop][0], options[prop][1]];
+            if (Array.isArray(props[prop]) && matchArray(value, props[prop])) { value = false; }
           }
-        } else if ((options[prop] + '').toLowerCase() === KEY_AUTO) {
-          value = [];
+        } else {
+          if ((options[prop] + '').toLowerCase() === KEY_AUTO) {
+            value = null;
+          } else if (typeof options[prop] === 'number' && options[prop] >= 0) {
+            value = options[prop];
+          }
+          if (value === props[prop]) { value = false; }
         }
-        if (value && (!props[prop] || !matchArray(value, props[prop]))) {
+        if (value !== false) {
           props[prop] = value;
           needsPosition = true;
         }
       }
-      if (!props[prop]) {
-        props[prop] = DEFAULT_OPTIONS[prop];
+    });
+
+    ['startPlug', 'endPlug'].forEach(function(prop) {
+      if (setValidId(prop, PLUG_KEY_2_ID, true)) {
+        needsPlugs = addPropList(prop, needsPlugs);
+        needsPosition = true;
+      }
+      if (setValidType(prop + 'Color', false, 'string', true)) {
+        needsPlugs = addPropList(prop + 'Color', needsPlugs);
+      }
+      if (setValidType(prop + 'Size', true)) {
+        needsPlugs = addPropList(prop + 'Size', needsPlugs);
         needsPosition = true;
       }
     });
 
-    if (setValidType('color', true)) { needsUpdateStyles = addPropList('color', needsUpdateStyles); }
-    if (setValidType('size', true)) {
-      needsUpdateStyles = addPropList('color', needsUpdateStyles);
-      needsPosition = true; // `*socketXY` must be changed.
+    if (needsStyles) { // Update styles.
+      setStyles(props, Array.isArray(needsStyles) ? needsStyles : null);
     }
-
-    if (needsUpdateStyles) { // Update styles.
-      setStyles(props, Array.isArray(needsUpdateStyles) ? needsUpdateStyles : null);
+    if (needsPlugs) { // Update plugs.
+      setPlugs(props, Array.isArray(needsPlugs) ? needsPlugs : null);
     }
     if (needsPosition) { // Call `position()`.
       this.position();
@@ -658,14 +701,14 @@
           ['start', 'end'].forEach(function(key) {
             var gravity = props[key + 'SocketGravity'], socketXY = props[key + 'SocketXY'],
               offset = {}, anotherSocketXY, len;
-            if (gravity.length === 2) { // offset
+            if (Array.isArray(gravity)) { // offset
               offset = {x: gravity[0], y: gravity[1]};
-            } else if (gravity.length === 1) { // distance
+            } else if (typeof gravity === 'number') { // distance
               offset =
-                socketXY.socketId === SOCKET_TOP ? {x: 0, y: -gravity[0]} :
-                socketXY.socketId === SOCKET_RIGHT ? {x: gravity[0], y: 0} :
-                socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity[0]} :
-                                    /* SOCKET_LEFT */ {x: -gravity[0], y: 0};
+                socketXY.socketId === SOCKET_TOP ? {x: 0, y: -gravity} :
+                socketXY.socketId === SOCKET_RIGHT ? {x: gravity, y: 0} :
+                socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity} :
+                                    /* SOCKET_LEFT */ {x: -gravity, y: 0};
             } else { // auto
               anotherSocketXY = props[(key === 'start' ? 'end' : 'start') + 'SocketXY'];
               if (socketXY.socketId === SOCKET_TOP) {
@@ -722,7 +765,7 @@
                 return newPathSegValue !== pathSeg.values[i];
               });
           })) {
-        props.elmPath.setPathData(newPathData);
+        props.path.setPathData(newPathData);
         props.pathData = newPathData;
 
         // Position svg element and set its `viewBox`.
@@ -740,8 +783,8 @@
           newViewBBox.y = props.endSocketXY.y;
           newViewBBox.height = props.startSocketXY.y - newViewBBox.y;
         }
-        baseVal = props.elmSvg.viewBox.baseVal;
-        styles = props.elmSvg.style;
+        baseVal = props.svg.viewBox.baseVal;
+        styles = props.svg.style;
         [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
           var boxKey = keys[0], cssKey = keys[1];
           if (newViewBBox[boxKey] !== props.viewBBox[boxKey]) {

@@ -13,10 +13,6 @@ module.exports = grunt => {
     SRC_PATH = pathUtil.join(ROOT_PATH, 'src'),
 
     // from leader-line.js
-    PLUG_BEHIND = 1, PLUG_DISC = 2, PLUG_SQUARE = 3,
-    PLUG_ARROW1 = 4, PLUG_ARROW2 = 5, PLUG_ARROW3 = 6,
-    PLUG_KEY_2_ID = {behind: PLUG_BEHIND, disc: PLUG_DISC, square: PLUG_SQUARE,
-      arrow1: PLUG_ARROW1, arrow2: PLUG_ARROW2, arrow3: PLUG_ARROW3},
     DEFAULT_LINE_SIZE = 4; // DEFAULT_OPTIONS.size
 
   var embeddedAssets = [], referredAssets = [], protectedText = [], packages,
@@ -62,9 +58,15 @@ module.exports = grunt => {
             let cheerio = require('cheerio');
             var $ = cheerio.load(content), defsSrc = '', defsConf = {};
 
+            function getCode(value) {
+              return typeof value === 'object' ?
+                  `{${Object.keys(value).map(prop => `${prop}:${getCode(value[prop])}`).join(',')}}` :
+                typeof value === 'string' ? `'${value}'` : value;
+            }
+
             $('svg').each((i, elm) => {
               var symbol = $('.symbol', elm), size = $('.size', elm),
-                id, props, noOverhead;
+                id, props, bBox, noOverhead;
               if (symbol.length && size.length && (id = symbol.attr('id'))) {
                 props = (symbol.attr('class') + '').split(' ');
 
@@ -76,23 +78,22 @@ module.exports = grunt => {
                   return conf;
                 }, {});
 
-                defsConf[id].widthR = parseFloat(size.attr('width')) / DEFAULT_LINE_SIZE;
-                defsConf[id].heightR = parseFloat(size.attr('height')) / DEFAULT_LINE_SIZE;
-                if (!noOverhead) {
-                  defsConf[id].overhead = parseFloat(size.attr('x')) + parseFloat(size.attr('width'));
-                }
+                defsConf[id].bBox = bBox = {
+                  left: parseFloat(size.attr('x')),
+                  top: parseFloat(size.attr('y')),
+                  width: parseFloat(size.attr('width')),
+                  height: parseFloat(size.attr('height'))
+                };
+                defsConf[id].widthR = bBox.width / DEFAULT_LINE_SIZE;
+                defsConf[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
+                defsConf[id].overhead = noOverhead ? 0 : bBox.left + bBox.width;
               }
             });
 
             svgDefsCode = '\'' +
               htmlclean(`<svg version="1.1" width="0" height="0"><defs>${defsSrc}</defs></svg>`)
                 .replace(/\'/g, '\\\'') + '\'';
-            svgDefsConfCode = `{${
-              Object.keys(defsConf).map(id => `${id}:{${
-                Object.keys(defsConf[id]).map(prop => `${prop}:${
-                  typeof defsConf[id][prop] === 'string' ? `'${defsConf[id][prop]}'` : defsConf[id][prop]
-                }`).join(',')
-              }}`).join(',')}}`;
+            svgDefsConfCode = getCode(defsConf);
             return `var DEFS_HTML=${svgDefsCode},SYMBOLS=${svgDefsConfCode};`;
           }
         },
