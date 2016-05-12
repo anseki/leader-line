@@ -85,10 +85,12 @@
     SYMBOLS = window.SYMBOLS,
     // [/DEBUG]
 
+    IS_IE = !!document.uniqueID,
+
     /**
      * @typedef {Object.<_id: number, props>} insProps
      */
-    insProps = {}, insId = 0;
+    insProps = {}, insId = 0, svg2Supported;
 
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
@@ -295,7 +297,7 @@
 
   /**
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionedShape`, `pathData`,
-   *    `startMarkerOverhead`, `endMarkerOverhead`, `startMaskBBox`, `endMaskBBox`,
+   *    `startPlugOverhead`, `endPlugOverhead`, `startMaskBBox`, `endMaskBBox`,
    *    `svg`, `path`, `startMask`, `endMask`, `startMarker`, `endMarker`, `startMarkerUse`, `endMarkerUse`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
@@ -384,7 +386,7 @@
     props.endSocketXY = {};
     props.positionedShape = {};
     props.pathData = [];
-    props.startMarkerOverhead = props.endMarkerOverhead = 0;
+    props.startPlugOverhead = props.endPlugOverhead = 0;
     props.startMaskBBox = {};
     props.endMaskBBox = {};
   }
@@ -401,6 +403,59 @@
     (styleProps || ['color', 'size']).forEach(function(styleProp) {
       styles[PROP_2_CSSPROP[styleProp]] = props[styleProp];
     });
+  }
+
+  /**
+   * Apply `orient` to `marker`.
+   * @param {SVGMarkerElement} marker - Target `marker` element.
+   * @param {SVGUseElement} use - Target `use` element.
+   * @param {SVGPathElement} path - Target `path` element.
+   * @param {SVGSVGElement} svg - Parent `svg` element.
+   * @param {SymbolConf} symbolConf - `SymbolConf` of target symbol.
+   * @param {string} [orient] - `'auto'`, `'auto-start-reverse'` or `angle`. Default: `'0'`
+   * @returns {void}
+   */
+  function setMarkerOrient(marker, use, path, svg, symbolConf, orient) {
+    var transform, parent;
+
+    // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of `SVGMarkerElement`
+    // don't work in browsers other than Chrome.
+    orient = orient || '0';
+    marker.setAttribute('orient', orient);
+
+    if (orient === 'auto-start-reverse') {
+      if (typeof svg2Supported !== 'boolean') {
+        svg2Supported = marker.orientType.baseVal === SVGMarkerElement.SVG_MARKER_ORIENT_UNKNOWN;
+      }
+      if (!svg2Supported) {
+        transform = svg.createSVGTransform();
+        transform.setRotate(180, 0, 0);
+        use.transform.baseVal.appendItem(transform);
+        marker.setAttribute('orient', 'auto');
+        setTimeout(function() { // for IE bug
+          var baseVal = marker.viewBox.baseVal;
+          baseVal.x = -(symbolConf.bBox.left + symbolConf.bBox.width);
+          baseVal.y = -(symbolConf.bBox.top + symbolConf.bBox.height);
+          baseVal.width = symbolConf.bBox.width;
+          baseVal.height = symbolConf.bBox.height;
+        }, 0);
+      }
+    } else if (svg2Supported === false) {
+      use.transform.baseVal.clear();
+      setTimeout(function() { // for IE bug
+        var baseVal = marker.viewBox.baseVal;
+        baseVal.x = symbolConf.bBox.left;
+        baseVal.y = symbolConf.bBox.top;
+        baseVal.width = symbolConf.bBox.width;
+        baseVal.height = symbolConf.bBox.height;
+      }, 0);
+    }
+
+    if (IS_IE) { // for IE bug
+      parent = path.parentNode;
+      parent.removeChild(path);
+      parent.appendChild(path);
+    }
   }
 
   /**
@@ -425,22 +480,21 @@
       if (plugId === PLUG_BEHIND) {
         if (plugProps[key + 'Plug']) {
           props.path.style['marker' + ucKey] = 'none';
-          props[key + 'MarkerOverhead'] = -props.size;
+          props[key + 'PlugOverhead'] = -props.size;
         }
       } else {
         if (plugProps[key + 'Plug']) {
           props[key + 'MarkerUse'].href.baseVal = '#' + symbolId;
-          // SVG2 SVG_MARKER_ORIENT_AUTO
-          props[key + 'Marker'].orientType.baseVal =
-            symbolConf.noRotate ? SVGMarkerElement.SVG_MARKER_ORIENT_ANGLE : SVGMarkerElement.SVG_MARKER_ORIENT_AUTO;
-            
+          setMarkerOrient(
+            props[key + 'Marker'], props[key + 'MarkerUse'], props.path, props.svg, symbolConf,
+            symbolConf.noRotate ? '0' : key === 'start' ? 'auto-start-reverse' : 'auto');
           baseVal = props[key + 'Marker'].viewBox.baseVal;
           baseVal.x = symbolConf.bBox.left;
           baseVal.y = symbolConf.bBox.top;
           baseVal.width = symbolConf.bBox.width;
           baseVal.height = symbolConf.bBox.height;
           props.path.style['marker' + ucKey] = 'url(#' + props[key + 'MarkerId'] + ')';
-          props[key + 'MarkerOverhead'] =
+          props[key + 'PlugOverhead'] =
             props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
         }
         if (plugProps[key + 'PlugColor']) {
@@ -449,7 +503,7 @@
         if (plugProps[key + 'PlugSize']) {
           props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * props[key + 'PlugSize'];
           props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * props[key + 'PlugSize'];
-          props[key + 'MarkerOverhead'] =
+          props[key + 'PlugOverhead'] =
             props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
         }
       }
@@ -684,9 +738,10 @@
     });
 
     // Set `positionedShape` and generate path data.
-    if (newSocketXY.start || newSocketXY.end || props.positionedShape.line !== props.line ||
-        props.positionedShape.startPlug !== props.startPlug ||
-        props.positionedShape.endPlug !== props.endPlug) {
+    if (newSocketXY.start || newSocketXY.end ||
+        props.positionedShape.line !== props.line ||
+        props.positionedShape.startPlugOverhead !== props.startPlugOverhead ||
+        props.positionedShape.endPlugOverhead !== props.endPlugOverhead) {
       switch (props.line) {
 
         case LINE_STRAIGHT:
@@ -694,7 +749,6 @@
             {type: 'M', values: [props.startSocketXY.x, props.startSocketXY.y]},
             {type: 'L', values: [props.endSocketXY.x, props.endSocketXY.y]}
           ];
-          props.positionedShape.line = props.line;
           break;
 
         case LINE_FLUID:
@@ -738,11 +792,11 @@
               cx.start, cy.start, cx.end, cy.end,
               props.endSocketXY.x, props.endSocketXY.y]}
           ];
-          props.positionedShape.line = props.line;
           break;
 
         // no default
       }
+      props.positionedShape.line = props.line;
 
       ['startPlug', 'endPlug'].forEach(function(prop) {
         switch (props[prop]) {
