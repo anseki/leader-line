@@ -673,7 +673,7 @@
     var props = insProps[this._id],
       newBBox = {}, newSocketXY = {}, newPathData, newViewBBox = {},
       socketXYsWk, socketsLenMin = -1, autoKey, fixKey,
-      cx = {}, cy = {}, baseVal, styles;
+      cx = {}, cy = {}, pathSegs = [], baseVal, styles;
 
     function getSocketXY(bBox, socketId) {
       var socketXY = (
@@ -745,10 +745,7 @@
       switch (props.line) {
 
         case LINE_STRAIGHT:
-          newPathData = [
-            {type: 'M', values: [props.startSocketXY.x, props.startSocketXY.y]},
-            {type: 'L', values: [props.endSocketXY.x, props.endSocketXY.y]}
-          ];
+          pathSegs.push([props.startSocketXY, props.endSocketXY]);
           break;
 
         case LINE_FLUID:
@@ -786,12 +783,8 @@
             cx[key] = socketXY.x + offset.x;
             cy[key] = socketXY.y + offset.y;
           });
-          newPathData = [
-            {type: 'M', values: [props.startSocketXY.x, props.startSocketXY.y]},
-            {type: 'C', values: [
-              cx.start, cy.start, cx.end, cy.end,
-              props.endSocketXY.x, props.endSocketXY.y]}
-          ];
+          pathSegs.push([props.startSocketXY,
+            {x: cx.start, y: cy.start}, {x: cx.end, y: cy.end}, props.endSocketXY]);
           break;
 
         // no default
@@ -810,6 +803,13 @@
         }
       });
 
+      newPathData = [{type: 'M', values: [pathSegs[0][0].x, pathSegs[0][0].y]}];
+      pathSegs.forEach(function(pathSeg) {
+        newPathData.push(pathSeg.length === 2 ?
+          {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]} :
+          {type: 'C', values: [pathSeg[1].x, pathSeg[1].y,
+            pathSeg[2].x, pathSeg[2].y, pathSeg[3].x, pathSeg[3].y]});
+      });
       // Apply path data.
       if (newPathData.length !== props.pathData.length ||
           newPathData.some(function(newPathSeg, i) {
