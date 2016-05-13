@@ -15,13 +15,14 @@
   /**
    * An object that simulates `DOMRect` to indicate a bounding-box.
    * @typedef {Object} BBox
-   * @property {number} left
-   * @property {number} top
-   * @property {number} width
-   * @property {number} height
+   * @property {number|null} left
+   * @property {number|null} top
+   * @property {number|null} width
+   * @property {number|null} height
    */
 
   var
+    APP_ID = 'leader-line',
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_KEY_2_ID =
       {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
@@ -52,14 +53,14 @@
       endPlugSize: 1
     },
 
-    MIN_GRAVITY = 50,
+    MIN_GRAVITY = 50, MIN_ADJUST_LEN = 10,
 
-    STYLE_ID = 'leader-line-styles',
+    STYLE_ID = APP_ID + '-styles',
     /* [DEBUG/]
     CSS_TEXT = '@INCLUDE[file:leader-line.css]@',
     [DEBUG/] */
     // [DEBUG]
-    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line .line{fill:none} #leader-line-defs{width:0;height:0;}',
+    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line-line{fill:none} #leader-line-defs{width:0;height:0;}',
     // [/DEBUG]
 
     /**
@@ -67,6 +68,7 @@
      * @property {BBox} bBox
      * @property {number} widthR
      * @property {number} heightR
+     * @property {number} outlineR
      * @property {number} overhead
      * @property {boolean} noRotate
      */
@@ -75,7 +77,7 @@
      * @typedef {{symbolId: number, SymbolConf}} SYMBOLS
      */
 
-    DEFS_ID = 'leader-line-defs',
+    DEFS_ID = APP_ID + '-defs',
     /* [DEBUG/]
     DEFS_HTML = @INCLUDE[code:DEFS_HTML]@,
     SYMBOLS = @INCLUDE[code:SYMBOLS]@,
@@ -219,9 +221,18 @@
     return commonWindow || window;
   }
 
-  function pointsLen(point1, point2) {
+  function getPointsLength(p0, p1) {
     return Math.sqrt(
-      Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
+      Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2));
+  }
+
+  function getPointOnLineSeg(p0, p1, t) {
+    var xA = p1.x - p0.x, yA = p1.y - p0.y;
+    return {
+      x: p0.x + xA * t,
+      y: p0.y + yA * t,
+      angle: Math.atan2(yA, xA) / (Math.PI / 180)
+    };
   }
 
   function getPointOnPath(p0, p1, p2, p3, t) {
@@ -257,7 +268,7 @@
     /* eslint-enable key-spacing */
   }
 
-  function getLength(p0, p1, p2, p3, z) {
+  function getPathLength(p0, p1, p2, p3, z) {
     function base3(t, p0v, p1v, p2v, p3v) {
       var t1 = -3 * p0v + 9 * p1v - 9 * p2v + 3 * p3v,
         t2 = t * t1 + 6 * p0v - 12 * p1v + 6 * p2v;
@@ -284,31 +295,31 @@
     return z2 * sum;
   }
 
-  function getT(p0, p1, p2, p3, ll) {
+  function getPathT(p0, p1, p2, p3, ll) {
     var e = 0.01, step = 1 / 2, t2 = 1 - step,
-      l = getLength(p0, p1, p2, p3, t2);
+      l = getPathLength(p0, p1, p2, p3, t2);
     while (Math.abs(l - ll) > e) {
       step /= 2;
       t2 += (l < ll ? 1 : -1) * step;
-      l = getLength(p0, p1, p2, p3, t2);
+      l = getPathLength(p0, p1, p2, p3, t2);
     }
     return t2;
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionedShape`, `pathData`,
-   *    `startPlugOverhead`, `endPlugOverhead`, `startMaskBBox`, `endMaskBBox`,
-   *    `svg`, `path`, `startMask`, `endMask`, `startMarker`, `endMarker`, `startMarkerUse`, `endMarkerUse`.
+   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionedShape`,
+   *    `pathData`, `startPlugOverhead`, `endPlugOverhead`, `startPlugOutlineR`, `endPlugOutlineR`,
+   *    `startMaskBBox`, `endMaskBBox`,
+   *    `svg`, `path`, `startMarker`, `endMarker`, `startMarkerUse`, `endMarkerUse`, `maskPath`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
-   * @param {number} id - ID of instance.
    * @returns {void}
    */
   function bindWindow(props, newWindow) {
     var SVG_NS = 'http://www.w3.org/2000/svg',
       baseDocument = newWindow.document,
       bodyOffset = {x: 0, y: 0},
-      sheet, defs, stylesHtml, stylesBody, svg, elmDefs;
+      sheet, defs, clip, stylesHtml, stylesBody, svg, elmDefs;
 
     if (props.baseWindow && props.svg) {
       props.baseWindow.document.body.removeChild(props.svg);
@@ -363,7 +374,7 @@
 
     // svg
     svg = baseDocument.createElementNS(SVG_NS, 'svg');
-    svg.className.baseVal = 'leader-line';
+    svg.className.baseVal = APP_ID;
     if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
     elmDefs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
     ['start', 'end'].forEach(function(key) {
@@ -374,11 +385,13 @@
         props[key + 'Marker'].setAttribute('viewBox', '0 0 0 0'); // for Firefox bug
       }
       props[key + 'MarkerUse'] = props[key + 'Marker'].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-      props[key + 'Mask'] = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
-      props[key + 'Mask'].className.baseVal = 'leader-line-mask';
     });
+    clip = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'clipPath'));
+    clip.id = props.clipId;
+    props.maskPath = clip.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+    props.maskPath.className.baseVal = APP_ID + '-mask';
     props.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-    props.path.className.baseVal = 'line';
+    props.path.className.baseVal = APP_ID + '-line';
     props.svg = baseDocument.body.appendChild(svg);
 
     props.viewBBox = {};
@@ -386,9 +399,10 @@
     props.endSocketXY = {};
     props.positionedShape = {};
     props.pathData = [];
-    props.startPlugOverhead = props.endPlugOverhead = 0;
-    props.startMaskBBox = {};
-    props.endMaskBBox = {};
+    props.startPlugOverhead = props.endPlugOverhead =
+      props.startPlugOutlineR = props.endPlugOutlineR = 0;
+    props.startMaskBBox = null;
+    props.endMaskBBox = null;
   }
 
   /**
@@ -416,7 +430,7 @@
    * @returns {void}
    */
   function setMarkerOrient(marker, use, path, svg, symbolConf, orient) {
-    var transform, parent;
+    var transform, baseVal, reverseView, parent;
 
     // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of `SVGMarkerElement`
     // don't work in browsers other than Chrome.
@@ -432,24 +446,22 @@
         transform.setRotate(180, 0, 0);
         use.transform.baseVal.appendItem(transform);
         marker.setAttribute('orient', 'auto');
-        setTimeout(function() { // for IE bug
-          var baseVal = marker.viewBox.baseVal;
-          baseVal.x = -(symbolConf.bBox.left + symbolConf.bBox.width);
-          baseVal.y = -(symbolConf.bBox.top + symbolConf.bBox.height);
-          baseVal.width = symbolConf.bBox.width;
-          baseVal.height = symbolConf.bBox.height;
-        }, 0);
+        reverseView = true;
       }
     } else if (svg2Supported === false) {
       use.transform.baseVal.clear();
-      setTimeout(function() { // for IE bug
-        var baseVal = marker.viewBox.baseVal;
-        baseVal.x = symbolConf.bBox.left;
-        baseVal.y = symbolConf.bBox.top;
-        baseVal.width = symbolConf.bBox.width;
-        baseVal.height = symbolConf.bBox.height;
-      }, 0);
     }
+
+    baseVal = marker.viewBox.baseVal;
+    if (reverseView) {
+      baseVal.x = -(symbolConf.bBox.left + symbolConf.bBox.width);
+      baseVal.y = -(symbolConf.bBox.top + symbolConf.bBox.height);
+    } else {
+      baseVal.x = symbolConf.bBox.left;
+      baseVal.y = symbolConf.bBox.top;
+    }
+    baseVal.width = symbolConf.bBox.width;
+    baseVal.height = symbolConf.bBox.height;
 
     if (IS_IE) { // for IE bug
       parent = path.parentNode;
@@ -475,12 +487,20 @@
     ['start', 'end'].forEach(function(key) {
       var ucKey = key.substr(0, 1).toUpperCase() + key.substr(1),
         plugId = props[key + 'Plug'], symbolId = PLUG_2_SYMBOL[plugId],
-        symbolConf = SYMBOLS[symbolId], baseVal;
+        symbolConf = SYMBOLS[symbolId];
+
+      function changeShape() {
+        props[key + 'PlugOverhead'] =
+          props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
+        props[key + 'PlugOutlineR'] =
+          props.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * props[key + 'PlugSize'];
+      }
 
       if (plugId === PLUG_BEHIND) {
         if (plugProps[key + 'Plug']) {
           props.path.style['marker' + ucKey] = 'none';
-          props[key + 'PlugOverhead'] = -props.size;
+          props[key + 'PlugOverhead'] = -(props.size / 2);
+          props[key + 'PlugOutlineR'] = 0;
         }
       } else {
         if (plugProps[key + 'Plug']) {
@@ -488,14 +508,8 @@
           setMarkerOrient(
             props[key + 'Marker'], props[key + 'MarkerUse'], props.path, props.svg, symbolConf,
             symbolConf.noRotate ? '0' : key === 'start' ? 'auto-start-reverse' : 'auto');
-          baseVal = props[key + 'Marker'].viewBox.baseVal;
-          baseVal.x = symbolConf.bBox.left;
-          baseVal.y = symbolConf.bBox.top;
-          baseVal.width = symbolConf.bBox.width;
-          baseVal.height = symbolConf.bBox.height;
           props.path.style['marker' + ucKey] = 'url(#' + props[key + 'MarkerId'] + ')';
-          props[key + 'PlugOverhead'] =
-            props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
+          changeShape();
         }
         if (plugProps[key + 'PlugColor']) {
           props[key + 'MarkerUse'].style.fill = props[key + 'PlugColor'] || props.color;
@@ -503,8 +517,7 @@
         if (plugProps[key + 'PlugSize']) {
           props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * props[key + 'PlugSize'];
           props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * props[key + 'PlugSize'];
-          props[key + 'PlugOverhead'] =
-            props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
+          changeShape();
         }
       }
     });
@@ -520,8 +533,9 @@
     var props = {};
     Object.defineProperty(this, '_id', { value: insId++ });
     insProps[this._id] = props;
-    props.startMarkerId = 'leader-line-start-marker-' + this._id;
-    props.endMarkerId = 'leader-line-end-marker-' + this._id;
+    props.startMarkerId = APP_ID + '-start-marker-' + this._id;
+    props.endMarkerId = APP_ID + '-end-marker-' + this._id;
+    props.clipId = APP_ID + '-clip-' + this._id;
 
     if (arguments.length === 1) {
       options = start;
@@ -616,6 +630,7 @@
     if (setValidType('color', true)) { needsStyles = addPropList('color', needsStyles); }
     if (setValidType('size', true)) {
       needsStyles = addPropList('size', needsStyles);
+      //plug?
       needsPosition = true;
     }
 
@@ -670,10 +685,12 @@
   };
 
   LeaderLine.prototype.position = function() {
-    var props = insProps[this._id],
-      newBBox = {}, newSocketXY = {}, newPathData, newViewBBox = {},
+    var SHAPE_PROPS =
+        ['line', 'size', 'startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
+      props = insProps[this._id],
+      bBoxes = {}, newSocketXY = {}, newMaskBBox = {}, newPathData, newViewBBox = {},
       socketXYsWk, socketsLenMin = -1, autoKey, fixKey,
-      cx = {}, cy = {}, pathSegs = [], baseVal, styles;
+      cx = {}, cy = {}, pathSegs = [], pathSegsLen = [], baseVal, styles;
 
     function getSocketXY(bBox, socketId) {
       var socketXY = (
@@ -685,20 +702,20 @@
       return socketXY;
     }
 
-    newBBox.start = getBBoxNest(props.start, props.baseWindow);
-    newBBox.end = getBBoxNest(props.end, props.baseWindow);
+    bBoxes.start = getBBoxNest(props.start, props.baseWindow);
+    bBoxes.end = getBBoxNest(props.end, props.baseWindow);
 
     // Decide each socket.
     if (props.startSocket && props.endSocket) {
-      newSocketXY.start = getSocketXY(newBBox.start, props.startSocket);
-      newSocketXY.end = getSocketXY(newBBox.end, props.endSocket);
+      newSocketXY.start = getSocketXY(bBoxes.start, props.startSocket);
+      newSocketXY.end = getSocketXY(bBoxes.end, props.endSocket);
 
     } else if (!props.startSocket && !props.endSocket) {
-      socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(newBBox.end, socketId); });
-      SOCKET_IDS.map(function(socketId) { return getSocketXY(newBBox.start, socketId); })
+      socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes.end, socketId); });
+      SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes.start, socketId); })
         .forEach(function(startSocketXY) {
           socketXYsWk.forEach(function(endSocketXY) {
-            var len = pointsLen(startSocketXY, endSocketXY);
+            var len = getPointsLength(startSocketXY, endSocketXY);
             if (len < socketsLenMin || socketsLenMin === -1) {
               newSocketXY.start = startSocketXY;
               newSocketXY.end = endSocketXY;
@@ -715,10 +732,10 @@
         fixKey = 'end';
         autoKey = 'start';
       }
-      newSocketXY[fixKey] = getSocketXY(newBBox[fixKey], props[fixKey + 'Socket']);
-      socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(newBBox[autoKey], socketId); });
+      newSocketXY[fixKey] = getSocketXY(bBoxes[fixKey], props[fixKey + 'Socket']);
+      socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[autoKey], socketId); });
       socketXYsWk.forEach(function(socketXY) {
-        var len = pointsLen(socketXY, newSocketXY[fixKey]);
+        var len = getPointsLength(socketXY, newSocketXY[fixKey]);
         if (len < socketsLenMin || socketsLenMin === -1) {
           newSocketXY[autoKey] = socketXY;
           socketsLenMin = len;
@@ -739,9 +756,8 @@
 
     // Set `positionedShape` and generate path data.
     if (newSocketXY.start || newSocketXY.end ||
-        props.positionedShape.line !== props.line ||
-        props.positionedShape.startPlugOverhead !== props.startPlugOverhead ||
-        props.positionedShape.endPlugOverhead !== props.endPlugOverhead) {
+        SHAPE_PROPS.some(function(prop) { return props.positionedShape[prop] !== props[prop]; })) {
+      // Generate path segments.
       switch (props.line) {
 
         case LINE_STRAIGHT:
@@ -789,17 +805,54 @@
 
         // no default
       }
-      props.positionedShape.line = props.line;
+      // Adjust path with plugs.
+      ['start', 'end'].forEach(function(key) {
+        var prop = key + 'PlugOverhead', start = key === 'start', overhead = props[prop],
+          pathSeg, i, point, socketId, minAdjustOffset;
+        if (overhead > 0) {
+          i = start ? 0 : pathSegs.length - 1;
+          pathSeg = pathSegs[i];
 
-      ['startPlug', 'endPlug'].forEach(function(prop) {
-        switch (props[prop]) {
+          if (pathSeg.length === 2) { // Straight line
+            pathSegsLen[i] = pathSegsLen[i] || getPointsLength.apply(null, pathSeg);
+            if (pathSegsLen[i] > MIN_ADJUST_LEN) {
+              if (pathSegsLen[i] - overhead < MIN_ADJUST_LEN) {
+                overhead = pathSegsLen[i] - MIN_ADJUST_LEN;
+              }
+              point = getPointOnLineSeg(pathSeg[0], pathSeg[1],
+                (start ? overhead : pathSegsLen[i] - overhead) / pathSegsLen[i]);
+              pathSegs[i] = start ? [point, pathSeg[1]] : [pathSeg[0], point];
+              pathSegsLen[i] -= overhead;
+            }
 
-          case PLUG_DISC:
-            
-            props.positionedShape[prop] = props[prop];
-            break;
+          } else { // Cubic bezier
+            pathSegsLen[i] = pathSegsLen[i] || getPathLength.apply(null, pathSeg);
+            if (pathSegsLen[i] > MIN_ADJUST_LEN) {
+              if (pathSegsLen[i] - overhead < MIN_ADJUST_LEN) {
+                overhead = pathSegsLen[i] - MIN_ADJUST_LEN;
+              }
+              point = getPointOnPath(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
+                getPathT(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
+                  start ? overhead : pathSegsLen[i] - overhead));
+              pathSegs[i] = start ?
+                [point, point.toP1, point.toP2, pathSeg[3]] :
+                [pathSeg[0], point.fromP1, point.fromP2, point];
+              pathSegsLen[i] -= overhead;
+            }
 
-          // no default
+          }
+        } else if (overhead < 0) {
+          i = start ? 0 : pathSegs.length - 1;
+          pathSeg = pathSegs[i];
+          socketId = props[key + 'SocketXY'].socketId;
+          minAdjustOffset = -(bBoxes[key][
+            socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'width' : 'height']);
+          if (overhead < minAdjustOffset) { overhead = minAdjustOffset; }
+          point = pathSeg[start ? 0 : pathSeg.length - 1];
+          point[socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y'] +=
+            overhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
+          newMaskBBox[key] = bBoxes[key];
+          pathSegsLen[i] = null; // to re-calculate
         }
       });
 
@@ -809,7 +862,27 @@
           {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]} :
           {type: 'C', values: [pathSeg[1].x, pathSeg[1].y,
             pathSeg[2].x, pathSeg[2].y, pathSeg[3].x, pathSeg[3].y]});
+        pathSeg.forEach(function(point) {
+          /* eslint-disable eqeqeq */
+          if (newViewBBox.x1 == null || point.x < newViewBBox.x1) { newViewBBox.x1 = point.x; }
+          if (newViewBBox.x2 == null || point.x > newViewBBox.x2) { newViewBBox.x2 = point.x; }
+          if (newViewBBox.y1 == null || point.y < newViewBBox.y1) { newViewBBox.y1 = point.y; }
+          if (newViewBBox.y2 == null || point.y > newViewBBox.y2) { newViewBBox.y2 = point.y; }
+          /* eslint-enable eqeqeq */
+        });
       });
+      // Expand bBox with line or symbol of plugs.
+      (function(padding) {
+        newViewBBox.x1 -= padding;
+        newViewBBox.x2 += padding;
+        newViewBBox.y1 -= padding;
+        newViewBBox.y2 += padding;
+      })(Math.max(props.size / 2, props.startPlugOutlineR, props.endPlugOutlineR));
+      newViewBBox.x = newViewBBox.x1;
+      newViewBBox.y = newViewBBox.y1;
+      newViewBBox.width = newViewBBox.x2 - newViewBBox.x1;
+      newViewBBox.height = newViewBBox.y2 - newViewBBox.y1;
+
       // Apply path data.
       if (newPathData.length !== props.pathData.length ||
           newPathData.some(function(newPathSeg, i) {
@@ -821,34 +894,20 @@
           })) {
         props.path.setPathData(newPathData);
         props.pathData = newPathData;
-
-        // Position svg element and set its `viewBox`.
-        if (props.startSocketXY.x < props.endSocketXY.x) {
-          newViewBBox.x = props.startSocketXY.x;
-          newViewBBox.width = props.endSocketXY.x - newViewBBox.x;
-        } else {
-          newViewBBox.x = props.endSocketXY.x;
-          newViewBBox.width = props.startSocketXY.x - newViewBBox.x;
-        }
-        if (props.startSocketXY.y < props.endSocketXY.y) {
-          newViewBBox.y = props.startSocketXY.y;
-          newViewBBox.height = props.endSocketXY.y - newViewBBox.y;
-        } else {
-          newViewBBox.y = props.endSocketXY.y;
-          newViewBBox.height = props.startSocketXY.y - newViewBBox.y;
-        }
-        baseVal = props.svg.viewBox.baseVal;
-        styles = props.svg.style;
-        [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
-          var boxKey = keys[0], cssKey = keys[1];
-          if (newViewBBox[boxKey] !== props.viewBBox[boxKey]) {
-            props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
-            styles[cssKey] =
-              (boxKey === 'x' || boxKey === 'y' ? newViewBBox[boxKey] + props.bodyOffset[boxKey] :
-                newViewBBox[boxKey]) + 'px';
-          }
-        });
       }
+      // Position `<svg>` element and set its `viewBox`.
+      baseVal = props.svg.viewBox.baseVal;
+      styles = props.svg.style;
+      [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
+        var boxKey = keys[0], cssProp = keys[1];
+        if (newViewBBox[boxKey] !== props.viewBBox[boxKey]) {
+          props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
+          styles[cssProp] = newViewBBox[boxKey] +
+            (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
+        }
+      });
+
+      SHAPE_PROPS.forEach(function(prop) { props.positionedShape[prop] = props[prop]; });
     }
   };
 

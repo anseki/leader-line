@@ -86,6 +86,8 @@ module.exports = grunt => {
                 };
                 defsConf[id].widthR = bBox.width / DEFAULT_LINE_SIZE;
                 defsConf[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
+                defsConf[id].outlineR = Math.max(
+                  -bBox.left, -bBox.top, bBox.left + bBox.width, bBox.top + bBox.height);
                 defsConf[id].overhead = noOverhead ? 0 : bBox.left + bBox.width;
               }
             });
