@@ -545,14 +545,14 @@
     if (start) { options.start = start; }
     if (end) { options.end = end; }
 
-    this.option(options);
+    this.setOptions(options);
   }
 
   /**
    * @param {Object} options - New options.
    * @returns {void}
    */
-  LeaderLine.prototype.option = function(options) {
+  LeaderLine.prototype.setOptions = function(options) {
     var KEY_AUTO = 'auto',
       props = insProps[this._id],
       needsWindow, needsStyles, needsPlugs, needsPosition, newWindow;
