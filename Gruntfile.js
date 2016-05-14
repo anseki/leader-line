@@ -13,10 +13,18 @@ module.exports = grunt => {
     SRC_PATH = pathUtil.join(ROOT_PATH, 'src'),
 
     // from leader-line.js
-    DEFAULT_LINE_SIZE = 4; // DEFAULT_OPTIONS.size
+    APP_ID = 'leader-line',
+    DEFAULT_LINE_SIZE = 4, // DEFAULT_OPTIONS.size
+    DEFINED_VAR = {
+      PLUG_BEHIND: 'behind'
+    };
 
   var embeddedAssets = [], referredAssets = [], protectedText = [], packages,
-    svgDefsCode, svgDefsConfCode;
+    code = {},
+    definedVar = Object.keys(DEFINED_VAR).reduce((definedVar, varName) => {
+      definedVar[varName] = `\f${varName}\x07`;
+      return definedVar;
+    }, {});
 
   function productSrc(content) {
     return content
@@ -56,47 +64,62 @@ module.exports = grunt => {
         options: {
           handlerByContent: content => {
             let cheerio = require('cheerio');
-            var $ = cheerio.load(content), defsSrc = '', defsConf = {};
+            var $ = cheerio.load(content), defsSrc = '',
+              codeSrc = {
+                SYMBOLS: {},
+                PLUG_KEY_2_ID: {behind: definedVar.PLUG_BEHIND},
+                PLUG_2_SYMBOL: {}
+              };
 
             function getCode(value) {
+              var matches;
               return typeof value === 'object' ?
                   `{${Object.keys(value).map(prop => `${prop}:${getCode(value[prop])}`).join(',')}}` :
-                typeof value === 'string' ? `'${value}'` : value;
+                typeof value === 'string' ? (
+                  (matches = /^\f(.+)\x07$/.exec(value)) ? matches[1] : `'${value}'`
+                ) : value;
             }
 
             $('svg').each((i, elm) => {
               var symbol = $('.symbol', elm), size = $('.size', elm),
-                id, props, bBox, noOverhead;
+                id, elmId, props, bBox, noOverhead;
               if (symbol.length && size.length && (id = symbol.attr('id'))) {
+
+                elmId = `${APP_ID}-${id}`;
                 props = (symbol.attr('class') + '').split(' ');
+                defsSrc += $.xml(symbol.attr('id', elmId).removeAttr('class'));
 
-                defsSrc += $.xml(symbol.removeAttr('class'));
-                defsConf[id] = props.reduce((conf, prop) => {
-                  var matches = prop.match(/prop\-([^\s]+)/);
-                  if (matches) { conf[matches[1]] = true; }
+                codeSrc.SYMBOLS[id] = {elmId: elmId};
+                props.forEach(prop => {
+                  var matches;
+                  if ((matches = prop.match(/prop\-([^\s]+)/))) { codeSrc.SYMBOLS[id][matches[1]] = true; }
+                  if ((matches = prop.match(/var\-([^\s]+)/))) { codeSrc[matches[1]] = id; }
                   if (/ *no\-overhead */.test(prop)) { noOverhead = true; }
-                  return conf;
-                }, {});
+                });
 
-                defsConf[id].bBox = bBox = {
+                codeSrc.SYMBOLS[id].bBox = bBox = {
                   left: parseFloat(size.attr('x')),
                   top: parseFloat(size.attr('y')),
                   width: parseFloat(size.attr('width')),
                   height: parseFloat(size.attr('height'))
                 };
-                defsConf[id].widthR = bBox.width / DEFAULT_LINE_SIZE;
-                defsConf[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
-                defsConf[id].outlineR = Math.max(
+                codeSrc.SYMBOLS[id].widthR = bBox.width / DEFAULT_LINE_SIZE;
+                codeSrc.SYMBOLS[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
+                codeSrc.SYMBOLS[id].outlineR = Math.max(
                   -bBox.left, -bBox.top, bBox.left + bBox.width, bBox.top + bBox.height);
-                defsConf[id].overhead = noOverhead ? 0 : bBox.left + bBox.width;
+                codeSrc.SYMBOLS[id].overhead = noOverhead ? 0 : bBox.left + bBox.width;
+
+                codeSrc.PLUG_KEY_2_ID[id] = id;
+                codeSrc.PLUG_2_SYMBOL[id] = id;
               }
             });
 
-            svgDefsCode = '\'' +
+            code.DEFS_HTML = '\'' +
               htmlclean(`<svg version="1.1" width="0" height="0"><defs>${defsSrc}</defs></svg>`)
                 .replace(/\'/g, '\\\'') + '\'';
-            svgDefsConfCode = getCode(defsConf);
-            return `var DEFS_HTML=${svgDefsCode},SYMBOLS=${svgDefsConfCode};`;
+            Object.keys(DEFINED_VAR).forEach(codeVar => { code[codeVar] = getCode(DEFINED_VAR[codeVar]); });
+            Object.keys(codeSrc).forEach(codeVar => { code[codeVar] = getCode(codeSrc[codeVar]); });
+            return `var ${Object.keys(code).map(codeVar => `${codeVar}=${code[codeVar]}`).join(',')};`;
           }
         },
         src: `${SRC_PATH}/symbol.html`,

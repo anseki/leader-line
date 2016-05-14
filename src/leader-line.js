@@ -24,36 +24,10 @@
   var
     APP_ID = 'leader-line',
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
-    SOCKET_KEY_2_ID =
-      {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
-    SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
+    SOCKET_KEY_2_ID = {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
 
     LINE_STRAIGHT = 1, LINE_ARC = 2, LINE_FLUID = 3, LINE_GRID = 4,
     LINE_KEY_2_ID = {straight: LINE_STRAIGHT, arc: LINE_ARC, fluid: LINE_FLUID, grid: LINE_GRID},
-
-    PLUG_BEHIND = 1, PLUG_DISC = 2, PLUG_SQUARE = 3,
-    PLUG_ARROW1 = 4, PLUG_ARROW2 = 5, PLUG_ARROW3 = 6,
-    PLUG_KEY_2_ID = {behind: PLUG_BEHIND, disc: PLUG_DISC, square: PLUG_SQUARE,
-      arrow1: PLUG_ARROW1, arrow2: PLUG_ARROW2, arrow3: PLUG_ARROW3},
-    PLUG_2_SYMBOL = (function() {
-      var PLUG_2_SYMBOL = {};
-      PLUG_2_SYMBOL[PLUG_BEHIND] = 'behind'; PLUG_2_SYMBOL[PLUG_DISC] = 'disc';
-      PLUG_2_SYMBOL[PLUG_SQUARE] = 'square'; PLUG_2_SYMBOL[PLUG_ARROW1] = 'arrow1';
-      PLUG_2_SYMBOL[PLUG_ARROW2] = 'arrow2'; PLUG_2_SYMBOL[PLUG_ARROW3] = 'arrow3';
-      return PLUG_2_SYMBOL;
-    })(),
-
-    DEFAULT_OPTIONS = {
-      line: LINE_FLUID,
-      color: 'coral',
-      size: 4,
-      startPlug: PLUG_BEHIND,
-      endPlug: PLUG_ARROW1,
-      startPlugSize: 1,
-      endPlugSize: 1
-    },
-
-    MIN_GRAVITY = 50, MIN_ADJUST_LEN = 10,
 
     STYLE_ID = APP_ID + '-styles',
     /* [DEBUG/]
@@ -65,6 +39,7 @@
 
     /**
      * @typedef {Object} SymbolConf
+     * @property {string} elmId
      * @property {BBox} bBox
      * @property {number} widthR
      * @property {number} heightR
@@ -74,19 +49,41 @@
      */
 
     /**
-     * @typedef {{symbolId: number, SymbolConf}} SYMBOLS
+     * @typedef {{symbolId: string, SymbolConf}} SYMBOLS
      */
 
+    PLUG_BEHIND = 'behind',
     DEFS_ID = APP_ID + '-defs',
     /* [DEBUG/]
     DEFS_HTML = @INCLUDE[code:DEFS_HTML]@,
     SYMBOLS = @INCLUDE[code:SYMBOLS]@,
+    PLUG_KEY_2_ID = @INCLUDE[code:PLUG_KEY_2_ID]@,
+    PLUG_2_SYMBOL = @INCLUDE[code:PLUG_2_SYMBOL]@,
+    DEFAULT_END_PLUG = @INCLUDE[code:DEFAULT_END_PLUG]@,
     [DEBUG/] */
     // [DEBUG]
     DEFS_HTML = window.DEFS_HTML,
     SYMBOLS = window.SYMBOLS,
+    PLUG_KEY_2_ID = window.PLUG_KEY_2_ID,
+    PLUG_2_SYMBOL = window.PLUG_2_SYMBOL,
+    DEFAULT_END_PLUG = window.DEFAULT_END_PLUG,
     // [/DEBUG]
 
+    DEFAULT_OPTIONS = {
+      line: LINE_FLUID,
+      color: 'coral',
+      size: 4,
+      startPlug: PLUG_BEHIND,
+      endPlug: DEFAULT_END_PLUG,
+      startPlugSize: 1,
+      endPlugSize: 1
+    },
+
+    SHAPE_PROPS =
+      ['line', 'size', 'startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
+    SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
+
+    MIN_GRAVITY = 50, MIN_ADJUST_LEN = 10,
     IS_IE = !!document.uniqueID,
 
     /**
@@ -422,46 +419,46 @@
   /**
    * Apply `orient` to `marker`.
    * @param {SVGMarkerElement} marker - Target `marker` element.
+   * @param {string} orient - `'auto'`, `'auto-start-reverse'` or `angle`.
+   * @param {BBox} bBox - `BBox` of target symbol.
+   * @param {SVGSVGElement} svg - Parent `svg` element.
    * @param {SVGUseElement} use - Target `use` element.
    * @param {SVGPathElement} path - Target `path` element.
-   * @param {SVGSVGElement} svg - Parent `svg` element.
-   * @param {SymbolConf} symbolConf - `SymbolConf` of target symbol.
-   * @param {string} [orient] - `'auto'`, `'auto-start-reverse'` or `angle`. Default: `'0'`
    * @returns {void}
    */
-  function setMarkerOrient(marker, use, path, svg, symbolConf, orient) {
+  function setMarkerOrient(marker, orient, bBox, svg, use, path) {
     var transform, baseVal, reverseView, parent;
-
-    // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of `SVGMarkerElement`
-    // don't work in browsers other than Chrome.
-    orient = orient || '0';
-    marker.setAttribute('orient', orient);
-
+    // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of
+    // `SVGMarkerElement` don't work in browsers other than Chrome.
     if (orient === 'auto-start-reverse') {
       if (typeof svg2Supported !== 'boolean') {
+        marker.setAttribute('orient', 'auto-start-reverse');
         svg2Supported = marker.orientType.baseVal === SVGMarkerElement.SVG_MARKER_ORIENT_UNKNOWN;
       }
-      if (!svg2Supported) {
+      if (svg2Supported) {
+        marker.setAttribute('orient', orient);
+      } else {
         transform = svg.createSVGTransform();
         transform.setRotate(180, 0, 0);
         use.transform.baseVal.appendItem(transform);
         marker.setAttribute('orient', 'auto');
         reverseView = true;
       }
-    } else if (svg2Supported === false) {
-      use.transform.baseVal.clear();
+    } else {
+      marker.setAttribute('orient', orient);
+      if (svg2Supported === false) { use.transform.baseVal.clear(); }
     }
 
     baseVal = marker.viewBox.baseVal;
     if (reverseView) {
-      baseVal.x = -(symbolConf.bBox.left + symbolConf.bBox.width);
-      baseVal.y = -(symbolConf.bBox.top + symbolConf.bBox.height);
+      baseVal.x = -(bBox.left + bBox.width);
+      baseVal.y = -(bBox.top + bBox.height);
     } else {
-      baseVal.x = symbolConf.bBox.left;
-      baseVal.y = symbolConf.bBox.top;
+      baseVal.x = bBox.left;
+      baseVal.y = bBox.top;
     }
-    baseVal.width = symbolConf.bBox.width;
-    baseVal.height = symbolConf.bBox.height;
+    baseVal.width = bBox.width;
+    baseVal.height = bBox.height;
 
     if (IS_IE) { // for IE bug
       parent = path.parentNode;
@@ -486,15 +483,7 @@
 
     ['start', 'end'].forEach(function(key) {
       var ucKey = key.substr(0, 1).toUpperCase() + key.substr(1),
-        plugId = props[key + 'Plug'], symbolId = PLUG_2_SYMBOL[plugId],
-        symbolConf = SYMBOLS[symbolId];
-
-      function changeShape() {
-        props[key + 'PlugOverhead'] =
-          props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
-        props[key + 'PlugOutlineR'] =
-          props.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * props[key + 'PlugSize'];
-      }
+        plugId = props[key + 'Plug'], symbolConf;
 
       if (plugId === PLUG_BEHIND) {
         if (plugProps[key + 'Plug']) {
@@ -503,13 +492,15 @@
           props[key + 'PlugOutlineR'] = 0;
         }
       } else {
+        symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
         if (plugProps[key + 'Plug']) {
-          props[key + 'MarkerUse'].href.baseVal = '#' + symbolId;
-          setMarkerOrient(
-            props[key + 'Marker'], props[key + 'MarkerUse'], props.path, props.svg, symbolConf,
-            symbolConf.noRotate ? '0' : key === 'start' ? 'auto-start-reverse' : 'auto');
+          props[key + 'MarkerUse'].href.baseVal = '#' + symbolConf.elmId;
+          setMarkerOrient(props[key + 'Marker'],
+            symbolConf.noRotate ? '0' : key === 'start' ? 'auto-start-reverse' : 'auto',
+            symbolConf.bBox, props.svg, props[key + 'MarkerUse'], props.path);
           props.path.style['marker' + ucKey] = 'url(#' + props[key + 'MarkerId'] + ')';
-          changeShape();
+          // Initialize size because the plug might have been `PLUG_BEHIND`.
+          plugProps[key + 'PlugSize'] = true;
         }
         if (plugProps[key + 'PlugColor']) {
           props[key + 'MarkerUse'].style.fill = props[key + 'PlugColor'] || props.color;
@@ -517,7 +508,11 @@
         if (plugProps[key + 'PlugSize']) {
           props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * props[key + 'PlugSize'];
           props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * props[key + 'PlugSize'];
-          changeShape();
+          // Change shape.
+          props[key + 'PlugOverhead'] =
+            props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
+          props[key + 'PlugOutlineR'] =
+            props.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * props[key + 'PlugSize'];
         }
       }
     });
@@ -630,7 +625,11 @@
     if (setValidType('color', true)) { needsStyles = addPropList('color', needsStyles); }
     if (setValidType('size', true)) {
       needsStyles = addPropList('size', needsStyles);
-      //plug?
+      // Plug-size is changed with line-size automatically
+      // but needs to initialize `*PlugOverhead` and `*PlugOutlineR`.
+      // (`*PlugSize` doesn't initialize those when it's `PLUG_BEHIND`.)
+      needsPlugs = addPropList('startPlug', needsPlugs);
+      needsPlugs = addPropList('endPlug', needsPlugs);
       needsPosition = true;
     }
 
@@ -685,9 +684,7 @@
   };
 
   LeaderLine.prototype.position = function() {
-    var SHAPE_PROPS =
-        ['line', 'size', 'startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
-      props = insProps[this._id],
+    var props = insProps[this._id],
       bBoxes = {}, newSocketXY = {}, newMaskBBox = {}, newPathData, newViewBBox = {},
       socketXYsWk, socketsLenMin = -1, autoKey, fixKey,
       cx = {}, cy = {}, pathSegs = [], pathSegsLen = [], baseVal, styles;
