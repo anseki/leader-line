@@ -83,13 +83,18 @@
       ['line', 'size', 'startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
 
-    MIN_GRAVITY = 50, MIN_ADJUST_LEN = 10,
+    MIN_GRAVITY = 80, MIN_GRAVITY_SIZE = 4, MIN_GRAVITY_R = 5,
+    MIN_OH_GRAVITY = 120, MIN_OH_GRAVITY_OH = 8, MIN_OH_GRAVITY_R = 3.75,
+    MIN_ADJUST_LEN = 10,
     IS_IE = !!document.uniqueID,
 
     /**
      * @typedef {Object.<_id: number, props>} insProps
      */
     insProps = {}, insId = 0, svg2Supported;
+  // [DEBUG]
+  window.insProps = insProps;
+  // [/DEBUG]
 
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
@@ -499,8 +504,8 @@
             symbolConf.noRotate ? '0' : key === 'start' ? 'auto-start-reverse' : 'auto',
             symbolConf.bBox, props.svg, props[key + 'MarkerUse'], props.path);
           props.path.style['marker' + ucKey] = 'url(#' + props[key + 'MarkerId'] + ')';
-          // Initialize size because the plug might have been `PLUG_BEHIND`.
-          plugProps[key + 'PlugSize'] = true;
+          // Initialize size and color because the plug might have been `PLUG_BEHIND`.
+          plugProps[key + 'PlugSize'] = plugProps[key + 'PlugColor'] = true;
         }
         if (plugProps[key + 'PlugColor']) {
           props[key + 'MarkerUse'].style.fill = props[key + 'PlugColor'] || props.color;
@@ -541,10 +546,6 @@
     if (end) { options.end = end; }
 
     this.setOptions(options);
-
-    // [DEBUG]
-    this.props = props;
-    // [/DEBUG]
   }
 
   /**
@@ -768,7 +769,7 @@
         case LINE_FLUID:
           ['start', 'end'].forEach(function(key) {
             var gravity = props[key + 'SocketGravity'], socketXY = props[key + 'SocketXY'],
-              offset = {}, anotherSocketXY, len;
+              offset = {}, anotherSocketXY, overhead, minGravity, len;
             if (Array.isArray(gravity)) { // offset
               offset = {x: gravity[0], y: gravity[1]};
             } else if (typeof gravity === 'number') { // distance
@@ -779,21 +780,27 @@
                                     /* SOCKET_LEFT */ {x: -gravity, y: 0};
             } else { // auto
               anotherSocketXY = props[(key === 'start' ? 'end' : 'start') + 'SocketXY'];
+              overhead = props[key + 'PlugOverhead'];
+              minGravity = overhead > 0 ?
+                MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
+                  (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
+                MIN_GRAVITY + (props.size > MIN_GRAVITY_SIZE ?
+                  (props.size - MIN_GRAVITY_SIZE) * MIN_GRAVITY_R : 0);
               if (socketXY.socketId === SOCKET_TOP) {
                 len = (socketXY.y - anotherSocketXY.y) / 2;
-                if (len < MIN_GRAVITY) { len = MIN_GRAVITY; }
+                if (len < minGravity) { len = minGravity; }
                 offset = {x: 0, y: -len};
               } else if (socketXY.socketId === SOCKET_RIGHT) {
                 len = (anotherSocketXY.x - socketXY.x) / 2;
-                if (len < MIN_GRAVITY) { len = MIN_GRAVITY; }
+                if (len < minGravity) { len = minGravity; }
                 offset = {x: len, y: 0};
               } else if (socketXY.socketId === SOCKET_BOTTOM) {
                 len = (anotherSocketXY.y - socketXY.y) / 2;
-                if (len < MIN_GRAVITY) { len = MIN_GRAVITY; }
+                if (len < minGravity) { len = minGravity; }
                 offset = {x: 0, y: len};
               } else { // SOCKET_LEFT
                 len = (socketXY.x - anotherSocketXY.x) / 2;
-                if (len < MIN_GRAVITY) { len = MIN_GRAVITY; }
+                if (len < minGravity) { len = minGravity; }
                 offset = {x: -len, y: 0};
               }
             }

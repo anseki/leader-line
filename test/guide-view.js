@@ -1,0 +1,105 @@
+/* exported guideView */
+
+var guideView = (function() {
+  'use strict';
+
+  var SVG_NS = 'http://www.w3.org/2000/svg',
+    PATH_C_SIZE = 5,
+    elements = [], insProps = window.insProps;
+
+  function guideView() {
+    elements.forEach(function(element) { element.parentNode.removeChild(element); });
+    elements = [];
+
+    Object.keys(insProps).forEach(function(id) {
+      var props = insProps[id],
+        svg = props.svg,
+        baseDocument = props.baseWindow.document,
+        pathData = props.path.getPathData(); // Not `props.pathData`
+
+      // ======== path C
+      (function() {
+        var pathSegs = [], curPoint;
+        pathData.forEach(function(pathSeg) {
+          var values = pathSeg.values;
+          if (pathSeg.type === 'C') {
+            pathSegs.push([curPoint,
+              {x: values[0], y: values[1]},
+              {x: values[2], y: values[3]},
+              {x: values[4], y: values[5]}]);
+          }
+          curPoint = {x: values[values.length - 2], y: values[values.length - 1]};
+        });
+        pathSegs.forEach(function(pathSeg) {
+          var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+          path.className.baseVal = 'guide-c';
+          path.setPathData([
+            // line 1
+            {type: 'M', values: [pathSeg[0].x, pathSeg[0].y]},
+            {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]},
+            // line 2
+            {type: 'M', values: [pathSeg[3].x, pathSeg[3].y]},
+            {type: 'L', values: [pathSeg[2].x, pathSeg[2].y]},
+            // marker 1
+            {type: 'M', values: [pathSeg[1].x - PATH_C_SIZE, pathSeg[1].y - PATH_C_SIZE]},
+            {type: 'l', values: [PATH_C_SIZE * 2, PATH_C_SIZE * 2]},
+            {type: 'm', values: [0, -PATH_C_SIZE * 2]},
+            {type: 'l', values: [-PATH_C_SIZE * 2, PATH_C_SIZE * 2]},
+            // marker 2
+            {type: 'M', values: [pathSeg[2].x - PATH_C_SIZE, pathSeg[2].y - PATH_C_SIZE]},
+            {type: 'l', values: [PATH_C_SIZE * 2, PATH_C_SIZE * 2]},
+            {type: 'm', values: [0, -PATH_C_SIZE * 2]},
+            {type: 'l', values: [-PATH_C_SIZE * 2, PATH_C_SIZE * 2]}
+          ]);
+          elements.push(path);
+        });
+      })();
+
+      // ======== mask
+      if (props.startMaskBBox || props.endMaskBBox) {
+        (function() {
+          var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+          path.className.baseVal = 'guide-mask';
+          path.setAttribute('d', props.maskPath.getAttribute('d'));
+          elements.push(path);
+        })();
+      }
+
+      // ======== outline
+      (function() {
+        var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
+          padding = Math.max(props.size / 2, props.startPlugOutlineR, props.endPlugOutlineR),
+          pathSegs = [], corners = {};
+        pathData.forEach(function(pathSeg) {
+          var values = pathSeg.values, point, i, iLen = values.length;
+          for (i = 0; i < iLen; i += 2) {
+            // relative commands (e.g. `h`) are not supported.
+            if (values[i + 1] == null) { break; } // eslint-disable-line eqeqeq
+            point = {x: values[i], y: values[i + 1]};
+            /* eslint-disable eqeqeq */
+            if (corners.x1 == null || point.x < corners.x1) { corners.x1 = point.x; }
+            if (corners.x2 == null || point.x > corners.x2) { corners.x2 = point.x; }
+            if (corners.y1 == null || point.y < corners.y1) { corners.y1 = point.y; }
+            if (corners.y2 == null || point.y > corners.y2) { corners.y2 = point.y; }
+            /* eslint-enable eqeqeq */
+          }
+        });
+        [['x1', 'y1', -1, -1], ['x2', 'y1', 1, -1], ['x1', 'y2', -1, 1], ['x2', 'y2', 1, 1]]
+          .forEach(function(corner) {
+            var xKey = corner[0], yKey = corner[1], xDir = corner[2], yDir = corner[3];
+            pathSegs.push(
+              {type: 'M', values: [corners[xKey] + padding * xDir, corners[yKey]]},
+              {type: 'L', values: [corners[xKey], corners[yKey]]},
+              {type: 'L', values: [corners[xKey], corners[yKey] + padding * yDir]}
+            );
+          });
+        path.className.baseVal = 'guide-outline';
+        path.setPathData(pathSegs);
+        elements.push(path);
+      })();
+    });
+
+  }
+
+  return guideView;
+})();
