@@ -34,7 +34,7 @@
     CSS_TEXT = '@INCLUDE[file:leader-line.css]@',
     [DEBUG/] */
     // [DEBUG]
-    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line-line{fill:none} #leader-line-defs{width:0;height:0;}',
+    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line-line{fill:none} #leader-line-defs{width:0;height:0;} .leader-line-mask{clip-rule:evenodd;}',
     // [/DEBUG]
 
     /**
@@ -541,6 +541,10 @@
     if (end) { options.end = end; }
 
     this.setOptions(options);
+
+    // [DEBUG]
+    this.props = props;
+    // [/DEBUG]
   }
 
   /**
@@ -586,18 +590,18 @@
       return update;
     }
 
-    function matchArray(array1, array2) {
-      return array1.legth === array2.legth &&
-        array1.every(function(value1, i) { return value1 === array2[i]; });
-    }
-
     function addPropList(prop, list) {
       if (!list) {
         list = [prop];
       } else if (Array.isArray(list)) {
-        list.push(prop);
+        if (list.indexOf(prop) < 0) { list.push(prop); }
       } // Otherwise `list` is `true`.
       return list;
+    }
+
+    function matchArray(array1, array2) {
+      return array1.legth === array2.legth &&
+        array1.every(function(value1, i) { return value1 === array2[i]; });
     }
 
     ['start', 'end'].forEach(function(prop) {
@@ -626,15 +630,15 @@
     if (setValidType('size', true)) {
       needsStyles = addPropList('size', needsStyles);
       // Plug-size is changed with line-size automatically
-      // but needs to initialize `*PlugOverhead` and `*PlugOutlineR`.
-      // (`*PlugSize` doesn't initialize those when it's `PLUG_BEHIND`.)
+      // but needs to change `*PlugOverhead` and `*PlugOutlineR`.
+      // (`*PlugSize` doesn't change those when it's `PLUG_BEHIND`.)
       needsPlugs = addPropList('startPlug', needsPlugs);
       needsPlugs = addPropList('endPlug', needsPlugs);
       needsPosition = true;
     }
 
     ['startSocketGravity', 'endSocketGravity'].forEach(function(prop) {
-      var value = false; // means no-update input.
+      var value = false; // `false` means no-update input.
       if (options[prop] != null) { // eslint-disable-line eqeqeq
         if (Array.isArray(options[prop])) {
           if (typeof options[prop][0] === 'number' && typeof options[prop][1] === 'number') {
@@ -670,7 +674,7 @@
       }
     });
 
-    if (needsStyles) { // Update styles.
+    if (needsStyles) { // Update styles of `<path>`.
       setStyles(props, Array.isArray(needsStyles) ? needsStyles : null);
     }
     if (needsPlugs) { // Update plugs.
@@ -685,8 +689,8 @@
 
   LeaderLine.prototype.position = function() {
     var props = insProps[this._id],
-      bBoxes = {}, newSocketXY = {}, newMaskBBox = {}, newPathData, newViewBBox = {},
-      socketXYsWk, socketsLenMin = -1, autoKey, fixKey,
+      bBoxes = {}, newSocketXY = {}, newMaskBBox = {}, maskPathData, newPathData, newViewBBox = {},
+      socketXYsWk, socketsLenMin = -1, autoKey, fixKey, needsView,
       cx = {}, cy = {}, pathSegs = [], pathSegsLen = [], baseVal, styles;
 
     function getSocketXY(bBox, socketId) {
@@ -892,6 +896,7 @@
         props.path.setPathData(newPathData);
         props.pathData = newPathData;
       }
+
       // Position `<svg>` element and set its `viewBox`.
       baseVal = props.svg.viewBox.baseVal;
       styles = props.svg.style;
@@ -901,8 +906,46 @@
           props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
           styles[cssProp] = newViewBBox[boxKey] +
             (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
+          needsView = true;
         }
       });
+
+      // Apply mask for plugs.
+      if (needsView && (newMaskBBox.start || newMaskBBox.end) ||
+          ['start', 'end'].some(function(key) {
+            var enabled = !!props[key + 'MaskBBox'], enabledNew = !!newMaskBBox[key];
+            return enabled !== enabledNew ||
+              enabled && enabledNew && ['left', 'top', 'width', 'height'].some(function(prop) {
+                return props[key + 'MaskBBox'][prop] !== newMaskBBox[key][prop];
+              });
+          })) {
+        if (!newMaskBBox.start && !newMaskBBox.end) {
+          props.path.style.clipPath = 'none';
+        } else {
+          maskPathData = [
+            {type: 'M', values: [newViewBBox.x, newViewBBox.y]},
+            {type: 'h', values: [newViewBBox.width]},
+            {type: 'v', values: [newViewBBox.height]},
+            {type: 'h', values: [-newViewBBox.width]},
+            {type: 'z'}
+          ];
+          ['start', 'end'].forEach(function(key) {
+            if (newMaskBBox[key]) {
+              maskPathData.push(
+                {type: 'M', values: [newMaskBBox[key].left, newMaskBBox[key].top]},
+                {type: 'h', values: [newMaskBBox[key].width]},
+                {type: 'v', values: [newMaskBBox[key].height]},
+                {type: 'h', values: [-newMaskBBox[key].width]},
+                {type: 'z'}
+              );
+            }
+          });
+          props.maskPath.setPathData(maskPathData);
+          props.path.style.clipPath = 'url(#' + props.clipId + ')';
+        }
+        props.startMaskBBox = newMaskBBox.start;
+        props.endMaskBBox = newMaskBBox.end;
+      }
 
       SHAPE_PROPS.forEach(function(prop) { props.positionedShape[prop] = props[prop]; });
     }
