@@ -17,3 +17,10 @@
   stroke-width: 2px;
   stroke: rgba(0, 225, 20, 0.7);
 }
+
+/* line 19, guide-view.scss */
+.guide-socket {
+  fill: none;
+  stroke-width: 1px;
+  stroke: rgba(254, 0, 64, 0.7);
+}

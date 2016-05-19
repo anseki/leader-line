@@ -7,12 +7,22 @@ var guideView = (function() {
     PATH_C_SIZE = 5,
     elements = [], insProps = window.insProps;
 
+  function addXMarker(point, pathSegs) {
+    pathSegs.push(
+      {type: 'M', values: [point.x - PATH_C_SIZE, point.y - PATH_C_SIZE]},
+      {type: 'l', values: [PATH_C_SIZE * 2, PATH_C_SIZE * 2]},
+      {type: 'm', values: [0, -PATH_C_SIZE * 2]},
+      {type: 'l', values: [-PATH_C_SIZE * 2, PATH_C_SIZE * 2]}
+    );
+    return pathSegs;
+  }
+
   function guideView() {
     elements.forEach(function(element) { element.parentNode.removeChild(element); });
     elements = [];
 
     Object.keys(insProps).forEach(function(id) {
-      var props = insProps[id],
+      var props = insProps[id], options = props.options,
         svg = props.svg,
         baseDocument = props.baseWindow.document,
         pathData = props.path.getPathData(); // Not `props.pathData`
@@ -33,24 +43,18 @@ var guideView = (function() {
         pathSegs.forEach(function(pathSeg) {
           var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
           path.className.baseVal = 'guide-c';
-          path.setPathData([
-            // line 1
-            {type: 'M', values: [pathSeg[0].x, pathSeg[0].y]},
-            {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]},
-            // line 2
-            {type: 'M', values: [pathSeg[3].x, pathSeg[3].y]},
-            {type: 'L', values: [pathSeg[2].x, pathSeg[2].y]},
-            // marker 1
-            {type: 'M', values: [pathSeg[1].x - PATH_C_SIZE, pathSeg[1].y - PATH_C_SIZE]},
-            {type: 'l', values: [PATH_C_SIZE * 2, PATH_C_SIZE * 2]},
-            {type: 'm', values: [0, -PATH_C_SIZE * 2]},
-            {type: 'l', values: [-PATH_C_SIZE * 2, PATH_C_SIZE * 2]},
-            // marker 2
-            {type: 'M', values: [pathSeg[2].x - PATH_C_SIZE, pathSeg[2].y - PATH_C_SIZE]},
-            {type: 'l', values: [PATH_C_SIZE * 2, PATH_C_SIZE * 2]},
-            {type: 'm', values: [0, -PATH_C_SIZE * 2]},
-            {type: 'l', values: [-PATH_C_SIZE * 2, PATH_C_SIZE * 2]}
-          ]);
+          path.setPathData(
+            addXMarker(pathSeg[2],
+              addXMarker(pathSeg[1], [
+                // line 1
+                {type: 'M', values: [pathSeg[0].x, pathSeg[0].y]},
+                {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]},
+                // line 2
+                {type: 'M', values: [pathSeg[3].x, pathSeg[3].y]},
+                {type: 'L', values: [pathSeg[2].x, pathSeg[2].y]}
+              ])
+            )
+          );
           elements.push(path);
         });
       })();
@@ -68,7 +72,7 @@ var guideView = (function() {
       // ======== outline
       (function() {
         var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
-          padding = Math.max(props.options.size / 2, props.startPlugOutlineR, props.endPlugOutlineR),
+          padding = Math.max(options.size / 2, props.startPlugOutlineR, props.endPlugOutlineR),
           pathSegs = [], corners = {};
         pathData.forEach(function(pathSeg) {
           var values = pathSeg.values, point, i, iLen = values.length;
@@ -94,6 +98,26 @@ var guideView = (function() {
             );
           });
         path.className.baseVal = 'guide-outline';
+        path.setPathData(pathSegs);
+        elements.push(path);
+      })();
+
+      // ======== socket
+      (function() {
+        var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
+          pathSegs = [];
+        ['start', 'end'].forEach(function(key) {
+          var bBox = options[key].getBoundingClientRect(),
+            left = bBox.left + window.pageXOffset,
+            top = bBox.top + window.pageYOffset;
+          [
+            {x: left, y: top + bBox.height / 2},
+            {x: left + bBox.width / 2, y: top},
+            {x: left + bBox.width, y: top + bBox.height / 2},
+            {x: left + bBox.width / 2, y: top + bBox.height}
+          ].forEach(function(point) { addXMarker(point, pathSegs); });
+        });
+        path.className.baseVal = 'guide-socket';
         path.setPathData(pathSegs);
         elements.push(path);
       })();
