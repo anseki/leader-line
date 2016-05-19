@@ -228,6 +228,9 @@
       Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2));
   }
 
+  function getPointsAngle(p0, p1) {
+  }
+
   function getPointOnLineSeg(p0, p1, t) {
     var xA = p1.x - p0.x, yA = p1.y - p0.y;
     return {
@@ -818,7 +821,7 @@
       // Adjust path with plugs.
       ['start', 'end'].forEach(function(key) {
         var prop = key + 'PlugOverhead', start = key === 'start', overhead = props[prop],
-          pathSeg, i, point, socketId, minAdjustOffset;
+          pathSeg, i, point, minAdjustPoint, sPoint, cPoint, socketId, minAdjustOffset;
         if (overhead > 0) {
           i = start ? 0 : pathSegs.length - 1;
           pathSeg = pathSegs[i];
@@ -838,6 +841,20 @@
           } else { // Cubic bezier
             pathSegsLen[i] = pathSegsLen[i] || getPathLength.apply(null, pathSeg);
             if (pathSegsLen[i] > MIN_ADJUST_LEN) {
+              minAdjustPoint = getPointOnPath(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
+                getPathT(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
+                  start ? pathSegsLen[i] - MIN_ADJUST_LEN : MIN_ADJUST_LEN));
+              sPoint = start ? pathSeg[0] : pathSeg[3];
+              if (getPointsLength(minAdjustPoint, sPoint) > overhead) {
+                // point = minAdjustPoint;
+              } else {
+                point = minAdjustPoint;
+              }
+              cPoint = start ? point.toP1 : point.fromP2;
+
+
+
+
               if (pathSegsLen[i] - overhead < MIN_ADJUST_LEN) {
                 overhead = pathSegsLen[i] - MIN_ADJUST_LEN;
               }
