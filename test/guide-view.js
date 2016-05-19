@@ -68,7 +68,7 @@ var guideView = (function() {
       // ======== outline
       (function() {
         var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
-          padding = Math.max(props.size / 2, props.startPlugOutlineR, props.endPlugOutlineR),
+          padding = Math.max(props.options.size / 2, props.startPlugOutlineR, props.endPlugOutlineR),
           pathSegs = [], corners = {};
         pathData.forEach(function(pathSeg) {
           var values = pathSeg.values, point, i, iLen = values.length;

@@ -26,15 +26,15 @@
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_KEY_2_ID = {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
 
-    LINE_STRAIGHT = 1, LINE_ARC = 2, LINE_FLUID = 3, LINE_GRID = 4,
-    LINE_KEY_2_ID = {straight: LINE_STRAIGHT, arc: LINE_ARC, fluid: LINE_FLUID, grid: LINE_GRID},
+    PATH_STRAIGHT = 1, PATH_ARC = 2, PATH_FLUID = 3, PATH_GRID = 4,
+    PATH_KEY_2_ID = {straight: PATH_STRAIGHT, arc: PATH_ARC, fluid: PATH_FLUID, grid: PATH_GRID},
 
     STYLE_ID = APP_ID + '-styles',
     /* [DEBUG/]
     CSS_TEXT = '@INCLUDE[file:leader-line.css]@',
     [DEBUG/] */
     // [DEBUG]
-    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line-line{fill:none} #leader-line-defs{width:0;height:0;} .leader-line-mask{clip-rule:evenodd;}',
+    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line-path{fill:none} #leader-line-defs{width:0;height:0;} .leader-line-mask{clip-rule:evenodd;}',
     // [/DEBUG]
 
     /**
@@ -70,7 +70,7 @@
     // [/DEBUG]
 
     DEFAULT_OPTIONS = {
-      line: LINE_FLUID,
+      path: PATH_FLUID,
       color: 'coral',
       size: 4,
       startPlug: PLUG_BEHIND,
@@ -80,7 +80,7 @@
     },
 
     SHAPE_PROPS = ['startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
-    SHAPE_PROPS_OPTIONS = ['line', 'size'],
+    SHAPE_PROPS_OPTIONS = ['path', 'size'],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
 
     MIN_GRAVITY = 80, MIN_GRAVITY_SIZE = 4, MIN_GRAVITY_R = 5,
@@ -393,7 +393,7 @@
     props.maskPath = clip.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
     props.maskPath.className.baseVal = APP_ID + '-mask';
     props.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-    props.path.className.baseVal = APP_ID + '-line';
+    props.path.className.baseVal = APP_ID + '-path';
     props.svg = baseDocument.body.appendChild(svg);
 
     props.viewBBox = {};
@@ -624,14 +624,14 @@
       needsStyles = needsPlugs = true;
     }
 
-    needsPosition = setValidId('line', LINE_KEY_2_ID, true) || needsPosition;
+    needsPosition = setValidId('path', PATH_KEY_2_ID, true) || needsPosition;
     needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
     needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
 
     if (setValidType('color', true)) { needsStyles = addPropList('color', needsStyles); }
     if (setValidType('size', true)) {
       needsStyles = addPropList('size', needsStyles);
-      // Plug-size is changed with line-size automatically
+      // Plug-size is changed with path-size automatically
       // but needs to change `*PlugOverhead` and `*PlugOutlineR`.
       // (`*PlugSize` doesn't change those when it's `PLUG_BEHIND`.)
       needsPlugs = addPropList('startPlug', needsPlugs);
@@ -762,13 +762,13 @@
         SHAPE_PROPS.some(function(prop) { return props.positionedShape[prop] !== props[prop]; }) ||
         SHAPE_PROPS_OPTIONS.some(function(prop) { return props.positionedShape[prop] !== options[prop]; })) {
       // Generate path segments.
-      switch (options.line) {
+      switch (options.path) {
 
-        case LINE_STRAIGHT:
+        case PATH_STRAIGHT:
           pathSegs.push([props.startSocketXY, props.endSocketXY]);
           break;
 
-        case LINE_FLUID:
+        case PATH_FLUID:
           ['start', 'end'].forEach(function(key) {
             var gravity = options[key + 'SocketGravity'], socketXY = props[key + 'SocketXY'],
               offset = {}, anotherSocketXY, overhead, minGravity, len;
@@ -881,7 +881,7 @@
           /* eslint-enable eqeqeq */
         });
       });
-      // Expand bBox with line or symbols.
+      // Expand bBox with path or symbols.
       (function(padding) {
         newViewBBox.x1 -= padding;
         newViewBBox.x2 += padding;
