@@ -79,8 +79,8 @@
       endPlugSize: 1
     },
 
-    SHAPE_PROPS =
-      ['line', 'size', 'startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
+    SHAPE_PROPS = ['startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
+    SHAPE_PROPS_OPTIONS = ['line', 'size'],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
 
     MIN_GRAVITY = 80, MIN_GRAVITY_SIZE = 4, MIN_GRAVITY_R = 5,
@@ -415,9 +415,9 @@
    */
   function setStyles(props, styleProps) {
     var PROP_2_CSSPROP = {color: 'stroke', size: 'strokeWidth'},
-      styles = props.path.style;
+      options = props.options, styles = props.path.style;
     (styleProps || ['color', 'size']).forEach(function(styleProp) {
-      styles[PROP_2_CSSPROP[styleProp]] = props[styleProp];
+      styles[PROP_2_CSSPROP[styleProp]] = options[styleProp];
     });
   }
 
@@ -479,6 +479,7 @@
    * @returns {void}
    */
   function setPlugs(props, plugProps) {
+    var options = props.options;
     plugProps = (plugProps ||
         ['startPlug', 'endPlug', 'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize'])
       .reduce(function(plugProps, prop) {
@@ -488,12 +489,12 @@
 
     ['start', 'end'].forEach(function(key) {
       var ucKey = key.substr(0, 1).toUpperCase() + key.substr(1),
-        plugId = props[key + 'Plug'], symbolConf;
+        plugId = options[key + 'Plug'], symbolConf;
 
       if (plugId === PLUG_BEHIND) {
         if (plugProps[key + 'Plug']) {
           props.path.style['marker' + ucKey] = 'none';
-          props[key + 'PlugOverhead'] = -(props.size / 2);
+          props[key + 'PlugOverhead'] = -(options.size / 2);
           props[key + 'PlugOutlineR'] = 0;
         }
       } else {
@@ -508,16 +509,16 @@
           plugProps[key + 'PlugSize'] = plugProps[key + 'PlugColor'] = true;
         }
         if (plugProps[key + 'PlugColor']) {
-          props[key + 'MarkerUse'].style.fill = props[key + 'PlugColor'] || props.color;
+          props[key + 'MarkerUse'].style.fill = options[key + 'PlugColor'] || options.color;
         }
         if (plugProps[key + 'PlugSize']) {
-          props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * props[key + 'PlugSize'];
-          props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * props[key + 'PlugSize'];
+          props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * options[key + 'PlugSize'];
+          props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * options[key + 'PlugSize'];
           // Change shape.
           props[key + 'PlugOverhead'] =
-            props.size / DEFAULT_OPTIONS.size * symbolConf.overhead * props[key + 'PlugSize'];
+            options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options[key + 'PlugSize'];
           props[key + 'PlugOutlineR'] =
-            props.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * props[key + 'PlugSize'];
+            options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options[key + 'PlugSize'];
         }
       }
     });
@@ -530,7 +531,7 @@
    * @param {Object} [options] - Initial options.
    */
   function LeaderLine(start, end, options) {
-    var props = {};
+    var props = {options: {}};
     Object.defineProperty(this, '_id', { value: insId++ });
     insProps[this._id] = props;
     props.startMarkerId = APP_ID + '-start-marker-' + this._id;
@@ -549,26 +550,26 @@
   }
 
   /**
-   * @param {Object} options - New options.
+   * @param {Object} newOptions - New options.
    * @returns {void}
    */
-  LeaderLine.prototype.setOptions = function(options) {
+  LeaderLine.prototype.setOptions = function(newOptions) {
     var KEY_AUTO = 'auto',
-      props = insProps[this._id],
+      props = insProps[this._id], options = props.options,
       needsWindow, needsStyles, needsPlugs, needsPosition, newWindow;
 
     function setValidId(prop, key2Id, setDefault, acceptsAuto) {
       var key, id, update;
-      if (options[prop] != null && // eslint-disable-line eqeqeq
-          (key = (options[prop] + '').toLowerCase()) && (
+      if (newOptions[prop] != null && // eslint-disable-line eqeqeq
+          (key = (newOptions[prop] + '').toLowerCase()) && (
             acceptsAuto && key === KEY_AUTO ||
             (id = key2Id[key])
-          ) && id !== props[prop]) {
-        props[prop] = id; // `undefined` when `KEY_AUTO`
+          ) && id !== options[prop]) {
+        options[prop] = id; // `undefined` when `KEY_AUTO`
         update = true;
       }
-      if (setDefault && props[prop] == null) { // eslint-disable-line eqeqeq
-        props[prop] = DEFAULT_OPTIONS[prop];
+      if (setDefault && options[prop] == null) { // eslint-disable-line eqeqeq
+        options[prop] = DEFAULT_OPTIONS[prop];
         update = true;
       }
       return update;
@@ -577,15 +578,15 @@
     function setValidType(prop, setDefault, type, acceptsAuto) {
       var value, update;
       type = type || typeof DEFAULT_OPTIONS[prop];
-      if (options[prop] != null && ( // eslint-disable-line eqeqeq
-            acceptsAuto && (options[prop] + '').toLowerCase() === KEY_AUTO ||
-            typeof (value = options[prop]) === type
-          ) && value !== props[prop]) {
-        props[prop] = value; // `undefined` when `KEY_AUTO`
+      if (newOptions[prop] != null && ( // eslint-disable-line eqeqeq
+            acceptsAuto && (newOptions[prop] + '').toLowerCase() === KEY_AUTO ||
+            typeof (value = newOptions[prop]) === type
+          ) && value !== options[prop]) {
+        options[prop] = value; // `undefined` when `KEY_AUTO`
         update = true;
       }
-      if (setDefault && props[prop] == null) { // eslint-disable-line eqeqeq
-        props[prop] = DEFAULT_OPTIONS[prop];
+      if (setDefault && options[prop] == null) { // eslint-disable-line eqeqeq
+        options[prop] = DEFAULT_OPTIONS[prop];
         update = true;
       }
       return update;
@@ -606,19 +607,19 @@
     }
 
     ['start', 'end'].forEach(function(prop) {
-      if (options[prop] && options[prop].nodeType != null && // eslint-disable-line eqeqeq
-          options[prop] !== props[prop]) {
-        props[prop] = options[prop];
+      if (newOptions[prop] && newOptions[prop].nodeType != null && // eslint-disable-line eqeqeq
+          newOptions[prop] !== options[prop]) {
+        options[prop] = newOptions[prop];
         needsWindow = needsPosition = true;
       }
     });
-    if (!props.start || !props.end || props.start === props.end) {
+    if (!options.start || !options.end || options.start === options.end) {
       throw new Error('`start` and `end` are required.');
     }
 
     // Check window.
     if (needsWindow &&
-        (newWindow = getCommonWindow(props.start, props.end)) !== props.baseWindow) {
+        (newWindow = getCommonWindow(options.start, options.end)) !== props.baseWindow) {
       bindWindow(props, newWindow);
       needsStyles = needsPlugs = true;
     }
@@ -640,22 +641,22 @@
 
     ['startSocketGravity', 'endSocketGravity'].forEach(function(prop) {
       var value = false; // `false` means no-update input.
-      if (options[prop] != null) { // eslint-disable-line eqeqeq
-        if (Array.isArray(options[prop])) {
-          if (typeof options[prop][0] === 'number' && typeof options[prop][1] === 'number') {
-            value = [options[prop][0], options[prop][1]];
-            if (Array.isArray(props[prop]) && matchArray(value, props[prop])) { value = false; }
+      if (newOptions[prop] != null) { // eslint-disable-line eqeqeq
+        if (Array.isArray(newOptions[prop])) {
+          if (typeof newOptions[prop][0] === 'number' && typeof newOptions[prop][1] === 'number') {
+            value = [newOptions[prop][0], newOptions[prop][1]];
+            if (Array.isArray(options[prop]) && matchArray(value, options[prop])) { value = false; }
           }
         } else {
-          if ((options[prop] + '').toLowerCase() === KEY_AUTO) {
+          if ((newOptions[prop] + '').toLowerCase() === KEY_AUTO) {
             value = null;
-          } else if (typeof options[prop] === 'number' && options[prop] >= 0) {
-            value = options[prop];
+          } else if (typeof newOptions[prop] === 'number' && newOptions[prop] >= 0) {
+            value = newOptions[prop];
           }
-          if (value === props[prop]) { value = false; }
+          if (value === options[prop]) { value = false; }
         }
         if (value !== false) {
-          props[prop] = value;
+          options[prop] = value;
           needsPosition = true;
         }
       }
@@ -689,7 +690,7 @@
   };
 
   LeaderLine.prototype.position = function() {
-    var props = insProps[this._id],
+    var props = insProps[this._id], options = props.options,
       bBoxes = {}, newSocketXY = {}, newMaskBBox = {}, maskPathData, newPathData, newViewBBox = {},
       socketXYsWk, socketsLenMin = -1, autoKey, fixKey, needsView,
       cx = {}, cy = {}, pathSegs = [], pathSegsLen = [], baseVal, styles;
@@ -704,15 +705,15 @@
       return socketXY;
     }
 
-    bBoxes.start = getBBoxNest(props.start, props.baseWindow);
-    bBoxes.end = getBBoxNest(props.end, props.baseWindow);
+    bBoxes.start = getBBoxNest(options.start, props.baseWindow);
+    bBoxes.end = getBBoxNest(options.end, props.baseWindow);
 
     // Decide each socket.
-    if (props.startSocket && props.endSocket) {
-      newSocketXY.start = getSocketXY(bBoxes.start, props.startSocket);
-      newSocketXY.end = getSocketXY(bBoxes.end, props.endSocket);
+    if (options.startSocket && options.endSocket) {
+      newSocketXY.start = getSocketXY(bBoxes.start, options.startSocket);
+      newSocketXY.end = getSocketXY(bBoxes.end, options.endSocket);
 
-    } else if (!props.startSocket && !props.endSocket) {
+    } else if (!options.startSocket && !options.endSocket) {
       socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes.end, socketId); });
       SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes.start, socketId); })
         .forEach(function(startSocketXY) {
@@ -727,14 +728,14 @@
         });
 
     } else {
-      if (props.startSocket) {
+      if (options.startSocket) {
         fixKey = 'start';
         autoKey = 'end';
       } else {
         fixKey = 'end';
         autoKey = 'start';
       }
-      newSocketXY[fixKey] = getSocketXY(bBoxes[fixKey], props[fixKey + 'Socket']);
+      newSocketXY[fixKey] = getSocketXY(bBoxes[fixKey], options[fixKey + 'Socket']);
       socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[autoKey], socketId); });
       socketXYsWk.forEach(function(socketXY) {
         var len = getPointsLength(socketXY, newSocketXY[fixKey]);
@@ -758,9 +759,10 @@
 
     // Set `positionedShape` and generate path data.
     if (newSocketXY.start || newSocketXY.end ||
-        SHAPE_PROPS.some(function(prop) { return props.positionedShape[prop] !== props[prop]; })) {
+        SHAPE_PROPS.some(function(prop) { return props.positionedShape[prop] !== props[prop]; }) ||
+        SHAPE_PROPS_OPTIONS.some(function(prop) { return props.positionedShape[prop] !== options[prop]; })) {
       // Generate path segments.
-      switch (props.line) {
+      switch (options.line) {
 
         case LINE_STRAIGHT:
           pathSegs.push([props.startSocketXY, props.endSocketXY]);
@@ -768,7 +770,7 @@
 
         case LINE_FLUID:
           ['start', 'end'].forEach(function(key) {
-            var gravity = props[key + 'SocketGravity'], socketXY = props[key + 'SocketXY'],
+            var gravity = options[key + 'SocketGravity'], socketXY = props[key + 'SocketXY'],
               offset = {}, anotherSocketXY, overhead, minGravity, len;
             if (Array.isArray(gravity)) { // offset
               offset = {x: gravity[0], y: gravity[1]};
@@ -784,8 +786,8 @@
               minGravity = overhead > 0 ?
                 MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
                   (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
-                MIN_GRAVITY + (props.size > MIN_GRAVITY_SIZE ?
-                  (props.size - MIN_GRAVITY_SIZE) * MIN_GRAVITY_R : 0);
+                MIN_GRAVITY + (options.size > MIN_GRAVITY_SIZE ?
+                  (options.size - MIN_GRAVITY_SIZE) * MIN_GRAVITY_R : 0);
               if (socketXY.socketId === SOCKET_TOP) {
                 len = (socketXY.y - anotherSocketXY.y) / 2;
                 if (len < minGravity) { len = minGravity; }
@@ -879,13 +881,13 @@
           /* eslint-enable eqeqeq */
         });
       });
-      // Expand bBox with line or symbol of plugs.
+      // Expand bBox with line or symbols.
       (function(padding) {
         newViewBBox.x1 -= padding;
         newViewBBox.x2 += padding;
         newViewBBox.y1 -= padding;
         newViewBBox.y2 += padding;
-      })(Math.max(props.size / 2, props.startPlugOutlineR, props.endPlugOutlineR));
+      })(Math.max(options.size / 2, props.startPlugOutlineR, props.endPlugOutlineR));
       newViewBBox.x = newViewBBox.x1;
       newViewBBox.y = newViewBBox.y1;
       newViewBBox.width = newViewBBox.x2 - newViewBBox.x1;
@@ -955,6 +957,7 @@
       }
 
       SHAPE_PROPS.forEach(function(prop) { props.positionedShape[prop] = props[prop]; });
+      SHAPE_PROPS_OPTIONS.forEach(function(prop) { props.positionedShape[prop] = options[prop]; });
     }
   };
 
