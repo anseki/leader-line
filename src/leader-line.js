@@ -228,9 +228,6 @@
       Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2));
   }
 
-  function getPointsAngle(p0, p1) {
-  }
-
   function getPointOnLineSeg(p0, p1, t) {
     var xA = p1.x - p0.x, yA = p1.y - p0.y;
     return {
@@ -821,7 +818,7 @@
       // Adjust path with plugs.
       ['start', 'end'].forEach(function(key) {
         var prop = key + 'PlugOverhead', start = key === 'start', overhead = props[prop],
-          pathSeg, i, point, minAdjustPoint, sPoint, cPoint, socketId, minAdjustOffset;
+          pathSeg, i, point, sp, cp, angle, len, socketId, minAdjustOffset;
         if (overhead > 0) {
           i = start ? 0 : pathSegs.length - 1;
           pathSeg = pathSegs[i];
@@ -841,26 +838,28 @@
           } else { // Cubic bezier
             pathSegsLen[i] = pathSegsLen[i] || getPathLength.apply(null, pathSeg);
             if (pathSegsLen[i] > MIN_ADJUST_LEN) {
-              minAdjustPoint = getPointOnPath(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
-                getPathT(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
-                  start ? pathSegsLen[i] - MIN_ADJUST_LEN : MIN_ADJUST_LEN));
-              sPoint = start ? pathSeg[0] : pathSeg[3];
-              if (getPointsLength(minAdjustPoint, sPoint) > overhead) {
-                // point = minAdjustPoint;
-              } else {
-                point = minAdjustPoint;
-              }
-              cPoint = start ? point.toP1 : point.fromP2;
-
-
-
-
               if (pathSegsLen[i] - overhead < MIN_ADJUST_LEN) {
                 overhead = pathSegsLen[i] - MIN_ADJUST_LEN;
               }
               point = getPointOnPath(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
                 getPathT(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
                   start ? overhead : pathSegsLen[i] - overhead));
+
+              // Get direct distance and angle.
+              if (start) {
+                sp = pathSeg[0];
+                cp = point.toP1;
+              } else {
+                sp = pathSeg[3];
+                cp = point.fromP2;
+              }
+              angle = Math.atan2(sp.y - point.y, point.x - sp.x);
+              len = getPointsLength(point, cp);
+              point.x = sp.x + Math.cos(angle) * overhead;
+              point.y = sp.y + Math.sin(angle) * overhead * -1;
+              cp.x = point.x + Math.cos(angle) * len;
+              cp.y = point.y + Math.sin(angle) * len * -1;
+
               pathSegs[i] = start ?
                 [point, point.toP1, point.toP2, pathSeg[3]] :
                 [pathSeg[0], point.fromP1, point.fromP2, point];
