@@ -79,13 +79,14 @@
       endPlugSize: 1
     },
 
-    SHAPE_PROPS = ['startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
-    SHAPE_PROPS_OPTIONS = ['path', 'size'],
+    POSITION_PROPS = ['startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
+    POSITION_OPTIONS = ['path', 'size', 'startSocketGravity', 'endSocketGravity'],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
 
     MIN_GRAVITY = 80, MIN_GRAVITY_SIZE = 4, MIN_GRAVITY_R = 5,
     MIN_OH_GRAVITY = 120, MIN_OH_GRAVITY_OH = 8, MIN_OH_GRAVITY_R = 3.75,
     MIN_ADJUST_LEN = 10,
+
     IS_IE = !!document.uniqueID,
 
     /**
@@ -309,7 +310,7 @@
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionedShape`,
+   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionValues`,
    *    `pathData`, `startPlugOverhead`, `endPlugOverhead`, `startPlugOutlineR`, `endPlugOutlineR`,
    *    `startMaskBBox`, `endMaskBBox`,
    *    `svg`, `path`, `startMarker`, `endMarker`, `startMarkerUse`, `endMarkerUse`, `maskPath`.
@@ -386,7 +387,8 @@
       if (!props[key + 'Marker'].viewBox.baseVal) {
         props[key + 'Marker'].setAttribute('viewBox', '0 0 0 0'); // for Firefox bug
       }
-      props[key + 'MarkerUse'] = props[key + 'Marker'].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      props[key + 'MarkerUse'] =
+        props[key + 'Marker'].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     });
     clip = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'clipPath'));
     clip.id = props.clipId;
@@ -399,7 +401,7 @@
     props.viewBBox = {};
     props.startSocketXY = {};
     props.endSocketXY = {};
-    props.positionedShape = {};
+    props.positionValues = {};
     props.pathData = [];
     props.startPlugOverhead = props.endPlugOverhead =
       props.startPlugOutlineR = props.endPlugOutlineR = 0;
@@ -534,6 +536,7 @@
     var props = {options: {}};
     Object.defineProperty(this, '_id', { value: insId++ });
     insProps[this._id] = props;
+
     props.startMarkerId = APP_ID + '-start-marker-' + this._id;
     props.endMarkerId = APP_ID + '-end-marker-' + this._id;
     props.clipId = APP_ID + '-clip-' + this._id;
@@ -691,8 +694,9 @@
 
   LeaderLine.prototype.position = function() {
     var props = insProps[this._id], options = props.options,
-      bBoxes = {}, newSocketXY = {}, newMaskBBox = {}, maskPathData, newPathData, newViewBBox = {},
-      socketXYsWk, socketsLenMin = -1, autoKey, fixKey, needsView,
+      bBoxes = {}, newSocketXY = {}, newMaskBBox = {},
+      maskPathData, newPathData, newViewBBox = {},
+      socketXYsWk, socketsLenMin = -1, autoKey, fixKey, viewHasChanged,
       cx = {}, cy = {}, pathSegs = [], pathSegsLen = [], baseVal, styles;
 
     function getSocketXY(bBox, socketId) {
@@ -708,7 +712,7 @@
     bBoxes.start = getBBoxNest(options.start, props.baseWindow);
     bBoxes.end = getBBoxNest(options.end, props.baseWindow);
 
-    // Decide each socket.
+    // Decide each socket
     if (options.startSocket && options.endSocket) {
       newSocketXY.start = getSocketXY(bBoxes.start, options.startSocket);
       newSocketXY.end = getSocketXY(bBoxes.end, options.endSocket);
@@ -746,7 +750,7 @@
       });
     }
 
-    // To limit updated `SocketXY`.
+    // To limit updated `SocketXY`
     ['start', 'end'].forEach(function(key) {
       var socketXY1 = newSocketXY[key], socketXY2 = props[key + 'SocketXY'];
       if (socketXY1.x !== socketXY2.x || socketXY1.y !== socketXY2.y ||
@@ -757,11 +761,30 @@
       }
     });
 
-    // Set `positionedShape` and generate path data.
+    // Decide MaskBBox (coordinates might have changed)
+    ['start', 'end'].forEach(function(key) {
+      var maskBBox1 = bBoxes[key], maskBBox2 = props[key + 'MaskBBox'],
+        enabled1 = props[key + 'PlugOverhead'] < 0, enabled2 = !!maskBBox2;
+      if (enabled1 !== enabled2 ||
+          enabled1 && enabled2 && ['left', 'top', 'width', 'height'].some(function(prop) {
+            return maskBBox1[prop] !== maskBBox2[prop];
+          })) {
+        if (enabled1) {
+          props[key + 'MaskBBox'] = newMaskBBox[key] = bBoxes[key];
+        } else {
+          props[key + 'MaskBBox'] = null;
+          newMaskBBox[key] = false;
+        }
+      }
+    });
+
+    // New position
     if (newSocketXY.start || newSocketXY.end ||
-        SHAPE_PROPS.some(function(prop) { return props.positionedShape[prop] !== props[prop]; }) ||
-        SHAPE_PROPS_OPTIONS.some(function(prop) { return props.positionedShape[prop] !== options[prop]; })) {
-      // Generate path segments.
+        newMaskBBox.start != null || newMaskBBox.end != null || // eslint-disable-line eqeqeq
+        POSITION_PROPS.some(function(prop) { return props.positionValues[prop] !== props[prop]; }) ||
+        POSITION_OPTIONS.some(function(prop) { return props.positionValues[prop] !== options[prop]; })) {
+
+      // Generate path segments
       switch (options.path) {
 
         case PATH_STRAIGHT:
@@ -815,13 +838,13 @@
 
         // no default
       }
-      // Adjust path with plugs.
+
+      // Adjust path with plugs
       ['start', 'end'].forEach(function(key) {
         var prop = key + 'PlugOverhead', start = key === 'start', overhead = props[prop],
           pathSeg, i, point, sp, cp, angle, len, socketId, minAdjustOffset;
         if (overhead > 0) {
-          i = start ? 0 : pathSegs.length - 1;
-          pathSeg = pathSegs[i];
+          pathSeg = pathSegs[(i = start ? 0 : pathSegs.length - 1)];
 
           if (pathSeg.length === 2) { // Straight line
             pathSegsLen[i] = pathSegsLen[i] || getPointsLength.apply(null, pathSeg);
@@ -845,7 +868,7 @@
                 getPathT(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
                   start ? overhead : pathSegsLen[i] - overhead));
 
-              // Get direct distance and angle.
+              // Get direct distance and angle
               if (start) {
                 sp = pathSeg[0];
                 cp = point.toP1;
@@ -863,13 +886,12 @@
               pathSegs[i] = start ?
                 [point, point.toP1, point.toP2, pathSeg[3]] :
                 [pathSeg[0], point.fromP1, point.fromP2, point];
-              pathSegsLen[i] -= overhead;
+              pathSegsLen[i] = null; // to re-calculate
             }
 
           }
         } else if (overhead < 0) {
-          i = start ? 0 : pathSegs.length - 1;
-          pathSeg = pathSegs[i];
+          pathSeg = pathSegs[(i = start ? 0 : pathSegs.length - 1)];
           socketId = props[key + 'SocketXY'].socketId;
           minAdjustOffset = -(bBoxes[key][
             socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'width' : 'height']);
@@ -877,7 +899,6 @@
           point = pathSeg[start ? 0 : pathSeg.length - 1];
           point[socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y'] +=
             overhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
-          newMaskBBox[key] = bBoxes[key];
           pathSegsLen[i] = null; // to re-calculate
         }
       });
@@ -897,7 +918,8 @@
           /* eslint-enable eqeqeq */
         });
       });
-      // Expand bBox with path or symbols.
+
+      // Expand bBox with path or symbols
       (function(padding) {
         newViewBBox.x1 -= padding;
         newViewBBox.x2 += padding;
@@ -909,7 +931,7 @@
       newViewBBox.width = newViewBBox.x2 - newViewBBox.x1;
       newViewBBox.height = newViewBBox.y2 - newViewBBox.y1;
 
-      // Apply path data.
+      // Apply path data
       if (newPathData.length !== props.pathData.length ||
           newPathData.some(function(newPathSeg, i) {
             var pathSeg = props.pathData[i];
@@ -922,7 +944,7 @@
         props.pathData = newPathData;
       }
 
-      // Position `<svg>` element and set its `viewBox`.
+      // Position `<svg>` element and set its `viewBox`
       baseVal = props.svg.viewBox.baseVal;
       styles = props.svg.style;
       [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
@@ -931,20 +953,14 @@
           props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
           styles[cssProp] = newViewBBox[boxKey] +
             (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
-          needsView = true;
+          viewHasChanged = true;
         }
       });
 
-      // Apply mask for plugs.
-      if (needsView && (newMaskBBox.start || newMaskBBox.end) ||
-          ['start', 'end'].some(function(key) {
-            var enabled = !!props[key + 'MaskBBox'], enabledNew = !!newMaskBBox[key];
-            return enabled !== enabledNew ||
-              enabled && enabledNew && ['left', 'top', 'width', 'height'].some(function(prop) {
-                return props[key + 'MaskBBox'][prop] !== newMaskBBox[key][prop];
-              });
-          })) {
-        if (!newMaskBBox.start && !newMaskBBox.end) {
+      // Apply mask for plugs
+      if (viewHasChanged && (props.startMaskBBox || props.endMaskBBox) ||
+          newMaskBBox.start != null || newMaskBBox.end != null) { // eslint-disable-line eqeqeq
+        if (!props.startMaskBBox && !props.endMaskBBox) {
           props.path.style.clipPath = 'none';
         } else {
           maskPathData = [
@@ -954,13 +970,14 @@
             {type: 'h', values: [-newViewBBox.width]},
             {type: 'z'}
           ];
-          ['start', 'end'].forEach(function(key) {
-            if (newMaskBBox[key]) {
+          ['startMaskBBox', 'endMaskBBox'].forEach(function(prop) {
+            var maskBBox = props[prop];
+            if (maskBBox) {
               maskPathData.push(
-                {type: 'M', values: [newMaskBBox[key].left, newMaskBBox[key].top]},
-                {type: 'h', values: [newMaskBBox[key].width]},
-                {type: 'v', values: [newMaskBBox[key].height]},
-                {type: 'h', values: [-newMaskBBox[key].width]},
+                {type: 'M', values: [maskBBox.left, maskBBox.top]},
+                {type: 'h', values: [maskBBox.width]},
+                {type: 'v', values: [maskBBox.height]},
+                {type: 'h', values: [-maskBBox.width]},
                 {type: 'z'}
               );
             }
@@ -968,12 +985,10 @@
           props.maskPath.setPathData(maskPathData);
           props.path.style.clipPath = 'url(#' + props.clipId + ')';
         }
-        props.startMaskBBox = newMaskBBox.start;
-        props.endMaskBBox = newMaskBBox.end;
       }
 
-      SHAPE_PROPS.forEach(function(prop) { props.positionedShape[prop] = props[prop]; });
-      SHAPE_PROPS_OPTIONS.forEach(function(prop) { props.positionedShape[prop] = options[prop]; });
+      POSITION_PROPS.forEach(function(prop) { props.positionValues[prop] = props[prop]; });
+      POSITION_OPTIONS.forEach(function(prop) { props.positionValues[prop] = options[prop]; });
     }
   };
 
