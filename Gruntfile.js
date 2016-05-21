@@ -103,11 +103,12 @@ module.exports = grunt => {
                   width: parseFloat(size.attr('width')),
                   height: parseFloat(size.attr('height'))
                 };
+                bBox.right = bBox.left + bBox.width;
+                bBox.bottom = bBox.top + bBox.height;
                 codeSrc.SYMBOLS[id].widthR = bBox.width / DEFAULT_LINE_SIZE;
                 codeSrc.SYMBOLS[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
-                codeSrc.SYMBOLS[id].outlineR = Math.max(
-                  -bBox.left, -bBox.top, bBox.left + bBox.width, bBox.top + bBox.height);
-                codeSrc.SYMBOLS[id].overhead = noOverhead ? 0 : bBox.left + bBox.width;
+                codeSrc.SYMBOLS[id].outlineR = Math.max(-bBox.left, -bBox.top, bBox.right, bBox.bottom);
+                codeSrc.SYMBOLS[id].overhead = noOverhead ? 0 : bBox.right;
 
                 codeSrc.PLUG_KEY_2_ID[id] = id;
                 codeSrc.PLUG_2_SYMBOL[id] = id;

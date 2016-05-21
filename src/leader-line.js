@@ -17,6 +17,8 @@
    * @typedef {Object} BBox
    * @property {number|null} left
    * @property {number|null} top
+   * @property {number|null} right
+   * @property {number|null} bottom
    * @property {number|null} width
    * @property {number|null} height
    */
@@ -123,7 +125,9 @@
         return null;
       }
       bBox.left += win.pageXOffset;
+      bBox.right += win.pageXOffset;
       bBox.top += win.pageYOffset;
+      bBox.bottom += win.pageYOffset;
     }
 
     return bBox;
@@ -193,7 +197,9 @@
     });
     bBox = getBBox(element, true);
     bBox.left += left;
+    bBox.right += left;
     bBox.top += top;
+    bBox.bottom += top;
     return bBox;
   }
 
@@ -458,8 +464,8 @@
 
     baseVal = marker.viewBox.baseVal;
     if (reverseView) {
-      baseVal.x = -(bBox.left + bBox.width);
-      baseVal.y = -(bBox.top + bBox.height);
+      baseVal.x = -bBox.right;
+      baseVal.y = -bBox.bottom;
     } else {
       baseVal.x = bBox.left;
       baseVal.y = bBox.top;
@@ -766,7 +772,7 @@
       var maskBBox1 = bBoxes[key], maskBBox2 = props[key + 'MaskBBox'],
         enabled1 = props[key + 'PlugOverhead'] < 0, enabled2 = !!maskBBox2;
       if (enabled1 !== enabled2 ||
-          enabled1 && enabled2 && ['left', 'top', 'width', 'height'].some(function(prop) {
+          enabled1 && enabled2 && ['left', 'top', 'width', 'height'].some(function(prop) { // omission right, bottom
             return maskBBox1[prop] !== maskBBox2[prop];
           })) {
         if (enabled1) {
