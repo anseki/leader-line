@@ -1,0 +1,45 @@
+/* line 2, coordinates.scss */
+html,
+body {
+  border: solid maroon;
+}
+
+/* line 4, coordinates.scss */
+html {
+  background-color: burlywood;
+}
+
+/* line 5, coordinates.scss */
+body {
+  background-color: lightgray;
+}
+
+/* line 7, coordinates.scss */
+html,
+body {
+  /* All zero clear */
+  margin: 0;
+  border-width: 0;
+  padding: 0;
+}
+
+/* line 14, coordinates.scss */
+#static,
+#absolute {
+  background-color: aquamarine;
+}
+
+/* line 19, coordinates.scss */
+#static {
+  width: 100px;
+  height: 50px;
+}
+
+/* line 24, coordinates.scss */
+#absolute {
+  width: 101px;
+  height: 51px;
+  position: absolute;
+  left: 128px;
+  top: 128px;
+}

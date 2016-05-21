@@ -1,0 +1,30 @@
+
+html,
+body { border: solid maroon; }
+html { background-color: burlywood; }
+body { background-color: lightgray; }
+
+html,
+body { /* All zero clear */
+  margin: 0;
+  border-width: 0;
+  padding: 0;
+}
+
+#static,
+#absolute {
+  background-color: aquamarine;
+}
+
+#static {
+  width: 100px;
+  height: 50px;
+}
+
+#absolute {
+  width: 101px;
+  height: 51px;
+  position: absolute;
+  left: 128px;
+  top: 128px;
+}

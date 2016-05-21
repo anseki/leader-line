@@ -1,0 +1,20 @@
+
+$app_id: leader-line;
+
+.#{$app_id} {
+  position: absolute;
+  overflow: visible;
+}
+
+.#{$app_id}-path {
+  fill: none;
+}
+
+##{$app_id}-defs {
+  width: 0;
+  height: 0;
+}
+
+.#{$app_id}-mask {
+  clip-rule: evenodd;
+}

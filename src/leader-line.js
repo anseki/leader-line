@@ -34,7 +34,7 @@
     CSS_TEXT = '@INCLUDE[file:leader-line.css]@',
     [DEBUG/] */
     // [DEBUG]
-    CSS_TEXT = '.leader-line{position:absolute;overflow:visible} .leader-line-path{fill:none} #leader-line-defs{width:0;height:0;} .leader-line-mask{clip-rule:evenodd;}',
+    CSS_TEXT = '',
     // [/DEBUG]
 
     /**
