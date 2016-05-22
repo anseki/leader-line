@@ -21,7 +21,10 @@ describe('BBox', function() {
       'iframe2-top': 664
     },
     DIV_WIDTH = {static: 100, absolute: 101},
-    DIV_HEIGHT = {static: 50, absolute: 51};
+    DIV_HEIGHT = {static: 50, absolute: 51},
+
+    // from leader-line.js
+    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4;
 
   function setUpDocument(props, document, body) {
     var targets = {html: document.documentElement};
@@ -41,6 +44,35 @@ describe('BBox', function() {
   function reduceBBox(bBox) {
     return ['left', 'top', 'width', 'height']
       .reduce(function(rBBox, prop) { rBBox[prop] = bBox[prop]; return rBBox; }, {});
+  }
+
+  function getSocketXY(bBox, socketId) {
+    var socketXY = (
+      socketId === SOCKET_TOP ? {x: bBox.left + bBox.width / 2, y: bBox.top} :
+      socketId === SOCKET_RIGHT ? {x: bBox.left + bBox.width, y: bBox.top + bBox.height / 2} :
+      socketId === SOCKET_BOTTOM ? {x: bBox.left + bBox.width / 2, y: bBox.top + bBox.height} :
+                  /* SOCKET_LEFT */ {x: bBox.left, y: bBox.top + bBox.height / 2});
+    socketXY.socketId = socketId;
+    return socketXY;
+  }
+
+  function isSocket(point, bBox) {
+    var socketId;
+    [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT].some(function(id) {
+      var socketXY = getSocketXY(bBox, id);
+      if (socketXY.x === point.x && socketXY.y === point.y) {
+        socketId = id;
+        return true;
+      }
+      return false;
+    });
+    return socketId;
+  }
+
+  function copyObj(obj) {
+    var newObj = {}, prop;
+    for (prop in obj) { newObj[prop] = obj[prop]; } // eslint-disable-line guard-for-in
+    return newObj;
   }
 
   describe('coordinates should be got when:', function() {
@@ -122,7 +154,7 @@ describe('BBox', function() {
           });
 
           done();
-        }, title);
+        }/* , title */);
 
       });
     });
@@ -140,16 +172,48 @@ describe('BBox', function() {
         #iframe2
           #static, #absolute
     */
+    console.log('======================== nested-window');
     [
-      [':html-margin', ':html-border', ':html-padding',
+      [':html-margin', ':html-border', ':html-padding', ':body-margin', ':body-border', ':body-padding',
+        'iframe1:html-margin', 'iframe1:html-border', 'iframe1:html-padding',
+          'iframe1:body-margin', 'iframe1:body-border', 'iframe1:body-padding',
+        'iframe2:html-margin', 'iframe2:html-border', 'iframe2:html-padding',
+          'iframe2:body-margin', 'iframe2:body-border', 'iframe2:body-padding',
+        'iframe2_iframe1:html-margin', 'iframe2_iframe1:html-border', 'iframe2_iframe1:html-padding',
+          'iframe2_iframe1:body-margin', 'iframe2_iframe1:body-border', 'iframe2_iframe1:body-padding',
+        'iframe2_iframe2:html-margin', 'iframe2_iframe2:html-border', 'iframe2_iframe2:html-padding',
+          'iframe2_iframe2:body-margin', 'iframe2_iframe2:body-border', 'iframe2_iframe2:body-padding'],
+      [':body-margin', ':body-border', ':body-padding',
         'iframe1:body-margin', 'iframe1:body-border', 'iframe1:body-padding',
+        'iframe2:body-margin', 'iframe2:body-border', 'iframe2:body-padding',
+        'iframe2_iframe1:body-margin', 'iframe2_iframe1:body-border', 'iframe2_iframe1:body-padding',
         'iframe2_iframe2:body-margin', 'iframe2_iframe2:body-border', 'iframe2_iframe2:body-padding'],
+      [':body-margin', ':body-border',
+        'iframe1:body-margin', 'iframe1:body-border',
+        'iframe2:body-margin', 'iframe2:body-border',
+        'iframe2_iframe1:body-margin', 'iframe2_iframe1:body-border',
+        'iframe2_iframe2:body-margin', 'iframe2_iframe2:body-border'],
+      ['iframe1:body-margin', 'iframe1:body-border', 'iframe1:body-padding',
+        'iframe2_iframe1:body-margin', 'iframe2_iframe1:body-border', 'iframe2_iframe1:body-padding',
+        'iframe2_iframe2:body-margin', 'iframe2_iframe2:body-border', 'iframe2_iframe2:body-padding'],
+      [],
+      [':body-margin', ':body-border', ':body-padding', ':body-relative',
+        'iframe1:body-margin', 'iframe1:body-border', 'iframe1:body-padding',
+        'iframe2:body-margin', 'iframe2:body-border', 'iframe2:body-padding', 'iframe2:body-relative',
+        'iframe2_iframe1:body-margin', 'iframe2_iframe1:body-border', 'iframe2_iframe1:body-padding',
+        'iframe2_iframe2:body-margin', 'iframe2_iframe2:body-border', 'iframe2_iframe2:body-padding'],
+      [':body-border', ':body-relative',
+        'iframe1:body-border', 'iframe1:body-relative',
+        'iframe2:body-border', 'iframe2:body-relative',
+        'iframe2_iframe1:body-border', 'iframe2_iframe1:body-relative',
+        'iframe2_iframe2:body-border', 'iframe2_iframe2:body-relative']
     ].forEach(function(condition) {
       var title = 'enabled: ' + condition.join(', ');
       it(title, function(done) {
 
         loadPage('spec/bbox/nested-window.html', function(window, document) {
           var elms = {}, docProps = {};
+          console.log('---- ' + title);
 
           elms.static = document.getElementById('static');
           elms.absolute = document.getElementById('absolute');
@@ -161,14 +225,20 @@ describe('BBox', function() {
           elms.iframe1_absolute = elms.iframe1.getElementById('absolute');
           elms.iframe2_static = elms.iframe2.getElementById('static');
           elms.iframe2_absolute = elms.iframe2.getElementById('absolute');
-          elms.iframe2_iframe1 = elms.iframe2.getElementById('iframe1').contentDocument;
           elms.iframe2_iframe1Win = elms.iframe2.getElementById('iframe1').contentWindow;
-          elms.iframe2_iframe2 = elms.iframe2.getElementById('iframe2').contentDocument;
+          elms.iframe2_iframe1 = elms.iframe2.getElementById('iframe1').contentDocument;
           elms.iframe2_iframe2Win = elms.iframe2.getElementById('iframe2').contentWindow;
+          elms.iframe2_iframe2 = elms.iframe2.getElementById('iframe2').contentDocument;
           elms.iframe2_iframe1_static = elms.iframe2_iframe1.getElementById('static');
           elms.iframe2_iframe1_absolute = elms.iframe2_iframe1.getElementById('absolute');
           elms.iframe2_iframe2_static = elms.iframe2_iframe2.getElementById('static');
           elms.iframe2_iframe2_absolute = elms.iframe2_iframe2.getElementById('absolute');
+
+          ['iframe1_static', 'iframe1_absolute', 'iframe2_static', 'iframe2_absolute',
+            'iframe2_iframe1_static', 'iframe2_iframe1_absolute', 'iframe2_iframe2_static',
+            'iframe2_iframe2_absolute'].forEach(function(key) {
+              elms[key].textContent = key;
+            });
 
           condition.forEach(function(prop) {
             var docTargetProp = prop.split(':', 2),
@@ -198,6 +268,51 @@ describe('BBox', function() {
               startWinPath: ['iframe2', 'iframe2_iframe1'],
               endWinPath: ['iframe2', 'iframe2_iframe2']
             },
+            {
+              start: elms.iframe2_static,
+              end: elms.iframe2_iframe2_absolute,
+              startDiv: 'static',
+              endDiv: 'absolute',
+              baseWindow: elms.iframe2Win,
+              startWinPath: ['iframe2'],
+              endWinPath: ['iframe2', 'iframe2_iframe2']
+            },
+            {
+              start: elms.iframe1_absolute,
+              end: elms.iframe2_iframe2_absolute,
+              startDiv: 'absolute',
+              endDiv: 'absolute',
+              baseWindow: window,
+              startWinPath: ['', 'iframe1'],
+              endWinPath: ['', 'iframe2', 'iframe2_iframe2']
+            },
+            {
+              start: elms.static,
+              end: elms.iframe2_iframe2_static,
+              startDiv: 'static',
+              endDiv: 'static',
+              baseWindow: window,
+              startWinPath: [''],
+              endWinPath: ['', 'iframe2', 'iframe2_iframe2']
+            },
+            {
+              start: elms.iframe1_absolute,
+              end: elms.iframe2_absolute,
+              startDiv: 'absolute',
+              endDiv: 'absolute',
+              baseWindow: window,
+              startWinPath: ['', 'iframe1'],
+              endWinPath: ['', 'iframe2']
+            },
+            {
+              start: elms.iframe2_iframe2_static,
+              end: elms.iframe2_iframe2_absolute,
+              startDiv: 'static',
+              endDiv: 'absolute',
+              baseWindow: elms.iframe2_iframe2Win,
+              startWinPath: ['iframe2_iframe2'],
+              endWinPath: ['iframe2_iframe2']
+            }
           ].forEach(function(item, i) {
             var ll = new window.LeaderLine(item.start, item.end, {endPlug: 'behind'});
 
@@ -220,12 +335,12 @@ describe('BBox', function() {
 
                 frames.forEach(function(frame, i) {
                   var names, name;
-                  if (i < frames.length - 1) {
+                  if (i < frames.length - 1) { // iframe coordinates
                     addAbsolute(frame);
                     names = frames[i + 1].split('_');
                     name = names[names.length - 1];
                     props.push(':' + name + '-left', ':' + name + '-top', ':iframe-border', ':iframe-padding');
-                  } else {
+                  } else { // div coordinates
                     if (div === 'static') {
                       props = props.concat(
                         REL_BODY.concat(['body-padding']).map(function(prop) { return frame + ':' + prop; }));
@@ -236,6 +351,21 @@ describe('BBox', function() {
                   }
                 });
                 return props;
+              }
+
+              function getShiftSocketXY(bBox, socketId) {
+                var shift = window.insProps[ll._id].options.size / 2,
+                  socketXY = getSocketXY(bBox, socketId);
+                if (socketId === SOCKET_TOP) {
+                  socketXY.y += shift;
+                } else if (socketId === SOCKET_RIGHT) {
+                  socketXY.x -= shift;
+                } else if (socketId === SOCKET_BOTTOM) {
+                  socketXY.y -= shift;
+                } else /* SOCKET_LEFT */ {
+                  socketXY.x += shift;
+                }
+                return socketXY;
               }
 
               var bBox = expandProps(item[key + 'WinPath'], item[key + 'Div']).reduce(function(bBox, prop) {
@@ -254,7 +384,21 @@ describe('BBox', function() {
               expected.index = bBox.index = i; // for error information
               expected.key = bBox.key = key; // for error information
               expect(expected).toEqual(bBox);
+
+              expect(copyObj(window.insProps[ll._id][key + 'SocketXY']))
+                .toEqual(getShiftSocketXY(bBox, window.insProps[ll._id][key + 'SocketXY'].socketId));
             });
+
+            console.log('---- start:');
+            console.log(item.start);
+            console.log('---- end:');
+            console.log(item.end);
+            console.log('---- document:');
+            console.log(item.baseWindow.document);
+            console.log('---- svg:');
+            console.log(window.insProps[ll._id].svg);
+            console.log('---- path:');
+            console.log(window.insProps[ll._id].path);
           });
 
           done();

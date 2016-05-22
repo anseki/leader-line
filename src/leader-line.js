@@ -132,6 +132,7 @@
 
     return bBox;
   }
+  window.getBBox = getBBox; // [DEBUG/]
 
   /**
    * Get distance between an element's bounding-box and its content (`<iframe>` element and its document).
@@ -202,6 +203,7 @@
     bBox.bottom += top;
     return bBox;
   }
+  window.getBBoxNest = getBBoxNest; // [DEBUG/]
 
   /**
    * Get a common ancestor window.
@@ -229,6 +231,7 @@
     }
     return commonWindow || window;
   }
+  window.getCommonWindow = getCommonWindow; // [DEBUG/]
 
   function getPointsLength(p0, p1) {
     return Math.sqrt(
@@ -414,6 +417,7 @@
     props.startMaskBBox = null;
     props.endMaskBBox = null;
   }
+  window.bindWindow = bindWindow; // [DEBUG/]
 
   /**
    * Apply `color`, `size`.

@@ -5,7 +5,7 @@ var guideView = (function() {
 
   var SVG_NS = 'http://www.w3.org/2000/svg',
     PATH_C_SIZE = 5,
-    elements = [], insProps = window.insProps;
+    elements = [];
 
   function addXMarker(point, pathSegs) {
     pathSegs.push(
@@ -21,8 +21,8 @@ var guideView = (function() {
     elements.forEach(function(element) { element.parentNode.removeChild(element); });
     elements = [];
 
-    Object.keys(insProps).forEach(function(id) {
-      var props = insProps[id], options = props.options,
+    Object.keys(window.insProps).forEach(function(id) {
+      var props = window.insProps[id], options = props.options,
         svg = props.svg,
         baseDocument = props.baseWindow.document,
         pathData = props.path.getPathData(); // Not `props.pathData`
@@ -107,14 +107,12 @@ var guideView = (function() {
         var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
           pathSegs = [];
         ['start', 'end'].forEach(function(key) {
-          var bBox = options[key].getBoundingClientRect(),
-            left = bBox.left + window.pageXOffset,
-            top = bBox.top + window.pageYOffset;
+          var bBox = window.getBBoxNest(options[key], props.baseWindow);
           [
-            {x: left, y: top + bBox.height / 2},
-            {x: left + bBox.width / 2, y: top},
-            {x: left + bBox.width, y: top + bBox.height / 2},
-            {x: left + bBox.width / 2, y: top + bBox.height}
+            {x: bBox.left, y: bBox.top + bBox.height / 2},
+            {x: bBox.left + bBox.width / 2, y: bBox.top},
+            {x: bBox.left + bBox.width, y: bBox.top + bBox.height / 2},
+            {x: bBox.left + bBox.width / 2, y: bBox.top + bBox.height}
           ].forEach(function(point) { addXMarker(point, pathSegs); });
         });
         path.className.baseVal = 'guide-socket';

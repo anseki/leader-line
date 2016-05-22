@@ -1,17 +1,17 @@
 /* line 3, bbox.scss */
 html,
 body {
-  border: solid maroon;
+  border: solid #b27373;
 }
 
 /* line 5, bbox.scss */
 html {
-  background-color: burlywood;
+  background-color: #d6d6d6;
 }
 
 /* line 6, bbox.scss */
 body {
-  background-color: lightgray;
+  background-color: #f5deb3;
 }
 
 /* line 8, bbox.scss */
@@ -24,27 +24,23 @@ body {
 }
 
 /* line 15, bbox.scss */
-#static,
-#absolute {
-  background-color: aquamarine;
-}
-
-/* line 20, bbox.scss */
 #static {
   width: 100px;
   height: 50px;
+  background-color: rgba(127, 205, 255, 0.5);
 }
 
-/* line 25, bbox.scss */
+/* line 21, bbox.scss */
 #absolute {
   width: 101px;
   height: 51px;
   position: absolute;
   left: 128px;
   top: 128px;
+  background-color: rgba(150, 255, 127, 0.5);
 }
 
-/* line 33, bbox.scss */
+/* line 30, bbox.scss */
 iframe {
   width: 600px;
   height: 400px;
@@ -54,19 +50,19 @@ iframe {
   background-color: #eee;
 }
 
-/* line 42, bbox.scss */
+/* line 39, bbox.scss */
 #iframe1 {
   left: 8px;
   top: 216px;
 }
 
-/* line 47, bbox.scss */
+/* line 44, bbox.scss */
 #iframe2 {
   left: 32px;
   top: 664px;
 }
 
-/* line 52, bbox.scss */
+/* line 49, bbox.scss */
 #spacer {
   margin: 10px;
   width: 1600px;

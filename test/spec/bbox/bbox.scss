@@ -1,9 +1,9 @@
 @import "compass";
 
 html,
-body { border: solid maroon; }
-html { background-color: burlywood; }
-body { background-color: lightgray; }
+body { border: solid #b27373; }
+html { background-color: #d6d6d6; }
+body { background-color: #f5deb3; }
 
 html,
 body { /* All zero clear */
@@ -12,14 +12,10 @@ body { /* All zero clear */
   padding: 0;
 }
 
-#static,
-#absolute {
-  background-color: aquamarine;
-}
-
 #static {
   width: 100px;
   height: 50px;
+  background-color: rgba(127, 205, 255, 0.5);
 }
 
 #absolute {
@@ -28,6 +24,7 @@ body { /* All zero clear */
   position: absolute;
   left: 128px;
   top: 128px;
+  background-color: rgba(150, 255, 127, 0.5);
 }
 
 iframe {
