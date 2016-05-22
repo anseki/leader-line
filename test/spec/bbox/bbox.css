@@ -24,14 +24,14 @@ body {
 }
 
 /* line 15, bbox.scss */
-#static {
+#static, #overflow1-static {
   width: 100px;
   height: 50px;
   background-color: rgba(127, 205, 255, 0.5);
 }
 
 /* line 21, bbox.scss */
-#absolute {
+#absolute, #overflow2-absolute {
   width: 101px;
   height: 51px;
   position: absolute;
@@ -53,17 +53,43 @@ iframe {
 /* line 39, bbox.scss */
 #iframe1 {
   left: 8px;
-  top: 216px;
+  top: 316px;
 }
 
 /* line 44, bbox.scss */
 #iframe2 {
   left: 32px;
-  top: 664px;
+  top: 764px;
 }
 
-/* line 49, bbox.scss */
-#spacer {
+/* line 52, bbox.scss */
+#overflow1,
+#overflow2 {
+  overflow: auto;
+  position: absolute;
+  border: 2px solid #090;
+  padding: 4px;
+  background-color: #eee;
+}
+
+/* line 61, bbox.scss */
+#overflow1 {
+  left: 308px;
+  top: 16px;
+  width: 400px;
+  height: 400px;
+}
+
+/* line 68, bbox.scss */
+#overflow2 {
+  left: 132px;
+  top: 64px;
+  width: 200px;
+  height: 200px;
+}
+
+/* line 75, bbox.scss */
+.spacer {
   margin: 10px;
   width: 1600px;
   height: 1600px;

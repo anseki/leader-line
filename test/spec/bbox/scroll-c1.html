@@ -3,21 +3,31 @@
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="/src/leader-line.css">
-  <script src="/src/defs.js"></script>
-  <script src="/src/leader-line.js"></script>
   <script src="/src/path-data-polyfill.js"></script>
 
   <link rel="stylesheet" href="/guide-view.css">
-  <script src="/guide-view.js"></script>
 
   <link rel="stylesheet" href="bbox.css">
+  <style>
+    html {
+      border-width: 4px;
+      padding: 8px;
+    }
+  </style>
 </head>
 <body>
   <div id="static">static</div>
-  <div id="absolute">absolute</div>
 
-  <iframe id="iframe1" src="nested-window-c1.html"></iframe>
-  <iframe id="iframe2" src="nested-window-c2.html"></iframe>
+  <div id="overflow1">
+    <div id="overflow1-static">static</div>
+
+    <div id="overflow2">
+      <div id="overflow2-absolute">absolute</div>
+      <div class="spacer">spacer</div>
+    </div>
+
+    <div class="spacer">spacer</div>
+  </div>
 
   <div class="spacer">spacer</div>
 </body>

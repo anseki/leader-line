@@ -11,13 +11,29 @@
   <script src="/guide-view.js"></script>
 
   <link rel="stylesheet" href="bbox.css">
+  <style>
+    body {
+      border-width: 32px;
+      padding: 64px;
+      position: relative;
+    }
+  </style>
 </head>
 <body>
   <div id="static">static</div>
-  <div id="absolute">absolute</div>
 
-  <iframe id="iframe1" src="nested-window-c1.html"></iframe>
-  <iframe id="iframe2" src="nested-window-c2.html"></iframe>
+  <div id="overflow1">
+    <div id="overflow1-static">static</div>
+
+    <div id="overflow2">
+      <div id="overflow2-absolute">absolute</div>
+      <div class="spacer">spacer</div>
+    </div>
+
+    <div class="spacer">spacer</div>
+  </div>
+
+  <iframe id="iframe1" src="scroll-c1.html"></iframe>
 
   <div class="spacer">spacer</div>
 </body>

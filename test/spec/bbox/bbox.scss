@@ -38,15 +38,41 @@ iframe {
 
 #iframe1 {
   left: 8px;
-  top: 216px;
+  top: 316px;
 }
 
 #iframe2 {
   left: 32px;
-  top: 664px;
+  top: 764px;
 }
 
-#spacer {
+#overflow1-static { @extend #static; }
+#overflow2-absolute { @extend #absolute; }
+
+#overflow1,
+#overflow2 {
+  overflow: auto;
+  position: absolute;
+  border: 2px solid #090;
+  padding: 4px;
+  background-color: #eee;
+}
+
+#overflow1 {
+  left: 308px;
+  top: 16px;
+  width: 400px;
+  height: 400px;
+}
+
+#overflow2 {
+  left: 132px;
+  top: 64px;
+  width: 200px;
+  height: 200px;
+}
+
+.spacer {
   margin: 10px;
   width: 1600px;
   height: 1600px;

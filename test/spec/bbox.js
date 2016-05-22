@@ -16,15 +16,27 @@ describe('BBox', function() {
       'iframe-border': 2,
       'iframe-padding': 4,
       'iframe1-left': 8,
-      'iframe1-top': 216,
+      'iframe1-top': 316,
       'iframe2-left': 32,
-      'iframe2-top': 664
+      'iframe2-top': 764,
+      'overflow-border': 2,
+      'overflow-padding': 4,
+      'overflow1-left': 308,
+      'overflow1-top': 16,
+      'overflow2-left': 132,
+      'overflow2-top': 64
     },
     DIV_WIDTH = {static: 100, absolute: 101},
     DIV_HEIGHT = {static: 50, absolute: 51},
 
     // from leader-line.js
-    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4;
+    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3; // , SOCKET_LEFT = 4;
+
+  function copyObj(obj) {
+    var newObj = {}, prop;
+    for (prop in obj) { newObj[prop] = obj[prop]; } // eslint-disable-line guard-for-in
+    return newObj;
+  }
 
   function setUpDocument(props, document, body) {
     var targets = {html: document.documentElement};
@@ -56,23 +68,19 @@ describe('BBox', function() {
     return socketXY;
   }
 
-  function isSocket(point, bBox) {
-    var socketId;
-    [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT].some(function(id) {
-      var socketXY = getSocketXY(bBox, id);
-      if (socketXY.x === point.x && socketXY.y === point.y) {
-        socketId = id;
-        return true;
-      }
-      return false;
-    });
-    return socketId;
-  }
-
-  function copyObj(obj) {
-    var newObj = {}, prop;
-    for (prop in obj) { newObj[prop] = obj[prop]; } // eslint-disable-line guard-for-in
-    return newObj;
+  function getShiftSocketXY(bBox, socketId, props) {
+    var shift = props.options.size / 2,
+      socketXY = getSocketXY(bBox, socketId);
+    if (socketId === SOCKET_TOP) {
+      socketXY.y += shift;
+    } else if (socketId === SOCKET_RIGHT) {
+      socketXY.x -= shift;
+    } else if (socketId === SOCKET_BOTTOM) {
+      socketXY.y -= shift;
+    } else /* SOCKET_LEFT */ {
+      socketXY.x += shift;
+    }
+    return socketXY;
   }
 
   describe('coordinates should be got when:', function() {
@@ -172,7 +180,6 @@ describe('BBox', function() {
         #iframe2
           #static, #absolute
     */
-    console.log('======================== nested-window');
     [
       [':html-margin', ':html-border', ':html-padding', ':body-margin', ':body-border', ':body-padding',
         'iframe1:html-margin', 'iframe1:html-border', 'iframe1:html-padding',
@@ -212,8 +219,8 @@ describe('BBox', function() {
       it(title, function(done) {
 
         loadPage('spec/bbox/nested-window.html', function(window, document) {
-          var elms = {}, docProps = {};
-          console.log('---- ' + title);
+          var elms = {}, docProps = {}, show = !!document.title;
+          if (show) { console.log('---- ' + title); }
 
           elms.static = document.getElementById('static');
           elms.absolute = document.getElementById('absolute');
@@ -353,21 +360,6 @@ describe('BBox', function() {
                 return props;
               }
 
-              function getShiftSocketXY(bBox, socketId) {
-                var shift = window.insProps[ll._id].options.size / 2,
-                  socketXY = getSocketXY(bBox, socketId);
-                if (socketId === SOCKET_TOP) {
-                  socketXY.y += shift;
-                } else if (socketId === SOCKET_RIGHT) {
-                  socketXY.x -= shift;
-                } else if (socketId === SOCKET_BOTTOM) {
-                  socketXY.y -= shift;
-                } else /* SOCKET_LEFT */ {
-                  socketXY.x += shift;
-                }
-                return socketXY;
-              }
-
               var bBox = expandProps(item[key + 'WinPath'], item[key + 'Div']).reduce(function(bBox, prop) {
                   var targetProp = prop.split(':', 2)[1],
                     leftTop = (/\-(left|top)$/.exec(targetProp) || [])[1];
@@ -386,19 +378,223 @@ describe('BBox', function() {
               expect(expected).toEqual(bBox);
 
               expect(copyObj(window.insProps[ll._id][key + 'SocketXY']))
-                .toEqual(getShiftSocketXY(bBox, window.insProps[ll._id][key + 'SocketXY'].socketId));
+                .toEqual(getShiftSocketXY(
+                  bBox, window.insProps[ll._id][key + 'SocketXY'].socketId, window.insProps[ll._id]));
             });
 
-            console.log('---- start:');
-            console.log(item.start);
-            console.log('---- end:');
-            console.log(item.end);
-            console.log('---- document:');
-            console.log(item.baseWindow.document);
-            console.log('---- svg:');
-            console.log(window.insProps[ll._id].svg);
-            console.log('---- path:');
-            console.log(window.insProps[ll._id].path);
+            if (show) {
+              console.log('---- start:');
+              console.log(item.start);
+              console.log('---- end:');
+              console.log(item.end);
+              console.log('---- document:');
+              console.log(item.baseWindow.document);
+              console.log('---- svg:');
+              console.log(window.insProps[ll._id].svg);
+              console.log('---- path:');
+              console.log(window.insProps[ll._id].path);
+            }
+          });
+
+          done();
+        }/* , title */);
+
+      });
+    });
+  });
+
+  describe('coordinates with scroll', function() {
+    /*
+      #static
+      #overflow1
+        #overflow1-static
+        #overflow2
+          #overflow2-absolute
+      #iframe1
+        #static
+        #overflow1
+          #overflow1-static
+          #overflow2
+            #overflow2-absolute
+    */
+    var scrollLen = 10,
+      condition = [':body-border', ':body-padding', ':body-relative', 'iframe1:html-border', 'iframe1:html-padding'];
+    [condition, condition.concat('scroll')].forEach(function(condition) {
+      var scroll = condition.indexOf('scroll') > -1 ? scrollLen : 0,
+        title = 'scroll: ' + scroll;
+      it(title, function(done) {
+
+        loadPage('spec/bbox/scroll.html', function(window, document) {
+          var elms = {};
+
+          elms.static = document.getElementById('static');
+          elms.overflow1 = document.getElementById('overflow1');
+          elms.overflow1_static = document.getElementById('overflow1-static');
+          elms.overflow1_overflow2 = document.getElementById('overflow2');
+          elms.overflow1_overflow2_absolute = document.getElementById('overflow2-absolute');
+          elms.iframe1Win = document.getElementById('iframe1').contentWindow;
+          elms.iframe1 = document.getElementById('iframe1').contentDocument;
+          elms.iframe1_static = elms.iframe1.getElementById('static');
+          elms.iframe1_overflow1 = elms.iframe1.getElementById('overflow1');
+          elms.iframe1_overflow1_static = elms.iframe1.getElementById('overflow1-static');
+          elms.iframe1_overflow1_overflow2 = elms.iframe1.getElementById('overflow2');
+          elms.iframe1_overflow1_overflow2_absolute = elms.iframe1.getElementById('overflow2-absolute');
+
+          if (scroll) {
+            window.scroll(scroll, scroll);
+            elms.iframe1Win.scroll(scroll, scroll);
+            ['overflow1', 'overflow1_overflow2', 'iframe1_overflow1', 'iframe1_overflow1_overflow2']
+              .forEach(function(overflow) { elms[overflow].scrollLeft = elms[overflow].scrollTop = scroll; });
+          }
+
+          [
+            {
+              start: elms.static,
+              end: elms.overflow1_static,
+              startDiv: 'static',
+              endDiv: 'static',
+              baseWindow: window,
+              startWinPath: [''],
+              endWinPath: ['', 'overflow1']
+            },
+            {
+              start: elms.static,
+              end: elms.overflow1_overflow2_absolute,
+              startDiv: 'static',
+              endDiv: 'absolute',
+              baseWindow: window,
+              startWinPath: [''],
+              endWinPath: ['', 'overflow1', 'overflow1_overflow2']
+            },
+            {
+              start: elms.static,
+              end: elms.iframe1_static,
+              startDiv: 'static',
+              endDiv: 'static',
+              baseWindow: window,
+              startWinPath: [''],
+              endWinPath: ['', 'iframe1']
+            },
+            {
+              start: elms.static,
+              end: elms.iframe1_overflow1_static,
+              startDiv: 'static',
+              endDiv: 'static',
+              baseWindow: window,
+              startWinPath: [''],
+              endWinPath: ['', 'iframe1', 'iframe1_overflow1']
+            },
+            {
+              start: elms.static,
+              end: elms.iframe1_overflow1_overflow2_absolute,
+              startDiv: 'static',
+              endDiv: 'absolute',
+              baseWindow: window,
+              startWinPath: [''],
+              endWinPath: ['', 'iframe1', 'iframe1_overflow1', 'iframe1_overflow1_overflow2']
+            },
+            {
+              start: elms.iframe1_static,
+              end: elms.iframe1_overflow1_static,
+              startDiv: 'static',
+              endDiv: 'static',
+              baseWindow: elms.iframe1Win,
+              startWinPath: ['iframe1'],
+              endWinPath: ['iframe1', 'iframe1_overflow1']
+            },
+            {
+              start: elms.iframe1_static,
+              end: elms.iframe1_overflow1_overflow2_absolute,
+              startDiv: 'static',
+              endDiv: 'absolute',
+              baseWindow: elms.iframe1Win,
+              startWinPath: ['iframe1'],
+              endWinPath: ['iframe1', 'iframe1_overflow1', 'iframe1_overflow1_overflow2']
+            }
+          ].forEach(function(item, i) {
+            var ll = new window.LeaderLine(item.start, item.end, {endPlug: 'behind'});
+
+            expect(window.insProps[ll._id].baseWindow).toBe(item.baseWindow);
+
+            ['start', 'end'].forEach(function(key) {
+
+              function expandProps(frames, div) {
+                var REL_HTML = ['html-margin', 'html-border'],
+                  REL_BODY = REL_HTML.concat(['html-padding', 'body-margin', 'body-border']),
+                  props = [];
+
+                function addAbsolute(win) {
+                  if (condition.indexOf(win + ':body-relative') > -1) {
+                    props = props.concat(REL_BODY.map(function(prop) { return win + ':' + prop; }));
+                  } else if (condition.indexOf(win + ':html-relative') > -1) {
+                    props = props.concat(REL_HTML.map(function(prop) { return win + ':' + prop; }));
+                  }
+                }
+
+                frames.forEach(function(frame, i) {
+                  var names, name, frmClass, win;
+                  if (i < frames.length - 1) { // iframe coordinates
+                    if (!/(?:^|_)overflow/.test(frame)) { addAbsolute(frame); }
+                    names = frames[i + 1].split('_');
+                    name = names[names.length - 1];
+                    frmClass = (/^(.+?)\d*$/.exec(name) || [])[1];
+                    props.push(':' + name + '-left', ':' + name + '-top', ':' + frmClass + '-border');
+                    if (frmClass !== 'overflow') { props.push(':' + frmClass + '-padding'); }
+                  } else { // div coordinates
+                    names = frame.split('_');
+                    name = names[names.length - 1];
+                    frmClass = (/^(.+?)\d?$/.exec(name) || [])[1];
+                    if (frmClass !== 'overflow') {
+                      if (div === 'static') {
+                        props = props.concat(
+                          REL_BODY.concat(['body-padding']).map(function(prop) { return frame + ':' + prop; }));
+                      } else {
+                        addAbsolute(frame);
+                        props.push(':div-leftTop');
+                      }
+                    } else {
+                      if (div === 'static') {
+                        props.push(':' + frmClass + '-padding');
+                      } else {
+                        props.push(':div-leftTop');
+                      }
+                    }
+                  }
+
+                  if (scroll && i > 0 &&
+                      (!frame || /iframe\d*$/.test(frame) || /overflow\d*$/.test(frame))) {
+                    props.push(':scroll');
+                  }
+                });
+                return props;
+              }
+
+              var bBox = expandProps(item[key + 'WinPath'], item[key + 'Div']).reduce(function(bBox, prop) {
+                  var targetProp = prop.split(':', 2)[1],
+                    leftTop = (/\-(left|top)$/.exec(targetProp) || [])[1];
+                  if (targetProp === 'scroll') {
+                    bBox.left -= scroll;
+                    bBox.top -= scroll;
+                  } else if (condition.indexOf(prop) > -1 ||
+                      leftTop ||
+                      targetProp === 'iframe-border' || targetProp === 'iframe-padding' ||
+                      targetProp === 'overflow-border' || targetProp === 'overflow-padding' ||
+                      targetProp === 'div-leftTop') {
+                    if (!leftTop || leftTop === 'left') { bBox.left += DOC_LEN[targetProp]; }
+                    if (!leftTop || leftTop === 'top') { bBox.top += DOC_LEN[targetProp]; }
+                  }
+                  return bBox;
+                }, {left: 0, top: 0, width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]}),
+                expected = reduceBBox(window.insProps[ll._id][key + 'MaskBBox']);
+
+              expected.index = bBox.index = i; // for error information
+              expected.key = bBox.key = key; // for error information
+              expect(expected).toEqual(bBox);
+
+              expect(copyObj(window.insProps[ll._id][key + 'SocketXY']))
+                .toEqual(getShiftSocketXY(
+                  bBox, window.insProps[ll._id][key + 'SocketXY'].socketId, window.insProps[ll._id]));
+            });
           });
 
           done();
