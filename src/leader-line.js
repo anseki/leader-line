@@ -84,6 +84,7 @@
     POSITION_PROPS = ['startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
     POSITION_OPTIONS = ['path', 'size', 'startSocketGravity', 'endSocketGravity'],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
+    KEY_AUTO = 'auto',
 
     MIN_GRAVITY = 80, MIN_GRAVITY_SIZE = 4, MIN_GRAVITY_R = 5,
     MIN_OH_GRAVITY = 120, MIN_OH_GRAVITY_OH = 8, MIN_OH_GRAVITY_R = 3.75,
@@ -543,8 +544,24 @@
    * @param {Object} [options] - Initial options.
    */
   function LeaderLine(start, end, options) {
-    var props = {options: {}};
-    Object.defineProperty(this, '_id', { value: insId++ });
+    var that = this, props = {options: {}};
+
+    function createSetter(name) {
+      return function(value) {
+        var options = {};
+        options[name] = value;
+        that.setOptions(options);
+      };
+    }
+
+    function shallowCopy(obj) {
+      return Array.isArray(obj) ? obj.slice() : Object.keys(obj).reduce(function(copyObj, key) {
+        copyObj[key] = obj[key];
+        return copyObj;
+      }, {});
+    }
+
+    Object.defineProperty(this, '_id', {value: insId++});
     insProps[this._id] = props;
 
     props.startMarkerId = APP_ID + '-start-marker-' + this._id;
@@ -558,8 +575,40 @@
     options = options || {};
     if (start) { options.start = start; }
     if (end) { options.end = end; }
-
     this.setOptions(options);
+
+    // Setup option accessor methods (direct)
+    ['start', 'end', 'color', 'size', 'startSocketGravity', 'endSocketGravity',
+        'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize']
+      .forEach(function(name) {
+        Object.defineProperty(that, name, {
+          get: function() {
+            var value = insProps[that._id].options[name]; // Don't use closure.
+            return value == null ? KEY_AUTO : // eslint-disable-line eqeqeq
+              // eslint-disable-next-line eqeqeq
+              typeof value === 'object' && value.nodeType == null ? shallowCopy(value) : value;
+          },
+          set: createSetter(name),
+          enumerable: true
+        });
+      });
+    // Setup option accessor methods (key-id)
+    [['path', PATH_KEY_2_ID], ['startSocket', SOCKET_KEY_2_ID], ['endSocket', SOCKET_KEY_2_ID],
+        ['startPlug', PLUG_KEY_2_ID], ['endPlug', PLUG_KEY_2_ID]]
+      .forEach(function(defs) {
+        var name = defs[0], key2Id = defs[1];
+        Object.defineProperty(that, name, {
+          get: function() {
+            var value = insProps[that._id].options[name], key; // Don't use closure.
+            return !value ? KEY_AUTO : Object.keys(key2Id).some(function(optKey) {
+              if (key2Id[optKey] === value) { key = optKey; return true; }
+              return false;
+            }) ? key : new Error('It\'s broken');
+          },
+          set: createSetter(name),
+          enumerable: true
+        });
+      });
   }
 
   /**
@@ -567,8 +616,7 @@
    * @returns {void}
    */
   LeaderLine.prototype.setOptions = function(newOptions) {
-    var KEY_AUTO = 'auto',
-      props = insProps[this._id], options = props.options,
+    var props = insProps[this._id], options = props.options,
       needsWindow, needsStyles, needsPlugs, needsPosition, newWindow;
 
     function setValidId(prop, key2Id, setDefault, acceptsAuto) {
