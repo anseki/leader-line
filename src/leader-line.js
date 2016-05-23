@@ -98,6 +98,7 @@
     insProps = {}, insId = 0, svg2Supported;
   // [DEBUG]
   window.insProps = insProps;
+  window.traceLog = [];
   // [/DEBUG]
 
   /**
@@ -329,6 +330,7 @@
    * @returns {void}
    */
   function bindWindow(props, newWindow) {
+    window.traceLog.push('<bindWindow>'); // [DEBUG/]
     var SVG_NS = 'http://www.w3.org/2000/svg',
       baseDocument = newWindow.document,
       bodyOffset = {x: 0, y: 0},
@@ -427,9 +429,11 @@
    * @returns {void}
    */
   function setStyles(props, styleProps) {
+    window.traceLog.push('<setStyles>'); // [DEBUG/]
     var PROP_2_CSSPROP = {color: 'stroke', size: 'strokeWidth'},
       options = props.options, styles = props.path.style;
     (styleProps || ['color', 'size']).forEach(function(styleProp) {
+      window.traceLog.push('[' + styleProp + '] ' + options[styleProp]); // [DEBUG/]
       styles[PROP_2_CSSPROP[styleProp]] = options[styleProp];
     });
   }
@@ -492,6 +496,7 @@
    * @returns {void}
    */
   function setPlugs(props, plugProps) {
+    window.traceLog.push('<setPlugs>'); // [DEBUG/]
     var options = props.options;
     plugProps = (plugProps ||
         ['startPlug', 'endPlug', 'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize'])
@@ -506,6 +511,7 @@
 
       if (plugId === PLUG_BEHIND) {
         if (plugProps[key + 'Plug']) {
+          window.traceLog.push('[' + key + 'Plug] ' + plugId); // [DEBUG/]
           props.path.style['marker' + ucKey] = 'none';
           props[key + 'PlugOverhead'] = -(options.size / 2);
           props[key + 'PlugOutlineR'] = 0;
@@ -513,6 +519,7 @@
       } else {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
         if (plugProps[key + 'Plug']) {
+          window.traceLog.push('[' + key + 'Plug] ' + plugId); // [DEBUG/]
           props[key + 'MarkerUse'].href.baseVal = '#' + symbolConf.elmId;
           setMarkerOrient(props[key + 'Marker'],
             symbolConf.noRotate ? '0' : key === 'start' ? 'auto-start-reverse' : 'auto',
@@ -522,9 +529,11 @@
           plugProps[key + 'PlugSize'] = plugProps[key + 'PlugColor'] = true;
         }
         if (plugProps[key + 'PlugColor']) {
+          window.traceLog.push('[' + key + 'PlugColor] ' + (options[key + 'PlugColor'] || options.color)); // [DEBUG/]
           props[key + 'MarkerUse'].style.fill = options[key + 'PlugColor'] || options.color;
         }
         if (plugProps[key + 'PlugSize']) {
+          window.traceLog.push('[' + key + 'PlugSize] ' + options[key + 'PlugSize']); // [DEBUG/]
           props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * options[key + 'PlugSize'];
           props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * options[key + 'PlugSize'];
           // Change shape.
@@ -616,6 +625,7 @@
    * @returns {void}
    */
   LeaderLine.prototype.setOptions = function(newOptions) {
+    window.traceLog.push('<setOptions>'); // [DEBUG/]
     var props = insProps[this._id], options = props.options,
       needsWindow, needsStyles, needsPlugs, needsPosition, newWindow;
 
@@ -689,7 +699,11 @@
     needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
     needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
 
-    if (setValidType('color', true)) { needsStyles = addPropList('color', needsStyles); }
+    if (setValidType('color', true)) {
+      needsStyles = addPropList('color', needsStyles);
+      needsPlugs = addPropList('startPlugColor', needsPlugs);
+      needsPlugs = addPropList('endPlugColor', needsPlugs);
+    }
     if (setValidType('size', true)) {
       needsStyles = addPropList('size', needsStyles);
       // Plug-size is changed with path-size automatically
@@ -751,6 +765,7 @@
   };
 
   LeaderLine.prototype.position = function() {
+    window.traceLog.push('<position>'); // [DEBUG/]
     var props = insProps[this._id], options = props.options,
       bBoxes = {}, newSocketXY = {}, newMaskBBox = {},
       maskPathData, newPathData, newViewBBox = {},
@@ -841,6 +856,7 @@
         newMaskBBox.start != null || newMaskBBox.end != null || // eslint-disable-line eqeqeq
         POSITION_PROPS.some(function(prop) { return props.positionValues[prop] !== props[prop]; }) ||
         POSITION_OPTIONS.some(function(prop) { return props.positionValues[prop] !== options[prop]; })) {
+      window.traceLog.push('[update]'); // [DEBUG/]
 
       // Generate path segments
       switch (options.path) {
@@ -998,6 +1014,7 @@
                 return newPathSegValue !== pathSeg.values[i];
               });
           })) {
+        window.traceLog.push('[setPathData]'); // [DEBUG/]
         props.path.setPathData(newPathData);
         props.pathData = newPathData;
       }
@@ -1008,6 +1025,7 @@
       [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
         var boxKey = keys[0], cssProp = keys[1];
         if (newViewBBox[boxKey] !== props.viewBBox[boxKey]) {
+          window.traceLog.push('[viewBox] ' + boxKey); // [DEBUG/]
           props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
           styles[cssProp] = newViewBBox[boxKey] +
             (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
@@ -1019,6 +1037,7 @@
       if (viewHasChanged && (props.startMaskBBox || props.endMaskBBox) ||
           newMaskBBox.start != null || newMaskBBox.end != null) { // eslint-disable-line eqeqeq
         if (!props.startMaskBBox && !props.endMaskBBox) {
+          window.traceLog.push('[mask] none'); // [DEBUG/]
           props.path.style.clipPath = 'none';
         } else {
           maskPathData = [
@@ -1031,6 +1050,7 @@
           ['startMaskBBox', 'endMaskBBox'].forEach(function(prop) {
             var maskBBox = props[prop];
             if (maskBBox) {
+              window.traceLog.push('[mask] ' + prop); // [DEBUG/]
               maskPathData.push(
                 {type: 'M', values: [maskBBox.left, maskBBox.top]},
                 {type: 'h', values: [maskBBox.width]},

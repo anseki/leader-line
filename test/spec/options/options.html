@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="/src/leader-line.css">
+  <script src="/src/defs.js"></script>
+  <script src="/src/leader-line.js"></script>
+  <script src="/src/path-data-polyfill.js"></script>
+  <style>
+    div {
+      position: absolute;
+      width: 100px;
+      height: 30px;
+      background-color: rgba(150, 255, 127, 0.5);
+    }
+
+    #iframe1 {
+      position: absolute;
+      left: 500px;
+      top: 50px;
+      width: 400px;
+      height: 400px;
+    }
+  </style>
+</head>
+<body>
+  <div id="elm1" style="left: 1px; top: 2px;">elm1</div>
+  <div id="elm2" style="left: 104px; top: 108px;">elm2</div>
+  <div id="elm3" style="left: 216px; top: 232px;">elm3</div>
+  <div id="elm4" style="left: 364px; top: 428px;">elm4</div>
+
+  <iframe id="iframe1" src="options-c1.html"></iframe>
+</body>
+</html>
