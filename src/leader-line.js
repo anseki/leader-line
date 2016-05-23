@@ -425,7 +425,7 @@
   /**
    * Apply `color`, `size`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {Array} [styleProps] - To limit properties.
+   * @param {Array} [styleProps] - To limit properties. `[]` and `['']` are also accepted.
    * @returns {void}
    */
   function setStyles(props, styleProps) {
@@ -433,8 +433,10 @@
     var PROP_2_CSSPROP = {color: 'stroke', size: 'strokeWidth'},
       options = props.options, styles = props.path.style;
     (styleProps || ['color', 'size']).forEach(function(styleProp) {
-      window.traceLog.push('[' + styleProp + '] ' + options[styleProp]); // [DEBUG/]
-      styles[PROP_2_CSSPROP[styleProp]] = options[styleProp];
+      if (styleProp) {
+        window.traceLog.push('[' + styleProp + '] ' + options[styleProp]); // [DEBUG/]
+        styles[PROP_2_CSSPROP[styleProp]] = options[styleProp];
+      }
     });
   }
 
@@ -492,7 +494,7 @@
   /**
    * Apply `startPlug`, `endPlug`, `startPlugColor`, `endPlugColor`, `startPlugSize`, `endPlugSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {Array} [plugProps] - To limit properties.
+   * @param {Array} [plugProps] - To limit properties. `[]` and `['']` are also accepted.
    * @returns {void}
    */
   function setPlugs(props, plugProps) {
@@ -501,7 +503,7 @@
     plugProps = (plugProps ||
         ['startPlug', 'endPlug', 'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize'])
       .reduce(function(plugProps, prop) {
-        plugProps[prop] = true;
+        if (plugProps) { plugProps[prop] = true; }
         return plugProps;
       }, {});
 
@@ -513,9 +515,10 @@
         if (plugProps[key + 'Plug']) {
           window.traceLog.push('[' + key + 'Plug] ' + plugId); // [DEBUG/]
           props.path.style['marker' + ucKey] = 'none';
-          props[key + 'PlugOverhead'] = -(options.size / 2);
-          props[key + 'PlugOutlineR'] = 0;
         }
+        // Update shape always for `options.size` that might have been changed.
+        props[key + 'PlugOverhead'] = -(options.size / 2);
+        props[key + 'PlugOutlineR'] = 0;
       } else {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
         if (plugProps[key + 'Plug']) {
@@ -536,12 +539,12 @@
           window.traceLog.push('[' + key + 'PlugSize] ' + options[key + 'PlugSize']); // [DEBUG/]
           props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * options[key + 'PlugSize'];
           props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * options[key + 'PlugSize'];
-          // Change shape.
-          props[key + 'PlugOverhead'] =
-            options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options[key + 'PlugSize'];
-          props[key + 'PlugOutlineR'] =
-            options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options[key + 'PlugSize'];
         }
+        // Update shape always for `options.size` that might have been changed.
+        props[key + 'PlugOverhead'] =
+          options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options[key + 'PlugSize'];
+        props[key + 'PlugOutlineR'] =
+          options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options[key + 'PlugSize'];
       }
     });
   }
@@ -706,11 +709,7 @@
     }
     if (setValidType('size', true)) {
       needsStyles = addPropList('size', needsStyles);
-      // Plug-size is changed with path-size automatically
-      // but needs to change `*PlugOverhead` and `*PlugOutlineR`.
-      // (`*PlugSize` doesn't change those when it's `PLUG_BEHIND`.)
-      needsPlugs = addPropList('startPlug', needsPlugs);
-      needsPlugs = addPropList('endPlug', needsPlugs);
+      needsPlugs = addPropList('', needsPlugs); // For `*PlugOverhead` and `*PlugOutlineR`.
       needsPosition = true;
     }
 
