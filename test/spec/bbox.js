@@ -532,7 +532,7 @@ describe('BBox', function() {
                 }
 
                 frames.forEach(function(frame, i) {
-                  var names, name, frmClass, win;
+                  var names, name, frmClass;
                   if (i < frames.length - 1) { // iframe coordinates
                     if (!/(?:^|_)overflow/.test(frame)) { addAbsolute(frame); }
                     names = frames[i + 1].split('_');
