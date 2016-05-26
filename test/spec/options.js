@@ -29,7 +29,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox'
+      '[mask] start'
     ]);
 
     // Change to element in iframe, baseWindow is not changed
@@ -39,7 +39,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox'
+      '[mask] start'
     ]);
 
     // Change to element in iframe, baseWindow not changed
@@ -52,7 +52,7 @@ describe('options', function() {
       '<setPlugs>', '[startPlug] behind', '[endPlug] arrow1', '[endPlugColor] coral', '[endPlugSize] 1',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox'
+      '[mask] start'
     ]);
 
     // Change right and bottom
@@ -67,7 +67,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox'
+      '[mask] start'
     ]);
 
     pageDone();
@@ -80,7 +80,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox'
+      '[mask] start'
     ]);
 
     // Change path
@@ -108,7 +108,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox', '[mask] endMaskBBox'
+      '[mask] start', '[mask] end'
     ]);
 
     pageDone();
@@ -172,7 +172,7 @@ describe('options', function() {
       '<setPlugs>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox'
+      '[mask] start'
     ]);
 
     pageDone();
@@ -190,7 +190,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox', '[mask] endMaskBBox'
+      '[mask] start', '[mask] end'
     ]);
 
     // Change bottom
@@ -204,7 +204,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] height',
-      '[mask] startMaskBBox', '[mask] endMaskBBox'
+      '[mask] start', '[mask] end'
     ]);
 
     pageDone();
@@ -232,7 +232,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] width',
-      '[mask] startMaskBBox', '[mask] endMaskBBox'
+      '[mask] start', '[mask] end'
     ]);
 
     // No change size
@@ -251,7 +251,7 @@ describe('options', function() {
       '<setOptions>',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] height',
-      '[mask] startMaskBBox', '[mask] endMaskBBox'
+      '[mask] start', '[mask] end'
     ]);
 
     pageDone();
@@ -326,7 +326,7 @@ describe('options', function() {
       '<setPlugs>', '[endPlugSize] 2',
       '<position>', '[update]',
       '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox'
+      '[mask] start'
     ]);
 
     // No change (hidden plug)
@@ -347,7 +347,7 @@ describe('options', function() {
       '<setPlugs>', '[endPlugSize] 1',
       '<position>', '[update]',
       '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] startMaskBBox'
+      '[mask] start'
     ]);
 
     pageDone();
