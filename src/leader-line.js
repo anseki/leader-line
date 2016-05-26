@@ -28,8 +28,9 @@
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_KEY_2_ID = {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
 
-    PATH_STRAIGHT = 1, PATH_ARC = 2, PATH_FLUID = 3, PATH_GRID = 4,
-    PATH_KEY_2_ID = {straight: PATH_STRAIGHT, arc: PATH_ARC, fluid: PATH_FLUID, grid: PATH_GRID},
+    PATH_STRAIGHT = 1, PATH_ARC = 2, PATH_FLUID = 3, PATH_MAGNET = 4, PATH_GRID = 5,
+    PATH_KEY_2_ID = {
+      straight: PATH_STRAIGHT, arc: PATH_ARC, fluid: PATH_FLUID, magnet: PATH_MAGNET, grid: PATH_GRID},
 
     STYLE_ID = APP_ID + '-styles',
     /* [DEBUG/]
@@ -889,10 +890,11 @@
           break;
 
         case PATH_FLUID:
-          (function() {
+        case PATH_MAGNET:
+          (function(socketsGravity) {
             var cx = {}, cy = {};
             ['start', 'end'].forEach(function(key) {
-              var gravity = options[key + 'SocketGravity'], socketXY = props[key + 'SocketXY'],
+              var gravity = socketsGravity[key], socketXY = props[key + 'SocketXY'],
                 offset = {}, anotherSocketXY, overhead, minGravity, len;
               if (Array.isArray(gravity)) { // offset
                 offset = {x: gravity[0], y: gravity[1]};
@@ -933,7 +935,10 @@
             });
             pathSegs.push([props.startSocketXY,
               {x: cx.start, y: cy.start}, {x: cx.end, y: cy.end}, props.endSocketXY]);
-          })();
+          })({
+            start: options.startSocketGravity,
+            end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity
+          });
           break;
 
         case PATH_GRID:
@@ -1154,7 +1159,7 @@
         var pathSegsLen = [];
         ['start', 'end'].forEach(function(key) {
           var prop = key + 'PlugOverhead', start = key === 'start', overhead = props[prop],
-            pathSeg, i, point, sp, cp, angle, len, socketId, minAdjustOffset;
+            pathSeg, i, point, sp, cp, angle, len, socketId, axis, dir, minAdjustOffset;
           if (overhead > 0) {
             pathSeg = pathSegs[(i = start ? 0 : pathSegs.length - 1)];
 
@@ -1208,9 +1213,14 @@
             minAdjustOffset = -(bBoxes[key][
               socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'width' : 'height']);
             if (overhead < minAdjustOffset) { overhead = minAdjustOffset; }
-            point = pathSeg[start ? 0 : pathSeg.length - 1];
-            point[socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y'] +=
-              overhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
+            axis = socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y';
+            dir = overhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
+            if (pathSeg.length === 2) { // Straight line
+              pathSeg[start ? 0 : pathSeg.length - 1][axis] += dir;
+            } else { // Cubic bezier
+              (start ? [0, 1] : [pathSeg.length - 2, pathSeg.length - 1]).forEach(
+                function(i) { pathSeg[i][axis] += dir; });
+            }
             pathSegsLen[i] = null; // to re-calculate
           }
         });
