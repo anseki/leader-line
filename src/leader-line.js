@@ -90,6 +90,7 @@
     MIN_OH_GRAVITY = 120, MIN_OH_GRAVITY_OH = 8, MIN_OH_GRAVITY_R = 3.75,
     MIN_ADJUST_LEN = 10, MIN_GRID_LEN = 30,
 
+    CIRCLE_CP = 0.5522847, CIRCLE_8_RAD = 1 / 4 * Math.PI,
     IS_IE = !!document.uniqueID,
 
     /**
@@ -865,6 +866,28 @@
           pathSegs.push([props.startSocketXY, props.endSocketXY]);
           break;
 
+        case PATH_ARC:
+          (function() {
+            var
+              downward =
+                typeof options.startSocketGravity === 'number' && options.startSocketGravity > 0 ||
+                typeof options.endSocketGravity === 'number' && options.endSocketGravity > 0,
+              circle8rad = CIRCLE_8_RAD * (downward ? -1 : 1),
+              angle = Math.atan2(props.endSocketXY.y - props.startSocketXY.y,
+                props.endSocketXY.x - props.startSocketXY.x),
+              cp1Angle = -angle + circle8rad,
+              cp2Angle = Math.PI - angle - circle8rad,
+              crLen = getPointsLength(props.startSocketXY, props.endSocketXY) / Math.sqrt(2) * CIRCLE_CP,
+              cp1 = {
+                x: props.startSocketXY.x + Math.cos(cp1Angle) * crLen,
+                y: props.startSocketXY.y + Math.sin(cp1Angle) * crLen * -1},
+              cp2 = {
+                x: props.endSocketXY.x + Math.cos(cp2Angle) * crLen,
+                y: props.endSocketXY.y + Math.sin(cp2Angle) * crLen * -1};
+            pathSegs.push([props.startSocketXY, cp1, cp2, props.endSocketXY]);
+          })();
+          break;
+
         case PATH_FLUID:
           (function() {
             var cx = {}, cy = {};
@@ -968,23 +991,18 @@
                 point.x === dirPoint.x : point.y === dirPoint.y;
             }
 
-            function getKeysWithScope(scopeContains) { // Must `scopeContains.start !== scopeContains.end`
-              var axisScope = {};
-              if (scopeContains.start) {
-                axisScope.contain = 'start';
-                axisScope.notContain = 'end';
-              } else {
-                axisScope.contain = 'end';
-                axisScope.notContain = 'start';
-              }
-              return axisScope;
+            // Must `scopeContains.start !== scopeContains.end`
+            function getKeysWithScope(scopeContains) {
+              return scopeContains.start ?
+                {contain: 'start', notContain: 'end'} : {contain: 'end', notContain: 'start'};
             }
 
             function getAxisDistance(point1, point2, axis) {
               return Math.abs(point2[axis] - point1[axis]);
             }
 
-            function getDirIdWithAxis(fromPoint, toPoint, axis) { // Must `fromPoint.[x|y] !== toPoint.[x|y]`
+            // Must `fromPoint.[x|y] !== toPoint.[x|y]`
+            function getDirIdWithAxis(fromPoint, toPoint, axis) {
               return axis === 'x' ?
                 (fromPoint.x < toPoint.x ? DIR_RIGHT : DIR_LEFT) :
                 (fromPoint.y < toPoint.y ? DIR_DOWN : DIR_UP);
@@ -997,18 +1015,16 @@
               (function(dirLen) {
                 dirPoint.dirId = dirLen[0];
                 len = dirLen[1];
-              })(
-                Array.isArray(len) ? ( // offset
+              })(Array.isArray(len) ? ( // offset
                   len[0] < 0 ? [DIR_LEFT, -len[0]] : // ignore Y
                   len[0] > 0 ? [DIR_RIGHT, len[0]] : // ignore Y
                   len[1] < 0 ? [DIR_UP, -len[1]] :
                   len[1] > 0 ? [DIR_DOWN, len[1]] :
-                    [socketXY.socketId, 0] // (0, 0)
+                                [socketXY.socketId, 0] // (0, 0)
                 ) :
                 typeof len !== 'number' ? [socketXY.socketId, MIN_GRID_LEN] : // auto
                 len >= 0 ? [socketXY.socketId, len] : // distance
-                  [reverseDir(socketXY.socketId), -len]
-              );
+                            [reverseDir(socketXY.socketId), -len]);
               dpList[key].push(dirPoint);
               curDirPoint[key] = getNextDirPoint(dirPoint, len);
             });
@@ -1092,7 +1108,7 @@
                     curDirPoint[axisScope.notContain] =
                       getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
                         getAxisDistance(curDirPoint[axisScope.notContain],
-                          curDirPoint[axisScope.contain], axis[axisScope.contain]) >= MIN_GRID_LEN ?
+                            curDirPoint[axisScope.contain], axis[axisScope.contain]) >= MIN_GRID_LEN ?
                           getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
                             axis[axisScope.contain]) :
                           curDirPoint[axisScope.contain].dirId);
