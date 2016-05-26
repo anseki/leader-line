@@ -326,7 +326,8 @@
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionValues`,
    *    `pathData`, `startPlugOverhead`, `endPlugOverhead`, `startPlugOutlineR`, `endPlugOutlineR`,
    *    `startMaskBBox`, `endMaskBBox`,
-   *    `svg`, `path`, `startMarker`, `endMarker`, `startMarkerUse`, `endMarkerUse`, `maskPath`.
+   *    `svg`, `path`, `startMarker`, `endMarker`, `startMarkerUse`, `endMarkerUse`,
+   *    `startMaskPath`, `endMaskPath`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -336,7 +337,7 @@
     var SVG_NS = 'http://www.w3.org/2000/svg',
       baseDocument = newWindow.document,
       bodyOffset = {x: 0, y: 0},
-      sheet, defs, clip, stylesHtml, stylesBody, svg, elmDefs;
+      sheet, defs, stylesHtml, stylesBody, svg, elmDefs;
 
     if (props.baseWindow && props.svg) {
       props.baseWindow.document.body.removeChild(props.svg);
@@ -395,6 +396,7 @@
     if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
     elmDefs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
     ['start', 'end'].forEach(function(key) {
+      var clip;
       props[key + 'Marker'] = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
       props[key + 'Marker'].id = props[key + 'MarkerId'];
       props[key + 'Marker'].markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
@@ -403,11 +405,12 @@
       }
       props[key + 'MarkerUse'] =
         props[key + 'Marker'].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+
+      clip = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'clipPath'));
+      clip.id = props[key + 'ClipId'];
+      props[key + 'MaskPath'] = clip.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+      props[key + 'MaskPath'].className.baseVal = APP_ID + '-mask';
     });
-    clip = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'clipPath'));
-    clip.id = props.clipId;
-    props.maskPath = clip.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-    props.maskPath.className.baseVal = APP_ID + '-mask';
     props.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
     props.path.className.baseVal = APP_ID + '-path';
     props.svg = baseDocument.body.appendChild(svg);
@@ -580,7 +583,8 @@
 
     props.startMarkerId = APP_ID + '-start-marker-' + this._id;
     props.endMarkerId = APP_ID + '-end-marker-' + this._id;
-    props.clipId = APP_ID + '-clip-' + this._id;
+    props.startClipId = APP_ID + '-start-clip-' + this._id;
+    props.endClipId = APP_ID + '-end-clip-' + this._id;
 
     if (arguments.length === 1) {
       options = start;
@@ -848,7 +852,7 @@
           props[key + 'MaskBBox'] = newMaskBBox[key] = bBoxes[key];
         } else {
           props[key + 'MaskBBox'] = null;
-          newMaskBBox[key] = false;
+          newMaskBBox[key] = false; // To indicate that it was changed.
         }
       }
     });
@@ -1285,35 +1289,38 @@
 
       // Apply mask for plugs
       (function() {
-        var maskPathData;
         if (viewHasChanged && (props.startMaskBBox || props.endMaskBBox) ||
             newMaskBBox.start != null || newMaskBBox.end != null) { // eslint-disable-line eqeqeq
           if (!props.startMaskBBox && !props.endMaskBBox) {
             window.traceLog.push('[mask] none'); // [DEBUG/]
             props.path.style.clipPath = 'none';
           } else {
-            maskPathData = [
-              {type: 'M', values: [newViewBBox.x, newViewBBox.y]},
-              {type: 'h', values: [newViewBBox.width]},
-              {type: 'v', values: [newViewBBox.height]},
-              {type: 'h', values: [-newViewBBox.width]},
-              {type: 'z'}
-            ];
-            ['startMaskBBox', 'endMaskBBox'].forEach(function(prop) {
-              var maskBBox = props[prop];
+            ['start', 'end'].forEach(function(key) {
+              var maskBBox = props[key + 'MaskBBox'];
               if (maskBBox) {
-                window.traceLog.push('[mask] ' + prop); // [DEBUG/]
-                maskPathData.push(
+                window.traceLog.push('[mask] ' + key); // [DEBUG/]
+                props[key + 'MaskPath'].setPathData([
+                  {type: 'M', values: [newViewBBox.x, newViewBBox.y]},
+                  {type: 'h', values: [newViewBBox.width]},
+                  {type: 'v', values: [newViewBBox.height]},
+                  {type: 'h', values: [-newViewBBox.width]},
+                  {type: 'z'},
                   {type: 'M', values: [maskBBox.left, maskBBox.top]},
                   {type: 'h', values: [maskBBox.width]},
                   {type: 'v', values: [maskBBox.height]},
                   {type: 'h', values: [-maskBBox.width]},
                   {type: 'z'}
-                );
+                ]);
               }
             });
-            props.maskPath.setPathData(maskPathData);
-            props.path.style.clipPath = 'url(#' + props.clipId + ')';
+            if (props.startMaskBBox && props.endMaskBBox) {
+              props.endMaskPath.style.clipPath = 'url(#' + props.startClipId + ')';
+              props.path.style.clipPath = 'url(#' + props.endClipId + ')';
+            } else {
+              props.endMaskPath.style.clipPath = 'none';
+              props.path.style.clipPath = 'url(#' +
+                props[(props.startMaskBBox ? 'start' : 'end') + 'ClipId'] + ')';
+            }
           }
         }
       })();

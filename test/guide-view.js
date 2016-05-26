@@ -60,14 +60,15 @@ var guideView = (function() {
       })();
 
       // ======== mask
-      if (props.startMaskBBox || props.endMaskBBox) {
-        (function() {
-          var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+      ['start', 'end'].forEach(function(key) {
+        var path;
+        if (props[key + 'MaskBBox']) {
+          path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
           path.className.baseVal = 'guide-mask';
-          path.setAttribute('d', props.maskPath.getAttribute('d'));
+          path.setAttribute('d', props[key + 'MaskPath'].getAttribute('d'));
           elements.push(path);
-        })();
-      }
+        }
+      });
 
       // ======== outline
       (function() {
