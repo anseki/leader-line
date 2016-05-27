@@ -125,6 +125,22 @@ module.exports = grunt => {
         },
         src: `${SRC_PATH}/symbol.html`,
         dest: `${SRC_PATH}/defs.js`
+      },
+
+      testFuncs: {
+        options: {
+          handlerByContent: content => {
+            content.replace(/@EXPORT\[file:([^\n]+?)\]@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@/g,
+              (s, file, content) => {
+                var path = pathUtil.join(SRC_PATH, file);
+                grunt.file.write(path, content);
+                grunt.log.writeln(`File "${path}" created.`);
+              });
+            return false;
+          }
+        },
+        src: `${SRC_PATH}/leader-line.js`,
+        dest: `${SRC_PATH}/dummy`
       }
     }
   });
@@ -133,6 +149,9 @@ module.exports = grunt => {
 
   grunt.registerTask('defs', [
     'taskHelper:getSvgDefs'
+  ]);
+  grunt.registerTask('funcs', [
+    'taskHelper:testFuncs'
   ]);
 
   grunt.registerTask('default', [

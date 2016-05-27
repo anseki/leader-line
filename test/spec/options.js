@@ -14,7 +14,7 @@ describe('options', function() {
       pageDone = done;
       ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm2'));
       beforeDone();
-    }, 'options');
+    }/* , 'options' */);
   });
 
   it('start, end', function() {

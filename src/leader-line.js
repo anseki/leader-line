@@ -895,7 +895,7 @@
 
         case PATH_FLUID:
         case PATH_MAGNET:
-          (function(socketsGravity) {
+          (/* @EXPORT[file:../test/spec/functions/fluid]@ */function(socketsGravity) {
             var cx = {}, cy = {};
             ['start', 'end'].forEach(function(key) {
               var gravity = socketsGravity[key], socketXY = props[key + 'SocketXY'],
@@ -939,7 +939,7 @@
             });
             pathSegs.push([props.startSocketXY,
               {x: cx.start, y: cy.start}, {x: cx.end, y: cy.end}, props.endSocketXY]);
-          })({
+          }/* @/EXPORT@ */)({
             start: options.startSocketGravity,
             end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity
           });
@@ -1230,6 +1230,7 @@
         });
       })();
 
+      // Convert path segments to `pathData`.
       newPathData = [{type: 'M', values: [pathSegs[0][0].x, pathSegs[0][0].y]}];
       pathSegs.forEach(function(pathSeg) {
         newPathData.push(pathSeg.length === 2 ?
@@ -1288,42 +1289,41 @@
       })();
 
       // Apply mask for plugs
-      (function() {
-        if (viewHasChanged && (props.startMaskBBox || props.endMaskBBox) ||
-            newMaskBBox.start != null || newMaskBBox.end != null) { // eslint-disable-line eqeqeq
-          if (!props.startMaskBBox && !props.endMaskBBox) {
-            window.traceLog.push('[mask] none'); // [DEBUG/]
-            props.path.style.clipPath = 'none';
-          } else {
-            ['start', 'end'].forEach(function(key) {
-              var maskBBox = props[key + 'MaskBBox'];
-              if (maskBBox) {
-                window.traceLog.push('[mask] ' + key); // [DEBUG/]
-                props[key + 'MaskPath'].setPathData([
-                  {type: 'M', values: [newViewBBox.x, newViewBBox.y]},
-                  {type: 'h', values: [newViewBBox.width]},
-                  {type: 'v', values: [newViewBBox.height]},
-                  {type: 'h', values: [-newViewBBox.width]},
-                  {type: 'z'},
-                  {type: 'M', values: [maskBBox.left, maskBBox.top]},
-                  {type: 'h', values: [maskBBox.width]},
-                  {type: 'v', values: [maskBBox.height]},
-                  {type: 'h', values: [-maskBBox.width]},
-                  {type: 'z'}
-                ]);
-              }
-            });
-            if (props.startMaskBBox && props.endMaskBBox) {
-              props.endMaskPath.style.clipPath = 'url(#' + props.startClipId + ')';
-              props.path.style.clipPath = 'url(#' + props.endClipId + ')';
-            } else {
-              props.endMaskPath.style.clipPath = 'none';
-              props.path.style.clipPath = 'url(#' +
-                props[(props.startMaskBBox ? 'start' : 'end') + 'ClipId'] + ')';
+      if (viewHasChanged && (props.startMaskBBox || props.endMaskBBox) ||
+          newMaskBBox.start != null || newMaskBBox.end != null) { // eslint-disable-line eqeqeq
+        if (!props.startMaskBBox && !props.endMaskBBox) {
+          window.traceLog.push('[mask] none'); // [DEBUG/]
+          props.path.style.clipPath = 'none';
+        } else {
+          // Separate `clipPath` elements for overlapping masks.
+          ['start', 'end'].forEach(function(key) {
+            var maskBBox = props[key + 'MaskBBox'];
+            if (maskBBox) {
+              window.traceLog.push('[mask] ' + key); // [DEBUG/]
+              props[key + 'MaskPath'].setPathData([
+                {type: 'M', values: [newViewBBox.x, newViewBBox.y]},
+                {type: 'h', values: [newViewBBox.width]},
+                {type: 'v', values: [newViewBBox.height]},
+                {type: 'h', values: [-newViewBBox.width]},
+                {type: 'z'},
+                {type: 'M', values: [maskBBox.left, maskBBox.top]},
+                {type: 'h', values: [maskBBox.width]},
+                {type: 'v', values: [maskBBox.height]},
+                {type: 'h', values: [-maskBBox.width]},
+                {type: 'z'}
+              ]);
             }
+          });
+          if (props.startMaskBBox && props.endMaskBBox) {
+            props.endMaskPath.style.clipPath = 'url(#' + props.startClipId + ')';
+            props.path.style.clipPath = 'url(#' + props.endClipId + ')';
+          } else {
+            props.endMaskPath.style.clipPath = 'none';
+            props.path.style.clipPath = 'url(#' +
+              props[(props.startMaskBBox ? 'start' : 'end') + 'ClipId'] + ')';
           }
         }
-      })();
+      }
 
       POSITION_PROPS.forEach(function(prop) { props.positionValues[prop] = props[prop]; });
       POSITION_OPTIONS.forEach(function(prop) { props.positionValues[prop] = options[prop]; });

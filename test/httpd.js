@@ -3,7 +3,7 @@
 'use strict';
 
 const
-  DOC_ROOT = './',
+  DOC_ROOT = __dirname,
   PORT = 8080,
 
   http = require('http'),
