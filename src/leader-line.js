@@ -895,7 +895,7 @@
 
         case PATH_FLUID:
         case PATH_MAGNET:
-          (/* @EXPORT[file:../test/spec/functions/fluid]@ */function(socketsGravity) {
+          (/* @EXPORT[file:../test/spec/functions/PATH_FLUID]@ */function(socketsGravity) {
             var cx = {}, cy = {};
             ['start', 'end'].forEach(function(key) {
               var gravity = socketsGravity[key], socketXY = props[key + 'SocketXY'],
@@ -946,7 +946,7 @@
           break;
 
         case PATH_GRID:
-          (function() {
+          (/* @EXPORT[file:../test/spec/functions/PATH_GRID]@ */function() {
             /**
              * @typedef {Object} DirPoint
              * @property {number} dirId - DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT
@@ -1147,12 +1147,13 @@
             (function() {
               var curPoint;
               dpList.end.reverse();
-              dpList.start.concat(dpList.end).forEach(function(point, i) {
+              dpList.start.concat(dpList.end).forEach(function(dirPoint, i) {
+                var point = {x: dirPoint.x, y: dirPoint.y};
                 if (i > 0) { pathSegs.push([curPoint, point]); }
                 curPoint = point;
               });
             })();
-          })();
+          }/* @/EXPORT@ */)();
           break;
 
         // no default

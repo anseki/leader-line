@@ -1,7 +1,7 @@
 /* eslint-env jasmine */
 /* global getSource:false */
 
-describe('func-fluid', function() {
+describe('func-PATH_FLUID', function() {
   'use strict';
 
   var func,
@@ -16,7 +16,7 @@ describe('func-fluid', function() {
     /* eslint-enable no-unused-vars */
 
   beforeAll(function(done) {
-    getSource('./spec/functions/fluid', function(error, source) {
+    getSource('./spec/functions/PATH_FLUID', function(error, source) {
       if (error) { throw error; }
       func = eval('(' + source + ')'); // eslint-disable-line no-eval
       done();
