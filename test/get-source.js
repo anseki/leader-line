@@ -23,13 +23,9 @@ var getSource = (function() {
 
     httpRequest.onreadystatechange = function() {
       if (httpRequest.readyState === 4) {
-        if (httpRequest.status === 200) {
-          return cb(null, httpRequest.responseText);
-        } else {
-          return cb(new Error(httpRequest.status));
-        }
+        return void (httpRequest.status === 200 ? cb(null, httpRequest.responseText) :
+          cb(new Error(httpRequest.status)));
       }
-      return null;
     };
     httpRequest.open('GET', url, true);
     httpRequest.send('');
