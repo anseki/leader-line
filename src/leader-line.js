@@ -104,35 +104,7 @@
     /**
      * @typedef {Object.<_id: number, props>} insProps
      */
-    insProps = {}, insId = 0, svg2Supported,
-
-    /**
-     * Apply path data with `SVGPathSegList` or `SVGPathData` or polyfill.
-     * Since `SVGPathData` polyfill is slow in IE, try to use `SVGPathSegList` first.
-     * @param {SVGPathElement} path - Target `path` element.
-     * @param {Array.<Array.<Point>>} pathSegs - Array of path segment.
-     * @returns {void}
-     */
-    setPathSegs = 'SVGPathSeg' in window ?
-      function(path, pathSegs) {
-        var segList = path.pathSegList;
-        segList.initialize(path.createSVGPathSegMovetoAbs(pathSegs[0][0].x, pathSegs[0][0].y));
-        pathSegs.forEach(function(pathSeg) {
-          segList.appendItem(pathSeg.length === 2 ?
-            path.createSVGPathSegLinetoAbs(pathSeg[1].x, pathSeg[1].y) :
-            path.createSVGPathSegCurvetoCubicAbs(pathSeg[3].x, pathSeg[3].y,
-              pathSeg[1].x, pathSeg[1].y, pathSeg[2].x, pathSeg[2].y));
-        });
-      } : function(path, pathSegs) {
-        var pathData = [{type: 'M', values: [pathSegs[0][0].x, pathSegs[0][0].y]}];
-        pathSegs.forEach(function(pathSeg) {
-          pathData.push(pathSeg.length === 2 ?
-            {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]} :
-            {type: 'C', values: [pathSeg[1].x, pathSeg[1].y,
-              pathSeg[2].x, pathSeg[2].y, pathSeg[3].x, pathSeg[3].y]});
-        });
-        path.setPathData(pathData);
-      };
+    insProps = {}, insId = 0, svg2Supported;
 
   // [DEBUG]
   window.insProps = insProps;
