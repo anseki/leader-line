@@ -23,6 +23,13 @@
    * @property {number|null} height
    */
 
+  /**
+   * An object that has coordinates.
+   * @typedef {Object} Point
+   * @property {number} x
+   * @property {number} y
+   */
+
   var
     APP_ID = 'leader-line',
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
@@ -97,7 +104,36 @@
     /**
      * @typedef {Object.<_id: number, props>} insProps
      */
-    insProps = {}, insId = 0, svg2Supported;
+    insProps = {}, insId = 0, svg2Supported,
+
+    /**
+     * Apply path data with `SVGPathSegList` or `SVGPathData` or polyfill.
+     * Since `SVGPathData` polyfill is slow in IE, try to use `SVGPathSegList` first.
+     * @param {SVGPathElement} path - Target `path` element.
+     * @param {Array.<Array.<Point>>} pathSegs - Array of path segment.
+     * @returns {void}
+     */
+    setPathSegs = 'SVGPathSeg' in window ?
+      function(path, pathSegs) {
+        var segList = path.pathSegList;
+        segList.initialize(path.createSVGPathSegMovetoAbs(pathSegs[0][0].x, pathSegs[0][0].y));
+        pathSegs.forEach(function(pathSeg) {
+          segList.appendItem(pathSeg.length === 2 ?
+            path.createSVGPathSegLinetoAbs(pathSeg[1].x, pathSeg[1].y) :
+            path.createSVGPathSegCurvetoCubicAbs(pathSeg[3].x, pathSeg[3].y,
+              pathSeg[1].x, pathSeg[1].y, pathSeg[2].x, pathSeg[2].y));
+        });
+      } : function(path, pathSegs) {
+        var pathData = [{type: 'M', values: [pathSegs[0][0].x, pathSegs[0][0].y]}];
+        pathSegs.forEach(function(pathSeg) {
+          pathData.push(pathSeg.length === 2 ?
+            {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]} :
+            {type: 'C', values: [pathSeg[1].x, pathSeg[1].y,
+              pathSeg[2].x, pathSeg[2].y, pathSeg[3].x, pathSeg[3].y]});
+        });
+        path.setPathData(pathData);
+      };
+
   // [DEBUG]
   window.insProps = insProps;
   window.traceLog = [];
@@ -489,7 +525,7 @@
     baseVal.width = bBox.width;
     baseVal.height = bBox.height;
 
-    if (IS_IE) { // for IE bug
+    if (IS_IE) { // for IE bug (reflow like `offsetWidth` can't update)
       parent = path.parentNode;
       parent.removeChild(path);
       parent.appendChild(path);
