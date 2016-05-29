@@ -1297,6 +1297,7 @@
           props.path.style.clipPath = 'none';
         } else {
           // Separate `clipPath` elements for overlapping masks.
+          // `mask` is faster than
           ['start', 'end'].forEach(function(key) {
             var maskBBox = props[key + 'MaskBBox'];
             if (maskBBox) {
