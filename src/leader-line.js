@@ -827,11 +827,12 @@
   LeaderLine.prototype.position = function() {
     window.traceLog.push('<position>'); // [DEBUG/]
     var props = insProps[this._id], options = props.options,
-      bBoxes = {}, newSocketXY = {}, newMaskBBox = {}, newPathData, newViewBBox = {},
+      bBoxes, newSocketXY, newMaskBBox = [], newPathData, newViewBBox = {},
       pathSegs = [], viewHasChanged;
 
-    bBoxes.start = getBBoxNest(options.start, props.baseWindow);
-    bBoxes.end = getBBoxNest(options.end, props.baseWindow);
+    bBoxes = [
+      getBBoxNest(options.anchor[0], props.baseWindow),
+      getBBoxNest(options.anchor[1], props.baseWindow)];
 
     // Decide each socket
     (function() {
@@ -845,76 +846,77 @@
         return socketXY;
       }
 
-      var socketXYsWk, socketsLenMin = -1, autoKey, fixKey;
-      if (options.startSocket && options.endSocket) {
-        newSocketXY.start = getSocketXY(bBoxes.start, options.startSocket);
-        newSocketXY.end = getSocketXY(bBoxes.end, options.endSocket);
+      var socketXYsWk, socketsLenMin = -1, iFix, iAuto;
+      if (options.socket[0] && options.socket[1]) {
+        newSocketXY = [
+          getSocketXY(bBoxes[0], options.socket[0]),
+          getSocketXY(bBoxes[1], options.socket[1])];
 
-      } else if (!options.startSocket && !options.endSocket) {
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes.end, socketId); });
-        SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes.start, socketId); })
-          .forEach(function(startSocketXY) {
-            socketXYsWk.forEach(function(endSocketXY) {
-              var len = getPointsLength(startSocketXY, endSocketXY);
+      } else if (!options.socket[0] && !options.socket[1]) {
+        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[1], socketId); });
+        SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[0], socketId); })
+          .forEach(function(socketXY0) {
+            socketXYsWk.forEach(function(socketXY1) {
+              var len = getPointsLength(socketXY0, socketXY1);
               if (len < socketsLenMin || socketsLenMin === -1) {
-                newSocketXY.start = startSocketXY;
-                newSocketXY.end = endSocketXY;
+                newSocketXY = [socketXY0, socketXY1];
                 socketsLenMin = len;
               }
             });
           });
 
       } else {
-        if (options.startSocket) {
-          fixKey = 'start';
-          autoKey = 'end';
+        if (options.socket[0]) {
+          iFix = 0;
+          iAuto = 1;
         } else {
-          fixKey = 'end';
-          autoKey = 'start';
+          iFix = 1;
+          iAuto = 0;
         }
-        newSocketXY[fixKey] = getSocketXY(bBoxes[fixKey], options[fixKey + 'Socket']);
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[autoKey], socketId); });
+        newSocketXY = [];
+        newSocketXY[iFix] = getSocketXY(bBoxes[iFix], options.socket[iFix]);
+        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[iAuto], socketId); });
         socketXYsWk.forEach(function(socketXY) {
-          var len = getPointsLength(socketXY, newSocketXY[fixKey]);
+          var len = getPointsLength(socketXY, newSocketXY[iFix]);
           if (len < socketsLenMin || socketsLenMin === -1) {
-            newSocketXY[autoKey] = socketXY;
+            newSocketXY[iAuto] = socketXY;
             socketsLenMin = len;
           }
         });
       }
     })();
 
-    // To limit updated `SocketXY`
-    ['start', 'end'].forEach(function(key) {
-      var socketXY1 = newSocketXY[key], socketXY2 = props[key + 'SocketXY'];
+    // To limit updated `socketXY`
+    newSocketXY.forEach(function(socketXY1, i) {
+      var socketXY2 = props.socketXY[i];
       if (socketXY1.x !== socketXY2.x || socketXY1.y !== socketXY2.y ||
           socketXY1.socketId !== socketXY2.socketId) {
-        props[key + 'SocketXY'] = newSocketXY[key];
+        props.socketXY[i] = socketXY1;
       } else {
-        newSocketXY[key] = null;
+        newSocketXY[i] = null;
       }
     });
 
-    // Decide MaskBBox (coordinates might have changed)
-    ['start', 'end'].forEach(function(key) {
-      var maskBBox1 = bBoxes[key], maskBBox2 = props[key + 'MaskBBox'],
-        enabled1 = props[key + 'PlugOverhead'] < 0, enabled2 = !!maskBBox2;
+    // Decide `maskBBox` (coordinates might have changed)
+    bBoxes.forEach(function(maskBBox1, i) {
+      var maskBBox2 = props.maskBBox[i],
+        enabled1 = props.plugOverhead[i] < 0, enabled2 = !!maskBBox2;
       if (enabled1 !== enabled2 ||
           enabled1 && enabled2 && ['left', 'top', 'width', 'height'].some(function(prop) { // omission right, bottom
             return maskBBox1[prop] !== maskBBox2[prop];
           })) {
         if (enabled1) {
-          props[key + 'MaskBBox'] = newMaskBBox[key] = bBoxes[key];
+          props.maskBBox[i] = newMaskBBox[i] = maskBBox1;
         } else {
-          props[key + 'MaskBBox'] = null;
-          newMaskBBox[key] = false; // To indicate that it was changed.
+          props.maskBBox[i] = null;
+          newMaskBBox[i] = false; // To indicate that it was changed.
         }
       }
     });
 
     // New position
-    if (newSocketXY.start || newSocketXY.end ||
-        newMaskBBox.start != null || newMaskBBox.end != null || // eslint-disable-line eqeqeq
+    if (newSocketXY[0] || newSocketXY[1] ||
+        newMaskBBox[0] != null || newMaskBBox[1] != null || // eslint-disable-line eqeqeq
         POSITION_PROPS.some(function(prop) { return props.positionValues[prop] !== props[prop]; }) ||
         POSITION_OPTIONS.some(function(prop) { return props.positionValues[prop] !== options[prop]; })) {
       window.traceLog.push('[update]'); // [DEBUG/]
@@ -923,38 +925,37 @@
       switch (options.path) {
 
         case PATH_STRAIGHT:
-          pathSegs.push([props.startSocketXY, props.endSocketXY]);
+          pathSegs.push([props.socketXY[0], props.socketXY[1]]);
           break;
 
         case PATH_ARC:
           (function() {
             var
               downward =
-                typeof options.startSocketGravity === 'number' && options.startSocketGravity > 0 ||
-                typeof options.endSocketGravity === 'number' && options.endSocketGravity > 0,
+                typeof options.socketGravity[0] === 'number' && options.socketGravity[0] > 0 ||
+                typeof options.socketGravity[1] === 'number' && options.socketGravity[1] > 0,
               circle8rad = CIRCLE_8_RAD * (downward ? -1 : 1),
-              angle = Math.atan2(props.endSocketXY.y - props.startSocketXY.y,
-                props.endSocketXY.x - props.startSocketXY.x),
+              angle = Math.atan2(props.socketXY[1].y - props.socketXY[0].y,
+                props.socketXY[1].x - props.socketXY[0].x),
               cp1Angle = -angle + circle8rad,
               cp2Angle = Math.PI - angle - circle8rad,
-              crLen = getPointsLength(props.startSocketXY, props.endSocketXY) / Math.sqrt(2) * CIRCLE_CP,
+              crLen = getPointsLength(props.socketXY[0], props.socketXY[1]) / Math.sqrt(2) * CIRCLE_CP,
               cp1 = {
-                x: props.startSocketXY.x + Math.cos(cp1Angle) * crLen,
-                y: props.startSocketXY.y + Math.sin(cp1Angle) * crLen * -1},
+                x: props.socketXY[0].x + Math.cos(cp1Angle) * crLen,
+                y: props.socketXY[0].y + Math.sin(cp1Angle) * crLen * -1},
               cp2 = {
-                x: props.endSocketXY.x + Math.cos(cp2Angle) * crLen,
-                y: props.endSocketXY.y + Math.sin(cp2Angle) * crLen * -1};
-            pathSegs.push([props.startSocketXY, cp1, cp2, props.endSocketXY]);
+                x: props.socketXY[1].x + Math.cos(cp2Angle) * crLen,
+                y: props.socketXY[1].y + Math.sin(cp2Angle) * crLen * -1};
+            pathSegs.push([props.socketXY[0], cp1, cp2, props.socketXY[1]]);
           })();
           break;
 
         case PATH_FLUID:
         case PATH_MAGNET:
-          (/* @EXPORT[file:../test/spec/functions/PATH_FLUID]@ */function(socketsGravity) {
-            var cx = {}, cy = {};
-            ['start', 'end'].forEach(function(key) {
-              var gravity = socketsGravity[key], socketXY = props[key + 'SocketXY'],
-                offset = {}, anotherSocketXY, overhead, minGravity, len;
+          (/* @EXPORT[file:../test/spec/functions/PATH_FLUID]@ */function(socketGravity) {
+            var cx = [], cy = [];
+            props.socketXY.forEach(function(socketXY, i) {
+              var gravity = socketGravity[i], offset, anotherSocketXY, overhead, minGravity, len;
               if (Array.isArray(gravity)) { // offset
                 offset = {x: gravity[0], y: gravity[1]};
               } else if (typeof gravity === 'number') { // distance
@@ -964,8 +965,8 @@
                   socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity} :
                                       /* SOCKET_LEFT */ {x: -gravity, y: 0};
               } else { // auto
-                anotherSocketXY = props[(key === 'start' ? 'end' : 'start') + 'SocketXY'];
-                overhead = props[key + 'PlugOverhead'];
+                anotherSocketXY = props.socketXY[i === 0 ? 1 : 0];
+                overhead = props.plugOverhead[i];
                 minGravity = overhead > 0 ?
                   MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
                     (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
@@ -989,15 +990,13 @@
                   offset = {x: -len, y: 0};
                 }
               }
-              cx[key] = socketXY.x + offset.x;
-              cy[key] = socketXY.y + offset.y;
+              cx[i] = socketXY.x + offset.x;
+              cy[i] = socketXY.y + offset.y;
             });
-            pathSegs.push([props.startSocketXY,
-              {x: cx.start, y: cy.start}, {x: cx.end, y: cy.end}, props.endSocketXY]);
-          }/* @/EXPORT@ */)({
-            start: options.startSocketGravity,
-            end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity
-          });
+            pathSegs.push([props.socketXY[0],
+              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, props.socketXY[1]]);
+          }/* @/EXPORT@ */)([options.socketGravity[0],
+            options.path === PATH_MAGNET ? 0 : options.socketGravity[1]]);
           break;
 
         case PATH_GRID:
@@ -1010,7 +1009,7 @@
              */
             var
               DIR_UP = 1, DIR_RIGHT = 2, DIR_DOWN = 3, DIR_LEFT = 4, // Correspond with `socketId`
-              dpList = {start: [], end: []}, curDirPoint = {}, scopeContains = {}, axis = {};
+              dpList = [[], []], curDirPoint = [], curPoint;
 
             function reverseDir(dirId) {
               return dirId === DIR_UP ? DIR_DOWN :
@@ -1055,10 +1054,9 @@
                 point.x === dirPoint.x : point.y === dirPoint.y;
             }
 
-            // Must `scopeContains.start !== scopeContains.end`
-            function getKeysWithScope(scopeContains) {
-              return scopeContains.start ?
-                {contain: 'start', notContain: 'end'} : {contain: 'end', notContain: 'start'};
+            // Must `scopeContains[0] !== scopeContains[1]`
+            function getIndexWithScope(scopeContains) {
+              return scopeContains[0] ? {contain: 0, notContain: 1} : {contain: 1, notContain: 0};
             }
 
             function getAxisDistance(point1, point2, axis) {
@@ -1072,10 +1070,105 @@
                 (fromPoint.y < toPoint.y ? DIR_DOWN : DIR_UP);
             }
 
-            ['start', 'end'].forEach(function(key) {
-              var socketXY = props[key + 'SocketXY'],
-                dirPoint = {x: socketXY.x, y: socketXY.y},
-                len = options[key + 'SocketGravity'];
+            function joinPoints() {
+              var scopeContains = [
+                  inAxisScope(curDirPoint[1], curDirPoint[0]),
+                  inAxisScope(curDirPoint[0], curDirPoint[1])],
+                axis = [getAxis(curDirPoint[0].dirId), getAxis(curDirPoint[1].dirId)],
+                center, axisScope, distance, points;
+
+              if (axis[0] === axis[1]) { // Same axis
+                if (scopeContains[0] && scopeContains[1]) {
+                  if (!onAxisLine(curDirPoint[1], curDirPoint[0])) {
+                    if (curDirPoint[0][axis[0]] === curDirPoint[1][axis[1]]) { // vertical
+                      dpList[0].push(curDirPoint[0]);
+                      dpList[1].push(curDirPoint[1]);
+                    } else {
+                      center = curDirPoint[0][axis[0]] +
+                        (curDirPoint[1][axis[1]] - curDirPoint[0][axis[0]]) / 2;
+                      dpList[0].push(
+                        getNextDirPoint(curDirPoint[0], Math.abs(center - curDirPoint[0][axis[0]])));
+                      dpList[1].push(
+                        getNextDirPoint(curDirPoint[1], Math.abs(center - curDirPoint[1][axis[1]])));
+                    }
+                  }
+                  return false;
+
+                } else if (scopeContains[0] !== scopeContains[1]) { // turn notContain 90deg
+                  axisScope = getIndexWithScope(scopeContains);
+                  distance = getAxisDistance(curDirPoint[axisScope.notContain],
+                    curDirPoint[axisScope.contain], axis[axisScope.notContain]);
+                  if (distance < MIN_GRID_LEN) {
+                    curDirPoint[axisScope.notContain] =
+                      getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN - distance);
+                  }
+                  dpList[axisScope.notContain].push(curDirPoint[axisScope.notContain]);
+                  curDirPoint[axisScope.notContain] =
+                    getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
+                      onAxisLine(curDirPoint[axisScope.contain], curDirPoint[axisScope.notContain]) ?
+                        (axis[axisScope.notContain] === 'x' ? DIR_DOWN : DIR_RIGHT) :
+                        getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
+                          (axis[axisScope.notContain] === 'x' ? 'y' : 'x')));
+
+                } else { // turn both 90deg
+                  distance =
+                    getAxisDistance(curDirPoint[0], curDirPoint[1], axis[0] === 'x' ? 'y' : 'x');
+                  dpList.forEach(function(targetDpList, iTarget) {
+                    var iAnother = iTarget === 0 ? 1 : 0;
+                    targetDpList.push(curDirPoint[iTarget]);
+                    curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN,
+                      distance >= MIN_GRID_LEN * 2 ?
+                        getDirIdWithAxis(curDirPoint[iTarget], curDirPoint[iAnother],
+                          (axis[iTarget] === 'x' ? 'y' : 'x')) :
+                        (axis[iTarget] === 'x' ? DIR_DOWN : DIR_RIGHT));
+                  });
+                }
+
+              } else { // Different axis
+                if (scopeContains[0] && scopeContains[1]) {
+                  if (onAxisLine(curDirPoint[1], curDirPoint[0])) {
+                    dpList[1].push(curDirPoint[1]); // Drop curDirPoint[0]
+                  } else if (onAxisLine(curDirPoint[0], curDirPoint[1])) {
+                    dpList[0].push(curDirPoint[0]); // Drop curDirPoint[1]
+                  } else { // Drop curDirPoint[0] and end
+                    dpList[0].push(axis[0] === 'x' ?
+                      {x: curDirPoint[1].x, y: curDirPoint[0].y} :
+                      {x: curDirPoint[0].x, y: curDirPoint[1].y});
+                  }
+                  return false;
+
+                } else if (scopeContains[0] !== scopeContains[1]) { // turn notContain 90deg
+                  axisScope = getIndexWithScope(scopeContains);
+                  dpList[axisScope.notContain].push(curDirPoint[axisScope.notContain]);
+                  curDirPoint[axisScope.notContain] =
+                    getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
+                      getAxisDistance(curDirPoint[axisScope.notContain],
+                          curDirPoint[axisScope.contain], axis[axisScope.contain]) >= MIN_GRID_LEN ?
+                        getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
+                          axis[axisScope.contain]) :
+                        curDirPoint[axisScope.contain].dirId);
+
+                } else { // turn both 90deg
+                  points = [{x: curDirPoint[0].x, y: curDirPoint[0].y},
+                    {x: curDirPoint[1].x, y: curDirPoint[1].y}];
+                  dpList.forEach(function(targetDpList, iTarget) {
+                    var iAnother = iTarget === 0 ? 1 : 0,
+                      distance = getAxisDistance(points[iTarget], points[iAnother], axis[iTarget]);
+                    if (distance < MIN_GRID_LEN) {
+                      curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN - distance);
+                    }
+                    targetDpList.push(curDirPoint[iTarget]);
+                    curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN,
+                      getDirIdWithAxis(curDirPoint[iTarget], curDirPoint[iAnother], axis[iAnother]));
+                  });
+                }
+              }
+              return true;
+            }
+
+            props.socketXY.forEach(function(socketXY, i) {
+              var dirPoint = {x: socketXY.x, y: socketXY.y},
+                len = options.socketGravity[i];
               (function(dirLen) {
                 dirPoint.dirId = dirLen[0];
                 len = dirLen[1];
@@ -1089,125 +1182,17 @@
                 typeof len !== 'number' ? [socketXY.socketId, MIN_GRID_LEN] : // auto
                 len >= 0 ? [socketXY.socketId, len] : // distance
                             [reverseDir(socketXY.socketId), -len]);
-              dpList[key].push(dirPoint);
-              curDirPoint[key] = getNextDirPoint(dirPoint, len);
+              dpList[i].push(dirPoint);
+              curDirPoint[i] = getNextDirPoint(dirPoint, len);
             });
+            while (joinPoints()) { /* empty */ }
 
-            while (true) {
-              scopeContains.start = inAxisScope(curDirPoint.end, curDirPoint.start);
-              scopeContains.end = inAxisScope(curDirPoint.start, curDirPoint.end);
-              axis.start = getAxis(curDirPoint.start.dirId);
-              axis.end = getAxis(curDirPoint.end.dirId);
-
-              if (axis.start === axis.end) { // Same axis
-                if (scopeContains.start && scopeContains.end) {
-                  if (!onAxisLine(curDirPoint.end, curDirPoint.start)) {
-                    if (curDirPoint.start[axis.start] === curDirPoint.end[axis.end]) { // vertical
-                      dpList.start.push(curDirPoint.start);
-                      dpList.end.push(curDirPoint.end);
-                    } else {
-                      (function() {
-                        var center = curDirPoint.start[axis.start] +
-                          (curDirPoint.end[axis.end] - curDirPoint.start[axis.start]) / 2;
-                        dpList.start.push(
-                          getNextDirPoint(curDirPoint.start, Math.abs(center - curDirPoint.start[axis.start])));
-                        dpList.end.push(
-                          getNextDirPoint(curDirPoint.end, Math.abs(center - curDirPoint.end[axis.end])));
-                      })();
-                    }
-                  }
-                  break;
-
-                } else if (scopeContains.start !== scopeContains.end) { // turn notContain 90deg
-                  (function() {
-                    var axisScope = getKeysWithScope(scopeContains),
-                      distance = getAxisDistance(curDirPoint[axisScope.notContain],
-                        curDirPoint[axisScope.contain], axis[axisScope.notContain]);
-                    if (distance < MIN_GRID_LEN) {
-                      curDirPoint[axisScope.notContain] =
-                        getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN - distance);
-                    }
-                    dpList[axisScope.notContain].push(curDirPoint[axisScope.notContain]);
-                    curDirPoint[axisScope.notContain] =
-                      getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
-                        onAxisLine(curDirPoint[axisScope.contain], curDirPoint[axisScope.notContain]) ?
-                          (axis[axisScope.notContain] === 'x' ? DIR_DOWN : DIR_RIGHT) :
-                          getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
-                            (axis[axisScope.notContain] === 'x' ? 'y' : 'x')));
-                  })();
-
-                } else { // turn both 90deg
-                  (function() {
-                    var distance =
-                      getAxisDistance(curDirPoint.start, curDirPoint.end, axis.start === 'x' ? 'y' : 'x');
-                    ['start', 'end'].forEach(function(target) {
-                      var another = target === 'start' ? 'end' : 'start';
-                      dpList[target].push(curDirPoint[target]);
-                      curDirPoint[target] = getNextDirPoint(curDirPoint[target], MIN_GRID_LEN,
-                        distance >= MIN_GRID_LEN * 2 ?
-                          getDirIdWithAxis(curDirPoint[target], curDirPoint[another],
-                            (axis[target] === 'x' ? 'y' : 'x')) :
-                          (axis[target] === 'x' ? DIR_DOWN : DIR_RIGHT));
-                    });
-                  })();
-                }
-
-              } else { // Different axis
-                if (scopeContains.start && scopeContains.end) {
-                  if (onAxisLine(curDirPoint.end, curDirPoint.start)) {
-                    dpList.end.push(curDirPoint.end); // Drop curDirPoint.start
-                  } else if (onAxisLine(curDirPoint.start, curDirPoint.end)) {
-                    dpList.start.push(curDirPoint.start); // Drop curDirPoint.end
-                  } else { // Drop curDirPoint.start and end
-                    dpList.start.push(axis.start === 'x' ?
-                      {x: curDirPoint.end.x, y: curDirPoint.start.y} :
-                      {x: curDirPoint.start.x, y: curDirPoint.end.y});
-                  }
-                  break;
-
-                } else if (scopeContains.start !== scopeContains.end) { // turn notContain 90deg
-                  (function() {
-                    var axisScope = getKeysWithScope(scopeContains);
-                    dpList[axisScope.notContain].push(curDirPoint[axisScope.notContain]);
-                    curDirPoint[axisScope.notContain] =
-                      getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
-                        getAxisDistance(curDirPoint[axisScope.notContain],
-                            curDirPoint[axisScope.contain], axis[axisScope.contain]) >= MIN_GRID_LEN ?
-                          getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
-                            axis[axisScope.contain]) :
-                          curDirPoint[axisScope.contain].dirId);
-                  })();
-
-                } else { // turn both 90deg
-                  (function() {
-                    var points = {
-                      start: {x: curDirPoint.start.x, y: curDirPoint.start.y},
-                      end: {x: curDirPoint.end.x, y: curDirPoint.end.y}
-                    };
-                    ['start', 'end'].forEach(function(target) {
-                      var another = target === 'start' ? 'end' : 'start',
-                        distance = getAxisDistance(points[target], points[another], axis[target]);
-                      if (distance < MIN_GRID_LEN) {
-                        curDirPoint[target] = getNextDirPoint(curDirPoint[target], MIN_GRID_LEN - distance);
-                      }
-                      dpList[target].push(curDirPoint[target]);
-                      curDirPoint[target] = getNextDirPoint(curDirPoint[target], MIN_GRID_LEN,
-                        getDirIdWithAxis(curDirPoint[target], curDirPoint[another], axis[another]));
-                    });
-                  })();
-                }
-              }
-            }
-
-            (function() {
-              var curPoint;
-              dpList.end.reverse();
-              dpList.start.concat(dpList.end).forEach(function(dirPoint, i) {
-                var point = {x: dirPoint.x, y: dirPoint.y};
-                if (i > 0) { pathSegs.push([curPoint, point]); }
-                curPoint = point;
-              });
-            })();
+            dpList[1].reverse();
+            dpList[0].concat(dpList[1]).forEach(function(dirPoint, i) {
+              var point = {x: dirPoint.x, y: dirPoint.y};
+              if (i > 0) { pathSegs.push([curPoint, point]); }
+              curPoint = point;
+            });
           }/* @/EXPORT@ */)();
           break;
 
@@ -1346,7 +1331,7 @@
 
       // Apply mask for plugs
       if (viewHasChanged && (props.startMaskBBox || props.endMaskBBox) ||
-          newMaskBBox.start != null || newMaskBBox.end != null) { // eslint-disable-line eqeqeq
+          newMaskBBox[0] != null || newMaskBBox[1] != null) { // eslint-disable-line eqeqeq
         if (!props.startMaskBBox && !props.endMaskBBox) {
           window.traceLog.push('[mask] none'); // [DEBUG/]
           props.path.style.clipPath = 'none';
