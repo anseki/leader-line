@@ -15,12 +15,12 @@
   /**
    * An object that simulates `DOMRect` to indicate a bounding-box.
    * @typedef {Object} BBox
-   * @property {number|null} left
-   * @property {number|null} top
-   * @property {number|null} right
-   * @property {number|null} bottom
-   * @property {number|null} width
-   * @property {number|null} height
+   * @property {(number|null)} left
+   * @property {(number|null)} top
+   * @property {(number|null)} right
+   * @property {(number|null)} bottom
+   * @property {(number|null)} width
+   * @property {(number|null)} height
    */
 
   /**
@@ -92,7 +92,7 @@
     POSITION_PROPS = ['startPlugOverhead', 'endPlugOverhead', 'startPlugOutlineR', 'endPlugOutlineR'],
     POSITION_OPTIONS = ['path', 'size', 'startSocketGravity', 'endSocketGravity'],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
-    KEY_AUTO = 'auto',
+    KEYWORD_AUTO = 'auto',
 
     MIN_GRAVITY = 80, MIN_GRAVITY_SIZE = 4, MIN_GRAVITY_R = 5,
     MIN_OH_GRAVITY = 120, MIN_OH_GRAVITY_OH = 8, MIN_OH_GRAVITY_R = 3.75,
@@ -115,7 +115,7 @@
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
    * @param {Element} element - Target element.
    * @param {boolean} [relWindow] - Whether it's relative to the element's window, or document (i.e. `<html>`).
-   * @returns {BBox|null} - A bounding-box or null when failed.
+   * @returns {(BBox|null)} - A bounding-box or null when failed.
    */
   function getBBox(element, relWindow) {
     var bBox = {}, rect, prop, doc, win;
@@ -163,7 +163,7 @@
    * Get `<iframe>` elements in path to an element.
    * @param {Element} element - Target element.
    * @param {Window} [baseWindow] - Start searching at this window. This is excluded from result.
-   * @returns {Element[]|null} - An array of `<iframe>` elements or null when `baseWindow` was not found in the path.
+   * @returns {(Element[]|null)} - An array of `<iframe>` elements or null when `baseWindow` was not found in the path.
    */
   function getFrames(element, baseWindow) {
     var frames = [], curElement = element, doc, win;
@@ -191,7 +191,7 @@
    * Get an element's bounding-box that contains coordinates relative to document of specified window.
    * @param {Element} element - Target element.
    * @param {Window} [baseWindow] - Window that is base of coordinates.
-   * @returns {BBox|null} - A bounding-box or null when failed.
+   * @returns {(BBox|null)} - A bounding-box or null when failed.
    */
   function getBBoxNest(element, baseWindow) {
     var left = 0, top = 0, bBox, frames;
@@ -331,11 +331,11 @@
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `startSocketXY`, `endSocketXY`, `positionValues`,
-   *    `pathData`, `startPlugOverhead`, `endPlugOverhead`, `startPlugOutlineR`, `endPlugOutlineR`,
-   *    `startMaskBBox`, `endMaskBBox`,
-   *    `svg`, `path`, `startMarker`, `endMarker`, `startMarkerUse`, `endMarkerUse`,
-   *    `startMaskPath`, `endMaskPath`.
+   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXY`, `positionValues`,
+   *    `pathData`, `plugOverhead`, `plugOutlineR`,
+   *    `maskBBox`,
+   *    `svg`, `path`, `marker`, `markerUse`,
+   *    `maskPath`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -346,6 +346,8 @@
       baseDocument = newWindow.document,
       bodyOffset = {x: 0, y: 0},
       sheet, defs, stylesHtml, stylesBody, svg, elmDefs;
+
+    function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
 
     if (props.baseWindow && props.svg) {
       props.baseWindow.document.body.removeChild(props.svg);
@@ -380,21 +382,17 @@
       // `element{position:absolute}` is positioned relative to border-box of `<body>`.
       bodyOffset.x -=
         [stylesHtml.marginLeft, stylesHtml.borderLeftWidth, stylesHtml.paddingLeft,
-          stylesBody.marginLeft, stylesBody.borderLeftWidth]
-        .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
+          stylesBody.marginLeft, stylesBody.borderLeftWidth].reduce(sumProps, 0);
       bodyOffset.y -=
         [stylesHtml.marginTop, stylesHtml.borderTopWidth, stylesHtml.paddingTop,
-          stylesBody.marginTop, stylesBody.borderTopWidth]
-        .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
+          stylesBody.marginTop, stylesBody.borderTopWidth].reduce(sumProps, 0);
     } else if (stylesHtml.position !== 'static') {
       // When `<body>` has `position:static` and `<html>` has `position:(non-static)`
       // `element{position:absolute}` is positioned relative to border-box of `<html>`.
       bodyOffset.x -=
-        [stylesHtml.marginLeft, stylesHtml.borderLeftWidth]
-        .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
+        [stylesHtml.marginLeft, stylesHtml.borderLeftWidth].reduce(sumProps, 0);
       bodyOffset.y -=
-        [stylesHtml.marginTop, stylesHtml.borderTopWidth]
-        .reduce(function(value, addValue) { return (value += parseFloat(addValue)); }, 0);
+        [stylesHtml.marginTop, stylesHtml.borderTopWidth].reduce(sumProps, 0);
     }
     props.bodyOffset = bodyOffset;
 
@@ -403,35 +401,46 @@
     svg.className.baseVal = APP_ID;
     if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
     elmDefs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
-    ['start', 'end'].forEach(function(key) {
-      var clip;
-      props[key + 'Marker'] = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
-      props[key + 'Marker'].id = props[key + 'MarkerId'];
-      props[key + 'Marker'].markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
-      if (!props[key + 'Marker'].viewBox.baseVal) {
-        props[key + 'Marker'].setAttribute('viewBox', '0 0 0 0'); // for Firefox bug
-      }
-      props[key + 'MarkerUse'] =
-        props[key + 'Marker'].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
 
-      clip = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'clipPath'));
-      clip.id = props[key + 'ClipId'];
-      props[key + 'MaskPath'] = clip.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-      props[key + 'MaskPath'].className.baseVal = APP_ID + '-mask';
+    [
+      ['marker', function(i) {
+        var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
+        element.id = props.markerId[i];
+        element.markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
+        if (!element.viewBox.baseVal) {
+          element.setAttribute('viewBox', '0 0 0 0'); // for Firefox bug
+        }
+        return element;
+      }],
+      ['markerUse', function(i) {
+        return props.marker[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      }],
+      ['maskPath', function(i) {
+        var clip = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'clipPath')),
+          element = clip.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+        clip.id = props.clipId[i];
+        element.className.baseVal = APP_ID + '-mask';
+        return element;
+      }]
+    ].forEach(function(propCreate) {
+      var prop = propCreate[0], create = propCreate[1];
+      props[prop] = [0, 1].reduce(function(array, i) {
+        array[i] = create(i);
+        return array;
+      }, []);
     });
+
     props.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
     props.path.className.baseVal = APP_ID + '-path';
     props.svg = baseDocument.body.appendChild(svg);
 
     props.viewBBox = {};
-    props.startSocketXY = {};
-    props.endSocketXY = {};
+    props.socketXY = [{}, {}];
     props.positionValues = {};
     props.pathData = [];
-    props.startPlugOverhead = props.endPlugOverhead =
-      props.startPlugOutlineR = props.endPlugOutlineR = 0;
-    props.startMaskBBox = null;
-    props.endMaskBBox = null;
+    props.plugOverhead = [0, 0];
+    props.plugOutlineR = [0, 0];
+    props.maskBBox = [null, null];
   }
   window.bindWindow = bindWindow; // [DEBUG/]
 
@@ -455,15 +464,15 @@
 
   /**
    * Apply `orient` to `marker`.
-   * @param {SVGMarkerElement} marker - Target `marker` element.
-   * @param {string} orient - `'auto'`, `'auto-start-reverse'` or `angle`.
-   * @param {BBox} bBox - `BBox` of target symbol.
-   * @param {SVGSVGElement} svg - Parent `svg` element.
-   * @param {SVGUseElement} use - Target `use` element.
-   * @param {SVGPathElement} path - Target `path` element.
+   * @param {SVGMarkerElement} marker - Target `<marker>` element.
+   * @param {string} orient - `'auto'`, `'auto-start-reverse'` or angle.
+   * @param {BBox} bBox - `BBox` as `viewBox` of the marker.
+   * @param {SVGSVGElement} svg - Parent `<svg>` element.
+   * @param {SVGElement} content - An element that is shown as marker.
+   * @param {SVGElement} marked - Target element that has `marker-start/end` such as `<path>`.
    * @returns {void}
    */
-  function setMarkerOrient(marker, orient, bBox, svg, use, path) {
+  function setMarkerOrient(marker, orient, bBox, svg, content, marked) {
     var transform, baseVal, reverseView, parent;
     // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of
     // `SVGMarkerElement` don't work in browsers other than Chrome.
@@ -477,13 +486,13 @@
       } else {
         transform = svg.createSVGTransform();
         transform.setRotate(180, 0, 0);
-        use.transform.baseVal.appendItem(transform);
+        content.transform.baseVal.appendItem(transform);
         marker.setAttribute('orient', 'auto');
         reverseView = true;
       }
     } else {
       marker.setAttribute('orient', orient);
-      if (svg2Supported === false) { use.transform.baseVal.clear(); }
+      if (svg2Supported === false) { content.transform.baseVal.clear(); }
     }
 
     baseVal = marker.viewBox.baseVal;
@@ -498,66 +507,64 @@
     baseVal.height = bBox.height;
 
     if (IS_IE) { // for IE bug (reflow like `offsetWidth` can't update)
-      parent = path.parentNode;
-      parent.removeChild(path);
-      parent.appendChild(path);
+      parent = marked.parentNode;
+      parent.removeChild(marked);
+      parent.appendChild(marked);
     }
   }
 
   /**
-   * Apply `startPlug`, `endPlug`, `startPlugColor`, `endPlugColor`, `startPlugSize`, `endPlugSize`.
+   * Apply `plug`, `plugColor`, `plugSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {Array} [plugProps] - To limit properties. `[]` and `['']` are also accepted.
+   * @param {(Array|null)[]} plugProps - To limit properties. `[[]]` and `[['']]` are also accepted.
    * @returns {void}
    */
   function setPlugs(props, plugProps) {
     window.traceLog.push('<setPlugs>'); // [DEBUG/]
     var options = props.options;
-    plugProps = (plugProps ||
-        ['startPlug', 'endPlug', 'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize'])
-      .reduce(function(plugProps, prop) {
-        if (plugProps) { plugProps[prop] = true; }
+
+    plugProps.forEach(function(plugProps, i) {
+      var plugId = options.plug[i], symbolConf;
+
+      plugProps = (plugProps || ['plug', 'plugColor', 'plugSize']).reduce(function(plugProps, prop) {
+        if (prop) { plugProps[prop] = true; }
         return plugProps;
       }, {});
 
-    ['start', 'end'].forEach(function(key) {
-      var ucKey = key.substr(0, 1).toUpperCase() + key.substr(1),
-        plugId = options[key + 'Plug'], symbolConf;
-
       if (plugId === PLUG_BEHIND) {
-        if (plugProps[key + 'Plug']) {
-          window.traceLog.push('[' + key + 'Plug] ' + plugId); // [DEBUG/]
-          props.path.style['marker' + ucKey] = 'none';
+        if (plugProps.plug) {
+          window.traceLog.push('[plug ' + i + '] ' + plugId); // [DEBUG/]
+          props.path.style[i === 0 ? 'markerStart' : 'markerEnd'] = 'none';
         }
         // Update shape always for `options.size` that might have been changed.
-        props[key + 'PlugOverhead'] = -(options.size / 2);
-        props[key + 'PlugOutlineR'] = 0;
+        props.plugOverhead[i] = -(options.size / 2);
+        props.plugOutlineR[i] = 0;
       } else {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
-        if (plugProps[key + 'Plug']) {
-          window.traceLog.push('[' + key + 'Plug] ' + plugId); // [DEBUG/]
-          props[key + 'MarkerUse'].href.baseVal = '#' + symbolConf.elmId;
-          setMarkerOrient(props[key + 'Marker'],
-            symbolConf.noRotate ? '0' : key === 'start' ? 'auto-start-reverse' : 'auto',
-            symbolConf.bBox, props.svg, props[key + 'MarkerUse'], props.path);
-          props.path.style['marker' + ucKey] = 'url(#' + props[key + 'MarkerId'] + ')';
+        if (plugProps.plug) {
+          window.traceLog.push('[plug ' + i + '] ' + plugId); // [DEBUG/]
+          props.markerUse[i].href.baseVal = '#' + symbolConf.elmId;
+          setMarkerOrient(props.marker[i],
+            symbolConf.noRotate ? '0' : i === 0 ? 'auto-start-reverse' : 'auto',
+            symbolConf.bBox, props.svg, props.markerUse[i], props.path);
+          props.path.style[i === 0 ? 'markerStart' : 'markerEnd'] = 'url(#' + props.markerId[i] + ')';
           // Initialize size and color because the plug might have been `PLUG_BEHIND`.
-          plugProps[key + 'PlugSize'] = plugProps[key + 'PlugColor'] = true;
+          plugProps.PlugSize = plugProps.PlugColor = true;
         }
-        if (plugProps[key + 'PlugColor']) {
-          window.traceLog.push('[' + key + 'PlugColor] ' + (options[key + 'PlugColor'] || options.color)); // [DEBUG/]
-          props[key + 'MarkerUse'].style.fill = options[key + 'PlugColor'] || options.color;
+        if (plugProps.PlugColor) {
+          window.traceLog.push('[plugColor ' + i + '] ' + (options.plugColor[i] || options.color)); // [DEBUG/]
+          props.markerUse[i].style.fill = options.plugColor[i] || options.color;
         }
-        if (plugProps[key + 'PlugSize']) {
-          window.traceLog.push('[' + key + 'PlugSize] ' + options[key + 'PlugSize']); // [DEBUG/]
-          props[key + 'Marker'].markerWidth.baseVal.value = symbolConf.widthR * options[key + 'PlugSize'];
-          props[key + 'Marker'].markerHeight.baseVal.value = symbolConf.heightR * options[key + 'PlugSize'];
+        if (plugProps.PlugSize) {
+          window.traceLog.push('[plugSize ' + i + '] ' + options.plugSize[i]); // [DEBUG/]
+          props.marker[i].markerWidth.baseVal.value = symbolConf.widthR * options.plugSize[i];
+          props.marker[i].markerHeight.baseVal.value = symbolConf.heightR * options.plugSize[i];
         }
         // Update shape always for `options.size` that might have been changed.
-        props[key + 'PlugOverhead'] =
-          options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options[key + 'PlugSize'];
-        props[key + 'PlugOutlineR'] =
-          options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options[key + 'PlugSize'];
+        props.plugOverhead[i] =
+          options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options.plugSize[i];
+        props.plugOutlineR[i] =
+          options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options.plugSize[i];
       }
     });
   }
@@ -580,19 +587,18 @@
     }
 
     function shallowCopy(obj) {
-      return Array.isArray(obj) ? obj.slice() : Object.keys(obj).reduce(function(copyObj, key) {
-        copyObj[key] = obj[key];
-        return copyObj;
-      }, {});
+      return Array.isArray(obj) ? obj.slice() :
+        Object.keys(obj).reduce(function(copyObj, key) {
+          copyObj[key] = obj[key];
+          return copyObj;
+        }, {});
     }
 
     Object.defineProperty(this, '_id', {value: insId++});
     insProps[this._id] = props;
 
-    props.startMarkerId = APP_ID + '-start-marker-' + this._id;
-    props.endMarkerId = APP_ID + '-end-marker-' + this._id;
-    props.startClipId = APP_ID + '-start-clip-' + this._id;
-    props.endClipId = APP_ID + '-end-clip-' + this._id;
+    props.markerId = [APP_ID + '-' + this._id + '-marker-0', APP_ID + '-' + this._id + '-marker-1'];
+    props.clipId = [APP_ID + '-' + this._id + '-clip-0', APP_ID + '-' + this._id + '-clip-1'];
 
     if (arguments.length === 1) {
       options = start;
@@ -604,13 +610,18 @@
     this.setOptions(options);
 
     // Setup option accessor methods (direct)
-    ['start', 'end', 'color', 'size', 'startSocketGravity', 'endSocketGravity',
-        'startPlugColor', 'endPlugColor', 'startPlugSize', 'endPlugSize']
-      .forEach(function(name) {
+    [['start', 'anchor', 0], ['end', 'anchor', 1], ['color'], ['size'],
+        ['startSocketGravity', 'socketGravity', 0], ['endSocketGravity', 'socketGravity', 1],
+        ['startPlugColor', 'plugColor', 0], ['endPlugColor', 'plugColor', 1],
+        ['startPlugSize', 'plugSize', 0], ['endPlugSize', 'plugSize', 1]]
+      .forEach(function(conf) {
+        var name = conf[0], optionName = conf[1], index = conf[2];
         Object.defineProperty(that, name, {
           get: function() {
-            var value = insProps[that._id].options[name]; // Don't use closure.
-            return value == null ? KEY_AUTO : // eslint-disable-line eqeqeq
+            var value = optionName ? // Don't use closure.
+              insProps[that._id].options[optionName][index] :
+              insProps[that._id].options[name];
+            return value == null ? KEYWORD_AUTO : // eslint-disable-line eqeqeq
               // eslint-disable-next-line eqeqeq
               typeof value === 'object' && value.nodeType == null ? shallowCopy(value) : value;
           },
@@ -618,18 +629,23 @@
           enumerable: true
         });
       });
-    // Setup option accessor methods (key-id)
-    [['path', PATH_KEY_2_ID], ['startSocket', SOCKET_KEY_2_ID], ['endSocket', SOCKET_KEY_2_ID],
-        ['startPlug', PLUG_KEY_2_ID], ['endPlug', PLUG_KEY_2_ID]]
-      .forEach(function(defs) {
-        var name = defs[0], key2Id = defs[1];
+    // Setup option accessor methods (key-to-id)
+    [['path', PATH_KEY_2_ID],
+        ['startSocket', SOCKET_KEY_2_ID, 'socket', 0], ['endSocket', SOCKET_KEY_2_ID, 'socket', 1],
+        ['startPlug', PLUG_KEY_2_ID, 'plug', 0], ['endPlug', PLUG_KEY_2_ID, 'plug', 1]]
+      .forEach(function(conf) {
+        var name = conf[0], key2Id = conf[1], optionName = conf[2], index = conf[3];
         Object.defineProperty(that, name, {
           get: function() {
-            var value = insProps[that._id].options[name], key; // Don't use closure.
-            return !value ? KEY_AUTO : Object.keys(key2Id).some(function(optKey) {
-              if (key2Id[optKey] === value) { key = optKey; return true; }
-              return false;
-            }) ? key : new Error('It\'s broken');
+            var value = optionName ? // Don't use closure.
+              insProps[that._id].options[optionName][index] :
+              insProps[that._id].options[name],
+              key;
+            return !value ? KEYWORD_AUTO :
+              Object.keys(key2Id).some(function(optKey) {
+                if (key2Id[optKey] === value) { key = optKey; return true; }
+                return false;
+              }) ? key : new Error('It\'s broken');
           },
           set: createSetter(name),
           enumerable: true
@@ -642,39 +658,67 @@
    * @returns {void}
    */
   LeaderLine.prototype.setOptions = function(newOptions) {
+    /*
+      Names of `options` : Keys of API
+      ----------------------------------------
+      anchor            start, end
+      socket            startSocket, endSocket
+      socketGravity     startSocketGravity, endSocketGravity
+      plug              startPlug, endPlug
+      plugColor         startPlugColor, endPlugColor
+      plugSize          startPlugSize, endPlugSize
+    */
     window.traceLog.push('<setOptions>'); // [DEBUG/]
     var props = insProps[this._id], options = props.options,
-      needsWindow, needsStyles, needsPlugs, needsPosition, newWindow;
+      needsWindow, needsStyles, needsPlugs = [], needsPosition, newWindow;
 
-    function setValidId(prop, key2Id, setDefault, acceptsAuto) {
-      var key, id, update;
-      if (newOptions[prop] != null && // eslint-disable-line eqeqeq
-          (key = (newOptions[prop] + '').toLowerCase()) && (
-            acceptsAuto && key === KEY_AUTO ||
+    function setValidId(name, key2Id, optionName, index) {
+      var acceptsAuto = DEFAULT_OPTIONS[name] == null, // eslint-disable-line eqeqeq
+        currentOptions, optionKey, update, key, id;
+      if (optionName) {
+        currentOptions = options[optionName];
+        optionKey = index;
+      } else {
+        currentOptions = options;
+        optionKey = name;
+      }
+
+      if (newOptions[name] != null && // eslint-disable-line eqeqeq
+          (key = (newOptions[name] + '').toLowerCase()) && (
+            acceptsAuto && key === KEYWORD_AUTO ||
             (id = key2Id[key])
-          ) && id !== options[prop]) {
-        options[prop] = id; // `undefined` when `KEY_AUTO`
+          ) && id !== currentOptions[optionKey]) {
+        currentOptions[optionKey] = id; // `undefined` when `KEYWORD_AUTO`
         update = true;
       }
-      if (setDefault && options[prop] == null) { // eslint-disable-line eqeqeq
-        options[prop] = DEFAULT_OPTIONS[prop];
+      if (currentOptions[optionKey] == null && !acceptsAuto) { // eslint-disable-line eqeqeq
+        currentOptions[optionKey] = DEFAULT_OPTIONS[name];
         update = true;
       }
       return update;
     }
 
-    function setValidType(prop, setDefault, type, acceptsAuto) {
-      var value, update;
-      type = type || typeof DEFAULT_OPTIONS[prop];
-      if (newOptions[prop] != null && ( // eslint-disable-line eqeqeq
-            acceptsAuto && (newOptions[prop] + '').toLowerCase() === KEY_AUTO ||
-            typeof (value = newOptions[prop]) === type
-          ) && value !== options[prop]) {
-        options[prop] = value; // `undefined` when `KEY_AUTO`
+    function setValidType(name, type, optionName, index) {
+      var acceptsAuto = DEFAULT_OPTIONS[name] == null, // eslint-disable-line eqeqeq
+        currentOptions, optionKey, update, value;
+      if (optionName) {
+        currentOptions = options[optionName];
+        optionKey = index;
+      } else {
+        currentOptions = options;
+        optionKey = name;
+      }
+      type = type || typeof DEFAULT_OPTIONS[optionName];
+
+      if (newOptions[name] != null && ( // eslint-disable-line eqeqeq
+            acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
+            typeof (value = newOptions[name]) === type
+          ) && value !== currentOptions[optionKey]) {
+        currentOptions[optionKey] = value; // `undefined` when `KEYWORD_AUTO`
         update = true;
       }
-      if (setDefault && options[prop] == null) { // eslint-disable-line eqeqeq
-        options[prop] = DEFAULT_OPTIONS[prop];
+      if (currentOptions[optionKey] == null && !acceptsAuto) { // eslint-disable-line eqeqeq
+        currentOptions[optionKey] = DEFAULT_OPTIONS[name];
         update = true;
       }
       return update;
@@ -694,72 +738,74 @@
         array1.every(function(value1, i) { return value1 === array2[i]; });
     }
 
-    ['start', 'end'].forEach(function(prop) {
-      if (newOptions[prop] && newOptions[prop].nodeType != null && // eslint-disable-line eqeqeq
-          newOptions[prop] !== options[prop]) {
-        options[prop] = newOptions[prop];
+    ['start', 'end'].forEach(function(name, i) {
+      if (newOptions[name] && newOptions[name].nodeType != null && // eslint-disable-line eqeqeq
+          newOptions[name] !== options.anchor[i]) {
+        options.anchor[i] = newOptions[name];
         needsWindow = needsPosition = true;
       }
     });
-    if (!options.start || !options.end || options.start === options.end) {
+    if (!options.anchor[0] || !options.anchor[1] || options.anchor[0] === options.anchor[1]) {
       throw new Error('`start` and `end` are required.');
     }
 
     // Check window.
     if (needsWindow &&
-        (newWindow = getCommonWindow(options.start, options.end)) !== props.baseWindow) {
+        (newWindow = getCommonWindow(options.anchor[0], options.anchor[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
-      needsStyles = needsPlugs = true;
+      needsStyles = needsPlugs[0] = needsPlugs[1] = true;
     }
 
-    needsPosition = setValidId('path', PATH_KEY_2_ID, true) || needsPosition;
-    needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
-    needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, false, true) || needsPosition;
+    needsPosition = setValidId('path', PATH_KEY_2_ID) || needsPosition;
+    needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socket', 0) || needsPosition;
+    needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socket', 1) || needsPosition;
 
-    if (setValidType('color', true)) {
+    if (setValidType('color')) {
       needsStyles = addPropList('color', needsStyles);
-      needsPlugs = addPropList('startPlugColor', needsPlugs);
-      needsPlugs = addPropList('endPlugColor', needsPlugs);
+      needsPlugs[0] = addPropList('plugColor', needsPlugs[0]);
+      needsPlugs[1] = addPropList('plugColor', needsPlugs[1]);
     }
-    if (setValidType('size', true)) {
+    if (setValidType('size')) {
       needsStyles = addPropList('size', needsStyles);
-      needsPlugs = addPropList('', needsPlugs); // For `*PlugOverhead` and `*PlugOutlineR`.
+      needsPlugs[0] = addPropList('', needsPlugs[0]); // For `plugOverhead` and `plugOutlineR`.
+      needsPlugs[1] = addPropList('', needsPlugs[1]); // For `plugOverhead` and `plugOutlineR`.
       needsPosition = true;
     }
 
-    ['startSocketGravity', 'endSocketGravity'].forEach(function(prop) {
+    ['startSocketGravity', 'endSocketGravity'].forEach(function(name, i) {
       var value = false; // `false` means no-update input.
-      if (newOptions[prop] != null) { // eslint-disable-line eqeqeq
-        if (Array.isArray(newOptions[prop])) {
-          if (typeof newOptions[prop][0] === 'number' && typeof newOptions[prop][1] === 'number') {
-            value = [newOptions[prop][0], newOptions[prop][1]];
-            if (Array.isArray(options[prop]) && matchArray(value, options[prop])) { value = false; }
+      if (newOptions[name] != null) { // eslint-disable-line eqeqeq
+        if (Array.isArray(newOptions[name])) {
+          if (typeof newOptions[name][0] === 'number' && typeof newOptions[name][1] === 'number') {
+            value = [newOptions[name][0], newOptions[name][1]];
+            if (Array.isArray(options.socketGravity[i]) &&
+              matchArray(value, options.socketGravity[i])) { value = false; }
           }
         } else {
-          if ((newOptions[prop] + '').toLowerCase() === KEY_AUTO) {
+          if ((newOptions[name] + '').toLowerCase() === KEYWORD_AUTO) {
             value = null;
-          } else if (typeof newOptions[prop] === 'number' && newOptions[prop] >= 0) {
-            value = newOptions[prop];
+          } else if (typeof newOptions[name] === 'number' && newOptions[name] >= 0) {
+            value = newOptions[name];
           }
-          if (value === options[prop]) { value = false; }
+          if (value === options.socketGravity[i]) { value = false; }
         }
         if (value !== false) {
-          options[prop] = value;
+          options.socketGravity[i] = value;
           needsPosition = true;
         }
       }
     });
 
-    ['startPlug', 'endPlug'].forEach(function(prop) {
-      if (setValidId(prop, PLUG_KEY_2_ID, true)) {
-        needsPlugs = addPropList(prop, needsPlugs);
+    ['startPlug', 'endPlug'].forEach(function(name, i) {
+      if (setValidId(name, PLUG_KEY_2_ID, 'plug', i)) {
+        needsPlugs[i] = addPropList('plug', needsPlugs[i]);
         needsPosition = true;
       }
-      if (setValidType(prop + 'Color', false, 'string', true)) {
-        needsPlugs = addPropList(prop + 'Color', needsPlugs);
+      if (setValidType(name + 'Color', 'string', 'plugColor', i)) {
+        needsPlugs[i] = addPropList('plugColor', needsPlugs[i]);
       }
-      if (setValidType(prop + 'Size', true)) {
-        needsPlugs = addPropList(prop + 'Size', needsPlugs);
+      if (setValidType(name + 'Size', null, 'plugSize', i)) {
+        needsPlugs[i] = addPropList('plugSize', needsPlugs[i]);
         needsPosition = true;
       }
     });
@@ -767,8 +813,9 @@
     if (needsStyles) { // Update styles of `<path>`.
       setStyles(props, Array.isArray(needsStyles) ? needsStyles : null);
     }
-    if (needsPlugs) { // Update plugs.
-      setPlugs(props, Array.isArray(needsPlugs) ? needsPlugs : null);
+    if (needsPlugs[0] || needsPlugs[1]) { // Update plugs.
+      setPlugs(props, [Array.isArray(needsPlugs[0]) ? needsPlugs[0] : null,
+        Array.isArray(needsPlugs[1]) ? needsPlugs[1] : null]);
     }
     if (needsPosition) { // Call `position()`.
       this.position();
