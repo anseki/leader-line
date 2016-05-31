@@ -837,22 +837,24 @@
       bBoxSE, newSocketXYSE, newMaskBBoxSE = [], newPathData, newViewBBox = {},
       pathSegs = [], viewHasChanged;
 
+    function getSocketXY(bBox, socketId) {
+      var socketXY = (
+        socketId === SOCKET_TOP ? {x: bBox.left + bBox.width / 2, y: bBox.top} :
+        socketId === SOCKET_RIGHT ? {x: bBox.right, y: bBox.top + bBox.height / 2} :
+        socketId === SOCKET_BOTTOM ? {x: bBox.left + bBox.width / 2, y: bBox.bottom} :
+                    /* SOCKET_LEFT */ {x: bBox.left, y: bBox.top + bBox.height / 2});
+      socketXY.socketId = socketId;
+      return socketXY;
+    }
+
+    function socketXY2Point(socketXY) { return {x: socketXY.x, y: socketXY.y}; }
+
     bBoxSE = [
       getBBoxNest(options.anchorSE[0], props.baseWindow),
       getBBoxNest(options.anchorSE[1], props.baseWindow)];
 
     // Decide each socket
     (function() {
-      function getSocketXY(bBox, socketId) {
-        var socketXY = (
-          socketId === SOCKET_TOP ? {x: bBox.left + bBox.width / 2, y: bBox.top} :
-          socketId === SOCKET_RIGHT ? {x: bBox.right, y: bBox.top + bBox.height / 2} :
-          socketId === SOCKET_BOTTOM ? {x: bBox.left + bBox.width / 2, y: bBox.bottom} :
-                      /* SOCKET_LEFT */ {x: bBox.left, y: bBox.top + bBox.height / 2});
-        socketXY.socketId = socketId;
-        return socketXY;
-      }
-
       var socketXYsWk, socketsLenMin = -1, iFix, iAuto;
       if (options.socketSE[0] && options.socketSE[1]) {
         newSocketXYSE = [
@@ -937,8 +939,7 @@
       switch (options.path) {
 
         case PATH_STRAIGHT:
-          pathSegs.push([{x: props.socketXYSE[0].x, y: props.socketXYSE[0].y},
-            {x: props.socketXYSE[1].x, y: props.socketXYSE[1].y}]);
+          pathSegs.push([socketXY2Point(props.socketXYSE[0]), socketXY2Point(props.socketXYSE[1])]);
           break;
 
         case PATH_ARC:
@@ -959,8 +960,8 @@
               cp2 = {
                 x: props.socketXYSE[1].x + Math.cos(cp2Angle) * crLen,
                 y: props.socketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
-            pathSegs.push([{x: props.socketXYSE[0].x, y: props.socketXYSE[0].y},
-              cp1, cp2, {x: props.socketXYSE[1].x, y: props.socketXYSE[1].y}]);
+            pathSegs.push(
+              [socketXY2Point(props.socketXYSE[0]), cp1, cp2, socketXY2Point(props.socketXYSE[1])]);
           })();
           break;
 
@@ -1007,9 +1008,8 @@
               cx[i] = socketXY.x + offset.x;
               cy[i] = socketXY.y + offset.y;
             });
-            pathSegs.push([{x: props.socketXYSE[0].x, y: props.socketXYSE[0].y},
-              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]},
-              {x: props.socketXYSE[1].x, y: props.socketXYSE[1].y}]);
+            pathSegs.push([socketXY2Point(props.socketXYSE[0]),
+              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(props.socketXYSE[1])]);
           }/* @/EXPORT@ */)([options.socketGravitySE[0],
             options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
           break;
@@ -1182,7 +1182,7 @@
             }
 
             props.socketXYSE.forEach(function(socketXY, i) {
-              var dirPoint = {x: socketXY.x, y: socketXY.y},
+              var dirPoint = socketXY2Point(socketXY),
                 len = options.socketGravitySE[i];
               (function(dirLen) {
                 dirPoint.dirId = dirLen[0];
