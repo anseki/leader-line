@@ -89,12 +89,12 @@
       endPlugSize: 1
     },
 
-    POSITION_PROPS = [ // `anchor` and `socketXY` are checked always.
-      {name: 'plugOverhead', has2: true},
-      {name: 'plugOutlineR', has2: true},
+    POSITION_PROPS = [ // `anchorSE` and `socketXYSE` are checked always.
+      {name: 'plugOverheadSE', has2: true},
+      {name: 'plugOutlineRSE', has2: true},
       {name: 'path', isOption: true},
       {name: 'size', isOption: true},
-      {name: 'socketGravity', has2: true, isOption: true}
+      {name: 'socketGravitySE', has2: true, isOption: true}
     ],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
     KEYWORD_AUTO = 'auto',
@@ -264,7 +264,7 @@
     };
   }
 
-  function getPointOnPath(p0, p1, p2, p3, t) {
+  function getPointOnCubic(p0, p1, p2, p3, t) {
     var
       t1 = 1 - t,
       t13 = Math.pow(t1, 3),
@@ -297,7 +297,7 @@
     /* eslint-enable key-spacing */
   }
 
-  function getPathLength(p0, p1, p2, p3, z) {
+  function getCubicLength(p0, p1, p2, p3, z) {
     function base3(t, p0v, p1v, p2v, p3v) {
       var t1 = -3 * p0v + 9 * p1v - 9 * p2v + 3 * p3v,
         t2 = t * t1 + 6 * p0v - 12 * p1v + 6 * p2v;
@@ -324,23 +324,23 @@
     return z2 * sum;
   }
 
-  function getPathT(p0, p1, p2, p3, ll) {
+  function getCubicT(p0, p1, p2, p3, ll) {
     var e = 0.01, step = 1 / 2, t2 = 1 - step,
-      l = getPathLength(p0, p1, p2, p3, t2);
+      l = getCubicLength(p0, p1, p2, p3, t2);
     while (Math.abs(l - ll) > e) {
       step /= 2;
       t2 += (l < ll ? 1 : -1) * step;
-      l = getPathLength(p0, p1, p2, p3, t2);
+      l = getCubicLength(p0, p1, p2, p3, t2);
     }
     return t2;
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXY`,
-   *    `pathData`, `plugOverhead`, `plugOutlineR`,
-   *    `maskBBox`,
-   *    `svg`, `path`, `marker`, `markerUse`,
-   *    `maskPath`, `positionValues`.
+   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXYSE`,
+   *    `pathData`, `plugOverheadSE`, `plugOutlineRSE`,
+   *    `maskBBoxSE`,
+   *    `svg`, `path`, `markerSE`, `markerUseSE`,
+   *    `maskPathSE`, `positionValues`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -408,31 +408,27 @@
     elmDefs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
 
     [
-      ['marker', function(i) {
+      ['markerSE', function(i) {
         var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
-        element.id = props.markerId[i];
+        element.id = props.markerIdSE[i];
         element.markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
         if (!element.viewBox.baseVal) {
           element.setAttribute('viewBox', '0 0 0 0'); // for Firefox bug
         }
         return element;
       }],
-      ['markerUse', function(i) {
-        return props.marker[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      ['markerUseSE', function(i) {
+        return props.markerSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
       }],
-      ['maskPath', function(i) {
+      ['maskPathSE', function(i) {
         var clip = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'clipPath')),
           element = clip.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-        clip.id = props.clipId[i];
+        clip.id = props.clipIdSE[i];
         element.className.baseVal = APP_ID + '-mask';
         return element;
       }]
     ].forEach(function(propCreate) {
-      var prop = propCreate[0], create = propCreate[1];
-      props[prop] = [0, 1].reduce(function(array, i) {
-        array[i] = create(i);
-        return array;
-      }, []);
+      props[propCreate[0]] = [0, 1].map(function(i) { return propCreate[1](i); });
     });
 
     props.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
@@ -440,11 +436,11 @@
     props.svg = baseDocument.body.appendChild(svg);
 
     props.viewBBox = {};
-    props.socketXY = [{}, {}];
+    props.socketXYSE = [{}, {}];
     props.pathData = [];
-    props.plugOverhead = [0, 0];
-    props.plugOutlineR = [0, 0];
-    props.maskBBox = [null, null];
+    props.plugOverheadSE = [0, 0];
+    props.plugOutlineRSE = [0, 0];
+    props.maskBBoxSE = [null, null];
     // Initialize properties as array.
     props.positionValues = POSITION_PROPS.reduce(function(values, prop) {
       if (prop.has2) { values[prop.name] = []; }
@@ -465,7 +461,7 @@
       options = props.options, styles = props.path.style;
     (styleProps || ['color', 'size']).forEach(function(styleProp) {
       if (styleProp) {
-        window.traceLog.push('[' + styleProp + '] ' + options[styleProp]); // [DEBUG/]
+        window.traceLog.push(styleProp + ' = ' + options[styleProp]); // [DEBUG/]
         styles[PROP_2_CSSPROP[styleProp]] = options[styleProp];
       }
     });
@@ -533,7 +529,7 @@
     var options = props.options;
 
     plugProps.forEach(function(plugProps, i) {
-      var plugId = options.plug[i], symbolConf;
+      var plugId = options.plugSE[i], symbolConf;
 
       plugProps = (plugProps || ['plug', 'plugColor', 'plugSize']).reduce(function(plugProps, prop) {
         if (prop) { plugProps[prop] = true; }
@@ -542,38 +538,38 @@
 
       if (plugId === PLUG_BEHIND) {
         if (plugProps.plug) {
-          window.traceLog.push('[plug ' + i + '] ' + plugId); // [DEBUG/]
+          window.traceLog.push('plug[' + i + '] = ' + plugId); // [DEBUG/]
           props.path.style[i ? 'markerEnd' : 'markerStart'] = 'none';
         }
         // Update shape always for `options.size` that might have been changed.
-        props.plugOverhead[i] = -(options.size / 2);
-        props.plugOutlineR[i] = 0;
+        props.plugOverheadSE[i] = -(options.size / 2);
+        props.plugOutlineRSE[i] = 0;
       } else {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
         if (plugProps.plug) {
-          window.traceLog.push('[plug ' + i + '] ' + plugId); // [DEBUG/]
-          props.markerUse[i].href.baseVal = '#' + symbolConf.elmId;
-          setMarkerOrient(props.marker[i],
+          window.traceLog.push('plug[' + i + '] = ' + plugId); // [DEBUG/]
+          props.markerUseSE[i].href.baseVal = '#' + symbolConf.elmId;
+          setMarkerOrient(props.markerSE[i],
             symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse',
-            symbolConf.bBox, props.svg, props.markerUse[i], props.path);
-          props.path.style[i ? 'markerEnd' : 'markerStart'] = 'url(#' + props.markerId[i] + ')';
+            symbolConf.bBox, props.svg, props.markerUseSE[i], props.path);
+          props.path.style[i ? 'markerEnd' : 'markerStart'] = 'url(#' + props.markerIdSE[i] + ')';
           // Initialize size and color because the plug might have been `PLUG_BEHIND`.
           plugProps.PlugSize = plugProps.PlugColor = true;
         }
         if (plugProps.PlugColor) {
-          window.traceLog.push('[plugColor ' + i + '] ' + (options.plugColor[i] || options.color)); // [DEBUG/]
-          props.markerUse[i].style.fill = options.plugColor[i] || options.color;
+          window.traceLog.push('plugColor[' + i + '] = ' + (options.plugColorSE[i] || options.color)); // [DEBUG/]
+          props.markerUseSE[i].style.fill = options.plugColorSE[i] || options.color;
         }
         if (plugProps.PlugSize) {
-          window.traceLog.push('[plugSize ' + i + '] ' + options.plugSize[i]); // [DEBUG/]
-          props.marker[i].markerWidth.baseVal.value = symbolConf.widthR * options.plugSize[i];
-          props.marker[i].markerHeight.baseVal.value = symbolConf.heightR * options.plugSize[i];
+          window.traceLog.push('plugSize[' + i + '] = ' + options.plugSizeSE[i]); // [DEBUG/]
+          props.markerSE[i].markerWidth.baseVal.value = symbolConf.widthR * options.plugSizeSE[i];
+          props.markerSE[i].markerHeight.baseVal.value = symbolConf.heightR * options.plugSizeSE[i];
         }
         // Update shape always for `options.size` that might have been changed.
-        props.plugOverhead[i] =
-          options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options.plugSize[i];
-        props.plugOutlineR[i] =
-          options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options.plugSize[i];
+        props.plugOverheadSE[i] =
+          options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options.plugSizeSE[i];
+        props.plugOutlineRSE[i] =
+          options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options.plugSizeSE[i];
       }
     });
   }
@@ -587,7 +583,7 @@
   function LeaderLine(start, end, options) {
     var that = this,
       props = {options: // Initialize properties as array.
-        {anchor: [], socket: [], socketGravity: [], plug: [], plugColor: [], plugSize: []}};
+        {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: []}};
 
     function createSetter(name) {
       return function(value) {
@@ -608,8 +604,8 @@
     Object.defineProperty(this, '_id', {value: insId++});
     insProps[this._id] = props;
 
-    props.markerId = [APP_ID + '-' + this._id + '-marker-0', APP_ID + '-' + this._id + '-marker-1'];
-    props.clipId = [APP_ID + '-' + this._id + '-clip-0', APP_ID + '-' + this._id + '-clip-1'];
+    props.markerIdSE = [APP_ID + '-' + this._id + '-marker-0', APP_ID + '-' + this._id + '-marker-1'];
+    props.clipIdSE = [APP_ID + '-' + this._id + '-clip-0', APP_ID + '-' + this._id + '-clip-1'];
 
     if (arguments.length === 1) {
       options = start;
@@ -621,10 +617,10 @@
     this.setOptions(options);
 
     // Setup option accessor methods (direct)
-    [['start', 'anchor', 0], ['end', 'anchor', 1], ['color'], ['size'],
-        ['startSocketGravity', 'socketGravity', 0], ['endSocketGravity', 'socketGravity', 1],
-        ['startPlugColor', 'plugColor', 0], ['endPlugColor', 'plugColor', 1],
-        ['startPlugSize', 'plugSize', 0], ['endPlugSize', 'plugSize', 1]]
+    [['start', 'anchorSE', 0], ['end', 'anchorSE', 1], ['color'], ['size'],
+        ['startSocketGravity', 'socketGravitySE', 0], ['endSocketGravity', 'socketGravitySE', 1],
+        ['startPlugColor', 'plugColorSE', 0], ['endPlugColor', 'plugColorSE', 1],
+        ['startPlugSize', 'plugSizeSE', 0], ['endPlugSize', 'plugSizeSE', 1]]
       .forEach(function(conf) {
         var name = conf[0], optionName = conf[1], i = conf[2];
         Object.defineProperty(that, name, {
@@ -642,8 +638,8 @@
       });
     // Setup option accessor methods (key-to-id)
     [['path', PATH_KEY_2_ID],
-        ['startSocket', SOCKET_KEY_2_ID, 'socket', 0], ['endSocket', SOCKET_KEY_2_ID, 'socket', 1],
-        ['startPlug', PLUG_KEY_2_ID, 'plug', 0], ['endPlug', PLUG_KEY_2_ID, 'plug', 1]]
+        ['startSocket', SOCKET_KEY_2_ID, 'socketSE', 0], ['endSocket', SOCKET_KEY_2_ID, 'socketSE', 1],
+        ['startPlug', PLUG_KEY_2_ID, 'plugSE', 0], ['endPlug', PLUG_KEY_2_ID, 'plugSE', 1]]
       .forEach(function(conf) {
         var name = conf[0], key2Id = conf[1], optionName = conf[2], i = conf[3];
         Object.defineProperty(that, name, {
@@ -672,12 +668,12 @@
     /*
       Names of `options` : Keys of API
       ----------------------------------------
-      anchor            start, end
-      socket            startSocket, endSocket
-      socketGravity     startSocketGravity, endSocketGravity
-      plug              startPlug, endPlug
-      plugColor         startPlugColor, endPlugColor
-      plugSize          startPlugSize, endPlugSize
+      anchorSE          start, end
+      socketSE          startSocket, endSocket
+      socketGravitySE   startSocketGravity, endSocketGravity
+      plugSE            startPlug, endPlug
+      plugColorSE       startPlugColor, endPlugColor
+      plugSizeSE        startPlugSize, endPlugSize
     */
     window.traceLog.push('<setOptions>'); // [DEBUG/]
     var props = insProps[this._id], options = props.options,
@@ -751,25 +747,25 @@
 
     ['start', 'end'].forEach(function(name, i) {
       if (newOptions[name] && newOptions[name].nodeType != null && // eslint-disable-line eqeqeq
-          newOptions[name] !== options.anchor[i]) {
-        options.anchor[i] = newOptions[name];
+          newOptions[name] !== options.anchorSE[i]) {
+        options.anchorSE[i] = newOptions[name];
         needsWindow = needsPosition = true;
       }
     });
-    if (!options.anchor[0] || !options.anchor[1] || options.anchor[0] === options.anchor[1]) {
+    if (!options.anchorSE[0] || !options.anchorSE[1] || options.anchorSE[0] === options.anchorSE[1]) {
       throw new Error('`start` and `end` are required.');
     }
 
     // Check window.
     if (needsWindow &&
-        (newWindow = getCommonWindow(options.anchor[0], options.anchor[1])) !== props.baseWindow) {
+        (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
       needsStyles = needsPlugs[0] = needsPlugs[1] = true;
     }
 
     needsPosition = setValidId('path', PATH_KEY_2_ID) || needsPosition;
-    needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socket', 0) || needsPosition;
-    needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socket', 1) || needsPosition;
+    needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needsPosition;
+    needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needsPosition;
 
     if (setValidType('color')) {
       needsStyles = addPropList('color', needsStyles);
@@ -778,8 +774,8 @@
     }
     if (setValidType('size')) {
       needsStyles = addPropList('size', needsStyles);
-      needsPlugs[0] = addPropList('', needsPlugs[0]); // For `plugOverhead` and `plugOutlineR`.
-      needsPlugs[1] = addPropList('', needsPlugs[1]); // For `plugOverhead` and `plugOutlineR`.
+      needsPlugs[0] = addPropList('', needsPlugs[0]); // For `plugOverheadSE` and `plugOutlineRSE`.
+      needsPlugs[1] = addPropList('', needsPlugs[1]); // For `plugOverheadSE` and `plugOutlineRSE`.
       needsPosition = true;
     }
 
@@ -789,8 +785,8 @@
         if (Array.isArray(newOptions[name])) {
           if (typeof newOptions[name][0] === 'number' && typeof newOptions[name][1] === 'number') {
             value = [newOptions[name][0], newOptions[name][1]];
-            if (Array.isArray(options.socketGravity[i]) &&
-              matchArray(value, options.socketGravity[i])) { value = false; }
+            if (Array.isArray(options.socketGravitySE[i]) &&
+              matchArray(value, options.socketGravitySE[i])) { value = false; }
           }
         } else {
           if ((newOptions[name] + '').toLowerCase() === KEYWORD_AUTO) {
@@ -798,24 +794,24 @@
           } else if (typeof newOptions[name] === 'number' && newOptions[name] >= 0) {
             value = newOptions[name];
           }
-          if (value === options.socketGravity[i]) { value = false; }
+          if (value === options.socketGravitySE[i]) { value = false; }
         }
         if (value !== false) {
-          options.socketGravity[i] = value;
+          options.socketGravitySE[i] = value;
           needsPosition = true;
         }
       }
     });
 
     ['startPlug', 'endPlug'].forEach(function(name, i) {
-      if (setValidId(name, PLUG_KEY_2_ID, 'plug', i)) {
+      if (setValidId(name, PLUG_KEY_2_ID, 'plugSE', i)) {
         needsPlugs[i] = addPropList('plug', needsPlugs[i]);
         needsPosition = true;
       }
-      if (setValidType(name + 'Color', 'string', 'plugColor', i)) {
+      if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
         needsPlugs[i] = addPropList('plugColor', needsPlugs[i]);
       }
-      if (setValidType(name + 'Size', null, 'plugSize', i)) {
+      if (setValidType(name + 'Size', null, 'plugSizeSE', i)) {
         needsPlugs[i] = addPropList('plugSize', needsPlugs[i]);
         needsPosition = true;
       }
@@ -838,12 +834,12 @@
   LeaderLine.prototype.position = function() {
     window.traceLog.push('<position>'); // [DEBUG/]
     var props = insProps[this._id], options = props.options,
-      bBoxes, newSocketXY, newMaskBBox = [], newPathData, newViewBBox = {},
+      bBoxSE, newSocketXYSE, newMaskBBoxSE = [], newPathData, newViewBBox = {},
       pathSegs = [], viewHasChanged;
 
-    bBoxes = [
-      getBBoxNest(options.anchor[0], props.baseWindow),
-      getBBoxNest(options.anchor[1], props.baseWindow)];
+    bBoxSE = [
+      getBBoxNest(options.anchorSE[0], props.baseWindow),
+      getBBoxNest(options.anchorSE[1], props.baseWindow)];
 
     // Decide each socket
     (function() {
@@ -858,39 +854,39 @@
       }
 
       var socketXYsWk, socketsLenMin = -1, iFix, iAuto;
-      if (options.socket[0] && options.socket[1]) {
-        newSocketXY = [
-          getSocketXY(bBoxes[0], options.socket[0]),
-          getSocketXY(bBoxes[1], options.socket[1])];
+      if (options.socketSE[0] && options.socketSE[1]) {
+        newSocketXYSE = [
+          getSocketXY(bBoxSE[0], options.socketSE[0]),
+          getSocketXY(bBoxSE[1], options.socketSE[1])];
 
-      } else if (!options.socket[0] && !options.socket[1]) {
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[1], socketId); });
-        SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[0], socketId); })
+      } else if (!options.socketSE[0] && !options.socketSE[1]) {
+        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxSE[1], socketId); });
+        SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxSE[0], socketId); })
           .forEach(function(socketXY0) {
             socketXYsWk.forEach(function(socketXY1) {
               var len = getPointsLength(socketXY0, socketXY1);
               if (len < socketsLenMin || socketsLenMin === -1) {
-                newSocketXY = [socketXY0, socketXY1];
+                newSocketXYSE = [socketXY0, socketXY1];
                 socketsLenMin = len;
               }
             });
           });
 
       } else {
-        if (options.socket[0]) {
+        if (options.socketSE[0]) {
           iFix = 0;
           iAuto = 1;
         } else {
           iFix = 1;
           iAuto = 0;
         }
-        newSocketXY = [];
-        newSocketXY[iFix] = getSocketXY(bBoxes[iFix], options.socket[iFix]);
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxes[iAuto], socketId); });
+        newSocketXYSE = [];
+        newSocketXYSE[iFix] = getSocketXY(bBoxSE[iFix], options.socketSE[iFix]);
+        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxSE[iAuto], socketId); });
         socketXYsWk.forEach(function(socketXY) {
-          var len = getPointsLength(socketXY, newSocketXY[iFix]);
+          var len = getPointsLength(socketXY, newSocketXYSE[iFix]);
           if (len < socketsLenMin || socketsLenMin === -1) {
-            newSocketXY[iAuto] = socketXY;
+            newSocketXYSE[iAuto] = socketXY;
             socketsLenMin = len;
           }
         });
@@ -898,36 +894,36 @@
     })();
 
     // To limit updated `socketXY`
-    newSocketXY.forEach(function(socketXY1, i) {
-      var socketXY2 = props.socketXY[i];
+    newSocketXYSE.forEach(function(socketXY1, i) {
+      var socketXY2 = props.socketXYSE[i];
       if (socketXY1.x !== socketXY2.x || socketXY1.y !== socketXY2.y ||
           socketXY1.socketId !== socketXY2.socketId) {
-        props.socketXY[i] = socketXY1;
+        props.socketXYSE[i] = socketXY1;
       } else {
-        newSocketXY[i] = null;
+        newSocketXYSE[i] = null;
       }
     });
 
     // Decide `maskBBox` (coordinates might have changed)
-    bBoxes.forEach(function(maskBBox1, i) {
-      var maskBBox2 = props.maskBBox[i],
-        enabled1 = props.plugOverhead[i] < 0, enabled2 = !!maskBBox2;
+    bBoxSE.forEach(function(maskBBox1, i) {
+      var maskBBox2 = props.maskBBoxSE[i],
+        enabled1 = props.plugOverheadSE[i] < 0, enabled2 = !!maskBBox2;
       if (enabled1 !== enabled2 ||
           enabled1 && enabled2 && ['left', 'top', 'width', 'height'].some(function(prop) { // omission right, bottom
             return maskBBox1[prop] !== maskBBox2[prop];
           })) {
         if (enabled1) {
-          props.maskBBox[i] = newMaskBBox[i] = maskBBox1;
+          props.maskBBoxSE[i] = newMaskBBoxSE[i] = maskBBox1;
         } else {
-          props.maskBBox[i] = null;
-          newMaskBBox[i] = false; // To indicate that it was changed.
+          props.maskBBoxSE[i] = null;
+          newMaskBBoxSE[i] = false; // To indicate that it was changed.
         }
       }
     });
 
     // New position
-    if (newSocketXY[0] || newSocketXY[1] ||
-        newMaskBBox[0] != null || newMaskBBox[1] != null || // eslint-disable-line eqeqeq
+    if (newSocketXYSE[0] || newSocketXYSE[1] ||
+        newMaskBBoxSE[0] != null || newMaskBBoxSE[1] != null || // eslint-disable-line eqeqeq
         POSITION_PROPS.some(function(prop) {
           var curValue = (prop.isOption ? options : props)[prop.name],
             positionValue = props.positionValues[prop.name];
@@ -935,45 +931,45 @@
             [0, 1].some(function(i) { return positionValue[i] !== curValue[i]; }) :
             positionValue !== curValue;
         })) {
-      window.traceLog.push('[update]'); // [DEBUG/]
+      window.traceLog.push('(update)'); // [DEBUG/]
 
       // Generate path segments
       switch (options.path) {
 
         case PATH_STRAIGHT:
-          pathSegs.push([{x: props.socketXY[0].x, y: props.socketXY[0].y},
-            {x: props.socketXY[1].x, y: props.socketXY[1].y}]);
+          pathSegs.push([{x: props.socketXYSE[0].x, y: props.socketXYSE[0].y},
+            {x: props.socketXYSE[1].x, y: props.socketXYSE[1].y}]);
           break;
 
         case PATH_ARC:
           (function() {
             var
               downward =
-                typeof options.socketGravity[0] === 'number' && options.socketGravity[0] > 0 ||
-                typeof options.socketGravity[1] === 'number' && options.socketGravity[1] > 0,
+                typeof options.socketGravitySE[0] === 'number' && options.socketGravitySE[0] > 0 ||
+                typeof options.socketGravitySE[1] === 'number' && options.socketGravitySE[1] > 0,
               circle8rad = CIRCLE_8_RAD * (downward ? -1 : 1),
-              angle = Math.atan2(props.socketXY[1].y - props.socketXY[0].y,
-                props.socketXY[1].x - props.socketXY[0].x),
+              angle = Math.atan2(props.socketXYSE[1].y - props.socketXYSE[0].y,
+                props.socketXYSE[1].x - props.socketXYSE[0].x),
               cp1Angle = -angle + circle8rad,
               cp2Angle = Math.PI - angle - circle8rad,
-              crLen = getPointsLength(props.socketXY[0], props.socketXY[1]) / Math.sqrt(2) * CIRCLE_CP,
+              crLen = getPointsLength(props.socketXYSE[0], props.socketXYSE[1]) / Math.sqrt(2) * CIRCLE_CP,
               cp1 = {
-                x: props.socketXY[0].x + Math.cos(cp1Angle) * crLen,
-                y: props.socketXY[0].y + Math.sin(cp1Angle) * crLen * -1},
+                x: props.socketXYSE[0].x + Math.cos(cp1Angle) * crLen,
+                y: props.socketXYSE[0].y + Math.sin(cp1Angle) * crLen * -1},
               cp2 = {
-                x: props.socketXY[1].x + Math.cos(cp2Angle) * crLen,
-                y: props.socketXY[1].y + Math.sin(cp2Angle) * crLen * -1};
-            pathSegs.push([{x: props.socketXY[0].x, y: props.socketXY[0].y},
-              cp1, cp2, {x: props.socketXY[1].x, y: props.socketXY[1].y}]);
+                x: props.socketXYSE[1].x + Math.cos(cp2Angle) * crLen,
+                y: props.socketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
+            pathSegs.push([{x: props.socketXYSE[0].x, y: props.socketXYSE[0].y},
+              cp1, cp2, {x: props.socketXYSE[1].x, y: props.socketXYSE[1].y}]);
           })();
           break;
 
         case PATH_FLUID:
         case PATH_MAGNET:
-          (/* @EXPORT[file:../test/spec/functions/PATH_FLUID]@ */function(socketGravity) {
+          (/* @EXPORT[file:../test/spec/functions/PATH_FLUID]@ */function(socketGravitySE) {
             var cx = [], cy = [];
-            props.socketXY.forEach(function(socketXY, i) {
-              var gravity = socketGravity[i], offset, anotherSocketXY, overhead, minGravity, len;
+            props.socketXYSE.forEach(function(socketXY, i) {
+              var gravity = socketGravitySE[i], offset, anotherSocketXY, overhead, minGravity, len;
               if (Array.isArray(gravity)) { // offset
                 offset = {x: gravity[0], y: gravity[1]};
               } else if (typeof gravity === 'number') { // distance
@@ -983,8 +979,8 @@
                   socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity} :
                                       /* SOCKET_LEFT */ {x: -gravity, y: 0};
               } else { // auto
-                anotherSocketXY = props.socketXY[i ? 0 : 1];
-                overhead = props.plugOverhead[i];
+                anotherSocketXY = props.socketXYSE[i ? 0 : 1];
+                overhead = props.plugOverheadSE[i];
                 minGravity = overhead > 0 ?
                   MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
                     (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
@@ -1011,11 +1007,11 @@
               cx[i] = socketXY.x + offset.x;
               cy[i] = socketXY.y + offset.y;
             });
-            pathSegs.push([{x: props.socketXY[0].x, y: props.socketXY[0].y},
+            pathSegs.push([{x: props.socketXYSE[0].x, y: props.socketXYSE[0].y},
               {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]},
-              {x: props.socketXY[1].x, y: props.socketXY[1].y}]);
-          }/* @/EXPORT@ */)([options.socketGravity[0],
-            options.path === PATH_MAGNET ? 0 : options.socketGravity[1]]);
+              {x: props.socketXYSE[1].x, y: props.socketXYSE[1].y}]);
+          }/* @/EXPORT@ */)([options.socketGravitySE[0],
+            options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
           break;
 
         case PATH_GRID:
@@ -1185,9 +1181,9 @@
               return true;
             }
 
-            props.socketXY.forEach(function(socketXY, i) {
+            props.socketXYSE.forEach(function(socketXY, i) {
               var dirPoint = {x: socketXY.x, y: socketXY.y},
-                len = options.socketGravity[i];
+                len = options.socketGravitySE[i];
               (function(dirLen) {
                 dirPoint.dirId = dirLen[0];
                 len = dirLen[1];
@@ -1221,7 +1217,7 @@
       // Adjust path with plugs
       (function() {
         var pathSegsLen = [];
-        props.plugOverhead.forEach(function(plugOverhead, i) {
+        props.plugOverheadSE.forEach(function(plugOverhead, i) {
           var start = !i, pathSeg, iSeg, point, sp, cp, angle, len,
             socketId, axis, dir, minAdjustOffset;
           if (plugOverhead > 0) {
@@ -1240,13 +1236,13 @@
               }
 
             } else { // Cubic bezier
-              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getPathLength.apply(null, pathSeg);
+              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getCubicLength.apply(null, pathSeg);
               if (pathSegsLen[iSeg] > MIN_ADJUST_LEN) {
                 if (pathSegsLen[iSeg] - plugOverhead < MIN_ADJUST_LEN) {
                   plugOverhead = pathSegsLen[iSeg] - MIN_ADJUST_LEN;
                 }
-                point = getPointOnPath(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
-                  getPathT(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
+                point = getPointOnCubic(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
+                  getCubicT(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
                     start ? plugOverhead : pathSegsLen[iSeg] - plugOverhead));
 
                 // Get direct distance and angle
@@ -1273,9 +1269,9 @@
             }
           } else if (plugOverhead < 0) {
             pathSeg = pathSegs[(iSeg = start ? 0 : pathSegs.length - 1)];
-            socketId = props.socketXY[i].socketId;
+            socketId = props.socketXYSE[i].socketId;
             axis = socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y';
-            minAdjustOffset = -(bBoxes[i][axis === 'x' ? 'width' : 'height']);
+            minAdjustOffset = -(bBoxSE[i][axis === 'x' ? 'width' : 'height']);
             if (plugOverhead < minAdjustOffset) { plugOverhead = minAdjustOffset; }
             dir = plugOverhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
             if (pathSeg.length === 2) { // Straight line
@@ -1312,7 +1308,7 @@
         newViewBBox.x2 += padding;
         newViewBBox.y1 -= padding;
         newViewBBox.y2 += padding;
-      })(Math.max(options.size / 2, props.plugOutlineR[0], props.plugOutlineR[1]));
+      })(Math.max(options.size / 2, props.plugOutlineRSE[0], props.plugOutlineRSE[1]));
       newViewBBox.x = newViewBBox.x1;
       newViewBBox.y = newViewBBox.y1;
       newViewBBox.width = newViewBBox.x2 - newViewBBox.x1;
@@ -1327,7 +1323,7 @@
                 return newPathSegValue !== pathSeg.values[i];
               });
           })) {
-        window.traceLog.push('[setPathData]'); // [DEBUG/]
+        window.traceLog.push('(setPathData)'); // [DEBUG/]
         props.path.setPathData(newPathData);
         props.pathData = newPathData;
       }
@@ -1338,7 +1334,7 @@
         [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
           var boxKey = keys[0], cssProp = keys[1];
           if (newViewBBox[boxKey] !== props.viewBBox[boxKey]) {
-            window.traceLog.push('[viewBox] ' + boxKey); // [DEBUG/]
+            window.traceLog.push('viewBox[' + boxKey + ']'); // [DEBUG/]
             props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
             styles[cssProp] = newViewBBox[boxKey] +
               (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
@@ -1348,18 +1344,18 @@
       })();
 
       // Apply mask for plugs
-      if (viewHasChanged && (props.maskBBox[0] || props.maskBBox[1]) ||
-          newMaskBBox[0] != null || newMaskBBox[1] != null) { // eslint-disable-line eqeqeq
-        if (!props.maskBBox[0] && !props.maskBBox[1]) {
-          window.traceLog.push('[mask] none'); // [DEBUG/]
+      if (viewHasChanged && (props.maskBBoxSE[0] || props.maskBBoxSE[1]) ||
+          newMaskBBoxSE[0] != null || newMaskBBoxSE[1] != null) { // eslint-disable-line eqeqeq
+        if (!props.maskBBoxSE[0] && !props.maskBBoxSE[1]) {
+          window.traceLog.push('mask = none'); // [DEBUG/]
           props.path.style.clipPath = 'none';
         } else {
           // Separate `clipPath` elements for overlapping masks.
           // `mask` is faster than
-          props.maskBBox.forEach(function(maskBBox, i) {
+          props.maskBBoxSE.forEach(function(maskBBox, i) {
             if (maskBBox) {
-              window.traceLog.push('[mask ' + i + ']'); // [DEBUG/]
-              props.maskPath[i].setPathData([
+              window.traceLog.push('mask[' + i + ']'); // [DEBUG/]
+              props.maskPathSE[i].setPathData([
                 {type: 'M', values: [newViewBBox.x, newViewBBox.y]},
                 {type: 'h', values: [newViewBBox.width]},
                 {type: 'v', values: [newViewBBox.height]},
@@ -1373,13 +1369,13 @@
               ]);
             }
           });
-          if (props.maskBBox[0] && props.maskBBox[1]) {
-            props.maskPath[1].style.clipPath = 'url(#' + props.clipId[0] + ')';
-            props.path.style.clipPath = 'url(#' + props.clipId[1] + ')';
+          if (props.maskBBoxSE[0] && props.maskBBoxSE[1]) {
+            props.maskPathSE[1].style.clipPath = 'url(#' + props.clipIdSE[0] + ')';
+            props.path.style.clipPath = 'url(#' + props.clipIdSE[1] + ')';
           } else {
-            props.maskPath[1].style.clipPath = 'none';
+            props.maskPathSE[1].style.clipPath = 'none';
             props.path.style.clipPath = 'url(#' +
-              props.clipId[props.maskBBox[0] ? 0 : 1] + ')';
+              props.clipIdSE[props.maskBBoxSE[0] ? 0 : 1] + ')';
           }
         }
       }
