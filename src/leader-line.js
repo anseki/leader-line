@@ -90,11 +90,11 @@
     },
 
     POSITION_PROPS = [ // `anchorSE` and `socketXYSE` are checked always.
-      {name: 'plugOverheadSE', has2: true},
-      {name: 'plugOutlineRSE', has2: true},
+      {name: 'plugOverheadSE', hasSE: true},
+      {name: 'plugOutlineRSE', hasSE: true},
       {name: 'path', isOption: true},
       {name: 'size', isOption: true},
-      {name: 'socketGravitySE', has2: true, isOption: true}
+      {name: 'socketGravitySE', hasSE: true, isOption: true}
     ],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
     KEYWORD_AUTO = 'auto',
@@ -339,7 +339,7 @@
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXYSE`,
    *    `pathData`, `plugOverheadSE`, `plugOutlineRSE`,
    *    `maskBBoxSE`,
-   *    `svg`, `path`, `markerSE`, `markerUseSE`,
+   *    `svg`, `line`, `markerSE`, `markerUseSE`,
    *    `maskPathSE`, `positionValues`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
@@ -431,8 +431,8 @@
       props[propCreate[0]] = [0, 1].map(function(i) { return propCreate[1](i); });
     });
 
-    props.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-    props.path.className.baseVal = APP_ID + '-path';
+    props.line = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+    props.line.className.baseVal = APP_ID + '-line';
     props.svg = baseDocument.body.appendChild(svg);
 
     props.viewBBox = {};
@@ -443,7 +443,7 @@
     props.maskBBoxSE = [null, null];
     // Initialize properties as array.
     props.positionValues = POSITION_PROPS.reduce(function(values, prop) {
-      if (prop.has2) { values[prop.name] = []; }
+      if (prop.hasSE) { values[prop.name] = []; }
       return values;
     }, {});
   }
@@ -458,7 +458,7 @@
   function setStyles(props, styleProps) {
     window.traceLog.push('<setStyles>'); // [DEBUG/]
     var PROP_2_CSSPROP = {color: 'stroke', size: 'strokeWidth'},
-      options = props.options, styles = props.path.style;
+      options = props.options, styles = props.line.style;
     (styleProps || ['color', 'size']).forEach(function(styleProp) {
       if (styleProp) {
         window.traceLog.push(styleProp + ' = ' + options[styleProp]); // [DEBUG/]
@@ -539,7 +539,7 @@
       if (plugId === PLUG_BEHIND) {
         if (plugProps.plug) {
           window.traceLog.push('plug[' + i + '] = ' + plugId); // [DEBUG/]
-          props.path.style[i ? 'markerEnd' : 'markerStart'] = 'none';
+          props.line.style[i ? 'markerEnd' : 'markerStart'] = 'none';
         }
         // Update shape always for `options.size` that might have been changed.
         props.plugOverheadSE[i] = -(options.size / 2);
@@ -551,8 +551,8 @@
           props.markerUseSE[i].href.baseVal = '#' + symbolConf.elmId;
           setMarkerOrient(props.markerSE[i],
             symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse',
-            symbolConf.bBox, props.svg, props.markerUseSE[i], props.path);
-          props.path.style[i ? 'markerEnd' : 'markerStart'] = 'url(#' + props.markerIdSE[i] + ')';
+            symbolConf.bBox, props.svg, props.markerUseSE[i], props.line);
+          props.line.style[i ? 'markerEnd' : 'markerStart'] = 'url(#' + props.markerIdSE[i] + ')';
           // Initialize size and color because the plug might have been `PLUG_BEHIND`.
           plugProps.PlugSize = plugProps.PlugColor = true;
         }
@@ -817,7 +817,7 @@
       }
     });
 
-    if (needsStyles) { // Update styles of `<path>`.
+    if (needsStyles) { // Update styles of `line`.
       setStyles(props, Array.isArray(needsStyles) ? needsStyles : null);
     }
     if (needsPlugs[0] || needsPlugs[1]) { // Update plugs.
@@ -929,7 +929,7 @@
         POSITION_PROPS.some(function(prop) {
           var curValue = (prop.isOption ? options : props)[prop.name],
             positionValue = props.positionValues[prop.name];
-          return prop.has2 ?
+          return prop.hasSE ?
             [0, 1].some(function(i) { return positionValue[i] !== curValue[i]; }) :
             positionValue !== curValue;
         })) {
@@ -1302,7 +1302,7 @@
         });
       });
 
-      // Expand bBox with path or symbols
+      // Expand bBox with `line` or symbols
       (function(padding) {
         newViewBBox.x1 -= padding;
         newViewBBox.x2 += padding;
@@ -1314,7 +1314,7 @@
       newViewBBox.width = newViewBBox.x2 - newViewBBox.x1;
       newViewBBox.height = newViewBBox.y2 - newViewBBox.y1;
 
-      // Apply path data
+      // Apply `pathData`
       if (newPathData.length !== props.pathData.length ||
           newPathData.some(function(newPathSeg, i) {
             var pathSeg = props.pathData[i];
@@ -1324,7 +1324,7 @@
               });
           })) {
         window.traceLog.push('(setPathData)'); // [DEBUG/]
-        props.path.setPathData(newPathData);
+        props.line.setPathData(newPathData);
         props.pathData = newPathData;
       }
 
@@ -1348,7 +1348,7 @@
           newMaskBBoxSE[0] != null || newMaskBBoxSE[1] != null) { // eslint-disable-line eqeqeq
         if (!props.maskBBoxSE[0] && !props.maskBBoxSE[1]) {
           window.traceLog.push('mask = none'); // [DEBUG/]
-          props.path.style.clipPath = 'none';
+          props.line.style.clipPath = 'none';
         } else {
           // Separate `clipPath` elements for overlapping masks.
           // `mask` is faster than
@@ -1371,10 +1371,10 @@
           });
           if (props.maskBBoxSE[0] && props.maskBBoxSE[1]) {
             props.maskPathSE[1].style.clipPath = 'url(#' + props.clipIdSE[0] + ')';
-            props.path.style.clipPath = 'url(#' + props.clipIdSE[1] + ')';
+            props.line.style.clipPath = 'url(#' + props.clipIdSE[1] + ')';
           } else {
             props.maskPathSE[1].style.clipPath = 'none';
-            props.path.style.clipPath = 'url(#' +
+            props.line.style.clipPath = 'url(#' +
               props.clipIdSE[props.maskBBoxSE[0] ? 0 : 1] + ')';
           }
         }
@@ -1382,7 +1382,7 @@
 
       POSITION_PROPS.forEach(function(prop) {
         var curValue = (prop.isOption ? options : props)[prop.name];
-        props.positionValues[prop.name] = prop.has2 ? [curValue[0], curValue[1]] : curValue;
+        props.positionValues[prop.name] = prop.hasSE ? [curValue[0], curValue[1]] : curValue;
       });
     }
   };
