@@ -4,16 +4,19 @@
 describe('func-PATH_FLUID', function() {
   'use strict';
 
-  var func,
-    // context
-    /* eslint-disable no-unused-vars */
+  var func;
+
+  // context
+  /* eslint-disable no-unused-vars */
+  var
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     PATH_STRAIGHT = 1, PATH_ARC = 2, PATH_FLUID = 3, PATH_MAGNET = 4, PATH_GRID = 5,
     MIN_GRAVITY = 80, MIN_GRAVITY_SIZE = 4, MIN_GRAVITY_R = 5,
     MIN_OH_GRAVITY = 120, MIN_OH_GRAVITY_OH = 8, MIN_OH_GRAVITY_R = 3.75,
     MIN_ADJUST_LEN = 10, MIN_GRID_LEN = 30,
     props, options, pathSegs;
-    /* eslint-enable no-unused-vars */
+  function socketXY2Point(socketXY) { return {x: socketXY.x, y: socketXY.y}; }
+  /* eslint-enable no-unused-vars */
 
   beforeAll(function(done) {
     getSource('./spec/functions/PATH_FLUID', function(error, source) {
@@ -24,148 +27,150 @@ describe('func-PATH_FLUID', function() {
   });
 
   it('should set offset by SocketGravity Array', function() {
-    props = {
-      startSocketXY: {x: 100, y: 100, socketId: SOCKET_RIGHT},
-      endSocketXY: {x: 300, y: 300, socketId: SOCKET_LEFT}
-    };
+    props = {socketXYSE: [
+      {x: 100, y: 100, socketId: SOCKET_RIGHT},
+      {x: 300, y: 300, socketId: SOCKET_LEFT}
+    ]};
     options = {
-      startSocketGravity: [2, 4],
-      endSocketGravity: [8, 16]
+      socketGravitySE: [[2, 4], [8, 16]]
     };
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x + 2, y: props.startSocketXY.y + 4},
-        {x: props.endSocketXY.x + 8, y: props.endSocketXY.y + 16},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x + 2, y: props.socketXYSE[0].y + 4},
+        {x: props.socketXYSE[1].x + 8, y: props.socketXYSE[1].y + 16},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
   });
 
   it('should set offset by SOCKETs direction', function() {
-    props = {
-      startSocketXY: {x: 100, y: 100, socketId: SOCKET_TOP},
-      endSocketXY: {x: 300, y: 300, socketId: SOCKET_RIGHT}
-    };
+    props = {socketXYSE: [
+      {x: 100, y: 100, socketId: SOCKET_TOP},
+      {x: 300, y: 300, socketId: SOCKET_RIGHT}
+    ]};
     options = {
-      startSocketGravity: 2,
-      endSocketGravity: 4
+      socketGravitySE: [2, 4]
     };
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x, y: props.startSocketXY.y - 2},
-        {x: props.endSocketXY.x + 4, y: props.endSocketXY.y},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x, y: props.socketXYSE[0].y - 2},
+        {x: props.socketXYSE[1].x + 4, y: props.socketXYSE[1].y},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
 
-    props.startSocketXY.socketId = SOCKET_BOTTOM;
-    props.endSocketXY.socketId = SOCKET_LEFT;
+    props.socketXYSE[0].socketId = SOCKET_BOTTOM;
+    props.socketXYSE[1].socketId = SOCKET_LEFT;
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x, y: props.startSocketXY.y + 2},
-        {x: props.endSocketXY.x - 4, y: props.endSocketXY.y},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x, y: props.socketXYSE[0].y + 2},
+        {x: props.socketXYSE[1].x - 4, y: props.socketXYSE[1].y},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
   });
 
   it('should set offset `auto` by SOCKETs position', function() {
     props = {
-      startSocketXY: {x: 100, y: 100, socketId: SOCKET_RIGHT},
-      endSocketXY: {x: 400, y: 400, socketId: SOCKET_LEFT},
-      startPlugOverhead: 10, // minGravity: 120 + 7.5
-      endPlugOverhead: 6 // minGravity: 120
+      socketXYSE: [
+        {x: 100, y: 100, socketId: SOCKET_RIGHT},
+        {x: 400, y: 400, socketId: SOCKET_LEFT}
+      ],
+      plugOverheadSE: [
+        10, // minGravity: 120 + 7.5
+        6 // minGravity: 120
+      ]
     };
-    options = {size: 4};
+    options = {size: 4, socketGravitySE: []};
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x + 150, y: props.startSocketXY.y},
-        {x: props.endSocketXY.x - 150, y: props.endSocketXY.y},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x + 150, y: props.socketXYSE[0].y},
+        {x: props.socketXYSE[1].x - 150, y: props.socketXYSE[1].y},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
 
     // Change direction
-    props.startSocketXY.socketId = SOCKET_BOTTOM;
-    props.endSocketXY.socketId = SOCKET_TOP;
+    props.socketXYSE[0].socketId = SOCKET_BOTTOM;
+    props.socketXYSE[1].socketId = SOCKET_TOP;
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x, y: props.startSocketXY.y + 150},
-        {x: props.endSocketXY.x, y: props.endSocketXY.y - 150},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x, y: props.socketXYSE[0].y + 150},
+        {x: props.socketXYSE[1].x, y: props.socketXYSE[1].y - 150},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
 
     // Closed position
-    props.startSocketXY.socketId = SOCKET_RIGHT;
-    props.endSocketXY.socketId = SOCKET_LEFT;
-    props.endSocketXY.x = 300;
+    props.socketXYSE[0].socketId = SOCKET_RIGHT;
+    props.socketXYSE[1].socketId = SOCKET_LEFT;
+    props.socketXYSE[1].x = 300;
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x + 127.5, y: props.startSocketXY.y},
-        {x: props.endSocketXY.x - 120, y: props.endSocketXY.y},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x + 127.5, y: props.socketXYSE[0].y},
+        {x: props.socketXYSE[1].x - 120, y: props.socketXYSE[1].y},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
 
     // Same as MIN_OH_GRAVITY_OH
-    props.startPlugOverhead = MIN_OH_GRAVITY_OH;
+    props.plugOverheadSE[0] = MIN_OH_GRAVITY_OH;
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x + 120, y: props.startSocketXY.y},
-        {x: props.endSocketXY.x - 120, y: props.endSocketXY.y},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x + 120, y: props.socketXYSE[0].y},
+        {x: props.socketXYSE[1].x - 120, y: props.socketXYSE[1].y},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
 
     // No PlugOverhead
-    props.startPlugOverhead = props.endPlugOverhead = 0; // minGravity: 80
+    props.plugOverheadSE = [0, 0]; // minGravity: 80
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x + 100, y: props.startSocketXY.y},
-        {x: props.endSocketXY.x - 100, y: props.endSocketXY.y},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x + 100, y: props.socketXYSE[0].y},
+        {x: props.socketXYSE[1].x - 100, y: props.socketXYSE[1].y},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
 
     // Closed position
-    props.endSocketXY.x = 200;
+    props.socketXYSE[1].x = 200;
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x + 80, y: props.startSocketXY.y},
-        {x: props.endSocketXY.x - 80, y: props.endSocketXY.y},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x + 80, y: props.socketXYSE[0].y},
+        {x: props.socketXYSE[1].x - 80, y: props.socketXYSE[1].y},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
 
     // Size affects
-    options = {size: 6};
+    options = {size: 6, socketGravitySE: []};
     pathSegs = [];
-    func({start: options.startSocketGravity,
-      end: options.path === PATH_MAGNET ? 0 : options.endSocketGravity});
+    func([options.socketGravitySE[0],
+      options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
     expect(pathSegs).toEqual([
-      [props.startSocketXY,
-        {x: props.startSocketXY.x + 90, y: props.startSocketXY.y},
-        {x: props.endSocketXY.x - 90, y: props.endSocketXY.y},
-        props.endSocketXY]
+      [socketXY2Point(props.socketXYSE[0]),
+        {x: props.socketXYSE[0].x + 90, y: props.socketXYSE[0].y},
+        {x: props.socketXYSE[1].x - 90, y: props.socketXYSE[1].y},
+        socketXY2Point(props.socketXYSE[1])]
     ]);
   });
 
