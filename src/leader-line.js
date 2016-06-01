@@ -452,17 +452,17 @@
   /**
    * Apply `color`, `size`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {Array} [styleProps] - To limit properties. `[]` and `['']` are also accepted.
+   * @param {Array} [setProps] - To limit properties. `[]` and `['']` don't change.
    * @returns {void}
    */
-  function setStyles(props, styleProps) {
-    window.traceLog.push('<setStyles>'); // [DEBUG/]
+  function setLine(props, setProps) {
+    window.traceLog.push('<setLine>'); // [DEBUG/]
     var PROP_2_CSSPROP = {color: 'stroke', size: 'strokeWidth'},
       options = props.options, styles = props.line.style;
-    (styleProps || ['color', 'size']).forEach(function(styleProp) {
-      if (styleProp) {
-        window.traceLog.push(styleProp + ' = ' + options[styleProp]); // [DEBUG/]
-        styles[PROP_2_CSSPROP[styleProp]] = options[styleProp];
+    (setProps || ['color', 'size']).forEach(function(setProp) {
+      if (setProp) {
+        window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
+        styles[PROP_2_CSSPROP[setProp]] = options[setProp];
       }
     });
   }
@@ -521,50 +521,50 @@
   /**
    * Apply `plug`, `plugColor`, `plugSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {(Array|null)[]} plugProps - To limit properties. `[[]]` and `[['']]` are also accepted.
+   * @param {(Array|null)[]} setPropsSE - To limit properties.
+   *    Each `[]` and `['']` change only each `plugOverhead` and `plugOutlineR`.
    * @returns {void}
    */
-  function setPlugs(props, plugProps) {
-    window.traceLog.push('<setPlugs>'); // [DEBUG/]
+  function setPlug(props, setPropsSE) {
+    window.traceLog.push('<setPlug>'); // [DEBUG/]
     var options = props.options;
 
-    plugProps.forEach(function(plugProps, i) {
+    setPropsSE.forEach(function(setProps, i) {
       var plugId = options.plugSE[i], symbolConf;
 
-      plugProps = (plugProps || ['plug', 'plugColor', 'plugSize']).reduce(function(plugProps, prop) {
-        if (prop) { plugProps[prop] = true; }
-        return plugProps;
-      }, {});
-
       if (plugId === PLUG_BEHIND) {
-        if (plugProps.plug) {
+        if (!setProps || setProps.indexOf('plug') > -1) {
           window.traceLog.push('plug[' + i + '] = ' + plugId); // [DEBUG/]
           props.line.style[i ? 'markerEnd' : 'markerStart'] = 'none';
         }
         // Update shape always for `options.size` that might have been changed.
         props.plugOverheadSE[i] = -(options.size / 2);
         props.plugOutlineRSE[i] = 0;
+
       } else {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
-        if (plugProps.plug) {
-          window.traceLog.push('plug[' + i + '] = ' + plugId); // [DEBUG/]
-          props.markerUseSE[i].href.baseVal = '#' + symbolConf.elmId;
-          setMarkerOrient(props.markerSE[i],
-            symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse',
-            symbolConf.bBox, props.svg, props.markerUseSE[i], props.line);
-          props.line.style[i ? 'markerEnd' : 'markerStart'] = 'url(#' + props.markerIdSE[i] + ')';
-          // Initialize size and color because the plug might have been `PLUG_BEHIND`.
-          plugProps.PlugSize = plugProps.PlugColor = true;
-        }
-        if (plugProps.PlugColor) {
-          window.traceLog.push('plugColor[' + i + '] = ' + (options.plugColorSE[i] || options.color)); // [DEBUG/]
-          props.markerUseSE[i].style.fill = options.plugColorSE[i] || options.color;
-        }
-        if (plugProps.PlugSize) {
-          window.traceLog.push('plugSize[' + i + '] = ' + options.plugSizeSE[i]); // [DEBUG/]
-          props.markerSE[i].markerWidth.baseVal.value = symbolConf.widthR * options.plugSizeSE[i];
-          props.markerSE[i].markerHeight.baseVal.value = symbolConf.heightR * options.plugSizeSE[i];
-        }
+        (setProps || ['plug', 'plugColor', 'plugSize']).forEach(function(setProp) {
+          switch (setProp) {
+            case 'plug':
+              window.traceLog.push('plug[' + i + '] = ' + plugId); // [DEBUG/]
+              props.markerUseSE[i].href.baseVal = '#' + symbolConf.elmId;
+              setMarkerOrient(props.markerSE[i],
+                symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse',
+                symbolConf.bBox, props.svg, props.markerUseSE[i], props.line);
+              props.line.style[i ? 'markerEnd' : 'markerStart'] = 'url(#' + props.markerIdSE[i] + ')';
+              break;
+            case 'plugColor':
+              window.traceLog.push('plugColor[' + i + '] = ' + (options.plugColorSE[i] || options.color)); // [DEBUG/]
+              props.markerUseSE[i].style.fill = options.plugColorSE[i] || options.color;
+              break;
+            case 'plugSize':
+              window.traceLog.push('plugSize[' + i + '] = ' + options.plugSizeSE[i]); // [DEBUG/]
+              props.markerSE[i].markerWidth.baseVal.value = symbolConf.widthR * options.plugSizeSE[i];
+              props.markerSE[i].markerHeight.baseVal.value = symbolConf.heightR * options.plugSizeSE[i];
+              break;
+            // no default
+          }
+        });
         // Update shape always for `options.size` that might have been changed.
         props.plugOverheadSE[i] =
           options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options.plugSizeSE[i];
@@ -665,6 +665,7 @@
    * @returns {void}
    */
   LeaderLine.prototype.setOptions = function(newOptions) {
+    window.traceLog.push('<setOptions>'); // [DEBUG/]
     /*
       Names of `options` : Keys of API
       ----------------------------------------
@@ -675,9 +676,8 @@
       plugColorSE       startPlugColor, endPlugColor
       plugSizeSE        startPlugSize, endPlugSize
     */
-    window.traceLog.push('<setOptions>'); // [DEBUG/]
     var props = insProps[this._id], options = props.options,
-      needsWindow, needsStyles, needsPlugs = [], needsPosition, newWindow;
+      needsWindow, needsLine, needsPlugSE = [null, null], needsPosition, newWindow;
 
     function setValidId(name, key2Id, optionName, index) {
       var acceptsAuto = DEFAULT_OPTIONS[name] == null, // eslint-disable-line eqeqeq
@@ -715,7 +715,7 @@
         currentOptions = options;
         optionKey = name;
       }
-      type = type || typeof DEFAULT_OPTIONS[optionName];
+      type = type || typeof DEFAULT_OPTIONS[name];
 
       if (newOptions[name] != null && ( // eslint-disable-line eqeqeq
             acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
@@ -760,23 +760,47 @@
     if (needsWindow &&
         (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
-      needsStyles = needsPlugs[0] = needsPlugs[1] = true;
+      needsLine = needsPlugSE[0] = needsPlugSE[1] = true;
     }
 
     needsPosition = setValidId('path', PATH_KEY_2_ID) || needsPosition;
     needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needsPosition;
     needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needsPosition;
 
+    // Since `plug*`s might be affected by `color` and `size`, check `plug*`s before those.
+    ['startPlug', 'endPlug'].forEach(function(name, i) {
+      var currentPlug = options.plugSE[i];
+      if (setValidId(name, PLUG_KEY_2_ID, 'plugSE', i)) {
+        needsPlugSE[i] = addPropList('plug', needsPlugSE[i]);
+        needsPosition = true;
+        if (currentPlug === PLUG_BEHIND) {
+          needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
+          needsPlugSE[i] = addPropList('plugSize', needsPlugSE[i]);
+        }
+      }
+      // Update at least `options` even if it is `PLUG_BEHIND` and visual is not changed.
+      if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
+        needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
+      }
+      if (setValidType(name + 'Size', null, 'plugSizeSE', i)) {
+        needsPlugSE[i] = addPropList('plugSize', needsPlugSE[i]);
+        needsPosition = true;
+      }
+    });
+
     if (setValidType('color')) {
-      needsStyles = addPropList('color', needsStyles);
-      needsPlugs[0] = addPropList('plugColor', needsPlugs[0]);
-      needsPlugs[1] = addPropList('plugColor', needsPlugs[1]);
+      needsLine = addPropList('color', needsLine);
+      options.plugSE.forEach(function(plug, i) {
+        if (plug !== PLUG_BEHIND && !options.plugColorSE[i]) {
+          needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
+        }
+      });
     }
     if (setValidType('size')) {
-      needsStyles = addPropList('size', needsStyles);
-      needsPlugs[0] = addPropList('', needsPlugs[0]); // For `plugOverheadSE` and `plugOutlineRSE`.
-      needsPlugs[1] = addPropList('', needsPlugs[1]); // For `plugOverheadSE` and `plugOutlineRSE`.
+      needsLine = addPropList('size', needsLine);
       needsPosition = true;
+      // For `plugOverhead` and `plugOutlineR`.
+      needsPlugSE.forEach(function(list, i) { needsPlugSE[i] = addPropList('', list); });
     }
 
     ['startSocketGravity', 'endSocketGravity'].forEach(function(name, i) {
@@ -803,26 +827,12 @@
       }
     });
 
-    ['startPlug', 'endPlug'].forEach(function(name, i) {
-      if (setValidId(name, PLUG_KEY_2_ID, 'plugSE', i)) {
-        needsPlugs[i] = addPropList('plug', needsPlugs[i]);
-        needsPosition = true;
-      }
-      if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
-        needsPlugs[i] = addPropList('plugColor', needsPlugs[i]);
-      }
-      if (setValidType(name + 'Size', null, 'plugSizeSE', i)) {
-        needsPlugs[i] = addPropList('plugSize', needsPlugs[i]);
-        needsPosition = true;
-      }
-    });
-
-    if (needsStyles) { // Update styles of `line`.
-      setStyles(props, Array.isArray(needsStyles) ? needsStyles : null);
+    if (needsLine) { // Update styles of `line`.
+      setLine(props, Array.isArray(needsLine) ? needsLine : null);
     }
-    if (needsPlugs[0] || needsPlugs[1]) { // Update plugs.
-      setPlugs(props, [Array.isArray(needsPlugs[0]) ? needsPlugs[0] : null,
-        Array.isArray(needsPlugs[1]) ? needsPlugs[1] : null]);
+    if (needsPlugSE[0] || needsPlugSE[1]) { // Update plugs.
+      setPlug(props, [Array.isArray(needsPlugSE[0]) ? needsPlugSE[0] : null,
+        Array.isArray(needsPlugSE[1]) ? needsPlugSE[1] : null]);
     }
     if (needsPosition) { // Call `position()`.
       this.position();
@@ -1323,7 +1333,7 @@
                 return newPathSegValue !== pathSeg.values[i];
               });
           })) {
-        window.traceLog.push('(setPathData)'); // [DEBUG/]
+        window.traceLog.push('setPathData'); // [DEBUG/]
         props.line.setPathData(newPathData);
         props.pathData = newPathData;
       }
@@ -1334,7 +1344,7 @@
         [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
           var boxKey = keys[0], cssProp = keys[1];
           if (newViewBBox[boxKey] !== props.viewBBox[boxKey]) {
-            window.traceLog.push('viewBox[' + boxKey + ']'); // [DEBUG/]
+            window.traceLog.push('viewBox.' + boxKey); // [DEBUG/]
             props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
             styles[cssProp] = newViewBBox[boxKey] +
               (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
