@@ -27,20 +27,27 @@ describe('BBox', function() {
       'overflow2-top': 64
     },
     DIV_WIDTH = {static: 100, absolute: 101},
-    DIV_HEIGHT = {static: 50, absolute: 51},
+    DIV_HEIGHT = {static: 50, absolute: 51};
 
-    // from leader-line.js
-    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3; // , SOCKET_LEFT = 4;
+  // ================ context
+  /* eslint-disable no-unused-vars, indent */
+  var
+    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4;
 
-  function copyObj(obj) {
-    var newObj = {}, prop;
-    for (prop in obj) { newObj[prop] = obj[prop]; } // eslint-disable-line guard-for-in
-    return newObj;
-  }
+    function getSocketXY(bBox, socketId) {
+      var socketXY = (
+        socketId === SOCKET_TOP ? {x: bBox.left + bBox.width / 2, y: bBox.top} :
+        socketId === SOCKET_RIGHT ? {x: bBox.right, y: bBox.top + bBox.height / 2} :
+        socketId === SOCKET_BOTTOM ? {x: bBox.left + bBox.width / 2, y: bBox.bottom} :
+                    /* SOCKET_LEFT */ {x: bBox.left, y: bBox.top + bBox.height / 2});
+      socketXY.socketId = socketId;
+      return socketXY;
+    }
+  /* eslint-enable no-unused-vars, indent */
+  // ================ /context
 
   function setUpDocument(props, document, body) {
-    var targets = {html: document.documentElement};
-    targets.body = body || document.body;
+    var targets = {html: document.documentElement, body: body || document.body};
     props.forEach(function(prop) {
       var targetProp = prop.split('-', 2),
         target = targets[targetProp[0]], propName = targetProp[1];
@@ -53,34 +60,10 @@ describe('BBox', function() {
     });
   }
 
-  function reduceBBox(bBox) {
-    return ['left', 'top', 'width', 'height']
-      .reduce(function(rBBox, prop) { rBBox[prop] = bBox[prop]; return rBBox; }, {});
-  }
-
-  function getSocketXY(bBox, socketId) {
-    var socketXY = (
-      socketId === SOCKET_TOP ? {x: bBox.left + bBox.width / 2, y: bBox.top} :
-      socketId === SOCKET_RIGHT ? {x: bBox.left + bBox.width, y: bBox.top + bBox.height / 2} :
-      socketId === SOCKET_BOTTOM ? {x: bBox.left + bBox.width / 2, y: bBox.top + bBox.height} :
-                  /* SOCKET_LEFT */ {x: bBox.left, y: bBox.top + bBox.height / 2});
-    socketXY.socketId = socketId;
-    return socketXY;
-  }
-
-  function getShiftSocketXY(bBox, socketId, props) {
-    var shift = props.options.size / 2,
-      socketXY = getSocketXY(bBox, socketId);
-    if (socketId === SOCKET_TOP) {
-      socketXY.y += shift;
-    } else if (socketId === SOCKET_RIGHT) {
-      socketXY.x -= shift;
-    } else if (socketId === SOCKET_BOTTOM) {
-      socketXY.y -= shift;
-    } else /* SOCKET_LEFT */ {
-      socketXY.x += shift;
-    }
-    return socketXY;
+  // props: {{left, top, width, height}}
+  function createBBox(props) {
+    return {left: props.left, top: props.top, width: props.width, height: props.height,
+      right: props.left + props.width, bottom: props.top + props.height};
   }
 
   describe('coordinates should be got when:', function() {
@@ -146,23 +129,25 @@ describe('BBox', function() {
       it(title, function(done) {
 
         loadPage('spec/bbox/coordinates.html', function(window, document, body) {
-          var ll;
+          var ll, props;
 
           setUpDocument(condition.props, document, body);
           ll = new window.LeaderLine(
             document.getElementById('static'),
             document.getElementById('absolute'),
-            {endPlug: 'behind'}); // Make it have endMaskBBox
+            {endPlug: 'behind'}); // Make it have maskBBoxSE[1]
+          props = window.insProps[ll._id];
 
-          [['static', 'startMaskBBox'], ['absolute', 'endMaskBBox']].forEach(function(divProp) {
-            var div = divProp[0], prop = divProp[1],
+          [['static', 'maskBBoxSE', 0], ['absolute', 'maskBBoxSE', 1]].forEach(function(divProp) {
+            var div = divProp[0],
+              actual = divProp.length === 2 ? props[divProp[1]] : props[divProp[1]][divProp[2]],
               len = condition.expected[div].reduce(function(sum, prop) { return (sum += DOC_LEN[prop]); }, 0);
-            expect(reduceBBox(window.insProps[ll._id][prop]))
-              .toEqual({left: len, top: len, width: DIV_WIDTH[div], height: DIV_HEIGHT[div]});
+            expect(actual)
+              .toEqual(createBBox({left: len, top: len, width: DIV_WIDTH[div], height: DIV_HEIGHT[div]}));
           });
 
           done();
-        }/* , title */);
+        }, title);
 
       });
     });
@@ -320,12 +305,13 @@ describe('BBox', function() {
               startWinPath: ['iframe2_iframe2'],
               endWinPath: ['iframe2_iframe2']
             }
-          ].forEach(function(item, i) {
-            var ll = new window.LeaderLine(item.start, item.end, {endPlug: 'behind'});
+          ].forEach(function(item, iCase) {
+            var ll = new window.LeaderLine(item.start, item.end, {endPlug: 'behind'}),
+              props = window.insProps[ll._id];
 
-            expect(window.insProps[ll._id].baseWindow).toBe(item.baseWindow);
+            expect(props.baseWindow).toBe(item.baseWindow);
 
-            ['start', 'end'].forEach(function(key) {
+            ['start', 'end'].forEach(function(key, i) {
 
               function expandProps(frames, div) {
                 var REL_HTML = ['html-margin', 'html-border'],
@@ -360,26 +346,29 @@ describe('BBox', function() {
                 return props;
               }
 
-              var bBox = expandProps(item[key + 'WinPath'], item[key + 'Div']).reduce(function(bBox, prop) {
-                  var targetProp = prop.split(':', 2)[1],
-                    leftTop = (/\-(left|top)$/.exec(targetProp) || [])[1];
-                  if (condition.indexOf(prop) > -1 ||
-                      leftTop || targetProp === 'iframe-border' || targetProp === 'iframe-padding' ||
-                      targetProp === 'div-leftTop') {
-                    if (!leftTop || leftTop === 'left') { bBox.left += DOC_LEN[targetProp]; }
-                    if (!leftTop || leftTop === 'top') { bBox.top += DOC_LEN[targetProp]; }
-                  }
-                  return bBox;
-                }, {left: 0, top: 0, width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]}),
-                expected = reduceBBox(window.insProps[ll._id][key + 'MaskBBox']);
+              var bBox = createBBox(
+                expandProps(item[key + 'WinPath'], item[key + 'Div'])
+                  .reduce(function(bBox, prop) {
+                    var targetProp = prop.split(':', 2)[1],
+                      leftTop = (/\-(left|top)$/.exec(targetProp) || [])[1];
+                    if (condition.indexOf(prop) > -1 ||
+                        leftTop || targetProp === 'iframe-border' || targetProp === 'iframe-padding' ||
+                        targetProp === 'div-leftTop') {
+                      if (!leftTop || leftTop === 'left') { bBox.left += DOC_LEN[targetProp]; }
+                      if (!leftTop || leftTop === 'top') { bBox.top += DOC_LEN[targetProp]; }
+                    }
+                    return bBox;
+                  },
+                  {left: 0, top: 0,
+                    width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]})),
 
-              expected.index = bBox.index = i; // for error information
+                expected = props.maskBBoxSE[i];
+
+              expected.index = bBox.index = iCase; // for error information
               expected.key = bBox.key = key; // for error information
               expect(expected).toEqual(bBox);
 
-              expect(copyObj(window.insProps[ll._id][key + 'SocketXY']))
-                .toEqual(getShiftSocketXY(
-                  bBox, window.insProps[ll._id][key + 'SocketXY'].socketId, window.insProps[ll._id]));
+              expect(props.socketXYSE[i]).toEqual(getSocketXY(bBox, props.socketXYSE[i].socketId));
             });
 
             if (show) {
@@ -390,14 +379,14 @@ describe('BBox', function() {
               console.log('---- document:');
               console.log(item.baseWindow.document);
               console.log('---- svg:');
-              console.log(window.insProps[ll._id].svg);
+              console.log(props.svg);
               console.log('---- path:');
-              console.log(window.insProps[ll._id].path);
+              console.log(props.path);
             }
           });
 
           done();
-        }/* , title */);
+        }, title);
 
       });
     });
@@ -511,12 +500,13 @@ describe('BBox', function() {
               startWinPath: ['iframe1'],
               endWinPath: ['iframe1', 'iframe1_overflow1', 'iframe1_overflow1_overflow2']
             }
-          ].forEach(function(item, i) {
-            var ll = new window.LeaderLine(item.start, item.end, {endPlug: 'behind'});
+          ].forEach(function(item, iCase) {
+            var ll = new window.LeaderLine(item.start, item.end, {endPlug: 'behind'}),
+              props = window.insProps[ll._id];
 
-            expect(window.insProps[ll._id].baseWindow).toBe(item.baseWindow);
+            expect(props.baseWindow).toBe(item.baseWindow);
 
-            ['start', 'end'].forEach(function(key) {
+            ['start', 'end'].forEach(function(key, i) {
 
               function expandProps(frames, div) {
                 var REL_HTML = ['html-margin', 'html-border'],
@@ -569,31 +559,34 @@ describe('BBox', function() {
                 return props;
               }
 
-              var bBox = expandProps(item[key + 'WinPath'], item[key + 'Div']).reduce(function(bBox, prop) {
-                  var targetProp = prop.split(':', 2)[1],
-                    leftTop = (/\-(left|top)$/.exec(targetProp) || [])[1];
-                  if (targetProp === 'scroll') {
-                    bBox.left -= scroll;
-                    bBox.top -= scroll;
-                  } else if (condition.indexOf(prop) > -1 ||
-                      leftTop ||
-                      targetProp === 'iframe-border' || targetProp === 'iframe-padding' ||
-                      targetProp === 'overflow-border' || targetProp === 'overflow-padding' ||
-                      targetProp === 'div-leftTop') {
-                    if (!leftTop || leftTop === 'left') { bBox.left += DOC_LEN[targetProp]; }
-                    if (!leftTop || leftTop === 'top') { bBox.top += DOC_LEN[targetProp]; }
-                  }
-                  return bBox;
-                }, {left: 0, top: 0, width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]}),
-                expected = reduceBBox(window.insProps[ll._id][key + 'MaskBBox']);
+              var bBox = createBBox(
+                expandProps(item[key + 'WinPath'], item[key + 'Div'])
+                  .reduce(function(bBox, prop) {
+                    var targetProp = prop.split(':', 2)[1],
+                      leftTop = (/\-(left|top)$/.exec(targetProp) || [])[1];
+                    if (targetProp === 'scroll') {
+                      bBox.left -= scroll;
+                      bBox.top -= scroll;
+                    } else if (condition.indexOf(prop) > -1 ||
+                        leftTop ||
+                        targetProp === 'iframe-border' || targetProp === 'iframe-padding' ||
+                        targetProp === 'overflow-border' || targetProp === 'overflow-padding' ||
+                        targetProp === 'div-leftTop') {
+                      if (!leftTop || leftTop === 'left') { bBox.left += DOC_LEN[targetProp]; }
+                      if (!leftTop || leftTop === 'top') { bBox.top += DOC_LEN[targetProp]; }
+                    }
+                    return bBox;
+                  },
+                  {left: 0, top: 0,
+                    width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]})),
 
-              expected.index = bBox.index = i; // for error information
+                expected = props.maskBBoxSE[i];
+
+              expected.index = bBox.index = iCase; // for error information
               expected.key = bBox.key = key; // for error information
               expect(expected).toEqual(bBox);
 
-              expect(copyObj(window.insProps[ll._id][key + 'SocketXY']))
-                .toEqual(getShiftSocketXY(
-                  bBox, window.insProps[ll._id][key + 'SocketXY'].socketId, window.insProps[ll._id]));
+              expect(props.socketXYSE[i]).toEqual(getSocketXY(bBox, props.socketXYSE[i].socketId));
             });
           });
 
