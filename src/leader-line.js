@@ -363,7 +363,7 @@
     var SVG_NS = 'http://www.w3.org/2000/svg',
       baseDocument = newWindow.document,
       bodyOffset = {x: 0, y: 0},
-      sheet, defs, stylesHtml, stylesBody, svg, elmDefs;
+      sheet, defs, stylesHtml, stylesBody, svg, elmDefs, lineMaskCaps, elmUse;
 
     function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
 
@@ -480,19 +480,26 @@
       props[key + 'MaskBG'] = maskBG;
     });
 
+    lineMaskCaps = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
+    lineMaskCaps.id = props.lineMaskCapsId;
+
     props.lineMaskAnchorSE = [0, 1].map(function() {
-      var element = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
+      var element = lineMaskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
       element.className.baseVal = APP_ID + '-line-mask-anchor';
       return element;
     });
 
-    props.lineMaskPlug = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.lineMaskPlug = lineMaskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskPlug.className.baseVal = APP_ID + '-line-mask-plug';
     props.lineMaskPlug.href.baseVal = '#' + props.lineShapeId;
+
+    elmUse = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    elmUse.href.baseVal = '#' + props.lineMaskCapsId;
 
     props.lineMaskOutline = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskOutline.className.baseVal = APP_ID + '-line-mask-outline';
     props.lineMaskOutline.href.baseVal = '#' + props.lineOutlineIShapeId;
+    props.lineMaskOutline.style.display = 'none';
 
     props.lineFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineFace.href.baseVal = '#' + props.lineShapeId;
@@ -618,6 +625,7 @@
         // Update shape always for `options.size` that might have been changed.
         props.plugOverheadSE[i] = -(options.size / 2);
         props.plugOutlineRSE[i] = 0;
+        props.lineMaskAnchorSE[i].style.display = 'inline';
 
       } else {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
@@ -660,8 +668,11 @@
           options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options.plugSizeSE[i];
         props.plugOutlineRSE[i] =
           options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options.plugSizeSE[i];
+        props.lineMaskAnchorSE[i].style.display = 'none';
       }
     });
+    props.lineMaskPlug.style.display =
+      options.plugSE[0] !== PLUG_BEHIND || options.plugSE[1] !== PLUG_BEHIND ? 'inline' : 'none';
   }
 
   /**
@@ -689,9 +700,9 @@
       });
     } else {
       if (!setProps || setProps.indexOf('outlineEnabled') > -1) {
-        window.traceLog.push('outlineEnabled = ' + options.outlineEnabled); // [DEBUG/]
-        markerProp = i ? 'markerEnd' : 'markerStart';
-        props.plugFace.style[markerProp] = props.lineMaskPlug.style[markerProp] = 'none';
+        // window.traceLog.push('outlineEnabled = ' + options.outlineEnabled); // [DEBUG/]
+        // markerProp = i ? 'markerEnd' : 'markerStart';
+        // props.plugFace.style[markerProp] = props.lineMaskPlug.style[markerProp] = 'none';
       }
     }
   }
@@ -730,6 +741,7 @@
     props.lineShapeId = APP_ID + '-' + this._id + '-line-shape';
     props.lineOutlineIShapeId = APP_ID + '-' + this._id + '-line-oi-shape';
     props.lineMaskId = APP_ID + '-' + this._id + '-line-mask';
+    props.lineMaskCapsId = APP_ID + '-' + this._id + '-line-mask-caps';
     props.plugMaskId = APP_ID + '-' + this._id + '-plug-mask';
     props.plugWireId = APP_ID + '-' + this._id + '-plug-wire';
     props.faceMarkerIdSE =
@@ -1505,7 +1517,7 @@
             !props.plugSymbolSE[0] && !props.plugSymbolSE[1]) {
           // Current version uses the mask always.
           window.traceLog.push('mask = none'); // [DEBUG/]
-          props.line.style.mask = 'none';
+          props.lineFace.style.mask = 'none';
         } else {
           props.lineMask.width.baseVal.value = props.plugMask.width.baseVal.value = newViewBBox.width;
           props.lineMask.height.baseVal.value = props.plugMask.height.baseVal.value = newViewBBox.height;
@@ -1520,13 +1532,8 @@
               props.lineMaskAnchorSE[i].y.baseVal.value = anchorBBox.top;
               props.lineMaskAnchorSE[i].width.baseVal.value = anchorBBox.width;
               props.lineMaskAnchorSE[i].height.baseVal.value = anchorBBox.height;
-              props.lineMaskAnchorSE[i].style.display = 'inline';
-            } else {
-              props.lineMaskAnchorSE[i].style.display = 'none';
             }
           });
-          props.lineMaskPlug.style.display =
-            !props.plugSymbolSE[0] || !props.plugSymbolSE[1] ? 'inline' : 'none';
           props.lineFace.style.mask = 'url(#' + props.lineMaskId + ')';
         }
       }
