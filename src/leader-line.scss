@@ -11,27 +11,24 @@ $app_id: leader-line;
   height: 0;
 }
 
-.#{$app_id}-line-shape {
+.#{$app_id}-line-path {
   fill: none;
 }
-
-.#{$app_id}-plug {
-  stroke: rgba(0, 0, 0, 0); /* `transparent` might not be supported */
-}
-
-// .#{$app_id}-mask {
-//   clip-rule: evenodd;
-// }
 
 .#{$app_id}-mask-bg {
   fill: white;
 }
 
-.#{$app_id}-mask-anchor,
+.#{$app_id}-line-mask-anchor,
 .#{$app_id}-mask-marker-shape {
   fill: black;
 }
 
-.#{$app_id}-mask-line {
+.#{$app_id}-line-mask-plug,
+.#{$app_id}-plug-face {
   stroke: rgba(0, 0, 0, 0); /* `transparent` might not be supported */
+}
+
+.#{$app_id}-line-mask-outline {
+  stroke: white;
 }
