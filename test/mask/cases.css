@@ -13,13 +13,8 @@
   background-color: #eae7c5;
   position: relative;
 }
-
-/* line 18, cases.scss */
-.ll-view {
-  background-image: url("../grid.svg");
-}
-
-/* line 22, cases.scss */
+/* line 17, cases.scss */
+.ll-view::after,
 .mask-view::after {
   content: "";
   position: absolute;
@@ -30,7 +25,14 @@
   background-image: url("../grid.svg");
 }
 
-/* line 32, cases.scss */
+/* line 28, cases.scss */
+.border {
+  stroke: red;
+  stroke-width: 1px;
+  fill: none;
+}
+
+/* line 34, cases.scss */
 .anchor {
   position: absolute;
 }
@@ -49,17 +51,9 @@
 .mask-svg {
   position: absolute;
   overflow: visible;
-  box-sizing: content-box;
-  border: 1px solid red;
 }
 
-/* line 45, cases.scss */
-.leader-line {
-  box-sizing: content-box;
-  border: 1px solid blue;
-}
-
-/* line 50, cases.scss */
+/* line 43, cases.scss */
 select {
   position: absolute;
   right: 0;

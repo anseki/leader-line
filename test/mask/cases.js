@@ -111,6 +111,16 @@ window.addEventListener('load', function() {
     }, false);
     if (shownG) { elmGs[shownG].style.display = 'inline'; }
 
+    [llSvg, maskSvg].forEach(function(svg) {
+      var border = svg.appendChild(document.createElementNS(SVG_NS, 'rect')),
+        viewBox = svg.viewBox.baseVal;
+      border.className.baseVal = 'border';
+      border.x.baseVal.value = viewBox.x - 0.5;
+      border.y.baseVal.value = viewBox.y - -0.5;
+      border.width.baseVal.value = viewBox.width + 1;
+      border.height.baseVal.value = viewBox.height + 1;
+    });
+
     // code +=
     //   INDENT + '// ' + testCase.title + '\n' +
     //   INDENT + 'props = {socketXYSE: [\n' +

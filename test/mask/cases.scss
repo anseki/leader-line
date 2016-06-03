@@ -13,38 +13,31 @@ $view-wh: 320px;
   height: $view-wh;
   background-color: #eae7c5;
   position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("../grid.svg");
+  }
 }
 
-.ll-view {
-  background-image: url("../grid.svg");
+.border {
+  stroke: red;
+  stroke-width: 1px;
+  fill: none;
 }
 
-.mask-view::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("../grid.svg");
-}
-
-.anchor {
-  position: absolute;
-}
+.anchor { position: absolute; }
 .anchor-0 { background-color: rgba(127, 205, 255, 0.8); }
 .anchor-1 { background-color: rgba(255, 127, 205, 0.8); }
 
 .mask-svg {
   position: absolute;
   overflow: visible;
-  box-sizing: content-box;
-  border: 1px solid red;
-}
-
-.leader-line {
-  box-sizing: content-box;
-  border: 1px solid blue;
 }
 
 select {
