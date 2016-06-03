@@ -41,6 +41,29 @@ window.addEventListener('load', function() {
         options: {
           size: 12
         }
+      },
+      {
+        title: '1-3',
+        options: {
+          outline: true
+        }
+      },
+      {
+        title: '1-4',
+        options: {
+          size: 12,
+          outline: true,
+          outlineColor: 'blue'
+        }
+      },
+      {
+        title: '1-5',
+        options: {
+          size: 12,
+          outline: true,
+          outlineColor: 'blue',
+          outlineSize: 0.5
+        }
       }
     ];
 
