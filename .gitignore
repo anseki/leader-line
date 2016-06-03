@@ -4,4 +4,4 @@ node_modules
 temp
 src/defs.js
 src/leader-line.css
-test/spec/functions
+test/spec/func

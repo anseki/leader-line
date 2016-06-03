@@ -109,6 +109,7 @@
     CIRCLE_CP = 0.5522847, CIRCLE_8_RAD = 1 / 4 * Math.PI,
     IS_TRIDENT = !!document.uniqueID,
     IS_BLINK = !!(window.chrome && window.chrome.webstore),
+    IS_GECKO = 'MozAppearance' in document.documentElement.style,
 
     /**
      * @typedef {Object.<_id: number, props>} insProps
@@ -522,6 +523,11 @@
       if (prop.hasSE) { values[prop.name] = []; }
       return values;
     }, {});
+
+    if (IS_GECKO) {
+      forceReflow(props.lineFace);
+      forceReflow(props.plugFace);
+    }
   }
   window.bindWindow = bindWindow; // [DEBUG/]
 
@@ -1130,7 +1136,7 @@
 
         case PATH_FLUID:
         case PATH_MAGNET:
-          (/* @EXPORT[file:../test/spec/functions/PATH_FLUID]@ */function(socketGravitySE) {
+          (/* @EXPORT[file:../test/spec/func/PATH_FLUID]@ */function(socketGravitySE) {
             var cx = [], cy = [];
             props.socketXYSE.forEach(function(socketXY, i) {
               var gravity = socketGravitySE[i], offset, anotherSocketXY, overhead, minGravity, len;
@@ -1178,7 +1184,7 @@
           break;
 
         case PATH_GRID:
-          (/* @EXPORT[file:../test/spec/functions/PATH_GRID]@ */function() {
+          (/* @EXPORT[file:../test/spec/func/PATH_GRID]@ */function() {
             /**
              * @typedef {Object} DirPoint
              * @property {number} dirId - DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT

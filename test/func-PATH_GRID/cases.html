@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <style>
+
+.view {
+  display: block;
+  width: 240px;
+  height: 240px;
+  background: #eee url("../grid.svg");
+  margin: 10px;
+  overflow: visible;
+}
+
+.ll-path {
+  fill: none;
+  stroke: blue;
+  stroke-width: 1px;
+}
+
+.m0 { fill: rgba(127, 205, 255, 0.8); }
+.m1 { fill: rgba(255, 127, 205, 0.8); }
+#mark > polygon { fill: rgba(255, 255, 255, 0.8); }
+
+  </style>
+
+  <script src="../../src/path-data-polyfill.js"></script>
+  <script src="cases.js"></script>
+</head>
+<body>
+
+  <svg version="1.1" style="width: 0; height: 0; position: absolute;">
+    <defs>
+      <g id="mark">
+        <circle r="10" cx="0" cy="0" />
+        <polygon id="arrow" points="-7,-7 10,0 -7,7 0,0" stroke-width="0"/>
+      </g>
+    </defs>
+  </svg>
+
+  <textarea id="code"></textarea>
+
+</body>
+</html>

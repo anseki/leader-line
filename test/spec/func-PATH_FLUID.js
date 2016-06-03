@@ -22,7 +22,7 @@ describe('func-PATH_FLUID', function() {
   // ================ /context
 
   beforeAll(function(done) {
-    getSource('./spec/functions/PATH_FLUID', function(error, source) {
+    getSource('./spec/func/PATH_FLUID', function(error, source) {
       if (error) { throw error; }
       func = eval('(' + source + ')'); // eslint-disable-line no-eval
       done();

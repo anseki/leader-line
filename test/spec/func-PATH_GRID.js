@@ -22,14 +22,14 @@ describe('func-PATH_GRID', function() {
   // ================ /context
 
   beforeAll(function(done) {
-    getSource('./spec/functions/PATH_GRID', function(error, source) {
+    getSource('./spec/func/PATH_GRID', function(error, source) {
       if (error) { throw error; }
       func = eval('(' + source + ')'); // eslint-disable-line no-eval
       done();
     });
   });
 
-  it('cases by test/grid/cases.html', function() {
+  it('cases by test/func-PATH_GRID/cases.html', function() {
     options = {socketGravitySE: []};
 
     // 1-1
