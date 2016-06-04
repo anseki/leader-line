@@ -81,13 +81,11 @@
 
     DEFAULT_OPTIONS = {
       path: PATH_FLUID,
-      color: 'coral',
-      size: 4,
-      startPlug: PLUG_BEHIND,
-      endPlug: DEFAULT_END_PLUG,
-      startPlugSize: 1,
-      endPlugSize: 1,
-      outline: false,
+      lineColor: 'coral',
+      lineSize: 4,
+      plugSE: [PLUG_BEHIND, DEFAULT_END_PLUG],
+      plugSizeSE: [1, 1],
+      outlineEnabled: false,
       outlineColor: 'indianred',
       outlineSize: 0.25
     },
@@ -96,7 +94,7 @@
       {name: 'plugOverheadSE', hasSE: true},
       {name: 'plugOutlineRSE', hasSE: true},
       {name: 'path', isOption: true},
-      {name: 'size', isOption: true},
+      {name: 'lineSize', isOption: true},
       {name: 'socketGravitySE', hasSE: true, isOption: true}
     ],
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
@@ -553,7 +551,7 @@
   window.bindWindow = bindWindow; // [DEBUG/]
 
   /**
-   * Apply `color`, `size`.
+   * Apply `lineColor`, `lineSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Array} [setProps] - To limit properties. `[]` and `['']` don't change.
    * @returns {void}
@@ -561,14 +559,14 @@
   function setLine(props, setProps) {
     window.traceLog.push('<setLine>'); // [DEBUG/]
     var options = props.options;
-    (setProps || ['color', 'size']).forEach(function(setProp) {
+    (setProps || ['lineColor', 'lineSize']).forEach(function(setProp) {
       switch (setProp) {
-        case 'color':
+        case 'lineColor':
           window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
           props.lineFace.style.stroke = options[setProp];
           break;
 
-        case 'size':
+        case 'lineSize':
           window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
           props.lineShape.style.strokeWidth = options[setProp];
           if (IS_TRIDENT) {
@@ -650,8 +648,8 @@
           props.plugFace.style[markerProp] = props.lineMaskPlug.style[markerProp] = 'none';
           props.lineMaskAnchorSE[i].style.display = 'inline';
         }
-        // Update shape always for `options.size` that might have been changed.
-        props.plugOverheadSE[i] = -(options.size / 2);
+        // Update shape always for `options.lineSize` that might have been changed.
+        props.plugOverheadSE[i] = -(options.lineSize / 2);
         props.plugOutlineRSE[i] = 0;
 
       } else {
@@ -676,8 +674,8 @@
               break;
 
             case 'plugColor':
-              window.traceLog.push('plugColor[' + i + '] = ' + (options.plugColorSE[i] || options.color)); // [DEBUG/]
-              props.faceMarkerShapeSE[i].style.fill = options.plugColorSE[i] || options.color;
+              window.traceLog.push('plugColor[' + i + '] = ' + (options.plugColorSE[i] || options.lineColor)); // [DEBUG/]
+              props.faceMarkerShapeSE[i].style.fill = options.plugColorSE[i] || options.lineColor;
               if (IS_BLINK) { forceReflow(props.plugFace); }
               break;
 
@@ -691,11 +689,11 @@
             // no default
           }
         });
-        // Update shape always for `options.size` that might have been changed.
+        // Update shape always for `options.lineSize` that might have been changed.
         props.plugOverheadSE[i] =
-          options.size / DEFAULT_OPTIONS.size * symbolConf.overhead * options.plugSizeSE[i];
+          options.lineSize / DEFAULT_OPTIONS.size * symbolConf.overhead * options.plugSizeSE[i];
         props.plugOutlineRSE[i] =
-          options.size / DEFAULT_OPTIONS.size * symbolConf.outlineR * options.plugSizeSE[i];
+          options.lineSize / DEFAULT_OPTIONS.size * symbolConf.outlineR * options.plugSizeSE[i];
       }
     });
     props.lineMaskPlug.style.display =
@@ -729,7 +727,7 @@
           case 'outlineSize':
             window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
             props.lineOutlineIShape.style.strokeWidth =
-              options.size - options.size * options.outlineSize * 2;
+              options.lineSize - options.lineSize * options.outlineSize * 2;
             if (IS_BLINK) {
               forceReflow(props.lineOutlineIShape);
             }
@@ -801,7 +799,7 @@
     this.setOptions(options);
 
     // Setup option accessor methods (direct)
-    [['start', 'anchorSE', 0], ['end', 'anchorSE', 1], ['color'], ['size'],
+    [['start', 'anchorSE', 0], ['end', 'anchorSE', 1], ['color', 'lineColor'], ['size', 'lineSize'],
         ['startSocketGravity', 'socketGravitySE', 0], ['endSocketGravity', 'socketGravitySE', 1],
         ['startPlugColor', 'plugColorSE', 0], ['endPlugColor', 'plugColorSE', 1],
         ['startPlugSize', 'plugSizeSE', 0], ['endPlugSize', 'plugSizeSE', 1],
@@ -865,59 +863,62 @@
     var props = insProps[this._id], options = props.options,
       needsWindow, needsLine, needsPlugSE = [null, null], needsLineOutline, needsPosition, newWindow;
 
-    function setValidId(name, key2Id, optionName, index) {
-      var acceptsAuto = DEFAULT_OPTIONS[name] == null, // eslint-disable-line eqeqeq
-        currentOptions, optionKey, update, key, id;
+    function getInternal(name, optionName, index) {
+      var internal = {};
       if (optionName) {
-        currentOptions = options[optionName];
-        optionKey = index;
+        if (index != null) { // eslint-disable-line eqeqeq
+          internal.currentOptions = options[optionName];
+          internal.optionKey = index;
+          internal.defaultOption = DEFAULT_OPTIONS[optionName] && DEFAULT_OPTIONS[optionName][index];
+        } else {
+          internal.currentOptions = options;
+          internal.optionKey = optionName;
+          internal.defaultOption = DEFAULT_OPTIONS[optionName];
+        }
       } else {
-        currentOptions = options;
-        optionKey = name;
+        internal.currentOptions = options;
+        internal.optionKey = name;
+        internal.defaultOption = DEFAULT_OPTIONS[name];
       }
+      internal.acceptsAuto = internal.defaultOption == null; // eslint-disable-line eqeqeq
+      return internal;
+    }
 
+    function setValidId(name, key2Id, optionName, index) {
+      var internal = getInternal(name, optionName, index), update, key, id;
       if (newOptions[name] != null && // eslint-disable-line eqeqeq
           (key = (newOptions[name] + '').toLowerCase()) && (
-            acceptsAuto && key === KEYWORD_AUTO ||
+            internal.acceptsAuto && key === KEYWORD_AUTO ||
             (id = key2Id[key])
-          ) && id !== currentOptions[optionKey]) {
-        currentOptions[optionKey] = id; // `undefined` when `KEYWORD_AUTO`
+          ) && id !== internal.currentOptions[internal.optionKey]) {
+        internal.currentOptions[internal.optionKey] = id; // `undefined` when `KEYWORD_AUTO`
         update = true;
       }
-      if (currentOptions[optionKey] == null && !acceptsAuto) { // eslint-disable-line eqeqeq
-        currentOptions[optionKey] = DEFAULT_OPTIONS[name];
+      // eslint-disable-next-line eqeqeq
+      if (internal.currentOptions[internal.optionKey] == null && !internal.acceptsAuto) {
+        internal.currentOptions[internal.optionKey] = internal.defaultOption;
         update = true;
       }
       return update;
     }
 
     function setValidType(name, type, optionName, index, check) {
-      var acceptsAuto = DEFAULT_OPTIONS[name] == null, // eslint-disable-line eqeqeq
-        currentOptions, optionKey, update, value;
-      if (optionName) {
-        if (index != null) { // eslint-disable-line eqeqeq
-          currentOptions = options[optionName];
-          optionKey = index;
-        } else {
-          currentOptions = options;
-          optionKey = optionName;
-        }
-      } else {
-        currentOptions = options;
-        optionKey = name;
+      var internal = getInternal(name, optionName, index), update, value;
+      if (!type) {
+        if (!internal.defaultOption) { throw new Error('Invalid `type`'); }
+        type = typeof internal.defaultOption;
       }
-      type = type || typeof DEFAULT_OPTIONS[name];
-
       if (newOptions[name] != null && ( // eslint-disable-line eqeqeq
-            acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
+            internal.acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
             typeof (value = newOptions[name]) === type &&
               (!check || check(value))
-          ) && value !== currentOptions[optionKey]) {
-        currentOptions[optionKey] = value; // `undefined` when `KEYWORD_AUTO`
+          ) && value !== internal.currentOptions[internal.optionKey]) {
+        internal.currentOptions[internal.optionKey] = value; // `undefined` when `KEYWORD_AUTO`
         update = true;
       }
-      if (currentOptions[optionKey] == null && !acceptsAuto) { // eslint-disable-line eqeqeq
-        currentOptions[optionKey] = DEFAULT_OPTIONS[name];
+      // eslint-disable-next-line eqeqeq
+      if (internal.currentOptions[internal.optionKey] == null && !internal.acceptsAuto) {
+        internal.currentOptions[internal.optionKey] = internal.defaultOption;
         update = true;
       }
       return update;
@@ -959,7 +960,7 @@
     needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needsPosition;
     needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needsPosition;
 
-    // Since `plug*`s might be affected by `color` and `size`, check `plug*`s before those.
+    // Since `plug*`s might be affected by `lineColor` and `lineSize`, check `plug*`s before those.
     ['startPlug', 'endPlug'].forEach(function(name, i) {
       var currentPlug = options.plugSE[i];
       if (setValidId(name, PLUG_KEY_2_ID, 'plugSE', i)) {
@@ -981,7 +982,7 @@
       }
     });
 
-    // Since `outlineSize` might be affected by `size`, check `outline*`s before those.
+    // Since `outlineSize` might be affected by `lineSize`, check `outline*`s before those.
     (function() {
       var currentOutlineEnabled = options.outlineEnabled;
       if (setValidType('outline', null, 'outlineEnabled')) {
@@ -1001,16 +1002,16 @@
       }
     })();
 
-    if (setValidType('color')) {
-      needsLine = addPropList('color', needsLine);
+    if (setValidType('color', null, 'lineColor')) {
+      needsLine = addPropList('lineColor', needsLine);
       options.plugSE.forEach(function(plug, i) {
         if (plug !== PLUG_BEHIND && !options.plugColorSE[i]) {
           needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
         }
       });
     }
-    if (setValidType('size', null, null, null, function(value) { return value > 0; })) {
-      needsLine = addPropList('size', needsLine);
+    if (setValidType('size', null, 'lineSize', null, function(value) { return value > 0; })) {
+      needsLine = addPropList('lineSize', needsLine);
       needsPosition = true;
       // For `plugOverhead` and `plugOutlineR`.
       needsPlugSE.forEach(function(list, i) { needsPlugSE[i] = addPropList('', list); });
@@ -1225,8 +1226,8 @@
                 minGravity = overhead > 0 ?
                   MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
                     (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
-                  MIN_GRAVITY + (options.size > MIN_GRAVITY_SIZE ?
-                    (options.size - MIN_GRAVITY_SIZE) * MIN_GRAVITY_R : 0);
+                  MIN_GRAVITY + (options.lineSize > MIN_GRAVITY_SIZE ?
+                    (options.lineSize - MIN_GRAVITY_SIZE) * MIN_GRAVITY_R : 0);
                 if (socketXY.socketId === SOCKET_TOP) {
                   len = (socketXY.y - anotherSocketXY.y) / 2;
                   if (len < minGravity) { len = minGravity; }
@@ -1548,7 +1549,7 @@
         newViewBBox.x2 += padding;
         newViewBBox.y1 -= padding;
         newViewBBox.y2 += padding;
-      })(Math.max(options.size / 2, props.plugOutlineRSE[0], props.plugOutlineRSE[1]));
+      })(Math.max(options.lineSize / 2, props.plugOutlineRSE[0], props.plugOutlineRSE[1]));
       newViewBBox.x = newViewBBox.x1;
       newViewBBox.y = newViewBBox.y1;
       newViewBBox.width = newViewBBox.x2 - newViewBBox.x1;
