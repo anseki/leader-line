@@ -27,6 +27,7 @@ $app_id: leader-line;
 
 .#{$app_id}-line-mask-plug,
 .#{$app_id}-plug-face {
+  // Show only markers.
   stroke: rgba(0, 0, 0, 0); /* `transparent` might not be supported */
 }
 
@@ -34,6 +35,6 @@ $app_id: leader-line;
   stroke: white;
 }
 
-.#{$app_id}-line-outline-mask-outline {
+.#{$app_id}-line-outline-mask-ishape {
   stroke: black;
 }
