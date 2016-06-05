@@ -39,21 +39,13 @@
     PATH_KEY_2_ID = {
       straight: PATH_STRAIGHT, arc: PATH_ARC, fluid: PATH_FLUID, magnet: PATH_MAGNET, grid: PATH_GRID},
 
-    STYLE_ID = APP_ID + '-styles',
-    /* [DEBUG/]
-    CSS_TEXT = '@INCLUDE[file:leader-line.css]@',
-    [DEBUG/] */
-    // [DEBUG]
-    CSS_TEXT = '',
-    // [/DEBUG]
-
     /**
      * @typedef {Object} SymbolConf
      * @property {string} elmId
      * @property {BBox} bBox
      * @property {number} widthR
      * @property {number} heightR
-     * @property {number} outlineR
+     * @property {number} bCircle
      * @property {number} overhead
      * @property {boolean} noRotate
      */
@@ -92,7 +84,7 @@
 
     POSITION_PROPS = [ // `anchorSE` and `socketXYSE` are checked always.
       {name: 'plugOverheadSE', hasSE: true},
-      {name: 'plugOutlineRSE', hasSE: true},
+      {name: 'plugBCircleSE', hasSE: true},
       {name: 'path', isOption: true},
       {name: 'lineSize', isOption: true},
       {name: 'socketGravitySE', hasSE: true, isOption: true}
@@ -349,7 +341,7 @@
 
   /**
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXYSE`,
-   *    `pathData`, `plugOverheadSE`, `plugOutlineRSE`,
+   *    `pathData`, `plugOverheadSE`, `plugBCircleSE`,
    *    `anchorBBoxSE`, `plugSymbolSE`,
    *    `svg`, `lineFace`, `faceMarkerSE`, `faceMarkerShapeSE`,
    *    `maskPathSE`, `positionValues`.
@@ -361,8 +353,8 @@
     window.traceLog.push('<bindWindow>'); // [DEBUG/]
     var SVG_NS = 'http://www.w3.org/2000/svg',
       baseDocument = newWindow.document,
-      bodyOffset = {x: 0, y: 0},
-      sheet, defs, stylesHtml, stylesBody, svg, elmDefs, lineMaskCaps, element;
+      defs, stylesHtml, stylesBody, bodyOffset = {x: 0, y: 0},
+      svg, elmDefs, lineMaskCaps, element;
 
     function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
 
@@ -382,24 +374,9 @@
     }
     props.baseWindow = newWindow;
 
-    if (!baseDocument.getElementById(STYLE_ID)) { // Add style rules
-      if (baseDocument.createStyleSheet) { // IE
-        sheet = baseDocument.createStyleSheet();
-        sheet.owningElement.id = STYLE_ID;
-        sheet.cssText = CSS_TEXT;
-      } else {
-        sheet = (baseDocument.getElementsByTagName('head')[0] || baseDocument.documentElement)
-          .appendChild(baseDocument.createElement('style'));
-        sheet.type = 'text/css';
-        sheet.id = STYLE_ID;
-        sheet.textContent = CSS_TEXT;
-      }
-    }
-
     if (!baseDocument.getElementById(DEFS_ID)) { // Add svg defs
-      defs = baseDocument.body.appendChild(baseDocument.createElement('div'));
-      defs.id = DEFS_ID;
-      defs.innerHTML = DEFS_HTML;
+      defs = (new newWindow.DOMParser()).parseFromString(DEFS_HTML, 'image/svg+xml');
+      baseDocument.body.appendChild(defs.documentElement);
     }
 
     // Get `bodyOffset`.
@@ -424,7 +401,7 @@
     }
     props.bodyOffset = bodyOffset;
 
-    // svg
+    // Main SVG
     svg = baseDocument.createElementNS(SVG_NS, 'svg');
     svg.className.baseVal = APP_ID;
     if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
@@ -545,7 +522,7 @@
     props.socketXYSE = [{}, {}];
     props.pathData = [];
     props.plugOverheadSE = [0, 0];
-    props.plugOutlineRSE = [0, 0];
+    props.plugBCircleSE = [0, 0];
     props.anchorBBoxSE = [null, null];
     props.plugSymbolSE = [null, null];
     // Initialize properties as array.
@@ -642,7 +619,7 @@
    * Apply `plug`, `plugColor`, `plugSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {(Array|null)[]} setPropsSE - To limit properties.
-   *    Each `[]` and `['']` change only each `plugOverhead` and `plugOutlineR`.
+   *    Each `[]` and `['']` change only each `plugOverhead` and `plugBCircle`.
    * @returns {void}
    */
   function setPlug(props, setPropsSE) {
@@ -661,7 +638,7 @@
         }
         // Update shape always for `options.lineSize` that might have been changed.
         props.plugOverheadSE[i] = -(options.lineSize / 2);
-        props.plugOutlineRSE[i] = 0;
+        props.plugBCircleSE[i] = 0;
 
       } else {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
@@ -703,8 +680,8 @@
         // Update shape always for `options.lineSize` that might have been changed.
         props.plugOverheadSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
-        props.plugOutlineRSE[i] =
-          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.outlineR * options.plugSizeSE[i];
+        props.plugBCircleSE[i] =
+          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
       }
     });
     props.lineMaskPlug.style.display =
@@ -1025,7 +1002,7 @@
     if (setValidType('size', null, 'lineSize', null, function(value) { return value > 0; })) {
       needsLine = addPropList('lineSize', needsLine);
       needsPosition = true;
-      // For `plugOverhead` and `plugOutlineR`.
+      // For `plugOverhead` and `plugBCircle`.
       needsPlugSE.forEach(function(list, i) { needsPlugSE[i] = addPropList('', list); });
       if (options.lineOutlineEnabled) {
         needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
@@ -1561,7 +1538,7 @@
         newViewBBox.x2 += padding;
         newViewBBox.y1 -= padding;
         newViewBBox.y2 += padding;
-      })(Math.max(options.lineSize / 2, props.plugOutlineRSE[0], props.plugOutlineRSE[1]));
+      })(Math.max(options.lineSize / 2, props.plugBCircleSE[0], props.plugBCircleSE[1]));
       newViewBBox.x = newViewBBox.x1;
       newViewBBox.y = newViewBBox.y1;
       newViewBBox.width = newViewBBox.x2 - newViewBBox.x1;

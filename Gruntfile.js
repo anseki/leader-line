@@ -8,13 +8,16 @@ module.exports = grunt => {
     fs = require('fs'),
     pathUtil = require('path'),
     htmlclean = require('htmlclean'),
+    CleanCSS = require('clean-css'),
 
     ROOT_PATH = __dirname,
     SRC_PATH = pathUtil.join(ROOT_PATH, 'src'),
+    CSS_PATH = pathUtil.join(SRC_PATH, 'leader-line.css'),
 
     // from leader-line.js
     APP_ID = 'leader-line',
-    DEFAULT_LINE_SIZE = 4, // DEFAULT_OPTIONS.size
+    DEFS_ID = `${APP_ID}-defs`,
+    DEFAULT_LINE_SIZE = 4, // DEFAULT_OPTIONS.lineSize
     DEFINED_VAR = {
       PLUG_BEHIND: 'behind'
     };
@@ -69,14 +72,15 @@ module.exports = grunt => {
                 SYMBOLS: {},
                 PLUG_KEY_2_ID: {behind: definedVar.PLUG_BEHIND},
                 PLUG_2_SYMBOL: {}
-              };
+              }, cssSrc;
 
             function getCode(value) {
               var matches;
               return typeof value === 'object' ?
                   `{${Object.keys(value).map(prop => `${prop}:${getCode(value[prop])}`).join(',')}}` :
                 typeof value === 'string' ? (
-                  (matches = /^\f(.+)\x07$/.exec(value)) ? matches[1] : `'${value}'`
+                  (matches = /^\f(.+)\x07$/.exec(value)) ? // eslint-disable-line no-control-regex
+                    matches[1] : `'${value}'`
                 ) : value;
             }
 
@@ -107,7 +111,7 @@ module.exports = grunt => {
                 bBox.bottom = bBox.top + bBox.height;
                 codeSrc.SYMBOLS[id].widthR = bBox.width / DEFAULT_LINE_SIZE;
                 codeSrc.SYMBOLS[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
-                codeSrc.SYMBOLS[id].outlineR = Math.max(-bBox.left, -bBox.top, bBox.right, bBox.bottom);
+                codeSrc.SYMBOLS[id].bCircle = Math.max(-bBox.left, -bBox.top, bBox.right, bBox.bottom);
                 codeSrc.SYMBOLS[id].overhead = noOverhead ? 0 : bBox.right;
 
                 codeSrc.PLUG_KEY_2_ID[id] = id;
@@ -115,8 +119,12 @@ module.exports = grunt => {
               }
             });
 
+            cssSrc = minCss(
+              fs.readFileSync(CSS_PATH, {encoding: 'utf8'}).trim().replace(/^\s*@charset\s+[^;]+;/gm, ''));
+
             code.DEFS_HTML = '\'' +
-              htmlclean(`<svg version="1.1" width="0" height="0"><defs>${defsSrc}</defs></svg>`)
+              htmlclean(`<svg xmlns="http://www.w3.org/2000/svg" version="1.1" id="${DEFS_ID}">` +
+                  `<style><![CDATA[${cssSrc}]]></style><defs>${defsSrc}</defs></svg>`)
                 .replace(/\'/g, '\\\'') + '\'';
             Object.keys(DEFINED_VAR).forEach(codeVar => { code[codeVar] = getCode(DEFINED_VAR[codeVar]); });
             Object.keys(codeSrc).forEach(codeVar => { code[codeVar] = getCode(codeSrc[codeVar]); });
