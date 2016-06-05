@@ -130,13 +130,21 @@ window.addEventListener('load', () => {
     </defs>
   </svg>
 
-  <!-- `stroke-width="0"` for IE bug -->
+  <!--
+     A symbol has `id` and `symbol` class.
+     `rect.size` is required for `BBox`.
+     `use.outline-base` and `use.outline-max` are required for `outlineBase` and `outlineMax`.
+     A symbol is able to have classes:
+     - `prop-*` :       Add a `*` property. e.g. `prop-noRotate`
+     - `varId-*` :      Add a variable that has `*` as name and `id` as value. e.g. `varId-DEFAULT_END_PLUG`
+     - `no-overhead` :  Disable `overhead`.
+  -->
 
   <svg version="1.1" viewBox="-12 -12 24 24" width="720" height="720">
     <use xlink:href="#grid" x="-12" y="-12" />
     <path class="line" d="M-12,0 L0,0" />
 
-    <circle id="disc" class="symbol prop-noRotate no-overhead "
+    <circle id="disc" class="symbol prop-noRotate no-overhead"
       cx="0" cy="0" r="5" />
 
     <rect class="size"          x="-5" y="-5" width="10" height="10" />
@@ -194,6 +202,20 @@ window.addEventListener('load', () => {
     <rect class="size"          x="-4" y="-5" width="12" height="10" />
     <use class="outline-base"   stroke-width="2" />
     <use class="outline-max"    stroke-width="5" />
+
+  </svg>
+
+  <svg version="1.1" viewBox="-12 -12 24 24" width="720" height="720">
+    <use xlink:href="#grid" x="-12" y="-12" />
+    <path class="line" d="M-12,0 L0,0" />
+
+    <g id="sight" class="symbol no-overhead">
+      <circle cx="0" cy="0" r="2" />
+      <circle cx="-8" cy="-8" r="4" />
+      <circle cx="-8" cy="8" r="4" />
+    </g>
+
+    <rect class="size"          x="-12" y="-12" width="14" height="24" />
 
   </svg>
 
