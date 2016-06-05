@@ -48,6 +48,8 @@
      * @property {number} bCircle
      * @property {number} overhead
      * @property {boolean} noRotate
+     * @property {number} outlineBase
+     * @property {number} outlineMax
      */
 
     /**

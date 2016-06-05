@@ -86,7 +86,7 @@ module.exports = grunt => {
 
             $('svg').each((i, elm) => {
               var symbol = $('.symbol', elm), size = $('.size', elm),
-                id, elmId, props, bBox, noOverhead;
+                id, elmId, props, bBox, noOverhead, outlineBase, outlineMax;
               if (symbol.length && size.length && (id = symbol.attr('id'))) {
 
                 elmId = `${APP_ID}-${id}`;
@@ -118,6 +118,13 @@ module.exports = grunt => {
                 codeSrc.SYMBOLS[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
                 codeSrc.SYMBOLS[id].bCircle = Math.max(-bBox.left, -bBox.top, bBox.right, bBox.bottom);
                 codeSrc.SYMBOLS[id].overhead = noOverhead ? 0 : bBox.right;
+
+                if ((outlineBase = $('.outline-base', elm)).length &&
+                    (outlineMax = $('.outline-max', elm)).length) {
+                  codeSrc.SYMBOLS[id].outlineBase = parseFloat(outlineBase.attr('stroke-width')) / 2;
+                  codeSrc.SYMBOLS[id].outlineMax =
+                    parseFloat(outlineMax.attr('stroke-width')) / 2 / codeSrc.SYMBOLS[id].outlineBase;
+                }
 
                 codeSrc.PLUG_KEY_2_ID[id] = id;
                 codeSrc.PLUG_2_SYMBOL[id] = id;
