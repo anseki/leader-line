@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>symbol</title>
 
-<style>
+  <style>
 
 svg {
   display: block;
@@ -32,11 +32,71 @@ svg {
   fill: rgba(0, 153, 10, 0.2);
 }
 
-.symbol {
+.face {
   fill: rgba(15, 51, 242, 0.6);
 }
 
-</style>
+.outline-base,
+.outline-max {
+  fill: none;
+  stroke: rgba(242, 15, 80, 0.6);
+  display: none;
+}
+
+.btn-base { fill: rgb(207, 122, 146); }
+.btn-max { fill: rgb(191, 71, 105); }
+
+.btn-base:hover ~ .outline-base { display: inline; }
+.btn-max:hover ~ .outline-max { display: inline; }
+
+  </style>
+
+  <script>
+
+window.addEventListener('load', () => {
+
+  Array.prototype.slice.call(document.getElementsByTagName('svg')).forEach(svg => {
+    var SVG_NS = 'http://www.w3.org/2000/svg', BTN_R = 1,
+      symbol = svg.getElementsByClassName('symbol')[0],
+      viewBox, defs, face, outlineBase, outlineMax, mask, maskSymbol, btnBase, btnMax;
+    if (symbol && symbol.id) {
+
+      defs = svg.appendChild(document.createElementNS(SVG_NS, 'defs'));
+      defs.appendChild(symbol);
+      face = svg.appendChild(document.createElementNS(SVG_NS, 'use'));
+      face.href.baseVal = `#${symbol.id}`;
+      face.className.baseVal = 'face';
+
+      if ((outlineBase = svg.getElementsByClassName('outline-base')[0]) &&
+          (outlineMax = svg.getElementsByClassName('outline-max')[0])) {
+        mask = defs.appendChild(document.createElementNS(SVG_NS, 'mask'));
+        mask.id = `${symbol.id}-mask`;
+
+        maskSymbol = mask.appendChild(document.createElementNS(SVG_NS, 'use'));
+        maskSymbol.href.baseVal = `#${symbol.id}`;
+        maskSymbol.style.fill = 'white';
+
+        btnBase = svg.appendChild(document.createElementNS(SVG_NS, 'circle'));
+        btnMax = svg.appendChild(document.createElementNS(SVG_NS, 'circle'));
+        btnBase.className.baseVal = 'btn-base';
+        btnMax.className.baseVal = 'btn-max';
+        viewBox = svg.viewBox.baseVal;
+        btnBase.r.baseVal.value = btnMax.r.baseVal.value = BTN_R;
+        btnBase.cx.baseVal.value = btnMax.cx.baseVal.value = viewBox.x + viewBox.width + BTN_R;
+        btnBase.cy.baseVal.value = viewBox.y + BTN_R;
+        btnMax.cy.baseVal.value = viewBox.y + BTN_R * 3;
+
+        outlineBase.href.baseVal = outlineMax.href.baseVal = `#${symbol.id}`;
+        outlineBase.style.mask = outlineMax.style.mask = `url(#${symbol.id}-mask)`;
+        svg.appendChild(outlineBase);
+        svg.appendChild(outlineMax);
+      }
+    }
+  });
+
+}, false);
+
+  </script>
 
 </head>
 <body>
@@ -76,21 +136,25 @@ svg {
     <use xlink:href="#grid" x="-12" y="-12" />
     <path class="line" d="M-12,0 L0,0" />
 
-    <rect x="-5" y="-5" width="10" height="10" class="size" />
+    <circle id="disc" class="symbol prop-noRotate no-overhead "
+      cx="0" cy="0" r="5" />
 
-    <circle id="disc" class="symbol prop-noRotate no-overhead"
-      cx="0" cy="0" r="5" stroke-width="0" />
+    <rect class="size"          x="-5" y="-5" width="10" height="10" />
+    <use class="outline-base"   stroke-width="2" />
+    <use class="outline-max"    stroke-width="8" />
 
   </svg>
 
   <svg version="1.1" viewBox="-12 -12 24 24" width="720" height="720">
     <use xlink:href="#grid" x="-12" y="-12" />
     <path class="line" d="M-12,0 L0,0" />
-
-    <rect x="-5" y="-5" width="10" height="10" class="size" />
 
     <rect id="square" class="symbol prop-noRotate no-overhead"
-      x="-5" y="-5" width="10" height="10" stroke-width="0" />
+      x="-5" y="-5" width="10" height="10" />
+
+    <rect class="size"          x="-5" y="-5" width="10" height="10" />
+    <use class="outline-base"   stroke-width="2" />
+    <use class="outline-max"    stroke-width="8" />
 
   </svg>
 
@@ -98,21 +162,25 @@ svg {
     <use xlink:href="#grid" x="-12" y="-12" />
     <path class="line" d="M-12,0 L0,0" />
 
-    <rect x="-8" y="-8" width="16" height="16" class="size" />
+    <polygon id="arrow1" class="symbol varId-DEFAULT_END_PLUG"
+      points="-8,-8 8,0 -8,8 -5,0" />
 
-    <polygon id="arrow1" class="symbol var-DEFAULT_END_PLUG"
-      points="-8,-8 8,0 -8,8 -5,0" stroke-width="0" />
+    <rect class="size"          x="-8" y="-8" width="16" height="16" />
+    <use class="outline-base"   stroke-width="2" />
+    <use class="outline-max"    stroke-width="6" />
 
   </svg>
 
   <svg version="1.1" viewBox="-12 -12 24 24" width="720" height="720">
     <use xlink:href="#grid" x="-12" y="-12" />
     <path class="line" d="M-12,0 L0,0" />
-
-    <rect x="-7" y="-8" width="11" height="16" class="size" />
 
     <polygon id="arrow2" class="symbol"
-      points="-4,-8 4,0 -4,8 -7,5 -2,0 -7,-5" stroke-width="0" />
+      points="-4,-8 4,0 -4,8 -7,5 -2,0 -7,-5" />
+
+    <rect class="size"          x="-7" y="-8" width="11" height="16" />
+    <use class="outline-base"   stroke-width="2" />
+    <use class="outline-max"    stroke-width="3.5" />
 
   </svg>
 
@@ -120,10 +188,12 @@ svg {
     <use xlink:href="#grid" x="-12" y="-12" />
     <path class="line" d="M-12,0 L0,0" />
 
-    <rect x="-4" y="-5" width="12" height="10" class="size" />
-
     <polygon id="arrow3" class="symbol"
-      points="-4,-5 8,0 -4,5" stroke-width="0" />
+      points="-4,-5 8,0 -4,5" />
+
+    <rect class="size"          x="-4" y="-5" width="12" height="10" />
+    <use class="outline-base"   stroke-width="2" />
+    <use class="outline-max"    stroke-width="5" />
 
   </svg>
 

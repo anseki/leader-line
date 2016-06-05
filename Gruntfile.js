@@ -96,9 +96,13 @@ module.exports = grunt => {
                 codeSrc.SYMBOLS[id] = {elmId: elmId};
                 props.forEach(prop => {
                   var matches;
-                  if ((matches = prop.match(/prop\-([^\s]+)/))) { codeSrc.SYMBOLS[id][matches[1]] = true; }
-                  if ((matches = prop.match(/var\-([^\s]+)/))) { codeSrc[matches[1]] = id; }
-                  if (/ *no\-overhead */.test(prop)) { noOverhead = true; }
+                  if ((matches = prop.match(/prop\-([^\s]+)/))) {
+                    codeSrc.SYMBOLS[id][matches[1]] = true;
+                  } else if ((matches = prop.match(/varId\-([^\s]+)/))) {
+                    codeSrc[matches[1]] = id;
+                  } else if (prop === 'no-overhead') {
+                    noOverhead = true;
+                  }
                 });
 
                 codeSrc.SYMBOLS[id].bBox = bBox = {
@@ -109,6 +113,7 @@ module.exports = grunt => {
                 };
                 bBox.right = bBox.left + bBox.width;
                 bBox.bottom = bBox.top + bBox.height;
+
                 codeSrc.SYMBOLS[id].widthR = bBox.width / DEFAULT_LINE_SIZE;
                 codeSrc.SYMBOLS[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
                 codeSrc.SYMBOLS[id].bCircle = Math.max(-bBox.left, -bBox.top, bBox.right, bBox.bottom);
