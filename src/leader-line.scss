@@ -16,17 +16,17 @@ $app_id: leader-line;
   fill: none;
 }
 
-.#{$app_id}-mask-bg {
+.#{$app_id}-line-mask-bg-rect {
   fill: white;
 }
 
 .#{$app_id}-line-mask-anchor,
-.#{$app_id}-mask-marker-shape {
+.#{$app_id}-line-mask-marker-shape {
   fill: black;
 }
 
 .#{$app_id}-line-mask-plug,
-.#{$app_id}-plug-face {
+.#{$app_id}-plugs-face {
   // Show only markers.
   stroke: rgba(0, 0, 0, 0); /* `transparent` might not be supported */
 }
