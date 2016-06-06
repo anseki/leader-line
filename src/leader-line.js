@@ -81,7 +81,9 @@
       plugSizeSE: [1, 1],
       lineOutlineEnabled: false,
       lineOutlineColor: 'indianred',
-      lineOutlineSize: 0.25
+      lineOutlineSize: 0.25,
+      plugOutlineEnabledSE: [false, false],
+      plugOutlineSizeSE: [1, 1]
     },
 
     POSITION_PROPS = [ // `anchorSE` and `socketXYSE` are checked always.
@@ -345,7 +347,7 @@
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXYSE`,
    *    `pathData`, `plugOverheadSE`, `plugBCircleSE`,
    *    `anchorBBoxSE`, `plugSymbolSE`,
-   *    `svg`, `lineFace`, `faceMarkerSE`, `faceMarkerShapeSE`,
+   *    `svg`, `lineFace`, `plugFaceSE`, `plugFaceShapeSE`,
    *    `maskPathSE`, `positionValues`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
@@ -426,10 +428,6 @@
     props.lineShape.id = props.lineShapeId;
     props.lineShape.href.baseVal = '#' + props.linePathId;
 
-    props.lineOutlineIShape = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineOutlineIShape.id = props.lineOutlineIShapeId;
-    props.lineOutlineIShape.href.baseVal = '#' + props.linePathId;
-
     lineMaskCaps = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
     lineMaskCaps.id = props.lineMaskCapsId;
 
@@ -457,44 +455,32 @@
       props.lineMaskBGRect[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
     });
 
-    props.plugOutlineIShapeSE = [0, 1].map(function(i) {
-      var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-      element.id = props.plugOutlineIShapeIdSE[i];
-      return element;
-    });
+    props.lineOutlineIShape = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.lineOutlineIShape.id = props.lineOutlineIShapeId;
+    props.lineOutlineIShape.href.baseVal = '#' + props.linePathId;
 
-    // `<mask>` setup
+    // ==== lineMask
     props.lineMask = setupMask(props.lineMaskId);
-    props.lineOutlineMask = setupMask(props.lineOutlineMaskId);
-    props.plugMaskSE = [0, 1].map(function(i) { return setupMask(props.plugMaskIdSE[i]); });
-    props.plugOutlineMaskSE = [0, 1].map(function(i) { return setupMask(props.plugOutlineMaskIdSE[i]); });
-
     props.lineMaskBG = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskBG.href.baseVal = '#' + props.lineMaskBGRectId;
-
     props.lineMaskOutline = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskOutline.className.baseVal = APP_ID + '-line-mask-outline';
     props.lineMaskOutline.href.baseVal = '#' + props.lineOutlineIShapeId;
     props.lineMaskOutline.style.display = 'none';
-
     element = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.href.baseVal = '#' + props.lineMaskCapsId;
+    // ==== /lineMask
 
+    // ==== lineOutlineMask
+    props.lineOutlineMask = setupMask(props.lineOutlineMaskId);
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.href.baseVal = '#' + props.lineMaskBGRectId;
-
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.className.baseVal = APP_ID + '-line-outline-mask-ishape';
     element.href.baseVal = '#' + props.lineOutlineIShapeId;
-
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.href.baseVal = '#' + props.lineMaskCapsId;
-
-
-    props.faceMarkerSE = [0, 1].map(function(i) { return setupMarker(props.faceMarkerIdSE[i]); });
-    props.faceMarkerShapeSE = [0, 1].map(function(i) {
-      return props.faceMarkerSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    });
+    // ==== lineOutlineMask
 
     props.lineFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineFace.href.baseVal = '#' + props.lineShapeId;
@@ -504,6 +490,35 @@
     props.lineOutlineFace.href.baseVal = '#' + props.lineShapeId;
     props.lineOutlineFace.style.mask = 'url(#' + props.lineOutlineMaskId + ')';
     props.lineOutlineFace.style.display = 'none';
+
+    props.plugOutlineIShapeSE = [0, 1].map(function(i) {
+      var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      element.id = props.plugOutlineIShapeIdSE[i];
+      return element;
+    });
+
+    // ==== plugMaskSE
+    props.plugMaskSE = [0, 1].map(function(i) { return setupMask(props.plugMaskIdSE[i]); });
+    props.plugMaskOutlineSE = [0, 1].map(function(i) {
+      var element = props.plugMaskSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      element.className.baseVal = APP_ID + '-plug-mask-outline';
+      element.href.baseVal = '#' + props.plugOutlineIShapeIdSE[i];
+      return element;
+    });
+    // ==== plugMaskSE
+
+
+
+
+    props.plugFaceSE = [0, 1].map(function(i) { return setupMarker(props.plugFaceIdSE[i]); });
+    props.plugFaceShapeSE = [0, 1].map(function(i) {
+      return props.plugFaceSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    });
+
+
+    props.plugOutlineMaskSE = [0, 1].map(function(i) { return setupMask(props.plugOutlineMaskIdSE[i]); });
+
+
 
     props.plugsFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.plugsFace.className.baseVal = APP_ID + '-plugs-face';
@@ -642,13 +657,13 @@
               orient = symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse';
               markerProp = i ? 'markerEnd' : 'markerStart';
 
-              props.faceMarkerShapeSE[i].href.baseVal =
+              props.plugFaceShapeSE[i].href.baseVal =
                 props.lineMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
               // Since IE doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
-              props.plugsFace.style[markerProp] = 'url(#' + props.faceMarkerIdSE[i] + ')';
+              props.plugsFace.style[markerProp] = 'url(#' + props.plugFaceIdSE[i] + ')';
               props.lineMaskPlug.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
-              setMarkerOrient(props.faceMarkerSE[i], orient,
-                symbolConf.bBox, props.svg, props.faceMarkerShapeSE[i], props.plugsFace);
+              setMarkerOrient(props.plugFaceSE[i], orient,
+                symbolConf.bBox, props.svg, props.plugFaceShapeSE[i], props.plugsFace);
               setMarkerOrient(props.lineMaskMarkerSE[i], orient,
                 symbolConf.bBox, props.svg, props.lineMaskMarkerShapeSE[i], props.lineMaskPlug);
               props.lineMaskAnchorSE[i].style.display = 'none';
@@ -656,16 +671,16 @@
 
             case 'plugColor':
               window.traceLog.push('plugColor[' + i + '] = ' + (options.plugColorSE[i] || options.lineColor)); // [DEBUG/]
-              props.faceMarkerShapeSE[i].style.fill = options.plugColorSE[i] || options.lineColor;
+              props.plugFaceShapeSE[i].style.fill = options.plugColorSE[i] || options.lineColor;
               if (IS_BLINK) { forceReflow(props.plugsFace); }
               break;
 
             case 'plugSize':
               window.traceLog.push('plugSize[' + i + '] = ' + options.plugSizeSE[i]); // [DEBUG/]
-              props.faceMarkerSE[i].markerWidth.baseVal.value =
+              props.plugFaceSE[i].markerWidth.baseVal.value =
                 props.lineMaskMarkerSE[i].markerWidth.baseVal.value =
                 symbolConf.widthR * options.plugSizeSE[i];
-              props.faceMarkerSE[i].markerHeight.baseVal.value =
+              props.plugFaceSE[i].markerHeight.baseVal.value =
                 props.lineMaskMarkerSE[i].markerHeight.baseVal.value =
                 symbolConf.heightR * options.plugSizeSE[i];
               break;
@@ -729,6 +744,51 @@
   }
 
   /**
+   * Apply `lineOutlineEnabled`, `lineOutlineColor`, `lineOutlineSize`.
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {Array} [setProps] - To limit properties. `[]` and `['']` don't change.
+   * @returns {void}
+   */
+  function setPlugOutline(props, setProps) {
+    window.traceLog.push('<setLineOutline>'); // [DEBUG/]
+    var options = props.options;
+    if (options.lineOutlineEnabled) {
+      (setProps || ['lineOutlineEnabled', 'lineOutlineColor', 'lineOutlineSize']).forEach(function(setProp) {
+        switch (setProp) {
+          case 'lineOutlineEnabled':
+            window.traceLog.push('lineOutlineEnabled = ' + options.lineOutlineEnabled); // [DEBUG/]
+            props.lineMaskOutline.style.display = 'inline';
+            props.lineMaskBG.style.display = 'none';
+            props.lineOutlineFace.style.display = 'inline';
+            break;
+
+          case 'lineOutlineColor':
+            window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
+            props.lineOutlineFace.style.stroke = options[setProp];
+            break;
+
+          case 'lineOutlineSize':
+            window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
+            props.lineOutlineIShape.style.strokeWidth =
+              options.lineSize - options.lineSize * options.lineOutlineSize * 2;
+            if (IS_BLINK) {
+              forceReflow(props.lineOutlineIShape);
+            }
+            break;
+          // no default
+        }
+      });
+    } else {
+      if (!setProps || setProps.indexOf('lineOutlineEnabled') > -1) {
+        window.traceLog.push('lineOutlineEnabled = ' + options.lineOutlineEnabled); // [DEBUG/]
+        props.lineMaskOutline.style.display = 'none';
+        props.lineMaskBG.style.display = 'inline';
+        props.lineOutlineFace.style.display = 'none';
+      }
+    }
+  }
+
+  /**
    * @class
    * @param {Element} [start] - Alternative to `options.start`.
    * @param {Element} [end] - Alternative to `options.end`.
@@ -736,8 +796,10 @@
    */
   function LeaderLine(start, end, options) {
     var that = this,
-      props = {options: // Initialize properties as array.
-        {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: []}},
+      props = { // Initialize properties as array.
+        options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
+          plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []}
+      },
       prefix;
 
     function createSetter(name) {
@@ -771,7 +833,7 @@
     props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
     props.plugOutlineIShapeIdSE = [prefix + '-plug-outline-ishape-0', prefix + '-plug-outline-ishape-1'];
     props.plugOutlineMaskIdSE = [prefix + '-plug-outline-mask-0', prefix + '-plug-outline-mask-1'];
-    props.faceMarkerIdSE = [prefix + '-face-marker-0', prefix + '-face-marker-1'];
+    props.plugFaceIdSE = [prefix + '-plug-face-0', prefix + '-plug-face-1'];
 
     if (arguments.length === 1) {
       options = start;
@@ -787,7 +849,11 @@
         ['startSocketGravity', 'socketGravitySE', 0], ['endSocketGravity', 'socketGravitySE', 1],
         ['startPlugColor', 'plugColorSE', 0], ['endPlugColor', 'plugColorSE', 1],
         ['startPlugSize', 'plugSizeSE', 0], ['endPlugSize', 'plugSizeSE', 1],
-        ['outline', 'lineOutlineEnabled'], ['outlineColor', 'lineOutlineColor'], ['outlineSize', 'lineOutlineSize']]
+        ['outline', 'lineOutlineEnabled'],
+          ['outlineColor', 'lineOutlineColor'], ['outlineSize', 'lineOutlineSize'],
+        ['startPlugOutline', 'plugOutlineEnabledSE', 0], ['endPlugOutline', 'plugOutlineEnabledSE', 1],
+          ['startPlugOutlineColor', 'plugOutlineColorSE', 0], ['endPlugOutlineColor', 'plugOutlineColorSE', 1],
+          ['startPlugOutlineSize', 'plugOutlineSizeSE', 0], ['endPlugOutlineSize', 'plugOutlineSizeSE', 1]]
       .forEach(function(conf) {
         var name = conf[0], optionName = conf[1], i = conf[2];
         Object.defineProperty(that, name, {
@@ -846,7 +912,8 @@
     */
     var props = insProps[this._id], options = props.options,
       newWindow, currentValue,
-      needsWindow, needsLine, needsPlugSE = [null, null], needsLineOutline, needsPosition;
+      needsWindow, needsLine, needsPlugSE = [null, null],
+      needsLineOutline, needsPlugOutlineSE = [null, null], needsPosition;
 
     function getInternal(name, optionName, index) {
       var internal = {};
@@ -957,7 +1024,7 @@
           needsPlugSE[i] = addPropList('plugSize', needsPlugSE[i]);
         }
       }
-      // Update at least `options` even if it is `PLUG_BEHIND` and visual is not changed.
+      // Update at least `options` even if `PLUG_BEHIND` and visual is not changed.
       if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
         needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
       }
@@ -977,7 +1044,7 @@
         needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
       }
     }
-    // Update at least `options` even if it is `lineOutlineEnabled` and visual is not changed.
+    // Update at least `options` even if `lineOutlineEnabled` and visual is not changed.
     if (setValidType('outlineColor', null, 'lineOutlineColor')) {
       needsLineOutline = addPropList('lineOutlineColor', needsLineOutline);
     }
@@ -1003,6 +1070,25 @@
         needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
       }
     }
+
+    ['startPlugOutline', 'endPlugOutline'].forEach(function(name, i) {
+      var currentValue = options.plugOutlineEnabledSE[i];
+      if (setValidType(name, null, 'plugOutlineEnabledSE', i)) {
+        needsPlugOutlineSE[i] = addPropList('plugOutlineEnabled', needsPlugOutlineSE[i]);
+        if (!currentValue) {
+          needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
+          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
+        }
+      }
+      // Update at least `options` even if `plugOutlineEnabled` and visual is not changed.
+      if (setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i)) {
+        needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
+      }
+      if (setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
+          function(value) { return value >= 1; })) { // `outlineMax` is checked in `setPlugOutline`.
+        needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
+      }
+    });
 
     ['startSocketGravity', 'endSocketGravity'].forEach(function(name, i) {
       var value = false; // `false` means no-update input.
