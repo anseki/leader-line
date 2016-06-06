@@ -62,7 +62,7 @@ window.addEventListener('load', function() {
           size: 12,
           outline: true,
           outlineColor: 'blue',
-          outlineSize: 0.5
+          endPlugOutline: true
         }
       }
     ];

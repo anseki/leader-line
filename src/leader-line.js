@@ -347,7 +347,7 @@
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXYSE`,
    *    `pathData`, `plugOverheadSE`, `plugBCircleSE`,
    *    `anchorBBoxSE`, `plugSymbolSE`,
-   *    `svg`, `lineFace`, `plugFaceSE`, `plugFaceShapeSE`,
+   *    `svg`, `lineFace`, `plugMarkerSE`, `plugFaceSE`,
    *    `maskPathSE`, `positionValues`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
@@ -480,7 +480,7 @@
     element.href.baseVal = '#' + props.lineOutlineIShapeId;
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.href.baseVal = '#' + props.lineMaskCapsId;
-    // ==== lineOutlineMask
+    // ==== /lineOutlineMask
 
     props.lineFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineFace.href.baseVal = '#' + props.lineShapeId;
@@ -505,20 +505,32 @@
       element.href.baseVal = '#' + props.plugOutlineIShapeIdSE[i];
       return element;
     });
-    // ==== plugMaskSE
+    // ==== /plugMaskSE
 
+    // ==== plugOutlineMaskSE
+    props.plugOutlineMaskSE = [0, 1].map(function(i) {
+      var element = setupMask(props.plugOutlineMaskIdSE[i]),
+        shape = element.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      shape.className.baseVal = APP_ID + '-plug-outline-mask-ishape';
+      shape.href.baseVal = '#' + props.plugOutlineIShapeIdSE[i];
+      return element;
+    });
+    // ==== /plugOutlineMaskSE
 
-
-
-    props.plugFaceSE = [0, 1].map(function(i) { return setupMarker(props.plugFaceIdSE[i]); });
-    props.plugFaceShapeSE = [0, 1].map(function(i) {
-      return props.plugFaceSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.plugMarkerSE = [0, 1].map(function(i) { return setupMarker(props.plugMarkerIdSE[i]); });
+    props.plugMarkerShapeSE = [0, 1].map(function(i) {
+      return props.plugMarkerSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
     });
 
-
-    props.plugOutlineMaskSE = [0, 1].map(function(i) { return setupMask(props.plugOutlineMaskIdSE[i]); });
-
-
+    props.plugFaceSE = [0, 1].map(function(i) {
+      return props.plugMarkerShapeSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    });
+    props.plugOutlineFaceSE = [0, 1].map(function(i) {
+      var element = props.plugMarkerShapeSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      element.style.mask = 'url(#' + props.plugOutlineMaskIdSE[i] + ')';
+      element.style.display = 'none';
+      return element;
+    });
 
     props.plugsFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.plugsFace.className.baseVal = APP_ID + '-plugs-face';
@@ -555,6 +567,7 @@
   function setLine(props, setProps) {
     window.traceLog.push('<setLine>'); // [DEBUG/]
     var options = props.options;
+
     (setProps || ['lineColor', 'lineSize']).forEach(function(setProp) {
       switch (setProp) {
         case 'lineColor':
@@ -657,13 +670,21 @@
               orient = symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse';
               markerProp = i ? 'markerEnd' : 'markerStart';
 
-              props.plugFaceShapeSE[i].href.baseVal =
+              props.plugFaceSE[i].href.baseVal =
+                props.plugOutlineFaceSE[i].href.baseVal =
+                props.plugOutlineIShapeSE[i].href.baseVal =
                 props.lineMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+              [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
+                mask.x.baseVal.value = symbolConf.bBox.left;
+                mask.y.baseVal.value = symbolConf.bBox.top;
+                mask.width.baseVal.value = symbolConf.bBox.width;
+                mask.height.baseVal.value = symbolConf.bBox.height;
+              });
               // Since IE doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
-              props.plugsFace.style[markerProp] = 'url(#' + props.plugFaceIdSE[i] + ')';
+              props.plugsFace.style[markerProp] = 'url(#' + props.plugMarkerIdSE[i] + ')';
               props.lineMaskPlug.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
-              setMarkerOrient(props.plugFaceSE[i], orient,
-                symbolConf.bBox, props.svg, props.plugFaceShapeSE[i], props.plugsFace);
+              setMarkerOrient(props.plugMarkerSE[i], orient,
+                symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
               setMarkerOrient(props.lineMaskMarkerSE[i], orient,
                 symbolConf.bBox, props.svg, props.lineMaskMarkerShapeSE[i], props.lineMaskPlug);
               props.lineMaskAnchorSE[i].style.display = 'none';
@@ -671,16 +692,16 @@
 
             case 'plugColor':
               window.traceLog.push('plugColor[' + i + '] = ' + (options.plugColorSE[i] || options.lineColor)); // [DEBUG/]
-              props.plugFaceShapeSE[i].style.fill = options.plugColorSE[i] || options.lineColor;
+              props.plugFaceSE[i].style.fill = options.plugColorSE[i] || options.lineColor;
               if (IS_BLINK) { forceReflow(props.plugsFace); }
               break;
 
             case 'plugSize':
               window.traceLog.push('plugSize[' + i + '] = ' + options.plugSizeSE[i]); // [DEBUG/]
-              props.plugFaceSE[i].markerWidth.baseVal.value =
+              props.plugMarkerSE[i].markerWidth.baseVal.value =
                 props.lineMaskMarkerSE[i].markerWidth.baseVal.value =
                 symbolConf.widthR * options.plugSizeSE[i];
-              props.plugFaceSE[i].markerHeight.baseVal.value =
+              props.plugMarkerSE[i].markerHeight.baseVal.value =
                 props.lineMaskMarkerSE[i].markerHeight.baseVal.value =
                 symbolConf.heightR * options.plugSizeSE[i];
               break;
@@ -707,6 +728,7 @@
   function setLineOutline(props, setProps) {
     window.traceLog.push('<setLineOutline>'); // [DEBUG/]
     var options = props.options;
+
     if (options.lineOutlineEnabled) {
       (setProps || ['lineOutlineEnabled', 'lineOutlineColor', 'lineOutlineSize']).forEach(function(setProp) {
         switch (setProp) {
@@ -744,48 +766,50 @@
   }
 
   /**
-   * Apply `lineOutlineEnabled`, `lineOutlineColor`, `lineOutlineSize`.
+   * Apply `plugOutlineEnabled`, `plugOutlineColor`, `plugOutlineSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {Array} [setProps] - To limit properties. `[]` and `['']` don't change.
+   * @param {(Array|null)[]} setPropsSE - To limit properties.
    * @returns {void}
    */
-  function setPlugOutline(props, setProps) {
-    window.traceLog.push('<setLineOutline>'); // [DEBUG/]
+  function setPlugOutline(props, setPropsSE) {
+    window.traceLog.push('<setPlugOutline>'); // [DEBUG/]
     var options = props.options;
-    if (options.lineOutlineEnabled) {
-      (setProps || ['lineOutlineEnabled', 'lineOutlineColor', 'lineOutlineSize']).forEach(function(setProp) {
-        switch (setProp) {
-          case 'lineOutlineEnabled':
-            window.traceLog.push('lineOutlineEnabled = ' + options.lineOutlineEnabled); // [DEBUG/]
-            props.lineMaskOutline.style.display = 'inline';
-            props.lineMaskBG.style.display = 'none';
-            props.lineOutlineFace.style.display = 'inline';
-            break;
 
-          case 'lineOutlineColor':
-            window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
-            props.lineOutlineFace.style.stroke = options[setProp];
-            break;
+    setPropsSE.forEach(function(setProps, i) {
+      if (options.plugOutlineEnabledSE[i]) {
+        (setProps || ['plugOutlineEnabled', 'plugOutlineColor', 'plugOutlineSize']).forEach(function(setProp) {
+          switch (setProp) {
+            case 'plugOutlineEnabled':
+              window.traceLog.push('plugOutlineEnabled[' + i + '] = ' + options.plugOutlineEnabledSE[i]); // [DEBUG/]
+              props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
+              props.plugOutlineFaceSE[i].style.display = 'inline';
+              break;
 
-          case 'lineOutlineSize':
-            window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
-            props.lineOutlineIShape.style.strokeWidth =
-              options.lineSize - options.lineSize * options.lineOutlineSize * 2;
-            if (IS_BLINK) {
-              forceReflow(props.lineOutlineIShape);
-            }
-            break;
-          // no default
+            case 'plugOutlineColor':
+              window.traceLog.push('plugOutlineColor[' + i + '] = ' + (options.plugOutlineColorSE[i] || options.lineOutlineColor)); // [DEBUG/]
+              props.plugOutlineFaceSE[i].style.fill = options.plugOutlineColorSE[i] || options.lineOutlineColor;
+              break;
+
+            case 'plugOutlineSize':
+              window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
+              // props.plugOutlineIShapeSE[i].style.strokeWidth =
+              //   options.lineSize - options.lineSize * options.lineOutlineSize * 2;
+              props.plugOutlineIShapeSE[i].style.strokeWidth = 1;
+              // if (IS_BLINK) {
+              //   forceReflow(props.lineOutlineIShape);
+              // }
+              break;
+            // no default
+          }
+        });
+      } else {
+        if (!setProps || setProps.indexOf('plugOutlineEnabled') > -1) {
+          window.traceLog.push('plugOutlineEnabled[' + i + '] = ' + options.plugOutlineEnabledSE[i]); // [DEBUG/]
+          props.plugFaceSE[i].style.mask = 'none';
+          props.plugOutlineFaceSE[i].style.display = 'none';
         }
-      });
-    } else {
-      if (!setProps || setProps.indexOf('lineOutlineEnabled') > -1) {
-        window.traceLog.push('lineOutlineEnabled = ' + options.lineOutlineEnabled); // [DEBUG/]
-        props.lineMaskOutline.style.display = 'none';
-        props.lineMaskBG.style.display = 'inline';
-        props.lineOutlineFace.style.display = 'none';
       }
-    }
+    });
   }
 
   /**
@@ -830,10 +854,10 @@
     props.lineMaskBGRectId = prefix + '-line-mask-bg-rect';
     props.lineOutlineIShapeId = prefix + '-line-outline-ishape';
     props.lineOutlineMaskId = prefix + '-line-outline-mask';
+    props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
     props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
     props.plugOutlineIShapeIdSE = [prefix + '-plug-outline-ishape-0', prefix + '-plug-outline-ishape-1'];
     props.plugOutlineMaskIdSE = [prefix + '-plug-outline-mask-0', prefix + '-plug-outline-mask-1'];
-    props.plugFaceIdSE = [prefix + '-plug-face-0', prefix + '-plug-face-1'];
 
     if (arguments.length === 1) {
       options = start;
@@ -991,10 +1015,12 @@
         array1.every(function(value1, i) { return value1 === array2[i]; });
     }
 
-    ['start', 'end'].forEach(function(name, i) {
-      if (newOptions[name] && newOptions[name].nodeType != null && // eslint-disable-line eqeqeq
-          newOptions[name] !== options.anchorSE[i]) {
-        options.anchorSE[i] = newOptions[name];
+    newOptions = newOptions || {};
+
+    [newOptions.start, newOptions.end].forEach(function(newOption, i) {
+      if (newOption && newOption.nodeType != null && // eslint-disable-line eqeqeq
+          newOption !== options.anchorSE[i]) {
+        options.anchorSE[i] = newOption;
         needsWindow = needsPosition = true;
       }
     });
@@ -1090,20 +1116,20 @@
       }
     });
 
-    ['startSocketGravity', 'endSocketGravity'].forEach(function(name, i) {
+    [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {
       var value = false; // `false` means no-update input.
-      if (newOptions[name] != null) { // eslint-disable-line eqeqeq
-        if (Array.isArray(newOptions[name])) {
-          if (typeof newOptions[name][0] === 'number' && typeof newOptions[name][1] === 'number') {
-            value = [newOptions[name][0], newOptions[name][1]];
+      if (newOption != null) { // eslint-disable-line eqeqeq
+        if (Array.isArray(newOption)) {
+          if (typeof newOption[0] === 'number' && typeof newOption[1] === 'number') {
+            value = [newOption[0], newOption[1]];
             if (Array.isArray(options.socketGravitySE[i]) &&
               matchArray(value, options.socketGravitySE[i])) { value = false; }
           }
         } else {
-          if ((newOptions[name] + '').toLowerCase() === KEYWORD_AUTO) {
+          if ((newOption + '').toLowerCase() === KEYWORD_AUTO) {
             value = null;
-          } else if (typeof newOptions[name] === 'number' && newOptions[name] >= 0) {
-            value = newOptions[name];
+          } else if (typeof newOption === 'number' && newOption >= 0) {
+            value = newOption;
           }
           if (value === options.socketGravitySE[i]) { value = false; }
         }
@@ -1123,6 +1149,10 @@
     }
     if (needsLineOutline) { // Update `lineOutline`.
       setLineOutline(props, Array.isArray(needsLineOutline) ? needsLineOutline : null);
+    }
+    if (needsPlugOutlineSE[0] || needsPlugOutlineSE[1]) { // Update `plugOutline`.
+      setPlugOutline(props, [Array.isArray(needsPlugOutlineSE[0]) ? needsPlugOutlineSE[0] : null,
+        Array.isArray(needsPlugOutlineSE[1]) ? needsPlugOutlineSE[1] : null]);
     }
     if (needsPosition) { // Call `position()`.
       this.position();
@@ -1661,8 +1691,7 @@
           newAnchorBBoxSE[0] != null || newAnchorBBoxSE[1] != null || // eslint-disable-line eqeqeq
           newPlugSymbolSE[0] != null || newPlugSymbolSE[1] != null) { // eslint-disable-line eqeqeq
 
-        ['lineMask', 'lineOutlineMask'].forEach(function(propMask) {
-          var mask = props[propMask];
+        [props.lineMask, props.lineOutlineMask].forEach(function(mask) {
           ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
             mask[boxKey].baseVal.value = newViewBBox[boxKey];
           });
