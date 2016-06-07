@@ -114,7 +114,8 @@ window.addEventListener('load', function() {
     Array.prototype.slice.call(llSvg.getElementsByTagName('mask')).forEach(function(mask, i) {
       var id = mask.id ?
           mask.id.replace((new RegExp('^leader\\-line\\-' + ll._id + '\\-')), '') : 'MASK-' + i,
-        option = select.appendChild(document.createElement('option'));
+        option = select.appendChild(document.createElement('option')),
+        transform;
       elmGs[id] = maskSvg.appendChild(document.createElementNS(SVG_NS, 'g'));
       Array.prototype.slice.call(mask.childNodes).forEach(function(node) {
         var copiedNode = elmGs[id].appendChild(node.cloneNode());
@@ -122,6 +123,12 @@ window.addEventListener('load', function() {
       });
       elmGs[id].style.display = 'none';
       option.textContent = id;
+      // `<mask>` for `<marker>`
+      if (/^plug/.test(id)) {
+        transform = maskSvg.createSVGTransform();
+        transform.setTranslate(maskSvg.viewBox.baseVal.x, maskSvg.viewBox.baseVal.y);
+        elmGs[id].transform.baseVal.appendItem(transform);
+      }
       shownG = shownG || id;
     });
     select.addEventListener('change', function() {
