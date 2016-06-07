@@ -650,18 +650,7 @@
     setPropsSE.forEach(function(setProps, i) {
       var plugId = options.plugSE[i], symbolConf, orient, markerProp;
 
-      if (plugId === PLUG_BEHIND) {
-        if (!setProps || setProps.indexOf('plug') > -1) {
-          window.traceLog.push('plug[' + i + '] = ' + plugId); // [DEBUG/]
-          markerProp = i ? 'markerEnd' : 'markerStart';
-          props.plugsFace.style[markerProp] = props.lineMaskPlug.style[markerProp] = 'none';
-          props.lineMaskAnchorSE[i].style.display = 'inline';
-        }
-        // Update shape always for `options.lineSize` that might have been changed.
-        props.plugOverheadSE[i] = -(options.lineSize / 2);
-        props.plugBCircleSE[i] = 0;
-
-      } else {
+      if (plugId !== PLUG_BEHIND) {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
         (setProps || ['plug', 'plugColor', 'plugSize']).forEach(function(setProp) {
           switch (setProp) {
@@ -713,6 +702,17 @@
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
         props.plugBCircleSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
+
+      } else {
+        if (!setProps || setProps.indexOf('plug') > -1) {
+          window.traceLog.push('plug[' + i + '] = ' + plugId); // [DEBUG/]
+          markerProp = i ? 'markerEnd' : 'markerStart';
+          props.plugsFace.style[markerProp] = props.lineMaskPlug.style[markerProp] = 'none';
+          props.lineMaskAnchorSE[i].style.display = 'inline';
+        }
+        // Update shape always for `options.lineSize` that might have been changed.
+        props.plugOverheadSE[i] = -(options.lineSize / 2);
+        props.plugBCircleSE[i] = 0;
       }
     });
     props.lineMaskPlug.style.display =
@@ -755,6 +755,7 @@
           // no default
         }
       });
+
     } else {
       if (!setProps || setProps.indexOf('lineOutlineEnabled') > -1) {
         window.traceLog.push('lineOutlineEnabled = ' + options.lineOutlineEnabled); // [DEBUG/]
@@ -776,6 +777,8 @@
     var options = props.options;
 
     setPropsSE.forEach(function(setProps, i) {
+      var symbolConf;
+
       if (options.plugOutlineEnabledSE[i]) {
         (setProps || ['plugOutlineEnabled', 'plugOutlineColor', 'plugOutlineSize']).forEach(function(setProp) {
           switch (setProp) {
@@ -792,9 +795,12 @@
 
             case 'plugOutlineSize':
               window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
-              // props.plugOutlineIShapeSE[i].style.strokeWidth =
-              //   options.lineSize - options.lineSize * options.lineOutlineSize * 2;
-              props.plugOutlineIShapeSE[i].style.strokeWidth = 1;
+              symbolConf = SYMBOLS[PLUG_2_SYMBOL[options.plugSE[i]]];
+              if (options.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
+                options.plugOutlineSizeSE[i] = symbolConf.outlineMax;
+              }
+              props.plugOutlineIShapeSE[i].style.strokeWidth =
+                symbolConf.outlineBase * options.plugOutlineSizeSE[i] * 2;
               // if (IS_BLINK) {
               //   forceReflow(props.lineOutlineIShape);
               // }
@@ -802,6 +808,7 @@
             // no default
           }
         });
+
       } else {
         if (!setProps || setProps.indexOf('plugOutlineEnabled') > -1) {
           window.traceLog.push('plugOutlineEnabled[' + i + '] = ' + options.plugOutlineEnabledSE[i]); // [DEBUG/]
@@ -1032,7 +1039,8 @@
     if (needsWindow &&
         (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
-      needsLine = needsPlugSE[0] = needsPlugSE[1] = true;
+      needsLine = needsPlugSE[0] = needsPlugSE[1] =
+        needsLineOutline = needsPlugOutlineSE[0] = needsPlugOutlineSE[1] = true;
     }
 
     needsPosition = setValidId('path', PATH_KEY_2_ID) || needsPosition;
