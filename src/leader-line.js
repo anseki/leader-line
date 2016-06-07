@@ -777,9 +777,10 @@
     var options = props.options;
 
     setPropsSE.forEach(function(setProps, i) {
-      var symbolConf;
+      var plugId = options.plugSE[i], symbolConf;
 
-      if (options.plugOutlineEnabledSE[i]) {
+      // Disable it when `plugId === PLUG_BEHIND` even if `plugOutlineEnabledSE`.
+      if (options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND) {
         (setProps || ['plugOutlineEnabled', 'plugOutlineColor', 'plugOutlineSize']).forEach(function(setProp) {
           switch (setProp) {
             case 'plugOutlineEnabled':
@@ -790,20 +791,24 @@
 
             case 'plugOutlineColor':
               window.traceLog.push('plugOutlineColor[' + i + '] = ' + (options.plugOutlineColorSE[i] || options.lineOutlineColor)); // [DEBUG/]
-              props.plugOutlineFaceSE[i].style.fill = options.plugOutlineColorSE[i] || options.lineOutlineColor;
+              props.plugOutlineFaceSE[i].style.fill =
+                options.plugOutlineColorSE[i] || options.lineOutlineColor;
+              if (IS_BLINK) {
+                forceReflow(props.plugOutlineFaceSE[i]);
+              }
               break;
 
             case 'plugOutlineSize':
               window.traceLog.push(setProp + ' = ' + options[setProp]); // [DEBUG/]
-              symbolConf = SYMBOLS[PLUG_2_SYMBOL[options.plugSE[i]]];
+              symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
               if (options.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
                 options.plugOutlineSizeSE[i] = symbolConf.outlineMax;
               }
               props.plugOutlineIShapeSE[i].style.strokeWidth =
                 symbolConf.outlineBase * options.plugOutlineSizeSE[i] * 2;
-              // if (IS_BLINK) {
-              //   forceReflow(props.lineOutlineIShape);
-              // }
+              if (IS_BLINK) {
+                forceReflow(props.plugOutlineIShapeSE[i]);
+              }
               break;
             // no default
           }
@@ -1047,15 +1052,40 @@
     needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needsPosition;
     needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needsPosition;
 
+    // Since `plugOutline*`s might be affected by `plug*`s and `lineOutline*`s, check `plugOutline*`s before those.
+    ['startPlugOutline', 'endPlugOutline'].forEach(function(name, i) {
+      var currentValue = options.plugOutlineEnabledSE[i];
+      if (setValidType(name, null, 'plugOutlineEnabledSE', i)) {
+        needsPlugOutlineSE[i] = addPropList('plugOutlineEnabled', needsPlugOutlineSE[i]);
+        if (!currentValue) { // off -> on
+          needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
+          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
+        }
+      }
+      // Update at least `options` even if `plugOutlineEnabled` and visual is not changed.
+      if (setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i)) {
+        needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
+      }
+      if (setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
+          function(value) { return value >= 1; })) { // `outlineMax` is checked in `setPlugOutline`.
+        needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
+      }
+    });
+
     // Since `plug*`s might be affected by `lineColor` and `lineSize`, check `plug*`s before those.
     ['startPlug', 'endPlug'].forEach(function(name, i) {
       var currentValue = options.plugSE[i];
       if (setValidId(name, PLUG_KEY_2_ID, 'plugSE', i)) {
         needsPlugSE[i] = addPropList('plug', needsPlugSE[i]);
         needsPosition = true;
-        if (currentValue === PLUG_BEHIND) {
+        if (currentValue === PLUG_BEHIND) { // off -> on
           needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
           needsPlugSE[i] = addPropList('plugSize', needsPlugSE[i]);
+        }
+        if (currentValue === PLUG_BEHIND || options.plugSE[i] === PLUG_BEHIND) { // off -> on / on -> off
+          needsPlugOutlineSE[0] = needsPlugOutlineSE[1] = true; // Update all or `enabled` of `plugOutline*`.
+        } else if (options.plugOutlineEnabledSE[i]) { // on -> on
+          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]); // for new SymbolConf
         }
       }
       // Update at least `options` even if `PLUG_BEHIND` and visual is not changed.
@@ -1069,11 +1099,11 @@
       }
     });
 
-    // Since `lineOutlineSize` might be affected by `lineSize`, check `outline*`s before those.
+    // Since `lineOutlineSize` might be affected by `lineSize`, check `lineOutline*`s before those.
     currentValue = options.lineOutlineEnabled;
     if (setValidType('outline', null, 'lineOutlineEnabled')) {
       needsLineOutline = addPropList('lineOutlineEnabled', needsLineOutline);
-      if (!currentValue) {
+      if (!currentValue) { // off -> on
         needsLineOutline = addPropList('lineOutlineColor', needsLineOutline);
         needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
       }
@@ -1081,6 +1111,11 @@
     // Update at least `options` even if `lineOutlineEnabled` and visual is not changed.
     if (setValidType('outlineColor', null, 'lineOutlineColor')) {
       needsLineOutline = addPropList('lineOutlineColor', needsLineOutline);
+      options.plugSE.forEach(function(plug, i) {
+        if (plug !== PLUG_BEHIND && options.plugOutlineEnabledSE[i] && !options.plugOutlineColorSE[i]) {
+          needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
+        }
+      });
     }
     if (setValidType('outlineSize', null, 'lineOutlineSize', null,
         function(value) { return value > 0 && value <= 0.48; })) {
@@ -1104,25 +1139,6 @@
         needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
       }
     }
-
-    ['startPlugOutline', 'endPlugOutline'].forEach(function(name, i) {
-      var currentValue = options.plugOutlineEnabledSE[i];
-      if (setValidType(name, null, 'plugOutlineEnabledSE', i)) {
-        needsPlugOutlineSE[i] = addPropList('plugOutlineEnabled', needsPlugOutlineSE[i]);
-        if (!currentValue) {
-          needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
-          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
-        }
-      }
-      // Update at least `options` even if `plugOutlineEnabled` and visual is not changed.
-      if (setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i)) {
-        needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
-      }
-      if (setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
-          function(value) { return value >= 1; })) { // `outlineMax` is checked in `setPlugOutline`.
-        needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
-      }
-    });
 
     [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {
       var value = false; // `false` means no-update input.
