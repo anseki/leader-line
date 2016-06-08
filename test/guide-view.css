@@ -1,24 +1,21 @@
-/* line 2, guide-view.scss */
+
+.guide-svg {
+  position: absolute;
+  overflow: visible;
+}
+
 .guide-c {
+  fill: none;
+  stroke-width: 1px;
+  stroke: rgba(0, 225, 20, 0.7);
+}
+
+.guide-bbox {
   fill: none;
   stroke-width: 1px;
   stroke: rgba(0, 0, 0, 0.8);
 }
 
-/* line 8, guide-view.scss */
-.guide-mask {
-  fill: rgba(255, 140, 0, 0.5);
-  fill-rule: evenodd;
-}
-
-/* line 13, guide-view.scss */
-.guide-outline {
-  fill: none;
-  stroke-width: 2px;
-  stroke: rgba(0, 225, 20, 0.7);
-}
-
-/* line 19, guide-view.scss */
 .guide-socket {
   fill: none;
   stroke-width: 1px;

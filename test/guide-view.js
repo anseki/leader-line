@@ -5,7 +5,7 @@ var guideView = (function() {
 
   var SVG_NS = 'http://www.w3.org/2000/svg',
     PATH_C_SIZE = 5,
-    elements = [];
+    guideElements = [];
 
   function addXMarker(point, pathSegs) {
     pathSegs.push(
@@ -18,19 +18,25 @@ var guideView = (function() {
   }
 
   function guideView() {
-    elements.forEach(function(element) { element.parentNode.removeChild(element); });
-    elements = [];
+    guideElements.forEach(function(element) { element.parentNode.removeChild(element); });
+    guideElements = [];
 
     Object.keys(window.insProps).forEach(function(id) {
       var props = window.insProps[id], options = props.options,
-        svg = props.svg,
+        llSvg = props.svg,
         baseDocument = props.baseWindow.document,
-        pathData = props.path.getPathData(); // Not `props.pathData`
+        guideSvg = baseDocument.body.appendChild(document.createElementNS(SVG_NS, 'svg'));
+
+      guideSvg.className.baseVal = 'guide-svg';
+      guideSvg.setAttribute('viewBox', llSvg.getAttribute('viewBox'));
+      (function(guideStyles, llStyles) {
+        ['left', 'top', 'width', 'height'].forEach(function(prop) { guideStyles[prop] = llStyles[prop]; });
+      })(guideSvg.style, llSvg.style);
 
       // ======== path C
       (function() {
         var pathSegs = [], curPoint;
-        pathData.forEach(function(pathSeg) {
+        props.linePath.getPathData().forEach(function(pathSeg) {
           var values = pathSeg.values;
           if (pathSeg.type === 'C') {
             pathSegs.push([curPoint,
@@ -41,7 +47,7 @@ var guideView = (function() {
           curPoint = {x: values[values.length - 2], y: values[values.length - 1]};
         });
         pathSegs.forEach(function(pathSeg) {
-          var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+          var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
           path.className.baseVal = 'guide-c';
           path.setPathData(
             addXMarker(pathSeg[2],
@@ -55,27 +61,15 @@ var guideView = (function() {
               ])
             )
           );
-          elements.push(path);
         });
       })();
 
-      // ======== mask
-      ['start', 'end'].forEach(function(key) {
-        var path;
-        if (props[key + 'MaskBBox']) {
-          path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-          path.className.baseVal = 'guide-mask';
-          path.setAttribute('d', props[key + 'MaskPath'].getAttribute('d'));
-          elements.push(path);
-        }
-      });
-
-      // ======== outline
+      // ======== BBox
       (function() {
-        var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
-          padding = Math.max(options.size / 2, props.startPlugBCircle, props.endPlugBCircle),
+        var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
+          padding = Math.max(options.lineSize / 2, props.plugBCircleSE[0], props.plugBCircleSE[1]),
           pathSegs = [], corners = {};
-        pathData.forEach(function(pathSeg) {
+        props.linePath.getPathData().forEach(function(pathSeg) {
           var values = pathSeg.values, point, i, iLen = values.length;
           for (i = 0; i < iLen; i += 2) {
             // relative commands (e.g. `h`) are not supported.
@@ -98,28 +92,28 @@ var guideView = (function() {
               {type: 'L', values: [corners[xKey], corners[yKey] + padding * yDir]}
             );
           });
-        path.className.baseVal = 'guide-outline';
+        path.className.baseVal = 'guide-bbox';
         path.setPathData(pathSegs);
-        elements.push(path);
       })();
 
       // ======== socket
       (function() {
-        var path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
+        var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
           pathSegs = [];
-        ['start', 'end'].forEach(function(key) {
-          var bBox = window.getBBoxNest(options[key], props.baseWindow);
+        options.anchorSE.forEach(function(anchor) {
+          var bBox = window.getBBoxNest(anchor, props.baseWindow);
           [
-            {x: bBox.left, y: bBox.top + bBox.height / 2},
             {x: bBox.left + bBox.width / 2, y: bBox.top},
-            {x: bBox.left + bBox.width, y: bBox.top + bBox.height / 2},
-            {x: bBox.left + bBox.width / 2, y: bBox.top + bBox.height}
+            {x: bBox.right, y: bBox.top + bBox.height / 2},
+            {x: bBox.left + bBox.width / 2, y: bBox.bottom},
+            {x: bBox.left, y: bBox.top + bBox.height / 2}
           ].forEach(function(point) { addXMarker(point, pathSegs); });
         });
         path.className.baseVal = 'guide-socket';
         path.setPathData(pathSegs);
-        elements.push(path);
       })();
+
+      guideElements.push(guideSvg);
     });
 
   }
