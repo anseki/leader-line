@@ -5,7 +5,12 @@
 describe('options', function() {
   'use strict';
 
-  var window, document, pageDone, ll;
+  var window, document, pageDone, ll, titles = [];
+
+  function registerTitle(title) {
+    titles.push(title);
+    return title;
+  }
 
   beforeEach(function(beforeDone) {
     loadPage('spec/options/options.html', function(frmWindow, frmDocument, body, done) {
@@ -14,91 +19,102 @@ describe('options', function() {
       pageDone = done;
       ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm2'));
       beforeDone();
-    }/* , 'options' */);
+    }, 'options - ' + titles.shift());
   });
 
-  it('start, end', function() {
+  it(registerTitle('anchorSE'), function() {
     // no update
     window.traceLog = [];
     ll.start = document.getElementById('elm1');
     expect(window.traceLog).toEqual(['<setOptions>']);
 
-    window.traceLog = [];
-    ll.start = document.getElementById('elm3');
-    expect(window.traceLog).toEqual([
-      '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start'
-    ]);
-
-    // Change to element in iframe, baseWindow is not changed
-    window.traceLog = [];
-    ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
-    expect(window.traceLog).toEqual([
-      '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start'
-    ]);
-
-    // Change to element in iframe, baseWindow not changed
-    window.traceLog = [];
-    ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm3');
-    expect(window.traceLog).toEqual([
-      '<setOptions>',
-      '<bindWindow>',
-      '<setStyles>', '[color] coral', '[size] 4',
-      '<setPlugs>', '[startPlug] behind', '[endPlug] arrow1', '[endPlugColor] coral', '[endPlugSize] 1',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start'
-    ]);
-
-    // Change right and bottom
+    // Change an element, socket is not changed
     ll.setOptions({
-      start: document.getElementById('elm1'),
-      end: document.getElementById('elm2'),
+      startSocket: 'right',
+      endSocket: 'top',
       path: 'straight'
     });
     window.traceLog = [];
     ll.end = document.getElementById('elm3');
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] width', '[viewBox] height',
-      '[mask] start'
+      '<position>',
+      'newSocketXYSE[1]', // only `end`
+      'update',
+      'setPathData', 'viewBox.width', 'viewBox.height', // only right and bottom of viewBox
+      'mask-position'
+    ]);
+
+    // Change an element, `auto` socket is changed
+    ll.setOptions({
+      startSocket: 'auto',
+      endSocket: 'auto',
+      end: document.getElementById('elm2')
+    });
+    // Now, sockets: right / top
+    window.traceLog = [];
+    ll.start = document.getElementById('elm3');
+    // Then, sockets: left / right
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<position>',
+      'newSocketXYSE[0]', 'newSocketXYSE[1]',
+      'update',
+      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask-position', 'lineMaskAnchorSE[0]'
+    ]);
+
+    // Change to element in iframe, `baseWindow` is not changed
+    ll.setOptions({
+      start: document.getElementById('elm2'),
+      end: document.getElementById('elm3')
+    });
+    window.traceLog = [];
+    ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<position>',
+      'newSocketXYSE[1]',
+      'update',
+      'setPathData', 'viewBox.width', 'viewBox.height',
+      'mask-position'
+    ]);
+
+    // Change to element in iframe, `baseWindow` is changed
+    window.traceLog = [];
+    ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<bindWindow>',
+      '<setLine>', 'lineColor=coral', 'lineSize=4',
+      '<setPlug>', 'plug[0]=behind', 'plug[1]=arrow1', 'plugColor[1]=coral', 'plugSize[1]=1',
+      '<setLineOutline>', 'lineOutlineEnabled=false',
+      '<setPlugOutline>', 'plugOutlineEnabled[0]=false', 'plugOutlineEnabled[1]=false',
+      '<position>',
+      'newSocketXYSE[0]', 'newSocketXYSE[1]', 'newPlugSymbolSE[1]',
+      'update',
+      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask-position', 'lineMaskAnchorSE[0]'
     ]);
 
     pageDone();
   });
 
-  it('path', function() {
-    window.traceLog = [];
-    ll.path = 'straight';
-    expect(window.traceLog).toEqual([
-      '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start'
-    ]);
-
-    // Change path
+  it(registerTitle('path'), function() {
+    // Change only path
     ll.setOptions({
-      start: document.getElementById('elm1'),
-      end: document.getElementById('elm3'),
-      path: 'fluid',
-      endPlug: 'behind'
+      end: document.getElementById('elm4'),
+      endPlug: 'behind' // to avoid changing padding by symbol
     });
     window.traceLog = [];
     ll.path = 'straight';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]'
+      '<position>', 'update',
+      'setPathData'
     ]);
 
-    // Change size
+    // Change `viewBox` size
     ll.setOptions({
       startSocketGravity: [160, -60]
     });
@@ -106,32 +122,32 @@ describe('options', function() {
     ll.path = 'fluid';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start', '[mask] end'
+      '<position>', 'update',
+      'setPathData', 'viewBox.y', 'viewBox.height'
     ]);
 
     pageDone();
   });
 
-  it('color', function() {
+  it(registerTitle('color'), function() {
+    // Change `lineColor`, `auto` `plugColor` is changed
     window.traceLog = [];
     ll.color = 'blue';
     expect(window.traceLog).toEqual([
-      '<setOptions>', '<setStyles>', '[color] blue',
-      '<setPlugs>', '[endPlugColor] blue'
+      '<setOptions>', '<setLine>', 'lineColor=blue',
+      '<setPlug>', 'plugColor[1]=blue'
     ]);
 
-    // Change `startPlugColor` also
+    // `plugColor[0]` also is changed
     ll.startPlug = 'arrow2';
     window.traceLog = [];
     ll.color = 'green';
     expect(window.traceLog).toEqual([
-      '<setOptions>', '<setStyles>', '[color] green',
-      '<setPlugs>', '[startPlugColor] green', '[endPlugColor] green'
+      '<setOptions>', '<setLine>', 'lineColor=green',
+      '<setPlug>', 'plugColor[0]=green', 'plugColor[1]=green'
     ]);
 
-    // Change no `*PlugColor`
+    // Change `lineColor`, `plugColor` is not changed
     ll.setOptions({
       startPlug: 'behind',
       endPlug: 'behind'
@@ -139,46 +155,30 @@ describe('options', function() {
     window.traceLog = [];
     ll.color = 'yellow';
     expect(window.traceLog).toEqual([
-      '<setOptions>', '<setStyles>', '[color] yellow',
-      '<setPlugs>'
+      '<setOptions>', '<setLine>', 'lineColor=yellow'
     ]);
 
     pageDone();
   });
 
-  it('size', function() {
+  it(registerTitle('size'), function() {
     ll.startPlug = 'arrow1';
     window.traceLog = [];
     ll.size = 8;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setStyles>', '[size] 8',
-      '<setPlugs>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height'
-    ]);
-
-    // Change size with overhead
-    ll.setOptions({
-      end: document.getElementById('elm3'),
-      path: 'straight',
-      startPlug: 'behind'
-    });
-    window.traceLog = [];
-    ll.size = 4;
-    expect(window.traceLog).toEqual([
-      '<setOptions>',
-      '<setStyles>', '[size] 4',
-      '<setPlugs>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start'
+      '<setLine>', 'lineSize=8',
+      '<setPlug>',
+      '<position>', 'update',
+      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask-position'
     ]);
 
     pageDone();
   });
 
-  it('startSocket, endSocket', function() {
+  it(registerTitle('socketSE'), function() {
+    // `left` and `top` of `viewBox` are changed
     ll.setOptions({
       start: document.getElementById('elm2'),
       end: document.getElementById('elm4'),
@@ -188,12 +188,13 @@ describe('options', function() {
     ll.startSocket = 'top';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start', '[mask] end'
+      '<position>',
+      'newSocketXYSE[0]',
+      'update',
+      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height'
     ]);
 
-    // Change bottom
+    // `bottom` of `viewBox` is changed
     ll.setOptions({
       path: 'straight',
       endSocket: 'top'
@@ -202,15 +203,16 @@ describe('options', function() {
     ll.endSocket = 'bottom';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] height',
-      '[mask] start', '[mask] end'
+      '<position>',
+      'newSocketXYSE[1]',
+      'update',
+      'setPathData', 'viewBox.height'
     ]);
 
     pageDone();
   });
 
-  it('startSocketGravity, endSocketGravity', function() {
+  it(registerTitle('socketGravitySE'), function() {
     // No change size
     ll.setOptions({
       start: document.getElementById('elm2'),
@@ -221,8 +223,8 @@ describe('options', function() {
     ll.startSocketGravity = 160;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]'
+      '<position>', 'update',
+      'setPathData'
     ]);
 
     // Change width
@@ -230,9 +232,8 @@ describe('options', function() {
     ll.startSocketGravity = 260;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] width',
-      '[mask] start', '[mask] end'
+      '<position>', 'update',
+      'setPathData', 'viewBox.width'
     ]);
 
     // No change size
@@ -240,8 +241,8 @@ describe('options', function() {
     ll.endSocketGravity = [-160, -80];
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]'
+      '<position>', 'update',
+      'setPathData'
     ]);
 
     // Change height
@@ -249,24 +250,26 @@ describe('options', function() {
     ll.endSocketGravity = [-160, 160];
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] height',
-      '[mask] start', '[mask] end'
+      '<position>', 'update',
+      'setPathData', 'viewBox.height'
     ]);
 
     pageDone();
   });
 
-  it('startPlug, endPlug', function() {
+  it(registerTitle('plugSE'), function() {
     ll.color = 'blue';
     window.traceLog = [];
     ll.startPlug = 'arrow2';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>', '[startPlug] arrow2', '[startPlugColor] blue', '[startPlugSize] 1',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] none'
+      '<setPlug>', 'plug[0]=arrow2', 'plugColor[0]=blue', 'plugSize[0]=1',
+      '<setPlugOutline>', 'plugOutlineEnabled[0]=false',
+      '<position>',
+      'newPlugSymbolSE[0]',
+      'update',
+      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask-position'
     ]);
 
     // Change size
@@ -275,9 +278,10 @@ describe('options', function() {
     ll.endPlug = 'disc';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>', '[endPlug] disc', '[endPlugColor] blue', '[endPlugSize] 1',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height'
+      '<setPlug>', 'plug[1]=disc',
+      '<position>', 'update',
+      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask-position'
     ]);
 
     // No change path and size
@@ -285,19 +289,19 @@ describe('options', function() {
     ll.endPlug = 'square';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>', '[endPlug] square', '[endPlugColor] blue', '[endPlugSize] 1',
+      '<setPlug>', 'plug[1]=square',
       '<position>'
     ]);
 
     pageDone();
   });
 
-  it('startPlugColor, endPlugColor', function() {
+  it(registerTitle('plugColorSE'), function() {
     window.traceLog = [];
     ll.endPlugColor = 'blue';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>', '[endPlugColor] blue'
+      '<setPlug>', 'plugColor[1]=blue'
     ]);
 
     // No change (hidden plug)
@@ -305,28 +309,28 @@ describe('options', function() {
     ll.startPlugColor = 'red';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>'
+      '<setPlug>'
     ]);
 
     window.traceLog = [];
     ll.endPlugColor = 'auto';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>', '[endPlugColor] coral'
+      '<setPlug>', 'plugColor[1]=coral'
     ]);
 
     pageDone();
   });
 
-  it('startPlugSize, endPlugSize', function() {
+  it(registerTitle('plugSizeSE'), function() {
     window.traceLog = [];
     ll.endPlugSize = 2;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>', '[endPlugSize] 2',
-      '<position>', '[update]',
-      '[setPathData]', '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start'
+      '<setPlug>', 'plugSize[1]=2',
+      '<position>', 'update',
+      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask-position'
     ]);
 
     // No change (hidden plug)
@@ -334,8 +338,8 @@ describe('options', function() {
     ll.startPlugSize = 3;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>',
-      '<position>', '[update]'
+      '<setPlug>',
+      '<position>'
     ]);
 
     // No change path
@@ -344,10 +348,10 @@ describe('options', function() {
     ll.endPlugSize = 1;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<setPlugs>', '[endPlugSize] 1',
-      '<position>', '[update]',
-      '[viewBox] x', '[viewBox] y', '[viewBox] width', '[viewBox] height',
-      '[mask] start'
+      '<setPlug>', 'plugSize[1]=1',
+      '<position>', 'update',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask-position'
     ]);
 
     pageDone();

@@ -1083,7 +1083,7 @@
           needsPlugSE[i] = addPropList('plugSize', needsPlugSE[i]);
         }
         if (currentValue === PLUG_BEHIND || options.plugSE[i] === PLUG_BEHIND) { // off -> on / on -> off
-          needsPlugOutlineSE[0] = needsPlugOutlineSE[1] = true; // Update all or `enabled` of `plugOutline*`.
+          needsPlugOutlineSE[i] = true; // Update all of `plugOutline*`.
         } else if (options.plugOutlineEnabledSE[i]) { // on -> on
           needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]); // for new SymbolConf
         }
@@ -1168,15 +1168,21 @@
       setLine(props, Array.isArray(needsLine) ? needsLine : null);
     }
     if (needsPlugSE[0] || needsPlugSE[1]) { // Update plugs.
-      setPlug(props, [Array.isArray(needsPlugSE[0]) ? needsPlugSE[0] : null,
-        Array.isArray(needsPlugSE[1]) ? needsPlugSE[1] : null]);
+      setPlug(props, [
+        /* eslint-disable eqeqeq */
+        needsPlugSE[0] == null ? [] : Array.isArray(needsPlugSE[0]) ? needsPlugSE[0] : null,
+        needsPlugSE[1] == null ? [] : Array.isArray(needsPlugSE[1]) ? needsPlugSE[1] : null]);
+        /* eslint-enable eqeqeq */
     }
     if (needsLineOutline) { // Update `lineOutline`.
       setLineOutline(props, Array.isArray(needsLineOutline) ? needsLineOutline : null);
     }
     if (needsPlugOutlineSE[0] || needsPlugOutlineSE[1]) { // Update `plugOutline`.
-      setPlugOutline(props, [Array.isArray(needsPlugOutlineSE[0]) ? needsPlugOutlineSE[0] : null,
-        Array.isArray(needsPlugOutlineSE[1]) ? needsPlugOutlineSE[1] : null]);
+      setPlugOutline(props, [
+        needsPlugOutlineSE[0] == null ? [] : // eslint-disable-line eqeqeq
+          Array.isArray(needsPlugOutlineSE[0]) ? needsPlugOutlineSE[0] : null,
+        needsPlugOutlineSE[1] == null ? [] : // eslint-disable-line eqeqeq
+          Array.isArray(needsPlugOutlineSE[1]) ? needsPlugOutlineSE[1] : null]);
     }
     if (needsPosition) { // Call `position()`.
       this.position();
@@ -1252,48 +1258,16 @@
     // To limit updated `socketXY`
     newSocketXYSE.forEach(function(socketXY1, i) {
       var socketXY2 = props.socketXYSE[i];
-      if (socketXY1.x !== socketXY2.x || socketXY1.y !== socketXY2.y ||
-          socketXY1.socketId !== socketXY2.socketId) {
-        props.socketXYSE[i] = socketXY1;
+      if (['x', 'y', 'socketId'].some(function(prop) { return socketXY1[prop] !== socketXY2[prop]; })) {
         window.traceLog.push('newSocketXYSE[' + i + ']'); // [DEBUG/]
+        props.socketXYSE[i] = socketXY1;
       } else {
         newSocketXYSE[i] = null;
       }
     });
 
-    // Decide `anchorBBox` (Must check coordinates also)
-    bBoxSE.forEach(function(anchorBBox1, i) {
-      var anchorBBox2 = props.anchorBBoxSE[i],
-        enabled1 = props.plugOverheadSE[i] < 0, enabled2 = !!anchorBBox2;
-      if (enabled1 !== enabled2 ||
-          enabled1 && enabled2 && ['left', 'top', 'width', 'height'].some(function(prop) { // omission right, bottom
-            return anchorBBox1[prop] !== anchorBBox2[prop];
-          })) {
-        if (enabled1) {
-          props.anchorBBoxSE[i] = newAnchorBBoxSE[i] = anchorBBox1;
-          window.traceLog.push('newAnchorBBoxSE[' + i + ']'); // [DEBUG/]
-        } else {
-          props.anchorBBoxSE[i] = null;
-          newAnchorBBoxSE[i] = false; // To indicate that it was changed.
-        }
-      }
-    });
-
-    // Decide `plugSymbol` (Check only on/off)
-    options.plugSE.forEach(function(plugId1, i) {
-      var symbol1 = PLUG_2_SYMBOL[plugId1], symbol2 = props.plugSymbolSE[i],
-        enabled1 = !!symbol1, enabled2 = !!symbol2;
-      if (enabled1 !== enabled2) {
-        newPlugSymbolSE[i] = enabled1 ? symbol1 : false; // `false` indicates that it was changed.
-        window.traceLog.push('newPlugSymbolSE[' + i + ']'); // [DEBUG/]
-      }
-      props.plugSymbolSE[i] = enabled1 ? symbol1 : null;
-    });
-
     // New position
     if (newSocketXYSE[0] || newSocketXYSE[1] ||
-        newAnchorBBoxSE[0] != null || newAnchorBBoxSE[1] != null || // eslint-disable-line eqeqeq
-        newPlugSymbolSE[0] != null || newPlugSymbolSE[1] != null || // eslint-disable-line eqeqeq
         POSITION_PROPS.some(function(prop) {
           var curValue = (prop.isOption ? options : props)[prop.name],
             positionValue = props.positionValues[prop.name];
@@ -1301,7 +1275,7 @@
             [0, 1].some(function(i) { return positionValue[i] !== curValue[i]; }) :
             positionValue !== curValue;
         })) {
-      window.traceLog.push('(update)'); // [DEBUG/]
+      window.traceLog.push('update'); // [DEBUG/]
 
       // Generate path segments
       switch (options.path) {
@@ -1710,36 +1684,65 @@
         });
       })(props.svg.viewBox.baseVal, props.svg.style);
 
-      // Apply mask
-      if (viewHasChanged &&
-            (props.anchorBBoxSE[0] || props.anchorBBoxSE[1] ||
-              props.plugSymbolSE[0] || props.plugSymbolSE[1]) ||
-          newAnchorBBoxSE[0] != null || newAnchorBBoxSE[1] != null || // eslint-disable-line eqeqeq
-          newPlugSymbolSE[0] != null || newPlugSymbolSE[1] != null) { // eslint-disable-line eqeqeq
-
-        window.traceLog.push('line*mask*'); // [DEBUG/]
-        [props.lineMask, props.lineOutlineMask].forEach(function(mask) {
-          ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-            mask[boxKey].baseVal.value = newViewBBox[boxKey];
-          });
-        });
-        props.lineMaskBGRect.x.baseVal.value = newViewBBox.x;
-        props.lineMaskBGRect.y.baseVal.value = newViewBBox.y;
-        props.anchorBBoxSE.forEach(function(anchorBBox, i) {
-          if (anchorBBox) {
-            window.traceLog.push('lineMaskAnchorSE[' + i + ']'); // [DEBUG/]
-            props.lineMaskAnchorSE[i].x.baseVal.value = anchorBBox.left;
-            props.lineMaskAnchorSE[i].y.baseVal.value = anchorBBox.top;
-            props.lineMaskAnchorSE[i].width.baseVal.value = anchorBBox.width;
-            props.lineMaskAnchorSE[i].height.baseVal.value = anchorBBox.height;
-          }
-        });
-      }
-
       POSITION_PROPS.forEach(function(prop) {
         var curValue = (prop.isOption ? options : props)[prop.name];
         props.positionValues[prop.name] = prop.hasSE ? [curValue[0], curValue[1]] : curValue;
       });
+    }
+
+    // Decide `anchorBBox` (Must check coordinates also)
+    bBoxSE.forEach(function(anchorBBox1, i) {
+      var anchorBBox2 = props.anchorBBoxSE[i],
+        enabled1 = props.plugOverheadSE[i] < 0, enabled2 = !!anchorBBox2;
+      if (!enabled1) {
+        props.anchorBBoxSE[i] = null;
+      } else {
+        props.anchorBBoxSE[i] = anchorBBox1;
+        if (!enabled2 || ['left', 'top', 'width', 'height'].some(function(prop) { // omission right, bottom
+          return anchorBBox1[prop] !== anchorBBox2[prop];
+        })) { // Update `lineMaskAnchorSE`
+          window.traceLog.push('lineMaskAnchorSE[' + i + ']'); // [DEBUG/]
+          props.lineMaskAnchorSE[i].x.baseVal.value = anchorBBox1.left;
+          props.lineMaskAnchorSE[i].y.baseVal.value = anchorBBox1.top;
+          props.lineMaskAnchorSE[i].width.baseVal.value = anchorBBox1.width;
+          props.lineMaskAnchorSE[i].height.baseVal.value = anchorBBox1.height;
+        }
+        if (!enabled2) { // off -> on
+          window.traceLog.push('newAnchorBBoxSE[' + i + ']'); // [DEBUG/]
+          newAnchorBBoxSE[i] = anchorBBox1;
+        }
+      }
+    });
+
+    // Decide `plugSymbol`
+    options.plugSE.forEach(function(plugId1, i) {
+      var symbol1 = PLUG_2_SYMBOL[plugId1], symbol2 = props.plugSymbolSE[i],
+        enabled1 = !!symbol1, enabled2 = !!symbol2;
+      if (!enabled1) {
+        props.plugSymbolSE[i] = null;
+      } else {
+        props.plugSymbolSE[i] = symbol1;
+        if (!enabled2) { // off -> on
+          window.traceLog.push('newPlugSymbolSE[' + i + ']'); // [DEBUG/]
+          newPlugSymbolSE[i] = symbol1;
+        }
+      }
+    });
+
+    // Update `<mask>`s that are positioned based on `viewBox`
+    if (viewHasChanged && ( // `viewBox` was changed and `<mask>`s are used
+          props.plugSymbolSE[0] || props.plugSymbolSE[1] ||
+            props.anchorBBoxSE[0] || props.anchorBBoxSE[1]) ||
+        // Or, `<mask>`s that might not yet be positioned are used
+        newAnchorBBoxSE[0] || newAnchorBBoxSE[1] || newPlugSymbolSE[0] || newPlugSymbolSE[1]) {
+      window.traceLog.push('mask-position'); // [DEBUG/]
+      [props.lineMask, props.lineOutlineMask].forEach(function(mask) {
+        ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+          mask[boxKey].baseVal.value = newViewBBox[boxKey];
+        });
+      });
+      props.lineMaskBGRect.x.baseVal.value = newViewBBox.x;
+      props.lineMaskBGRect.y.baseVal.value = newViewBBox.y;
     }
   };
 
