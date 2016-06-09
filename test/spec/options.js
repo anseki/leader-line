@@ -61,7 +61,8 @@ describe('options', function() {
       'newSocketXYSE[0]', 'newSocketXYSE[1]',
       'update',
       'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'mask-position', 'lineMaskAnchorSE[0]'
+      'lineMaskAnchorSE[0]',
+      'mask-position'
     ]);
 
     // Change to element in iframe, `baseWindow` is not changed
@@ -91,10 +92,11 @@ describe('options', function() {
       '<setLineOutline>', 'lineOutlineEnabled=false',
       '<setPlugOutline>', 'plugOutlineEnabled[0]=false', 'plugOutlineEnabled[1]=false',
       '<position>',
-      'newSocketXYSE[0]', 'newSocketXYSE[1]', 'newPlugSymbolSE[1]',
+      'newSocketXYSE[0]', 'newSocketXYSE[1]',
       'update',
       'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'mask-position', 'lineMaskAnchorSE[0]'
+      'lineMaskAnchorSE[0]', 'newAnchorBBoxSE[0]', 'newPlugSymbolSE[1]',
+      'mask-position'
     ]);
 
     pageDone();
@@ -123,7 +125,8 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<position>', 'update',
-      'setPathData', 'viewBox.y', 'viewBox.height'
+      'setPathData', 'viewBox.y', 'viewBox.height',
+      'mask-position'
     ]);
 
     pageDone();
@@ -191,7 +194,8 @@ describe('options', function() {
       '<position>',
       'newSocketXYSE[0]',
       'update',
-      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height'
+      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask-position'
     ]);
 
     // `bottom` of `viewBox` is changed
@@ -206,7 +210,8 @@ describe('options', function() {
       '<position>',
       'newSocketXYSE[1]',
       'update',
-      'setPathData', 'viewBox.height'
+      'setPathData', 'viewBox.height',
+      'mask-position'
     ]);
 
     pageDone();
@@ -233,7 +238,8 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<position>', 'update',
-      'setPathData', 'viewBox.width'
+      'setPathData', 'viewBox.width',
+      'mask-position'
     ]);
 
     // No change size
@@ -251,7 +257,8 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<position>', 'update',
-      'setPathData', 'viewBox.height'
+      'setPathData', 'viewBox.height',
+      'mask-position'
     ]);
 
     pageDone();
@@ -266,9 +273,9 @@ describe('options', function() {
       '<setPlug>', 'plug[0]=arrow2', 'plugColor[0]=blue', 'plugSize[0]=1',
       '<setPlugOutline>', 'plugOutlineEnabled[0]=false',
       '<position>',
-      'newPlugSymbolSE[0]',
       'update',
       'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'newPlugSymbolSE[0]',
       'mask-position'
     ]);
 
