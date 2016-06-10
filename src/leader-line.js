@@ -86,8 +86,11 @@
       plugOutlineSizeSE: [1, 1]
     },
 
+    /**
+     * @typedef {{name, hasSE, hasProps, isOption, hasChanged}[]} PROP_CONF
+     */
     POSITION_PROPS = [ // `anchorSE` is checked always.
-      {name: 'socketXYSE', hasSE: true,
+      {name: 'socketXYSE', hasSE: true, hasProps: true,
         hasChanged: function(a, b) {
           return ['x', 'y', 'socketId'].some(function(prop) { return a[prop] !== b[prop]; });
         }},
@@ -103,11 +106,28 @@
             [0, 1].some(function(i) { return a[i] !== b[i]; });
         }}
     ],
-    VIEW_BOX_PROPS = [
-      {name: 'plugBCircleSE', hasSE: true}
+
+    PATH_PROPS = [
+      {name: 'pathData',
+        hasChanged: function(a, b) {
+          return a == null || b == null || // eslint-disable-line eqeqeq
+            a.length !== b.length || a.some(function(aSeg, i) {
+              var bSeg = b[i];
+              return aSeg.type !== bSeg.type ||
+                aSeg.values.some(function(aSegValue, i) { return aSegValue !== bSeg.values[i]; });
+            });
+        }}
     ],
-    MASK_PROPS = [
+
+    VIEW_BBOX_PROPS = [
+      // `props.viewBBoxVals` contains `plugBCircleSE` to calculate `viewBBox`.
+      {name: 'viewBBox', hasProps: true,
+        hasChanged: function(a, b) {
+          return ['x', 'y', 'width', 'height'].some(function(prop) { return a[prop] !== b[prop]; });
+        }}
     ],
+
+    MASK_PROPS = [],
 
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
     KEYWORD_AUTO = 'auto',
@@ -250,7 +270,7 @@
    * Get a common ancestor window.
    * @param {Element} elm1 - A contained element.
    * @param {Element} elm2 - A contained element.
-   * @returns {Window} commonWindow - A common ancestor window.
+   * @returns {Window} - A common ancestor window.
    */
   function getCommonWindow(elm1, elm2) {
     var frames1, frames2, commonWindow;
@@ -360,11 +380,11 @@
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXYSE`,
+   * Setup `baseWindow`, `bodyOffset`,
    *    `pathData`, `plugBCircleSE`,
    *    `anchorBBoxSE`, `plugSymbolSE`,
    *    `svg`, `lineFace`, `plugMarkerSE`, `plugFaceSE`,
-   *    `maskPathSE`, `positionVals`, `viewBoxVals`, `maskVals`.
+   *    `maskPathSE`, `positionVals`, `pathVals`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -554,14 +574,13 @@
 
     props.svg = baseDocument.body.appendChild(svg);
 
-    props.viewBBox = {};
-    props.socketXYSE = [{}, {}];
     props.pathData = [];
     props.plugBCircleSE = [0, 0];
     props.anchorBBoxSE = [null, null];
     props.plugSymbolSE = [null, null];
 
-    [['positionVals', POSITION_PROPS], ['viewBoxVals', VIEW_BOX_PROPS], ['maskVals', MASK_PROPS]]
+    [['positionVals', POSITION_PROPS], ['pathVals', PATH_PROPS],
+        ['viewBBoxVals', VIEW_BBOX_PROPS], ['maskVals', MASK_PROPS]]
       .forEach(function(propNameConf) {
         props[propNameConf[0]] = propNameConf[1].reduce(function(values, propConf) {
           if (propConf.hasSE) {
@@ -863,7 +882,7 @@
     // [DEBUG]
     function log(out, name) {
       if (out) {
-        window.traceLog.push('propsHasChanged: ' + name); // eslint-disable-line eqeqeq
+        window.traceLog.push('propsHasChanged:' + name); // eslint-disable-line eqeqeq
       }
       return out;
     }
@@ -885,6 +904,96 @@
         , propConf.name) // [DEBUG/]
         ;
     });
+  }
+
+  /**
+   * @param {Object} values - Values that are saved such as `props.positionVals`.
+   * @param {Object} options - `props.options` of `LeaderLine` instance.
+   * @param {Object} conf - Config such as `POSITION_PROPS`.
+   * @returns {void}
+   */
+  function saveProps(values, options, conf) {
+    conf.forEach(function(propConf) {
+      var curValue = (propConf.isOption ? options : values.current)[propConf.name];
+      values.applied[propConf.name] = propConf.hasSE ? [curValue[0], curValue[1]] : curValue;
+    });
+  }
+
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {Array.<Point[]>} pathList - Array contains points.
+   * @returns {{x1: number, y1: number, x2: number, y2: number}} - min/max coordinates.
+   */
+  function updatePath(props, pathList) {
+    var pathVals = props.pathVals, pathEdge = {};
+    // Convert to `pathData`.
+    pathVals.current = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
+    pathEdge.x1 = pathEdge.x2 = pathList[0][0].x;
+    pathEdge.y1 = pathEdge.y2 = pathList[0][0].y;
+    pathList.forEach(function(points) {
+      pathVals.current.push(points.length === 2 ?
+        {type: 'L', values: [points[1].x, points[1].y]} :
+        {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
+      points.forEach(function(point) {
+        /* eslint-disable eqeqeq */
+        if (point.x < pathEdge.x1) { pathEdge.x1 = point.x; }
+        if (point.x > pathEdge.x2) { pathEdge.x2 = point.x; }
+        if (point.y < pathEdge.y1) { pathEdge.y1 = point.y; }
+        if (point.y > pathEdge.y2) { pathEdge.y2 = point.y; }
+        /* eslint-enable eqeqeq */
+      });
+    });
+
+    // Apply `pathData`
+    if (propsHasChanged(pathVals, props.options, PATH_PROPS)) {
+      window.traceLog.push('setPathData'); // [DEBUG/]
+      props.linePath.setPathData(pathVals.current);
+      pathVals.applied = pathVals.current;
+    }
+
+    return pathEdge;
+  }
+
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {{x1: number, y1: number, x2: number, y2: number}} pathEdge - min/max coordinates.
+   * @returns {boolean} - `true` if it was changed.
+   */
+  function updateViewBBox(props, pathEdge) {
+    var viewBBoxVals = props.viewBBoxVals,
+      padding = Math.max(props.options.lineSize / 2, props.plugBCircleSE[0], props.plugBCircleSE[1]),
+      viewHasChanged = false;
+    // Expand bBox with `line` or symbols
+    pathEdge.x1 -= padding;
+    pathEdge.y1 -= padding;
+    pathEdge.x2 += padding;
+    pathEdge.y2 += padding;
+    viewBBoxVals.current = {
+      x: pathEdge.x1,
+      y: pathEdge.y1,
+      width: pathEdge.x2 - pathEdge.x1,
+      height: pathEdge.y2 - pathEdge.y1
+    };
+
+    // Position `<svg>` element and set its `viewBox`
+    (function(baseVal, styles) {
+      var CSS_PROP = {x: 'left', y: 'top', width: 'width', height: 'height'};
+      ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+        if (viewBBoxVals.current[boxKey] !== viewBBoxVals.applied[boxKey]) {
+          window.traceLog.push('viewBox.' + boxKey); // [DEBUG/]
+          viewBBoxVals.applied[boxKey] = baseVal[boxKey] = viewBBoxVals.current[boxKey];
+          styles[CSS_PROP[boxKey]] = viewBBoxVals.current[boxKey] +
+            (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
+          viewHasChanged = true;
+        }
+      });
+    })(props.svg.viewBox.baseVal, props.svg.style);
+
+    return viewHasChanged;
+  }
+
+  function updateMask() {
+    
   }
 
   /**
@@ -1266,8 +1375,9 @@
     window.traceLog.push('<position>'); // [DEBUG/]
     var props = insProps[this._id],
       options = props.options, curPosition = props.positionVals.current,
-      newAnchorBBoxSE = [], newPlugSymbolSE = [], newPathData, newViewBBox = {},
-      bBoxSE, pathSegs = [], viewHasChanged;
+      socketXYSE = curPosition.socketXYSE,
+      bBoxSE, pathList = [], pathEdge, viewHasChanged,
+      newAnchorBBoxSE = [], newPlugSymbolSE = [];
 
     function getSocketXY(bBox, socketId) {
       var socketXY = (
@@ -1281,8 +1391,7 @@
 
     function socketXY2Point(socketXY) { return {x: socketXY.x, y: socketXY.y}; }
 
-    bBoxSE = [
-      getBBoxNest(options.anchorSE[0], props.baseWindow),
+    bBoxSE = [getBBoxNest(options.anchorSE[0], props.baseWindow),
       getBBoxNest(options.anchorSE[1], props.baseWindow)];
 
     // Decide each socket
@@ -1334,7 +1443,7 @@
       switch (options.path) {
 
         case PATH_STRAIGHT:
-          pathSegs.push([socketXY2Point(props.socketXYSE[0]), socketXY2Point(props.socketXYSE[1])]);
+          pathList.push([socketXY2Point(socketXYSE[0]), socketXY2Point(socketXYSE[1])]);
           break;
 
         case PATH_ARC:
@@ -1344,19 +1453,17 @@
                 typeof options.socketGravitySE[0] === 'number' && options.socketGravitySE[0] > 0 ||
                 typeof options.socketGravitySE[1] === 'number' && options.socketGravitySE[1] > 0,
               circle8rad = CIRCLE_8_RAD * (downward ? -1 : 1),
-              angle = Math.atan2(props.socketXYSE[1].y - props.socketXYSE[0].y,
-                props.socketXYSE[1].x - props.socketXYSE[0].x),
+              angle = Math.atan2(socketXYSE[1].y - socketXYSE[0].y, socketXYSE[1].x - socketXYSE[0].x),
               cp1Angle = -angle + circle8rad,
               cp2Angle = Math.PI - angle - circle8rad,
-              crLen = getPointsLength(props.socketXYSE[0], props.socketXYSE[1]) / Math.sqrt(2) * CIRCLE_CP,
+              crLen = getPointsLength(socketXYSE[0], socketXYSE[1]) / Math.sqrt(2) * CIRCLE_CP,
               cp1 = {
-                x: props.socketXYSE[0].x + Math.cos(cp1Angle) * crLen,
-                y: props.socketXYSE[0].y + Math.sin(cp1Angle) * crLen * -1},
+                x: socketXYSE[0].x + Math.cos(cp1Angle) * crLen,
+                y: socketXYSE[0].y + Math.sin(cp1Angle) * crLen * -1},
               cp2 = {
-                x: props.socketXYSE[1].x + Math.cos(cp2Angle) * crLen,
-                y: props.socketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
-            pathSegs.push(
-              [socketXY2Point(props.socketXYSE[0]), cp1, cp2, socketXY2Point(props.socketXYSE[1])]);
+                x: socketXYSE[1].x + Math.cos(cp2Angle) * crLen,
+                y: socketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
+            pathList.push([socketXY2Point(socketXYSE[0]), cp1, cp2, socketXY2Point(socketXYSE[1])]);
           })();
           break;
 
@@ -1364,7 +1471,7 @@
         case PATH_MAGNET:
           (/* @EXPORT[file:../test/spec/func/PATH_FLUID]@ */function(socketGravitySE) {
             var cx = [], cy = [];
-            props.socketXYSE.forEach(function(socketXY, i) {
+            socketXYSE.forEach(function(socketXY, i) {
               var gravity = socketGravitySE[i], offset, anotherSocketXY, overhead, minGravity, len;
               if (Array.isArray(gravity)) { // offset
                 offset = {x: gravity[0], y: gravity[1]};
@@ -1375,7 +1482,7 @@
                   socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity} :
                                       /* SOCKET_LEFT */ {x: -gravity, y: 0};
               } else { // auto
-                anotherSocketXY = props.socketXYSE[i ? 0 : 1];
+                anotherSocketXY = socketXYSE[i ? 0 : 1];
                 overhead = curPosition.plugOverheadSE[i];
                 minGravity = overhead > 0 ?
                   MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
@@ -1403,8 +1510,8 @@
               cx[i] = socketXY.x + offset.x;
               cy[i] = socketXY.y + offset.y;
             });
-            pathSegs.push([socketXY2Point(props.socketXYSE[0]),
-              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(props.socketXYSE[1])]);
+            pathList.push([socketXY2Point(socketXYSE[0]),
+              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(socketXYSE[1])]);
           }/* @/EXPORT@ */)([options.socketGravitySE[0],
             options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
           break;
@@ -1576,7 +1683,7 @@
               return true;
             }
 
-            props.socketXYSE.forEach(function(socketXY, i) {
+            socketXYSE.forEach(function(socketXY, i) {
               var dirPoint = socketXY2Point(socketXY),
                 len = options.socketGravitySE[i];
               (function(dirLen) {
@@ -1600,7 +1707,7 @@
             dpList[1].reverse();
             dpList[0].concat(dpList[1]).forEach(function(dirPoint, i) {
               var point = {x: dirPoint.x, y: dirPoint.y};
-              if (i > 0) { pathSegs.push([curPoint, point]); }
+              if (i > 0) { pathList.push([curPoint, point]); }
               curPoint = point;
             });
           }/* @/EXPORT@ */)();
@@ -1613,39 +1720,39 @@
       (function() {
         var pathSegsLen = [];
         curPosition.plugOverheadSE.forEach(function(plugOverhead, i) {
-          var start = !i, pathSeg, iSeg, point, sp, cp, angle, len,
+          var start = !i, pathPoints, iSeg, point, sp, cp, angle, len,
             socketId, axis, dir, minAdjustOffset;
           if (plugOverhead > 0) {
-            pathSeg = pathSegs[(iSeg = start ? 0 : pathSegs.length - 1)];
+            pathPoints = pathList[(iSeg = start ? 0 : pathList.length - 1)];
 
-            if (pathSeg.length === 2) { // Straight line
-              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getPointsLength.apply(null, pathSeg);
+            if (pathPoints.length === 2) { // Straight line
+              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getPointsLength.apply(null, pathPoints);
               if (pathSegsLen[iSeg] > MIN_ADJUST_LEN) {
                 if (pathSegsLen[iSeg] - plugOverhead < MIN_ADJUST_LEN) {
                   plugOverhead = pathSegsLen[iSeg] - MIN_ADJUST_LEN;
                 }
-                point = getPointOnLine(pathSeg[0], pathSeg[1],
+                point = getPointOnLine(pathPoints[0], pathPoints[1],
                   (start ? plugOverhead : pathSegsLen[iSeg] - plugOverhead) / pathSegsLen[iSeg]);
-                pathSegs[iSeg] = start ? [point, pathSeg[1]] : [pathSeg[0], point];
+                pathList[iSeg] = start ? [point, pathPoints[1]] : [pathPoints[0], point];
                 pathSegsLen[iSeg] -= plugOverhead;
               }
 
             } else { // Cubic bezier
-              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getCubicLength.apply(null, pathSeg);
+              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getCubicLength.apply(null, pathPoints);
               if (pathSegsLen[iSeg] > MIN_ADJUST_LEN) {
                 if (pathSegsLen[iSeg] - plugOverhead < MIN_ADJUST_LEN) {
                   plugOverhead = pathSegsLen[iSeg] - MIN_ADJUST_LEN;
                 }
-                point = getPointOnCubic(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
-                  getCubicT(pathSeg[0], pathSeg[1], pathSeg[2], pathSeg[3],
+                point = getPointOnCubic(pathPoints[0], pathPoints[1], pathPoints[2], pathPoints[3],
+                  getCubicT(pathPoints[0], pathPoints[1], pathPoints[2], pathPoints[3],
                     start ? plugOverhead : pathSegsLen[iSeg] - plugOverhead));
 
                 // Get direct distance and angle
                 if (start) {
-                  sp = pathSeg[0];
+                  sp = pathPoints[0];
                   cp = point.toP1;
                 } else {
-                  sp = pathSeg[3];
+                  sp = pathPoints[3];
                   cp = point.fromP2;
                 }
                 angle = Math.atan2(sp.y - point.y, point.x - sp.x);
@@ -1655,92 +1762,33 @@
                 cp.x = point.x + Math.cos(angle) * len;
                 cp.y = point.y + Math.sin(angle) * len * -1;
 
-                pathSegs[iSeg] = start ?
-                  [point, point.toP1, point.toP2, pathSeg[3]] :
-                  [pathSeg[0], point.fromP1, point.fromP2, point];
+                pathList[iSeg] = start ?
+                  [point, point.toP1, point.toP2, pathPoints[3]] :
+                  [pathPoints[0], point.fromP1, point.fromP2, point];
                 pathSegsLen[iSeg] = null; // to re-calculate
               }
 
             }
           } else if (plugOverhead < 0) {
-            pathSeg = pathSegs[(iSeg = start ? 0 : pathSegs.length - 1)];
-            socketId = props.socketXYSE[i].socketId;
+            pathPoints = pathList[(iSeg = start ? 0 : pathList.length - 1)];
+            socketId = socketXYSE[i].socketId;
             axis = socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y';
             minAdjustOffset = -(bBoxSE[i][axis === 'x' ? 'width' : 'height']);
             if (plugOverhead < minAdjustOffset) { plugOverhead = minAdjustOffset; }
             dir = plugOverhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
-            if (pathSeg.length === 2) { // Straight line
-              pathSeg[start ? 0 : pathSeg.length - 1][axis] += dir;
+            if (pathPoints.length === 2) { // Straight line
+              pathPoints[start ? 0 : pathPoints.length - 1][axis] += dir;
             } else { // Cubic bezier
-              (start ? [0, 1] : [pathSeg.length - 2, pathSeg.length - 1]).forEach(
-                function(i) { pathSeg[i][axis] += dir; });
+              (start ? [0, 1] : [pathPoints.length - 2, pathPoints.length - 1]).forEach(
+                function(i) { pathPoints[i][axis] += dir; });
             }
             pathSegsLen[iSeg] = null; // to re-calculate
           }
         });
       })();
 
-      // Convert path segments to `pathData`.
-      newPathData = [{type: 'M', values: [pathSegs[0][0].x, pathSegs[0][0].y]}];
-      pathSegs.forEach(function(pathSeg) {
-        newPathData.push(pathSeg.length === 2 ?
-          {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]} :
-          {type: 'C', values: [pathSeg[1].x, pathSeg[1].y,
-            pathSeg[2].x, pathSeg[2].y, pathSeg[3].x, pathSeg[3].y]});
-        pathSeg.forEach(function(point) {
-          /* eslint-disable eqeqeq */
-          if (newViewBBox.x1 == null || point.x < newViewBBox.x1) { newViewBBox.x1 = point.x; }
-          if (newViewBBox.x2 == null || point.x > newViewBBox.x2) { newViewBBox.x2 = point.x; }
-          if (newViewBBox.y1 == null || point.y < newViewBBox.y1) { newViewBBox.y1 = point.y; }
-          if (newViewBBox.y2 == null || point.y > newViewBBox.y2) { newViewBBox.y2 = point.y; }
-          /* eslint-enable eqeqeq */
-        });
-      });
-
-      // Expand bBox with `line` or symbols
-      (function(padding) {
-        newViewBBox.x1 -= padding;
-        newViewBBox.x2 += padding;
-        newViewBBox.y1 -= padding;
-        newViewBBox.y2 += padding;
-      })(Math.max(options.lineSize / 2, props.plugBCircleSE[0], props.plugBCircleSE[1]));
-      newViewBBox.x = newViewBBox.x1;
-      newViewBBox.y = newViewBBox.y1;
-      newViewBBox.width = newViewBBox.x2 - newViewBBox.x1;
-      newViewBBox.height = newViewBBox.y2 - newViewBBox.y1;
-
-      // Apply `pathData`
-      if (newPathData.length !== props.pathData.length ||
-          newPathData.some(function(newPathSeg, i) {
-            var pathSeg = props.pathData[i];
-            return newPathSeg.type !== pathSeg.type ||
-              newPathSeg.values.some(function(newPathSegValue, i) {
-                return newPathSegValue !== pathSeg.values[i];
-              });
-          })) {
-        window.traceLog.push('setPathData'); // [DEBUG/]
-        props.linePath.setPathData(newPathData);
-        props.pathData = newPathData;
-      }
-
-      // Position `<svg>` element and set its `viewBox`
-      (function(baseVal, styles) {
-        [['x', 'left'], ['y', 'top'], ['width', 'width'], ['height', 'height']].forEach(function(keys) {
-          var boxKey = keys[0], cssProp = keys[1];
-          if (newViewBBox[boxKey] !== props.viewBBox[boxKey]) {
-            window.traceLog.push('viewBox.' + boxKey); // [DEBUG/]
-            props.viewBBox[boxKey] = baseVal[boxKey] = newViewBBox[boxKey];
-            styles[cssProp] = newViewBBox[boxKey] +
-              (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
-            viewHasChanged = true;
-          }
-        });
-      })(props.svg.viewBox.baseVal, props.svg.style);
-
-      POSITION_PROPS.forEach(function(prop) {
-        var curValue = (prop.isOption ? options : props)[prop.name];
-        props.positionVals[prop.name] = prop.hasSE ? [curValue[0], curValue[1]] : curValue;
-      });
+      pathEdge = updatePath(props, pathList);
+      saveProps(props.positionVals, options, POSITION_PROPS);
     }
 
     // Decide `anchorBBox` (Must check coordinates also)
