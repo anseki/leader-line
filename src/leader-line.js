@@ -86,13 +86,29 @@
       plugOutlineSizeSE: [1, 1]
     },
 
-    POSITION_PROPS = [ // `anchorSE` and `socketXYSE` are checked always.
+    POSITION_PROPS = [ // `anchorSE` is checked always.
+      {name: 'socketXYSE', hasSE: true,
+        hasChanged: function(a, b) {
+          return ['x', 'y', 'socketId'].some(function(prop) { return a[prop] !== b[prop]; });
+        }},
       {name: 'plugOverheadSE', hasSE: true},
-      {name: 'plugBCircleSE', hasSE: true},
       {name: 'path', isOption: true},
       {name: 'lineSize', isOption: true},
-      {name: 'socketGravitySE', hasSE: true, isOption: true}
+      {name: 'socketGravitySE', hasSE: true, isOption: true,
+        hasChanged: function(a, b) {
+          var aType = a == null ? 'auto' : Array.isArray(a) ? 'array' : 'number', // eslint-disable-line eqeqeq
+            bType = b == null ? 'auto' : Array.isArray(b) ? 'array' : 'number'; // eslint-disable-line eqeqeq
+          return aType !== bType ? true :
+            aType === 'number' ? a !== b :
+            [0, 1].some(function(i) { return a[i] !== b[i]; });
+        }}
     ],
+    VIEW_BOX_PROPS = [
+      {name: 'plugBCircleSE', hasSE: true}
+    ],
+    MASK_PROPS = [
+    ],
+
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
     KEYWORD_AUTO = 'auto',
 
@@ -345,10 +361,10 @@
 
   /**
    * Setup `baseWindow`, `bodyOffset`, `viewBBox`, `socketXYSE`,
-   *    `pathData`, `plugOverheadSE`, `plugBCircleSE`,
+   *    `pathData`, `plugBCircleSE`,
    *    `anchorBBoxSE`, `plugSymbolSE`,
    *    `svg`, `lineFace`, `plugMarkerSE`, `plugFaceSE`,
-   *    `maskPathSE`, `positionValues`.
+   *    `maskPathSE`, `positionVals`, `viewBoxVals`, `maskVals`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -541,15 +557,28 @@
     props.viewBBox = {};
     props.socketXYSE = [{}, {}];
     props.pathData = [];
-    props.plugOverheadSE = [0, 0];
     props.plugBCircleSE = [0, 0];
     props.anchorBBoxSE = [null, null];
     props.plugSymbolSE = [null, null];
-    // Initialize properties as array.
-    props.positionValues = POSITION_PROPS.reduce(function(values, prop) {
-      if (prop.hasSE) { values[prop.name] = []; }
-      return values;
-    }, {});
+
+    [['positionVals', POSITION_PROPS], ['viewBoxVals', VIEW_BOX_PROPS], ['maskVals', MASK_PROPS]]
+      .forEach(function(propNameConf) {
+        props[propNameConf[0]] = propNameConf[1].reduce(function(values, propConf) {
+          if (propConf.hasSE) {
+            if (propConf.hasProps) {
+              if (!propConf.isOption) { values.current[propConf.name] = [{}, {}]; }
+              values.applied[propConf.name] = [{}, {}];
+            } else {
+              if (!propConf.isOption) { values.current[propConf.name] = []; }
+              values.applied[propConf.name] = [];
+            }
+          } else if (propConf.hasProps) {
+            if (!propConf.isOption) { values.current[propConf.name] = {}; }
+            values.applied[propConf.name] = {};
+          }
+          return values;
+        }, {current: {}, applied: {}});
+      });
 
     if (IS_GECKO) {
       forceReflow(props.lineFace);
@@ -645,7 +674,7 @@
    */
   function setPlug(props, setPropsSE) {
     window.traceLog.push('<setPlug>'); // [DEBUG/]
-    var options = props.options;
+    var options = props.options, curPosition = props.positionVals.current;
 
     setPropsSE.forEach(function(setProps, i) {
       var plugId = options.plugSE[i], symbolConf, orient, markerProp;
@@ -698,7 +727,7 @@
           }
         });
         // Update shape always for `options.lineSize` that might have been changed.
-        props.plugOverheadSE[i] =
+        curPosition.plugOverheadSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
         props.plugBCircleSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
@@ -711,7 +740,7 @@
           props.lineMaskAnchorSE[i].style.display = 'inline';
         }
         // Update shape always for `options.lineSize` that might have been changed.
-        props.plugOverheadSE[i] = -(options.lineSize / 2);
+        curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
         props.plugBCircleSE[i] = 0;
       }
     });
@@ -821,6 +850,40 @@
           props.plugOutlineFaceSE[i].style.display = 'none';
         }
       }
+    });
+  }
+
+  /**
+   * @param {Object} values - Saved values such as `props.positionVals`.
+   * @param {Object} options - `props.options` of `LeaderLine` instance.
+   * @param {Object} conf - Config such as `POSITION_PROPS`.
+   * @returns {boolean} - `true` if it was changed.
+   */
+  function propsHasChanged(values, options, conf) {
+    // [DEBUG]
+    function log(out, name) {
+      if (out) {
+        window.traceLog.push('propsHasChanged: ' + name); // eslint-disable-line eqeqeq
+      }
+      return out;
+    }
+    // [/DEBUG]
+    return conf.some(function(propConf) {
+      var curValue = (propConf.isOption ? options : values.current)[propConf.name],
+        aplValue = values.applied[propConf.name];
+      return propConf.hasSE ?
+        [0, 1].some(function(i) {
+          return (
+            log( // [DEBUG/]
+            propConf.hasChanged ?
+              propConf.hasChanged(aplValue[i], curValue[i]) : aplValue[i] !== curValue[i]
+            , propConf.name + '[' + i + ']') // [DEBUG/]
+            );
+        }) :
+        log( // [DEBUG/]
+        propConf.hasChanged ? propConf.hasChanged(aplValue, curValue) : aplValue !== curValue
+        , propConf.name) // [DEBUG/]
+        ;
     });
   }
 
@@ -939,12 +1002,20 @@
     /*
       Names of `options` : Keys of API
       ----------------------------------------
-      anchorSE          start, end
-      socketSE          startSocket, endSocket
-      socketGravitySE   startSocketGravity, endSocketGravity
-      plugSE            startPlug, endPlug
-      plugColorSE       startPlugColor, endPlugColor
-      plugSizeSE        startPlugSize, endPlugSize
+      anchorSE                start, end
+      lineColor               color
+      lineSize                size
+      socketSE                startSocket, endSocket
+      socketGravitySE         startSocketGravity, endSocketGravity
+      plugSE                  startPlug, endPlug
+      plugColorSE             startPlugColor, endPlugColor
+      plugSizeSE              startPlugSize, endPlugSize
+      lineOutlineEnabled      outline
+      lineOutlineColor        outlineColor
+      lineOutlineSize         outlineSize
+      plugOutlineEnabledSE    startPlugOutline, endPlugOutline
+      plugOutlineColorSE      startPlugOutlineColor, endPlugOutlineColor
+      plugOutlineSizeSE       startPlugOutlineSize, endPlugOutlineSize
     */
     var props = insProps[this._id], options = props.options,
       newWindow, currentValue,
@@ -1193,8 +1264,9 @@
 
   LeaderLine.prototype.position = function() {
     window.traceLog.push('<position>'); // [DEBUG/]
-    var props = insProps[this._id], options = props.options,
-      newSocketXYSE, newAnchorBBoxSE = [], newPlugSymbolSE = [], newPathData, newViewBBox = {},
+    var props = insProps[this._id],
+      options = props.options, curPosition = props.positionVals.current,
+      newAnchorBBoxSE = [], newPlugSymbolSE = [], newPathData, newViewBBox = {},
       bBoxSE, pathSegs = [], viewHasChanged;
 
     function getSocketXY(bBox, socketId) {
@@ -1217,7 +1289,7 @@
     (function() {
       var socketXYsWk, socketsLenMin = -1, iFix, iAuto;
       if (options.socketSE[0] && options.socketSE[1]) {
-        newSocketXYSE = [
+        curPosition.socketXYSE = [
           getSocketXY(bBoxSE[0], options.socketSE[0]),
           getSocketXY(bBoxSE[1], options.socketSE[1])];
 
@@ -1228,7 +1300,7 @@
             socketXYsWk.forEach(function(socketXY1) {
               var len = getPointsLength(socketXY0, socketXY1);
               if (len < socketsLenMin || socketsLenMin === -1) {
-                newSocketXYSE = [socketXY0, socketXY1];
+                curPosition.socketXYSE = [socketXY0, socketXY1];
                 socketsLenMin = len;
               }
             });
@@ -1242,39 +1314,20 @@
           iFix = 1;
           iAuto = 0;
         }
-        newSocketXYSE = [];
-        newSocketXYSE[iFix] = getSocketXY(bBoxSE[iFix], options.socketSE[iFix]);
+        curPosition.socketXYSE[iFix] = getSocketXY(bBoxSE[iFix], options.socketSE[iFix]);
         socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxSE[iAuto], socketId); });
         socketXYsWk.forEach(function(socketXY) {
-          var len = getPointsLength(socketXY, newSocketXYSE[iFix]);
+          var len = getPointsLength(socketXY, curPosition.socketXYSE[iFix]);
           if (len < socketsLenMin || socketsLenMin === -1) {
-            newSocketXYSE[iAuto] = socketXY;
+            curPosition.socketXYSE[iAuto] = socketXY;
             socketsLenMin = len;
           }
         });
       }
     })();
 
-    // To limit updated `socketXY`
-    newSocketXYSE.forEach(function(socketXY1, i) {
-      var socketXY2 = props.socketXYSE[i];
-      if (['x', 'y', 'socketId'].some(function(prop) { return socketXY1[prop] !== socketXY2[prop]; })) {
-        window.traceLog.push('newSocketXYSE[' + i + ']'); // [DEBUG/]
-        props.socketXYSE[i] = socketXY1;
-      } else {
-        newSocketXYSE[i] = null;
-      }
-    });
-
     // New position
-    if (newSocketXYSE[0] || newSocketXYSE[1] ||
-        POSITION_PROPS.some(function(prop) {
-          var curValue = (prop.isOption ? options : props)[prop.name],
-            positionValue = props.positionValues[prop.name];
-          return prop.hasSE ?
-            [0, 1].some(function(i) { return positionValue[i] !== curValue[i]; }) :
-            positionValue !== curValue;
-        })) {
+    if (propsHasChanged(props.positionVals, options, POSITION_PROPS)) {
       window.traceLog.push('update'); // [DEBUG/]
 
       // Generate path segments
@@ -1323,7 +1376,7 @@
                                       /* SOCKET_LEFT */ {x: -gravity, y: 0};
               } else { // auto
                 anotherSocketXY = props.socketXYSE[i ? 0 : 1];
-                overhead = props.plugOverheadSE[i];
+                overhead = curPosition.plugOverheadSE[i];
                 minGravity = overhead > 0 ?
                   MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
                     (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
@@ -1559,7 +1612,7 @@
       // Adjust path with plugs
       (function() {
         var pathSegsLen = [];
-        props.plugOverheadSE.forEach(function(plugOverhead, i) {
+        curPosition.plugOverheadSE.forEach(function(plugOverhead, i) {
           var start = !i, pathSeg, iSeg, point, sp, cp, angle, len,
             socketId, axis, dir, minAdjustOffset;
           if (plugOverhead > 0) {
@@ -1686,14 +1739,14 @@
 
       POSITION_PROPS.forEach(function(prop) {
         var curValue = (prop.isOption ? options : props)[prop.name];
-        props.positionValues[prop.name] = prop.hasSE ? [curValue[0], curValue[1]] : curValue;
+        props.positionVals[prop.name] = prop.hasSE ? [curValue[0], curValue[1]] : curValue;
       });
     }
 
     // Decide `anchorBBox` (Must check coordinates also)
     bBoxSE.forEach(function(anchorBBox1, i) {
       var anchorBBox2 = props.anchorBBoxSE[i],
-        enabled1 = props.plugOverheadSE[i] < 0, enabled2 = !!anchorBBox2;
+        enabled1 = curPosition.plugOverheadSE[i] < 0, enabled2 = !!anchorBBox2;
       if (!enabled1) {
         props.anchorBBoxSE[i] = null;
       } else {
