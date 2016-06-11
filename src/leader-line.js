@@ -130,8 +130,14 @@
       {name: 'x'}, {name: 'y'}, {name: 'width'}, {name: 'height'}
     ],
 
+    ANCHOR_MASK_PROPS = [
+      {name: 'xSE', hasSE: true}, {name: 'ySE', hasSE: true},
+      {name: 'widthSE', hasSE: true}, {name: 'heightSE', hasSE: true}
+    ],
+
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
     KEYWORD_AUTO = 'auto',
+    BBOX_PROP = {x: 'left', y: 'top', width: 'width', height: 'height'},
 
     MIN_GRAVITY = 80, MIN_GRAVITY_SIZE = 4, MIN_GRAVITY_R = 5,
     MIN_OH_GRAVITY = 120, MIN_OH_GRAVITY_OH = 8, MIN_OH_GRAVITY_R = 3.75,
@@ -381,11 +387,8 @@
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`,
-   *    `pathData`,
-   *    `anchorBBoxSE`, `plugSymbolSE`,
-   *    `svg`, `lineFace`, `plugMarkerSE`, `plugFaceSE`,
-   *    `maskPathSE`, `positionVals`, `pathVals`.
+   * Setup `baseWindow`, `bodyOffset`, `pathList`,
+   *    `positionVals`, `pathVals`, 'viewBBoxVals', 'maskVals', 'anchorMaskVals', SVG elements.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -575,12 +578,8 @@
 
     props.svg = baseDocument.body.appendChild(svg);
 
-    props.pathData = [];
-    props.anchorBBoxSE = [null, null];
-    props.plugSymbolSE = [null, null];
-
-    [['positionVals', POSITION_PROPS], ['pathVals', PATH_PROPS],
-        ['viewBBoxVals', VIEW_BBOX_PROPS], ['maskVals', MASK_PROPS]]
+    [['positionVals', POSITION_PROPS], ['pathVals', PATH_PROPS], ['viewBBoxVals', VIEW_BBOX_PROPS],
+        ['maskVals', MASK_PROPS], ['anchorMaskVals', ANCHOR_MASK_PROPS]]
       .forEach(function(propNameConf) {
         props[propNameConf[0]] = propNameConf[1].reduce(function(values, propConf) {
           if (propConf.hasSE) {
@@ -600,6 +599,7 @@
       });
     props.viewBBoxVals.plugBCircleSE = [0, 0];
     props.viewBBoxVals.pathEdge = {};
+    props.pathList = {};
 
     if (IS_GECKO) {
       forceReflow(props.lineFace);
@@ -989,12 +989,11 @@
 
     // Position `<svg>` element and set its `viewBox`
     (function(baseVal, styles) {
-      var CSS_PROP = {x: 'left', y: 'top', width: 'width', height: 'height'};
       ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
         if (viewBBoxVals.current[boxKey] !== viewBBoxVals.applied[boxKey]) {
           window.traceLog.push('viewBox.' + boxKey); // [DEBUG/]
           viewBBoxVals.applied[boxKey] = baseVal[boxKey] = viewBBoxVals.current[boxKey];
-          styles[CSS_PROP[boxKey]] = viewBBoxVals.current[boxKey] +
+          styles[BBOX_PROP[boxKey]] = viewBBoxVals.current[boxKey] +
             (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
           viewHasChanged = true;
         }
@@ -1022,13 +1021,13 @@
         aplAnchorHasMaskSE = maskVals.applied.anchorHasMaskSE;
 
       if (!aplPlugHasMaskSE[i] && curPlugHasMask) { // off -> on
-        window.traceLog.push('plugMaskIsNewSE[' + i + ']'); // [DEBUG/]
+        window.traceLog.push('new-plugMask[' + i + ']'); // [DEBUG/]
         plugMaskIsNewSE[i] = true;
       }
       aplPlugHasMaskSE[i] = curPlugHasMask;
 
       if (!aplAnchorHasMaskSE[i] && curAnchorHasMask) { // off -> on
-        window.traceLog.push('anchorMaskIsNewSE[' + i + ']'); // [DEBUG/]
+        window.traceLog.push('new-anchorMask[' + i + ']'); // [DEBUG/]
         anchorMaskIsNewSE[i] = true;
       }
       aplAnchorHasMaskSE[i] = curAnchorHasMask;
@@ -1432,10 +1431,10 @@
   LeaderLine.prototype.position = function() {
     window.traceLog.push('<position>'); // [DEBUG/]
     var props = insProps[this._id],
-      options = props.options, curPosition = props.positionVals.current,
-      socketXYSE = curPosition.socketXYSE,
-      bBoxSE, pathList = [], pathEdge, viewHasChanged,
-      newAnchorBBoxSE = [], newPlugSymbolSE = [];
+      options = props.options,
+      curPosition = props.positionVals.current, socketXYSE = curPosition.socketXYSE,
+      anchorMaskVals = props.anchorMaskVals,
+      anchorBBoxSE, pathList = (props.pathList.baseVal = []);
 
     function getSocketXY(bBox, socketId) {
       var socketXY = (
@@ -1449,25 +1448,25 @@
 
     function socketXY2Point(socketXY) { return {x: socketXY.x, y: socketXY.y}; }
 
-    bBoxSE = [getBBoxNest(options.anchorSE[0], props.baseWindow),
+    anchorBBoxSE = [getBBoxNest(options.anchorSE[0], props.baseWindow),
       getBBoxNest(options.anchorSE[1], props.baseWindow)];
 
     // Decide each socket
     (function() {
       var socketXYsWk, socketsLenMin = -1, iFix, iAuto;
       if (options.socketSE[0] && options.socketSE[1]) {
-        curPosition.socketXYSE = [
-          getSocketXY(bBoxSE[0], options.socketSE[0]),
-          getSocketXY(bBoxSE[1], options.socketSE[1])];
+        socketXYSE[0] = getSocketXY(anchorBBoxSE[0], options.socketSE[0]);
+        socketXYSE[1] = getSocketXY(anchorBBoxSE[1], options.socketSE[1]);
 
       } else if (!options.socketSE[0] && !options.socketSE[1]) {
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxSE[1], socketId); });
-        SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxSE[0], socketId); })
+        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[1], socketId); });
+        SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[0], socketId); })
           .forEach(function(socketXY0) {
             socketXYsWk.forEach(function(socketXY1) {
               var len = getPointsLength(socketXY0, socketXY1);
               if (len < socketsLenMin || socketsLenMin === -1) {
-                curPosition.socketXYSE = [socketXY0, socketXY1];
+                socketXYSE[0] = socketXY0;
+                socketXYSE[1] = socketXY1;
                 socketsLenMin = len;
               }
             });
@@ -1481,12 +1480,12 @@
           iFix = 1;
           iAuto = 0;
         }
-        curPosition.socketXYSE[iFix] = getSocketXY(bBoxSE[iFix], options.socketSE[iFix]);
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(bBoxSE[iAuto], socketId); });
+        socketXYSE[iFix] = getSocketXY(anchorBBoxSE[iFix], options.socketSE[iFix]);
+        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[iAuto], socketId); });
         socketXYsWk.forEach(function(socketXY) {
-          var len = getPointsLength(socketXY, curPosition.socketXYSE[iFix]);
+          var len = getPointsLength(socketXY, socketXYSE[iFix]);
           if (len < socketsLenMin || socketsLenMin === -1) {
-            curPosition.socketXYSE[iAuto] = socketXY;
+            socketXYSE[iAuto] = socketXY;
             socketsLenMin = len;
           }
         });
@@ -1831,7 +1830,7 @@
             pathPoints = pathList[(iSeg = start ? 0 : pathList.length - 1)];
             socketId = socketXYSE[i].socketId;
             axis = socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y';
-            minAdjustOffset = -(bBoxSE[i][axis === 'x' ? 'width' : 'height']);
+            minAdjustOffset = -(anchorBBoxSE[i][axis === 'x' ? 'width' : 'height']);
             if (plugOverhead < minAdjustOffset) { plugOverhead = minAdjustOffset; }
             dir = plugOverhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
             if (pathPoints.length === 2) { // Straight line
@@ -1849,32 +1848,22 @@
       saveProps(props.positionVals, options, POSITION_PROPS);
     }
 
-    // Decide `anchorBBox` (Must check coordinates also)
-    bBoxSE.forEach(function(anchorBBox1, i) {
-      var anchorBBox2 = props.anchorBBoxSE[i],
-        enabled1 = curPosition.plugOverheadSE[i] < 0, enabled2 = !!anchorBBox2;
-      if (!enabled1) {
-        props.anchorBBoxSE[i] = null;
-      } else {
-        props.anchorBBoxSE[i] = anchorBBox1;
-        if (!enabled2 || ['left', 'top', 'width', 'height'].some(function(prop) { // omission right, bottom
-          return anchorBBox1[prop] !== anchorBBox2[prop];
-        })) { // Update `lineMaskAnchorSE`
-          window.traceLog.push('lineMaskAnchorSE[' + i + ']'); // [DEBUG/]
-          props.lineMaskAnchorSE[i].x.baseVal.value = anchorBBox1.left;
-          props.lineMaskAnchorSE[i].y.baseVal.value = anchorBBox1.top;
-          props.lineMaskAnchorSE[i].width.baseVal.value = anchorBBox1.width;
-          props.lineMaskAnchorSE[i].height.baseVal.value = anchorBBox1.height;
-        }
-        if (!enabled2) { // off -> on
-          window.traceLog.push('newAnchorBBoxSE[' + i + ']'); // [DEBUG/]
-          newAnchorBBoxSE[i] = anchorBBox1;
-        }
+    updateMask(props, updateViewBBox(props));
+
+    // Decide `anchorMask` (check coordinates also)
+    anchorBBoxSE.forEach(function(anchorBBox, i) {
+      if (props.maskVals.current.anchorHasMaskSE[i]) {
+        ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+          var propKey = boxKey + 'SE';
+          if ((anchorMaskVals.current[propKey][i] = anchorBBox[BBOX_PROP[boxKey]]) !==
+              anchorMaskVals.applied[propKey][i]) {
+            window.traceLog.push('anchorMask[' + i + '].' + boxKey); // [DEBUG/]
+            anchorMaskVals.applied[propKey][i] =
+              props.lineMaskAnchorSE[i][boxKey].baseVal.value = anchorMaskVals.current[propKey][i];
+          }
+        });
       }
     });
-
-    // Update `<mask>`s that are positioned based on `viewBox`
-
   };
 
   return LeaderLine;
