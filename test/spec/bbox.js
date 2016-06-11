@@ -138,9 +138,13 @@ describe('BBox', function() {
             {endPlug: 'behind'}); // Make it have anchorBBoxSE[1]
           props = window.insProps[ll._id];
 
-          [['static', 'anchorBBoxSE', 0], ['absolute', 'anchorBBoxSE', 1]].forEach(function(divProp) {
-            var div = divProp[0],
-              actual = divProp.length === 2 ? props[divProp[1]] : props[divProp[1]][divProp[2]],
+          ['static', 'absolute'].forEach(function(div, i) {
+            var actual = createBBox({
+                left: props.anchorMaskVals.applied.xSE[i],
+                top: props.anchorMaskVals.applied.ySE[i],
+                width: props.anchorMaskVals.applied.widthSE[i],
+                height: props.anchorMaskVals.applied.heightSE[i]
+              }),
               len = condition.expected[div].reduce(function(sum, prop) { return (sum += DOC_LEN[prop]); }, 0);
             expect(actual)
               .toEqual(createBBox({left: len, top: len, width: DIV_WIDTH[div], height: DIV_HEIGHT[div]}));
@@ -362,13 +366,19 @@ describe('BBox', function() {
                   {left: 0, top: 0,
                     width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]})),
 
-                expected = props.anchorBBoxSE[i];
+                expected = createBBox({
+                  left: props.anchorMaskVals.applied.xSE[i],
+                  top: props.anchorMaskVals.applied.ySE[i],
+                  width: props.anchorMaskVals.applied.widthSE[i],
+                  height: props.anchorMaskVals.applied.heightSE[i]
+                });
 
               expected.index = bBox.index = iCase; // for error information
               expected.key = bBox.key = key; // for error information
               expect(expected).toEqual(bBox);
 
-              expect(props.socketXYSE[i]).toEqual(getSocketXY(bBox, props.socketXYSE[i].socketId));
+              expect(props.positionVals.applied.socketXYSE[i])
+                .toEqual(getSocketXY(bBox, props.positionVals.applied.socketXYSE[i].socketId));
             });
 
             if (show) {
@@ -580,13 +590,19 @@ describe('BBox', function() {
                   {left: 0, top: 0,
                     width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]})),
 
-                expected = props.anchorBBoxSE[i];
+                expected = createBBox({
+                  left: props.anchorMaskVals.applied.xSE[i],
+                  top: props.anchorMaskVals.applied.ySE[i],
+                  width: props.anchorMaskVals.applied.widthSE[i],
+                  height: props.anchorMaskVals.applied.heightSE[i]
+                });
 
               expected.index = bBox.index = iCase; // for error information
               expected.key = bBox.key = key; // for error information
               expect(expected).toEqual(bBox);
 
-              expect(props.socketXYSE[i]).toEqual(getSocketXY(bBox, props.socketXYSE[i].socketId));
+              expect(props.positionVals.applied.socketXYSE[i])
+                .toEqual(getSocketXY(bBox, props.positionVals.applied.socketXYSE[i].socketId));
             });
           });
 
