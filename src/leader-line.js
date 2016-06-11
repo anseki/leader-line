@@ -120,14 +120,15 @@
     ],
 
     VIEW_BBOX_PROPS = [
-      // `props.viewBBoxVals` contains `plugBCircleSE` to calculate `viewBBox`.
-      {name: 'viewBBox', hasProps: true,
-        hasChanged: function(a, b) {
-          return ['x', 'y', 'width', 'height'].some(function(prop) { return a[prop] !== b[prop]; });
-        }}
+      {name: 'x'}, {name: 'y'}, {name: 'width'}, {name: 'height'}
+      // `props.viewBBoxVals` contains `plugBCircleSE` and `pathEdge` to calculate.
     ],
 
-    MASK_PROPS = [],
+    MASK_PROPS = [
+      {name: 'plugHasMaskSE', hasSE: true},
+      {name: 'anchorHasMaskSE', hasSE: true},
+      {name: 'x'}, {name: 'y'}, {name: 'width'}, {name: 'height'}
+    ],
 
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
     KEYWORD_AUTO = 'auto',
@@ -381,7 +382,7 @@
 
   /**
    * Setup `baseWindow`, `bodyOffset`,
-   *    `pathData`, `plugBCircleSE`,
+   *    `pathData`,
    *    `anchorBBoxSE`, `plugSymbolSE`,
    *    `svg`, `lineFace`, `plugMarkerSE`, `plugFaceSE`,
    *    `maskPathSE`, `positionVals`, `pathVals`.
@@ -575,7 +576,6 @@
     props.svg = baseDocument.body.appendChild(svg);
 
     props.pathData = [];
-    props.plugBCircleSE = [0, 0];
     props.anchorBBoxSE = [null, null];
     props.plugSymbolSE = [null, null];
 
@@ -598,6 +598,8 @@
           return values;
         }, {current: {}, applied: {}});
       });
+    props.viewBBoxVals.plugBCircleSE = [0, 0];
+    props.viewBBoxVals.pathEdge = {};
 
     if (IS_GECKO) {
       forceReflow(props.lineFace);
@@ -693,7 +695,11 @@
    */
   function setPlug(props, setPropsSE) {
     window.traceLog.push('<setPlug>'); // [DEBUG/]
-    var options = props.options, curPosition = props.positionVals.current;
+    var options = props.options,
+      curPosition = props.positionVals.current,
+      plugBCircleSE = props.viewBBoxVals.plugBCircleSE,
+      plugHasMaskSE = props.maskVals.current.plugHasMaskSE,
+      anchorHasMaskSE = props.maskVals.current.anchorHasMaskSE;
 
     setPropsSE.forEach(function(setProps, i) {
       var plugId = options.plugSE[i], symbolConf, orient, markerProp;
@@ -748,8 +754,10 @@
         // Update shape always for `options.lineSize` that might have been changed.
         curPosition.plugOverheadSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
-        props.plugBCircleSE[i] =
+        plugBCircleSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
+        plugHasMaskSE[i] = true;
+        anchorHasMaskSE[i] = false;
 
       } else {
         if (!setProps || setProps.indexOf('plug') > -1) {
@@ -760,7 +768,9 @@
         }
         // Update shape always for `options.lineSize` that might have been changed.
         curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
-        props.plugBCircleSE[i] = 0;
+        plugBCircleSE[i] = 0;
+        plugHasMaskSE[i] = false;
+        anchorHasMaskSE[i] = true;
       }
     });
     props.lineMaskPlug.style.display =
@@ -922,16 +932,17 @@
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Array.<Point[]>} pathList - Array contains points.
-   * @returns {{x1: number, y1: number, x2: number, y2: number}} - min/max coordinates.
+   * @returns {void}
    */
   function updatePath(props, pathList) {
-    var pathVals = props.pathVals, pathEdge = {};
+    var pathVals = props.pathVals,
+      pathEdge = props.viewBBoxVals.pathEdge;
     // Convert to `pathData`.
-    pathVals.current = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
+    pathVals.current.pathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
     pathEdge.x1 = pathEdge.x2 = pathList[0][0].x;
     pathEdge.y1 = pathEdge.y2 = pathList[0][0].y;
     pathList.forEach(function(points) {
-      pathVals.current.push(points.length === 2 ?
+      pathVals.current.pathData.push(points.length === 2 ?
         {type: 'L', values: [points[1].x, points[1].y]} :
         {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
       points.forEach(function(point) {
@@ -947,32 +958,33 @@
     // Apply `pathData`
     if (propsHasChanged(pathVals, props.options, PATH_PROPS)) {
       window.traceLog.push('setPathData'); // [DEBUG/]
-      props.linePath.setPathData(pathVals.current);
-      pathVals.applied = pathVals.current;
+      props.linePath.setPathData(pathVals.current.pathData);
+      pathVals.applied.pathData = pathVals.current.pathData;
     }
-
-    return pathEdge;
   }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {{x1: number, y1: number, x2: number, y2: number}} pathEdge - min/max coordinates.
    * @returns {boolean} - `true` if it was changed.
    */
-  function updateViewBBox(props, pathEdge) {
+  function updateViewBBox(props) {
     var viewBBoxVals = props.viewBBoxVals,
-      padding = Math.max(props.options.lineSize / 2, props.plugBCircleSE[0], props.plugBCircleSE[1]),
+      padding = Math.max(
+        props.options.lineSize / 2, viewBBoxVals.plugBCircleSE[0], viewBBoxVals.plugBCircleSE[1]),
+      // Expand bBox with `line` or symbols
+      pointsVal = {
+        x1: viewBBoxVals.pathEdge.x1 - padding,
+        y1: viewBBoxVals.pathEdge.y1 - padding,
+        x2: viewBBoxVals.pathEdge.x2 + padding,
+        y2: viewBBoxVals.pathEdge.y2 + padding
+      },
       viewHasChanged = false;
-    // Expand bBox with `line` or symbols
-    pathEdge.x1 -= padding;
-    pathEdge.y1 -= padding;
-    pathEdge.x2 += padding;
-    pathEdge.y2 += padding;
+
     viewBBoxVals.current = {
-      x: pathEdge.x1,
-      y: pathEdge.y1,
-      width: pathEdge.x2 - pathEdge.x1,
-      height: pathEdge.y2 - pathEdge.y1
+      x: pointsVal.x1,
+      y: pointsVal.y1,
+      width: pointsVal.x2 - pointsVal.x1,
+      height: pointsVal.y2 - pointsVal.y1
     };
 
     // Position `<svg>` element and set its `viewBox`
@@ -992,8 +1004,54 @@
     return viewHasChanged;
   }
 
-  function updateMask() {
-    
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {boolean} viewHasChanged - `true` if it was changed.
+   * @returns {void}
+   */
+  function updateMask(props, viewHasChanged) {
+    var maskVals = props.maskVals,
+      plugHasMaskSE = maskVals.current.plugHasMaskSE,
+      anchorHasMaskSE = maskVals.current.anchorHasMaskSE,
+      plugMaskIsNewSE = [], anchorMaskIsNewSE = [], viewBBoxVals;
+
+    [0, 1].forEach(function(i) {
+      var curPlugHasMask = plugHasMaskSE[i],
+        aplPlugHasMaskSE = maskVals.applied.plugHasMaskSE,
+        curAnchorHasMask = anchorHasMaskSE[i],
+        aplAnchorHasMaskSE = maskVals.applied.anchorHasMaskSE;
+
+      if (!aplPlugHasMaskSE[i] && curPlugHasMask) { // off -> on
+        window.traceLog.push('plugMaskIsNewSE[' + i + ']'); // [DEBUG/]
+        plugMaskIsNewSE[i] = true;
+      }
+      aplPlugHasMaskSE[i] = curPlugHasMask;
+
+      if (!aplAnchorHasMaskSE[i] && curAnchorHasMask) { // off -> on
+        window.traceLog.push('anchorMaskIsNewSE[' + i + ']'); // [DEBUG/]
+        anchorMaskIsNewSE[i] = true;
+      }
+      aplAnchorHasMaskSE[i] = curAnchorHasMask;
+    });
+
+    // Update `<mask>`s that are positioned based on `viewBox`
+    if (viewHasChanged && ( // `viewBox` was changed and `<mask>`s are used
+          plugHasMaskSE[0] || plugHasMaskSE[1] || anchorHasMaskSE[0] || anchorHasMaskSE[1]) ||
+        // Or, `<mask>`s that might not yet be positioned are used
+        plugMaskIsNewSE[0] || plugMaskIsNewSE[1] || anchorMaskIsNewSE[0] || anchorMaskIsNewSE[1]) {
+      viewBBoxVals = props.viewBBoxVals.current;
+      ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+        if ((maskVals.current[boxKey] = viewBBoxVals[boxKey]) !== maskVals.applied[boxKey]) {
+          window.traceLog.push('mask.' + boxKey); // [DEBUG/]
+          maskVals.applied[boxKey] =
+            props.lineMask[boxKey].baseVal.value =
+            props.lineOutlineMask[boxKey].baseVal.value = maskVals.current[boxKey];
+          if (boxKey === 'x' || boxKey === 'y') {
+            props.lineMaskBGRect[boxKey].baseVal.value = maskVals.current[boxKey];
+          }
+        }
+      });
+    }
   }
 
   /**
@@ -1787,7 +1845,7 @@
         });
       })();
 
-      pathEdge = updatePath(props, pathList);
+      updatePath(props, pathList);
       saveProps(props.positionVals, options, POSITION_PROPS);
     }
 
@@ -1815,36 +1873,8 @@
       }
     });
 
-    // Decide `plugSymbol`
-    options.plugSE.forEach(function(plugId1, i) {
-      var symbol1 = PLUG_2_SYMBOL[plugId1], symbol2 = props.plugSymbolSE[i],
-        enabled1 = !!symbol1, enabled2 = !!symbol2;
-      if (!enabled1) {
-        props.plugSymbolSE[i] = null;
-      } else {
-        props.plugSymbolSE[i] = symbol1;
-        if (!enabled2) { // off -> on
-          window.traceLog.push('newPlugSymbolSE[' + i + ']'); // [DEBUG/]
-          newPlugSymbolSE[i] = symbol1;
-        }
-      }
-    });
-
     // Update `<mask>`s that are positioned based on `viewBox`
-    if (viewHasChanged && ( // `viewBox` was changed and `<mask>`s are used
-          props.plugSymbolSE[0] || props.plugSymbolSE[1] ||
-            props.anchorBBoxSE[0] || props.anchorBBoxSE[1]) ||
-        // Or, `<mask>`s that might not yet be positioned are used
-        newAnchorBBoxSE[0] || newAnchorBBoxSE[1] || newPlugSymbolSE[0] || newPlugSymbolSE[1]) {
-      window.traceLog.push('mask-position'); // [DEBUG/]
-      [props.lineMask, props.lineOutlineMask].forEach(function(mask) {
-        ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-          mask[boxKey].baseVal.value = newViewBBox[boxKey];
-        });
-      });
-      props.lineMaskBGRect.x.baseVal.value = newViewBBox.x;
-      props.lineMaskBGRect.y.baseVal.value = newViewBBox.y;
-    }
+
   };
 
   return LeaderLine;
