@@ -102,8 +102,8 @@
           var aType = a == null ? 'auto' : Array.isArray(a) ? 'array' : 'number', // eslint-disable-line eqeqeq
             bType = b == null ? 'auto' : Array.isArray(b) ? 'array' : 'number'; // eslint-disable-line eqeqeq
           return aType !== bType ? true :
-            aType === 'number' ? a !== b :
-            [0, 1].some(function(i) { return a[i] !== b[i]; });
+            aType === 'array' ? [0, 1].some(function(i) { return a[i] !== b[i]; }) :
+            a !== b;
         }}
     ],
 

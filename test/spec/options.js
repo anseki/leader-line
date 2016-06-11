@@ -39,10 +39,11 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<position>',
-      'newSocketXYSE[1]', // only `end`
+      'propsHasChanged:socketXYSE[1]', // only `end`
       'update',
-      'setPathData', 'viewBox.width', 'viewBox.height', // only right and bottom of viewBox
-      'mask-position'
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.width', 'viewBox.height', // only right and bottom of viewBox
+      'mask.width', 'mask.height'
     ]);
 
     // Change an element, `auto` socket is changed
@@ -58,11 +59,12 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<position>',
-      'newSocketXYSE[0]', 'newSocketXYSE[1]',
+      'propsHasChanged:socketXYSE[0]',
       'update',
-      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'lineMaskAnchorSE[0]',
-      'mask-position'
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height',
+      'anchorMask[0].x', 'anchorMask[0].y'
     ]);
 
     // Change to element in iframe, `baseWindow` is not changed
@@ -75,10 +77,11 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<position>',
-      'newSocketXYSE[1]',
+      'propsHasChanged:socketXYSE[1]',
       'update',
-      'setPathData', 'viewBox.width', 'viewBox.height',
-      'mask-position'
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.width', 'viewBox.height',
+      'mask.width', 'mask.height'
     ]);
 
     // Change to element in iframe, `baseWindow` is changed
@@ -92,11 +95,13 @@ describe('options', function() {
       '<setLineOutline>', 'lineOutlineEnabled=false',
       '<setPlugOutline>', 'plugOutlineEnabled[0]=false', 'plugOutlineEnabled[1]=false',
       '<position>',
-      'newSocketXYSE[0]', 'newSocketXYSE[1]',
+      'propsHasChanged:socketXYSE[0]',
       'update',
-      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'lineMaskAnchorSE[0]', 'newAnchorBBoxSE[0]', 'newPlugSymbolSE[1]',
-      'mask-position'
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'new-anchorMask[0]', 'new-plugMask[1]',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height',
+      'anchorMask[0].x', 'anchorMask[0].y', 'anchorMask[0].width', 'anchorMask[0].height'
     ]);
 
     pageDone();
@@ -112,8 +117,10 @@ describe('options', function() {
     ll.path = 'straight';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', 'update',
-      'setPathData'
+      '<position>',
+      'propsHasChanged:path',
+      'update',
+      'propsHasChanged:pathData', 'setPathData'
     ]);
 
     // Change `viewBox` size
@@ -124,9 +131,12 @@ describe('options', function() {
     ll.path = 'fluid';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', 'update',
-      'setPathData', 'viewBox.y', 'viewBox.height',
-      'mask-position'
+      '<position>',
+      'propsHasChanged:path',
+      'update',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.y', 'viewBox.height',
+      'mask.y', 'mask.height'
     ]);
 
     pageDone();
@@ -172,9 +182,12 @@ describe('options', function() {
       '<setOptions>',
       '<setLine>', 'lineSize=8',
       '<setPlug>',
-      '<position>', 'update',
-      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'mask-position'
+      '<position>',
+      'propsHasChanged:plugOverheadSE[0]',
+      'update',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
 
     pageDone();
@@ -192,10 +205,11 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<position>',
-      'newSocketXYSE[0]',
+      'propsHasChanged:socketXYSE[0]',
       'update',
-      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'mask-position'
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
 
     // `bottom` of `viewBox` is changed
@@ -208,10 +222,11 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<position>',
-      'newSocketXYSE[1]',
+      'propsHasChanged:socketXYSE[1]',
       'update',
-      'setPathData', 'viewBox.height',
-      'mask-position'
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.height',
+      'mask.height'
     ]);
 
     pageDone();
@@ -228,8 +243,10 @@ describe('options', function() {
     ll.startSocketGravity = 160;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', 'update',
-      'setPathData'
+      '<position>',
+      'propsHasChanged:socketGravitySE[0]',
+      'update',
+      'propsHasChanged:pathData', 'setPathData'
     ]);
 
     // Change width
@@ -237,9 +254,12 @@ describe('options', function() {
     ll.startSocketGravity = 260;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', 'update',
-      'setPathData', 'viewBox.width',
-      'mask-position'
+      '<position>',
+      'propsHasChanged:socketGravitySE[0]',
+      'update',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.width',
+      'mask.width'
     ]);
 
     // No change size
@@ -247,8 +267,10 @@ describe('options', function() {
     ll.endSocketGravity = [-160, -80];
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', 'update',
-      'setPathData'
+      '<position>',
+      'propsHasChanged:socketGravitySE[1]',
+      'update',
+      'propsHasChanged:pathData', 'setPathData'
     ]);
 
     // Change height
@@ -256,9 +278,12 @@ describe('options', function() {
     ll.endSocketGravity = [-160, 160];
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>', 'update',
-      'setPathData', 'viewBox.height',
-      'mask-position'
+      '<position>',
+      'propsHasChanged:socketGravitySE[1]',
+      'update',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.height',
+      'mask.height'
     ]);
 
     pageDone();
@@ -273,10 +298,12 @@ describe('options', function() {
       '<setPlug>', 'plug[0]=arrow2', 'plugColor[0]=blue', 'plugSize[0]=1',
       '<setPlugOutline>', 'plugOutlineEnabled[0]=false',
       '<position>',
+      'propsHasChanged:plugOverheadSE[0]',
       'update',
-      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'newPlugSymbolSE[0]',
-      'mask-position'
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'new-plugMask[0]',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
 
     // Change size
@@ -286,9 +313,12 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<setPlug>', 'plug[1]=disc',
-      '<position>', 'update',
-      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'mask-position'
+      '<position>',
+      'propsHasChanged:plugOverheadSE[1]',
+      'update',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
 
     // No change path and size
@@ -335,9 +365,12 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<setPlug>', 'plugSize[1]=2',
-      '<position>', 'update',
-      'setPathData', 'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'mask-position'
+      '<position>',
+      'propsHasChanged:plugOverheadSE[1]',
+      'update',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
 
     // No change (hidden plug)
@@ -356,9 +389,9 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<setPlug>', 'plugSize[1]=1',
-      '<position>', 'update',
+      '<position>',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'mask-position'
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
 
     pageDone();
