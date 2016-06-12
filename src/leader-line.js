@@ -599,7 +599,7 @@
       });
     props.viewBBoxVals.plugBCircleSE = [0, 0];
     props.viewBBoxVals.pathEdge = {};
-    props.pathList = {};
+    props.pathList = {baseVal: [], animVal: []};
 
     if (IS_GECKO) {
       forceReflow(props.lineFace);
@@ -980,12 +980,10 @@
       },
       viewHasChanged = false;
 
-    viewBBoxVals.current = {
-      x: pointsVal.x1,
-      y: pointsVal.y1,
-      width: pointsVal.x2 - pointsVal.x1,
-      height: pointsVal.y2 - pointsVal.y1
-    };
+    viewBBoxVals.current.x = pointsVal.x1;
+    viewBBoxVals.current.y = pointsVal.y1;
+    viewBBoxVals.current.width = pointsVal.x2 - pointsVal.x1;
+    viewBBoxVals.current.height = pointsVal.y2 - pointsVal.y1;
 
     // Position `<svg>` element and set its `viewBox`
     (function(baseVal, styles) {
@@ -1434,7 +1432,7 @@
       options = props.options,
       curPosition = props.positionVals.current, socketXYSE = curPosition.socketXYSE,
       anchorMaskVals = props.anchorMaskVals,
-      anchorBBoxSE, pathList = (props.pathList.baseVal = []);
+      anchorBBoxSE, pathList;
 
     function getSocketXY(bBox, socketId) {
       var socketXY = (
@@ -1494,7 +1492,8 @@
 
     // New position
     if (propsHasChanged(props.positionVals, options, POSITION_PROPS)) {
-      window.traceLog.push('update'); // [DEBUG/]
+      window.traceLog.push('new-pathList.baseVal'); // [DEBUG/]
+      pathList = props.pathList.baseVal = [];
 
       // Generate path segments
       switch (options.path) {
