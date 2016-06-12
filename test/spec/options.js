@@ -7,6 +7,14 @@ describe('options', function() {
 
   var window, document, pageDone, ll, titles = [];
 
+  // ================ context
+  /* eslint-disable no-unused-vars, indent */
+  var
+    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
+    PATH_STRAIGHT = 1, PATH_ARC = 2, PATH_FLUID = 3, PATH_MAGNET = 4, PATH_GRID = 5;
+  /* eslint-enable no-unused-vars, indent */
+  // ================ /context
+
   function registerTitle(title) {
     titles.push(title);
     return title;
@@ -38,9 +46,7 @@ describe('options', function() {
     ll.end = document.getElementById('elm3');
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketXYSE[1]', // only `end`
-      'update',
+      '<position>', 'propsHasChanged:socketXYSE[1]', 'new-pathList.baseVal', // only `end`
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.width', 'viewBox.height', // only right and bottom of viewBox
       'mask.width', 'mask.height'
@@ -58,9 +64,7 @@ describe('options', function() {
     // Then, sockets: left / right
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketXYSE[0]',
-      'update',
+      '<position>', 'propsHasChanged:socketXYSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       'mask.x', 'mask.y', 'mask.width', 'mask.height',
@@ -76,9 +80,7 @@ describe('options', function() {
     ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketXYSE[1]',
-      'update',
+      '<position>', 'propsHasChanged:socketXYSE[1]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.width', 'viewBox.height',
       'mask.width', 'mask.height'
@@ -94,9 +96,7 @@ describe('options', function() {
       '<setPlug>', 'plug[0]=behind', 'plug[1]=arrow1', 'plugColor[1]=coral', 'plugSize[1]=1',
       '<setLineOutline>', 'lineOutlineEnabled=false',
       '<setPlugOutline>', 'plugOutlineEnabled[0]=false', 'plugOutlineEnabled[1]=false',
-      '<position>',
-      'propsHasChanged:socketXYSE[0]',
-      'update',
+      '<position>', 'propsHasChanged:socketXYSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       'new-anchorMask[0]', 'new-plugMask[1]',
@@ -117,9 +117,7 @@ describe('options', function() {
     ll.path = 'straight';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:path',
-      'update',
+      '<position>', 'propsHasChanged:path', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData'
     ]);
 
@@ -131,9 +129,7 @@ describe('options', function() {
     ll.path = 'fluid';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:path',
-      'update',
+      '<position>', 'propsHasChanged:path', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.y', 'viewBox.height',
       'mask.y', 'mask.height'
@@ -182,9 +178,7 @@ describe('options', function() {
       '<setOptions>',
       '<setLine>', 'lineSize=8',
       '<setPlug>',
-      '<position>',
-      'propsHasChanged:plugOverheadSE[0]',
-      'update',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
@@ -204,9 +198,7 @@ describe('options', function() {
     ll.startSocket = 'top';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketXYSE[0]',
-      'update',
+      '<position>', 'propsHasChanged:socketXYSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
@@ -221,9 +213,7 @@ describe('options', function() {
     ll.endSocket = 'bottom';
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketXYSE[1]',
-      'update',
+      '<position>', 'propsHasChanged:socketXYSE[1]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.height',
       'mask.height'
@@ -243,9 +233,7 @@ describe('options', function() {
     ll.startSocketGravity = 160;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketGravitySE[0]',
-      'update',
+      '<position>', 'propsHasChanged:socketGravitySE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData'
     ]);
 
@@ -254,9 +242,7 @@ describe('options', function() {
     ll.startSocketGravity = 260;
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketGravitySE[0]',
-      'update',
+      '<position>', 'propsHasChanged:socketGravitySE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.width',
       'mask.width'
@@ -267,9 +253,7 @@ describe('options', function() {
     ll.endSocketGravity = [-160, -80];
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketGravitySE[1]',
-      'update',
+      '<position>', 'propsHasChanged:socketGravitySE[1]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData'
     ]);
 
@@ -278,9 +262,7 @@ describe('options', function() {
     ll.endSocketGravity = [-160, 160];
     expect(window.traceLog).toEqual([
       '<setOptions>',
-      '<position>',
-      'propsHasChanged:socketGravitySE[1]',
-      'update',
+      '<position>', 'propsHasChanged:socketGravitySE[1]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.height',
       'mask.height'
@@ -297,9 +279,7 @@ describe('options', function() {
       '<setOptions>',
       '<setPlug>', 'plug[0]=arrow2', 'plugColor[0]=blue', 'plugSize[0]=1',
       '<setPlugOutline>', 'plugOutlineEnabled[0]=false',
-      '<position>',
-      'propsHasChanged:plugOverheadSE[0]',
-      'update',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       'new-plugMask[0]',
@@ -313,9 +293,7 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<setPlug>', 'plug[1]=disc',
-      '<position>',
-      'propsHasChanged:plugOverheadSE[1]',
-      'update',
+      '<position>', 'propsHasChanged:plugOverheadSE[1]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
@@ -365,9 +343,7 @@ describe('options', function() {
     expect(window.traceLog).toEqual([
       '<setOptions>',
       '<setPlug>', 'plugSize[1]=2',
-      '<position>',
-      'propsHasChanged:plugOverheadSE[1]',
-      'update',
+      '<position>', 'propsHasChanged:plugOverheadSE[1]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
@@ -393,6 +369,398 @@ describe('options', function() {
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
+
+    pageDone();
+  });
+
+  // ======== Deeper in code
+
+  it(registerTitle('setOptions - setValidId'), function() {
+    var props = window.insProps[ll._id];
+
+    // valid ID
+    window.traceLog = [];
+    ll.path = 'straight';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<position>', 'propsHasChanged:path', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.y', 'mask.width', 'mask.height'
+    ]);
+    expect(props.options.path).toBe(PATH_STRAIGHT);
+    expect(ll.path).toBe('straight');
+
+    // invalid ID
+    window.traceLog = [];
+    ll.path = 'straightx';
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.path).toBe(PATH_STRAIGHT);
+    expect(ll.path).toBe('straight');
+
+    // same ID
+    window.traceLog = [];
+    ll.path = 'straight';
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.path).toBe(PATH_STRAIGHT);
+    expect(ll.path).toBe('straight');
+
+    // 'auto', getInternal
+    ll.endSocket = 'bottom';
+    expect(props.options.socketSE[1]).toBe(SOCKET_BOTTOM);
+    expect(ll.endSocket).toBe('bottom');
+    window.traceLog = [];
+    ll.endSocket = 'auto';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<position>', 'propsHasChanged:socketXYSE[1]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.width', 'viewBox.height',
+      'mask.width', 'mask.height'
+    ]);
+    expect(props.options.socketSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
+    expect(ll.endSocket).toBe('auto');
+
+    // invalid 'auto'
+    window.traceLog = [];
+    ll.path = 'auto';
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.path).toBe(PATH_STRAIGHT);
+    expect(ll.path).toBe('straight');
+
+    // invalid 'auto', getInternal
+    expect(props.options.plugSE[0]).toBe('behind');
+    expect(ll.startPlug).toBe('behind');
+    window.traceLog = [];
+    ll.startPlug = 'auto';
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.plugSE[0]).toBe('behind');
+    expect(ll.startPlug).toBe('behind');
+
+    pageDone();
+  });
+
+  it(registerTitle('setOptions - setValidType'), function() {
+    var props = window.insProps[ll._id];
+
+    // valid value
+    window.traceLog = [];
+    ll.startPlugColor = 'red';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlug>'
+    ]);
+    expect(props.options.plugColorSE[0]).toBe('red');
+    expect(ll.startPlugColor).toBe('red');
+
+    // invalid value
+    window.traceLog = [];
+    ll.startPlugColor = 0;
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.plugColorSE[0]).toBe('red');
+    expect(ll.startPlugColor).toBe('red');
+
+    // valid value (additional check)
+    window.traceLog = [];
+    ll.startPlugOutlineSize = 2;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlugOutline>'
+    ]);
+    expect(props.options.plugOutlineSizeSE[0]).toBe(2);
+    expect(ll.startPlugOutlineSize).toBe(2);
+
+    // invalid value (additional check)
+    window.traceLog = [];
+    ll.startPlugOutlineSize = 0.5;
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.plugOutlineSizeSE[0]).toBe(2);
+    expect(ll.startPlugOutlineSize).toBe(2);
+
+    // same value
+    window.traceLog = [];
+    ll.startPlugColor = 'red';
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.plugColorSE[0]).toBe('red');
+    expect(ll.startPlugColor).toBe('red');
+
+    // 'auto'
+    window.traceLog = [];
+    ll.startPlugColor = 'auto';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlug>'
+    ]);
+    expect(props.options.plugColorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+    expect(ll.startPlugColor).toBe('auto');
+
+    // invalid 'auto'
+    ll.size = 12;
+    expect(props.options.lineSize).toBe(12);
+    expect(ll.size).toBe(12);
+    window.traceLog = [];
+    ll.size = 'auto';
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.lineSize).toBe(12);
+    expect(ll.size).toBe(12);
+
+    // valid value (specified type)
+    window.traceLog = [];
+    ll.startPlugSize = 2;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlug>',
+      '<position>'
+    ]);
+    expect(props.options.plugSizeSE[0]).toBe(2);
+    expect(ll.startPlugSize).toBe(2);
+
+    // invalid value (specified type)
+    window.traceLog = [];
+    ll.startPlugSize = '3';
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.plugSizeSE[0]).toBe(2);
+    expect(ll.startPlugSize).toBe(2);
+
+    pageDone();
+  });
+
+  it(registerTitle('setOptions - addPropList'), function() {
+    var props = window.insProps[ll._id];
+
+    // value 1
+    window.traceLog = [];
+    ll.color = 'red';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLine>', 'lineColor=red', // value 1
+      '<setPlug>', 'plugColor[1]=red'
+    ]);
+    expect(props.options.lineColor).toBe('red');
+    expect(ll.color).toBe('red');
+
+    // value 2
+    window.traceLog = [];
+    ll.size = 5;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLine>', 'lineSize=5', // value 2
+      '<setPlug>', // '' is added to needsPlugSE
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+    expect(props.options.lineSize).toBe(5);
+    expect(ll.size).toBe(5);
+
+    // value 1, 2
+    window.traceLog = [];
+    ll.setOptions({color: 'blue', size: 6});
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLine>', 'lineColor=blue', 'lineSize=6', // value 1, 2
+      '<setPlug>', 'plugColor[1]=blue',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+    expect(props.options.lineColor).toBe('blue');
+    expect(props.options.lineSize).toBe(6);
+    expect(ll.color).toBe('blue');
+    expect(ll.size).toBe(6);
+
+    // all
+    ll.startPlugOutline = true;
+    window.traceLog = [];
+    ll.startPlug = 'arrow2'; // needsPlugOutlineSE = true
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlug>', 'plug[0]=arrow2', 'plugColor[0]=blue', 'plugSize[0]=1',
+      '<setPlugOutline>',
+      'plugOutlineEnabled[0]=true', 'plugOutlineColor[0]=indianred', 'plugOutlineSize[0]=1', // all
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'new-plugMask[0]',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+    expect(props.options.plugSE[0]).toBe('arrow2');
+    expect(ll.startPlug).toBe('arrow2');
+
+    pageDone();
+  });
+
+  it(registerTitle('setOptions - needsPlugOutlineSE'), function() {
+    var props = window.insProps[ll._id];
+
+    // off -> on
+    window.traceLog = [];
+    ll.endPlugOutline = true;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlugOutline>',
+      // plugOutlineColor and plugOutlineSize also
+      'plugOutlineEnabled[1]=true', 'plugOutlineColor[1]=indianred', 'plugOutlineSize[1]=1'
+    ]);
+    expect(props.options.plugOutlineEnabledSE[1]).toBe(true);
+    expect(ll.endPlugOutline).toBe(true);
+
+    // on -> off
+    window.traceLog = [];
+    ll.endPlugOutline = false;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlugOutline>',
+      'plugOutlineEnabled[1]=false' // only plugOutlineEnabled
+    ]);
+    expect(props.options.plugOutlineEnabledSE[1]).toBe(false);
+    expect(ll.endPlugOutline).toBe(false);
+
+    // invalid value
+    ll.setOptions({endPlugOutline: true, endPlugOutlineSize: 1});
+    expect(props.options.plugOutlineSizeSE[1]).toBe(1);
+    expect(ll.endPlugOutlineSize).toBe(1);
+    window.traceLog = [];
+    ll.endPlugOutlineSize = 0.9;
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.plugOutlineSizeSE[1]).toBe(1);
+    expect(ll.endPlugOutlineSize).toBe(1);
+
+    // valid value 1
+    window.traceLog = [];
+    ll.endPlugOutlineSize = 1.1;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlugOutline>', 'plugOutlineSize[1]=1.1'
+    ]);
+    expect(props.options.plugOutlineSizeSE[1]).toBe(1.1);
+    expect(ll.endPlugOutlineSize).toBe(1.1);
+
+    // valid value 2
+    window.traceLog = [];
+    ll.endPlugOutlineSize = 1;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlugOutline>', 'plugOutlineSize[1]=1'
+    ]);
+    expect(props.options.plugOutlineSizeSE[1]).toBe(1);
+    expect(ll.endPlugOutlineSize).toBe(1);
+
+    pageDone();
+  });
+
+  it(registerTitle('setOptions - needsPlugSE'), function() {
+    var props = window.insProps[ll._id];
+
+    // off -> on
+    ll.startPlugOutline = true;
+    window.traceLog = [];
+    ll.startPlug = 'arrow2';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlug>',
+      // plugColor and plugSize also
+      'plug[0]=arrow2', 'plugColor[0]=coral', 'plugSize[0]=1',
+      // plugOutline* also
+      '<setPlugOutline>',
+      'plugOutlineEnabled[0]=true', 'plugOutlineColor[0]=indianred', 'plugOutlineSize[0]=1',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'new-plugMask[0]',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+    expect(props.options.plugSE[0]).toBe('arrow2');
+    expect(ll.startPlug).toBe('arrow2');
+
+    // on -> on
+    window.traceLog = [];
+    ll.startPlug = 'arrow1';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlug>',
+      'plug[0]=arrow1', // only plug
+      // plugOutlineSize also
+      '<setPlugOutline>',
+      'plugOutlineSize[0]=1',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+    expect(props.options.plugSE[0]).toBe('arrow1');
+    expect(ll.startPlug).toBe('arrow1');
+
+    // on -> off
+    window.traceLog = [];
+    ll.startPlug = 'behind';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlug>',
+      'plug[0]=behind', // only plug
+      // plugOutline* also (but plugOutlineEnabled only when plug is 'behind')
+      '<setPlugOutline>',
+      'plugOutlineEnabled[0]=true',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'new-anchorMask[0]',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+    expect(props.options.plugSE[0]).toBe('behind');
+    expect(ll.startPlug).toBe('behind');
+
+    // invalid value
+    ll.setOptions({
+      startPlug: 'arrow1',
+      startPlugSize: 1
+    });
+    expect(props.options.plugSizeSE[0]).toBe(1);
+    expect(ll.startPlugSize).toBe(1);
+    window.traceLog = [];
+    ll.startPlugSize = 0;
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(props.options.plugSizeSE[0]).toBe(1);
+    expect(ll.startPlugSize).toBe(1);
+
+    // valid value
+    window.traceLog = [];
+    ll.startPlugSize = 0.1;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setPlug>',
+      'plugSize[0]=0.1',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+    expect(props.options.plugSizeSE[0]).toBe(0.1);
+    expect(ll.startPlugSize).toBe(0.1);
 
     pageDone();
   });
