@@ -765,4 +765,110 @@ describe('options', function() {
     pageDone();
   });
 
+  it(registerTitle('setOptions - needsLineOutline'), function() {
+    var props = window.insProps[ll._id];
+
+    // off -> on
+    window.traceLog = [];
+    ll.outline = true;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLineOutline>',
+      // lineOutlineColor and lineOutlineSize also
+      'lineOutlineEnabled=true', 'lineOutlineColor=indianred', 'lineOutlineSize=0.25'
+    ]);
+    expect(props.options.lineOutlineEnabled).toBe(true);
+    expect(ll.outline).toBe(true);
+
+    // on -> off
+    window.traceLog = [];
+    ll.outline = false;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLineOutline>',
+      'lineOutlineEnabled=false' // only plug
+    ]);
+    expect(props.options.lineOutlineEnabled).toBe(false);
+    expect(ll.outline).toBe(false);
+
+    // plugOutlineColor with lineOutlineColor 1
+    ll.setOptions({
+      outline: true,
+      startPlug: 'behind',
+      endPlug: 'arrow1',
+      startPlugOutline: true,
+      endPlugOutline: true,
+      startPlugOutlineColor: 'auto',
+      endPlugOutlineColor: 'auto'
+    });
+    expect(props.options.lineOutlineEnabled).toBe(true);
+    expect(props.options.plugSE[0]).toBe('behind');
+    expect(props.options.plugSE[1]).toBe('arrow1');
+    expect(props.options.plugOutlineEnabledSE[0]).toBe(true);
+    expect(props.options.plugOutlineEnabledSE[1]).toBe(true);
+    expect(props.options.plugOutlineColorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+    expect(props.options.plugOutlineColorSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
+    window.traceLog = [];
+    ll.outlineColor = 'red';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLineOutline>',
+      'lineOutlineColor=red',
+      '<setPlugOutline>',
+      // plugOutlineColor also
+      'plugOutlineColor[1]=red'
+    ]);
+    expect(props.options.lineOutlineColor).toBe('red');
+    expect(ll.outlineColor).toBe('red');
+
+    // plugOutlineColor with lineOutlineColor 2
+    ll.endPlug = 'behind';
+    expect(props.options.plugSE[1]).toBe('behind');
+    window.traceLog = [];
+    ll.outlineColor = 'blue';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLineOutline>',
+      'lineOutlineColor=blue' // behind plugOutlineColor is not updated
+    ]);
+    expect(props.options.lineOutlineColor).toBe('blue');
+    expect(ll.outlineColor).toBe('blue');
+
+    // plugOutlineColor with lineOutlineColor 3
+    ll.setOptions({
+      endPlug: 'arrow1',
+      endPlugOutline: false
+    });
+    expect(props.options.plugSE[1]).toBe('arrow1');
+    expect(props.options.plugOutlineEnabledSE[1]).toBe(false);
+    window.traceLog = [];
+    ll.outlineColor = 'green';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLineOutline>',
+      'lineOutlineColor=green' // disabled plugOutlineColor is not updated
+    ]);
+    expect(props.options.lineOutlineColor).toBe('green');
+    expect(ll.outlineColor).toBe('green');
+
+    // plugOutlineColor with lineOutlineColor 4
+    ll.setOptions({
+      endPlugOutline: true,
+      endPlugOutlineColor: 'yellow'
+    });
+    expect(props.options.plugOutlineEnabledSE[1]).toBe(true);
+    expect(props.options.plugOutlineColorSE[1]).toBe('yellow');
+    window.traceLog = [];
+    ll.outlineColor = 'orange';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLineOutline>',
+      'lineOutlineColor=orange' // specified plugOutlineColor is not updated
+    ]);
+    expect(props.options.lineOutlineColor).toBe('orange');
+    expect(ll.outlineColor).toBe('orange');
+
+    pageDone();
+  });
+
 });
