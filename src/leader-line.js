@@ -1031,6 +1031,9 @@
       aplAnchorHasMaskSE[i] = curAnchorHasMask;
     });
 
+    // In current version, masks are used anytime and those were already updated.
+    // Therefore, those are not updated when any `*MaskIsNewSE` is `true`.
+
     // Update `<mask>`s that are positioned based on `viewBox`
     if (viewHasChanged && ( // `viewBox` was changed and `<mask>`s are used
           plugHasMaskSE[0] || plugHasMaskSE[1] || anchorHasMaskSE[0] || anchorHasMaskSE[1]) ||
