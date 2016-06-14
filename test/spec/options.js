@@ -99,7 +99,7 @@ describe('options', function() {
       '<position>', 'propsHasChanged:socketXYSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'new-anchorMask[0]', 'new-plugMask[1]',
+      // 'new-anchorMask[0]', 'new-plugMask[1]',
       'mask.x', 'mask.y', 'mask.width', 'mask.height',
       'anchorMask[0].x', 'anchorMask[0].y', 'anchorMask[0].width', 'anchorMask[0].height'
     ]);
@@ -282,7 +282,7 @@ describe('options', function() {
       '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'new-plugMask[0]',
+      // 'new-plugMask[0]',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
 
@@ -601,7 +601,7 @@ describe('options', function() {
       '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'new-plugMask[0]',
+      // 'new-plugMask[0]',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
     expect(props.options.plugSE[0]).toBe('arrow2');
@@ -689,7 +689,7 @@ describe('options', function() {
       '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'new-plugMask[0]',
+      // 'new-plugMask[0]',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
     expect(props.options.plugSE[0]).toBe('arrow2');
@@ -726,7 +726,7 @@ describe('options', function() {
       '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
       'propsHasChanged:pathData', 'setPathData',
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
-      'new-anchorMask[0]',
+      // 'new-anchorMask[0]',
       'mask.x', 'mask.y', 'mask.width', 'mask.height'
     ]);
     expect(props.options.plugSE[0]).toBe('behind');

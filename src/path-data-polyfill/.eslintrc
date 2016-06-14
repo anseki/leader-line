@@ -1,0 +1,15 @@
+{
+  "env": {"browser": false},
+  "rules": {
+    "indent": 0,
+    "no-invalid-this": 0,
+    "key-spacing": 0,
+    "quotes": 0,
+    "func-style": 0,
+    "brace-style": 0,
+    "curly": 0,
+    "no-multi-spaces": 0,
+    "space-infix-ops": 0,
+    "no-unused-vars": 0
+  }
+}

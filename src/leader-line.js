@@ -151,7 +151,12 @@
     /**
      * @typedef {Object.<_id: number, props>} insProps
      */
-    insProps = {}, insId = 0, svg2Supported;
+    insProps = {}, insId = 0, svg2Supported,
+
+    /* [DEBUG/]
+    pathDataPolyfill = @INCLUDE[code:pathDataPolyfill]@;
+    [DEBUG/] */
+    pathDataPolyfill = window.pathDataPolyfill; // [DEBUG/]
 
   // [DEBUG]
   window.insProps = insProps;
@@ -430,6 +435,7 @@
     if (!baseDocument.getElementById(DEFS_ID)) { // Add svg defs
       defs = (new newWindow.DOMParser()).parseFromString(DEFS_HTML, 'image/svg+xml');
       baseDocument.body.appendChild(defs.documentElement);
+      pathDataPolyfill(newWindow);
     }
 
     // Get `bodyOffset`.
@@ -1010,9 +1016,14 @@
     var maskVals = props.maskVals,
       plugHasMaskSE = maskVals.current.plugHasMaskSE,
       anchorHasMaskSE = maskVals.current.anchorHasMaskSE,
-      plugMaskIsNewSE = [], anchorMaskIsNewSE = [], viewBBoxVals;
+      // plugMaskIsNewSE = [], anchorMaskIsNewSE = [],
+      viewBBoxVals;
+
+    // In current version, masks are used anytime and those were already updated when `viewHasChanged`.
+    // Therefore, those are not updated when any `*MaskIsNewSE` is `true`.
 
     [0, 1].forEach(function(i) {
+      /*
       var curPlugHasMask = plugHasMaskSE[i],
         aplPlugHasMaskSE = maskVals.applied.plugHasMaskSE,
         curAnchorHasMask = anchorHasMaskSE[i],
@@ -1029,16 +1040,16 @@
         anchorMaskIsNewSE[i] = true;
       }
       aplAnchorHasMaskSE[i] = curAnchorHasMask;
+      */
+      maskVals.applied.plugHasMaskSE[i] = plugHasMaskSE[i];
+      maskVals.applied.anchorHasMaskSE[i] = anchorHasMaskSE[i];
     });
-
-    // In current version, masks are used anytime and those were already updated.
-    // Therefore, those are not updated when any `*MaskIsNewSE` is `true`.
 
     // Update `<mask>`s that are positioned based on `viewBox`
     if (viewHasChanged && ( // `viewBox` was changed and `<mask>`s are used
-          plugHasMaskSE[0] || plugHasMaskSE[1] || anchorHasMaskSE[0] || anchorHasMaskSE[1]) ||
+          plugHasMaskSE[0] || plugHasMaskSE[1] || anchorHasMaskSE[0] || anchorHasMaskSE[1])/* ||
         // Or, `<mask>`s that might not yet be positioned are used
-        plugMaskIsNewSE[0] || plugMaskIsNewSE[1] || anchorMaskIsNewSE[0] || anchorMaskIsNewSE[1]) {
+        plugMaskIsNewSE[0] || plugMaskIsNewSE[1] || anchorMaskIsNewSE[0] || anchorMaskIsNewSE[1] */) {
       viewBBoxVals = props.viewBBoxVals.current;
       ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
         if ((maskVals.current[boxKey] = viewBBoxVals[boxKey]) !== maskVals.applied[boxKey]) {

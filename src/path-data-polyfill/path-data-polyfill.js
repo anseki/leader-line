@@ -1,3 +1,15 @@
+/*
+  Customized path-data-polyfill.js
+    https://github.com/jarek-foksa/path-data-polyfill.js 2016.06.14
+
+  - Wrap code with function
+  - With specified window
+*/
+
+/* exported pathDataPolyfill */
+
+function pathDataPolyfill(window) {
+  'use strict';
 
 // @info
 //   Polyfill for SVG 2 getPathData() and setPathData() methods. Based on:
@@ -11,7 +23,7 @@
 //   Jarosław Foksa
 // @license
 //   MIT License
-if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathData) {
+if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.prototype.setPathData) {
   (function() {
     var commandsMap = {
       "Z":"Z", "M":"M", "L":"L", "C":"C", "Q":"Q", "A":"A", "H":"H", "V":"V", "S":"S", "T":"T",
@@ -171,7 +183,8 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
       _parseNumber: function() {
         var exponent = 0;
         var integer = 0;
-        var decimals = [];
+        var frac = 1;
+        var decimal = 0;
         var sign = 1;
         var expsign = 1;
         var startIndex = this._currentIndex;
@@ -238,7 +251,8 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
             this._string[this._currentIndex] >= "0" &&
             this._string[this._currentIndex] <= "9"
           ) {
-            decimals.push(this._string[this._currentIndex] - "0");
+            frac *= 10;
+            decimal += (this._string.charAt(this._currentIndex) - "0") / frac;
             this._currentIndex += 1;
           }
         }
@@ -281,7 +295,7 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
           }
         }
 
-        var number = integer + parseFloat("0." + decimals.join(""));
+        var number = integer + decimal;
         number *= sign;
 
         if (exponent) {
@@ -342,18 +356,13 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
       }
 
       return pathData;
-    }
+    };
 
-    var setAttribute = SVGPathElement.prototype.setAttribute;
-    var removeAttribute = SVGPathElement.prototype.removeAttribute;
-    var symbols;
+    var setAttribute = window.SVGPathElement.prototype.setAttribute;
+    var removeAttribute = window.SVGPathElement.prototype.removeAttribute;
 
-    if (window.Symbol) {
-      symbols = {cachedPathData: Symbol(), cachedNormalizedPathData: Symbol()};
-    }
-    else {
-      symbols = {cachedPathData: "__cachedPathData", cachedNormalizedPathData: "__cachedNormalizedPathData"};
-    }
+    var $cachedPathData = window.Symbol ? window.Symbol() : "__cachedPathData";
+    var $cachedNormalizedPathData = window.Symbol ? window.Symbol() : "__cachedNormalizedPathData";
 
     // @info
     //   Get an array of corresponding cubic bezier curve parameters for given arc curve paramters.
@@ -508,7 +517,7 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
 
     var clonePathData = function(pathData) {
       return pathData.map( function(seg) {
-        return {type: seg.type, values: Array.prototype.slice.call(seg.values)}
+        return {type: seg.type, values: Array.prototype.slice.call(seg.values)};
       });
     };
 
@@ -524,6 +533,7 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
       var subpathY = null;
 
       pathData.forEach( function(seg) {
+        /* eslint-disable no-redeclare */
         var type = seg.type;
 
         if (type === "M") {
@@ -700,7 +710,7 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
 
         else if (type === "T") {
           var x = seg.values[0];
-          var y = seg.values[1]
+          var y = seg.values[1];
 
           absolutizedPathData.push({type: "T", values: [x, y]});
 
@@ -710,7 +720,7 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
 
         else if (type === "t") {
           var x = currentX + seg.values[0];
-          var y = currentY + seg.values[1]
+          var y = currentY + seg.values[1];
 
           absolutizedPathData.push({type: "T", values: [x, y]});
 
@@ -724,6 +734,7 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
           currentX = subpathX;
           currentY = subpathY;
         }
+        /* eslint-enable no-redeclare */
       });
 
       return absolutizedPathData;
@@ -746,6 +757,7 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
       var subpathY = null;
 
       pathData.forEach( function(seg) {
+        /* eslint-disable no-redeclare */
         if (seg.type === "M") {
           var x = seg.values[0];
           var y = seg.values[1];
@@ -914,63 +926,66 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
         }
 
         lastType = seg.type;
+        /* eslint-enable no-redeclare */
       });
 
       return reducedPathData;
     };
 
-    SVGPathElement.prototype.setAttribute = function(name, value) {
+    window.SVGPathElement.prototype.setAttribute = function(name, value) {
       if (name === "d") {
-        this[symbols.cachedPathData] = null;
-        this[symbols.cachedNormalizedPathData] = null;
+        this[$cachedPathData] = null;
+        this[$cachedNormalizedPathData] = null;
       }
 
       setAttribute.call(this, name, value);
     };
 
-    SVGPathElement.prototype.removeAttribute = function(name, value) {
+    window.SVGPathElement.prototype.removeAttribute = function(name, value) {
       if (name === "d") {
-        this[symbols.cachedPathData] = null;
-        this[symbols.cachedNormalizedPathData] = null;
+        this[$cachedPathData] = null;
+        this[$cachedNormalizedPathData] = null;
       }
 
       removeAttribute.call(this, name);
     };
 
-    SVGPathElement.prototype.getPathData = function(options) {
+    window.SVGPathElement.prototype.getPathData = function(options) {
+      /* eslint-disable no-redeclare */
       if (options && options.normalize) {
-        if (this[symbols.cachedNormalizedPathData]) {
-          return clonePathData(this[symbols.cachedNormalizedPathData]);
+        if (this[$cachedNormalizedPathData]) {
+          return clonePathData(this[$cachedNormalizedPathData]);
         }
         else {
           var pathData;
 
-          if (this[symbols.cachedPathData]) {
-            pathData = clonePathData(this[symbols.cachedPathData]);
+          if (this[$cachedPathData]) {
+            pathData = clonePathData(this[$cachedPathData]);
           }
           else {
             pathData = parsePathDataString(this.getAttribute("d") || "");
-            this[symbols.cachedPathData] = clonePathData(pathData);
+            this[$cachedPathData] = clonePathData(pathData);
           }
 
           var normalizedPathData = reducePathData(absolutizePathData(pathData));
-          this[symbols.cachedNormalizedPathData] = clonePathData(normalizedPathData);
+          this[$cachedNormalizedPathData] = clonePathData(normalizedPathData);
           return normalizedPathData;
         }
       }
       else {
-        if (this[symbols.cachedPathData]) {
-          return clonePathData(this[symbols.cachedPathData]);
+        if (this[$cachedPathData]) {
+          return clonePathData(this[$cachedPathData]);
         }
         else {
           var pathData = parsePathDataString(this.getAttribute("d") || "");
-          this[symbols.cachedPathData] = clonePathData(pathData);
+          this[$cachedPathData] = clonePathData(pathData);
           return pathData;
         }
       }
+      /* eslint-enable no-redeclare */
     };
 
-    SVGPathElement.prototype.setPathData = function(pathData) {
+    window.SVGPathElement.prototype.setPathData = function(pathData) {
       if (pathData.length === 0) {
         if (isIE) {
           // @bugfix https://github.com/mbostock/d3/issues/1737
@@ -1000,5 +1015,109 @@ if (!SVGPathElement.prototype.getPathData || !SVGPathElement.prototype.setPathDa
         this.setAttribute("d", d);
       }
     };
+
+    window.SVGRectElement.prototype.getPathData = function() {
+      var x = this.x.baseVal.value;
+      var y = this.y.baseVal.value;
+      var width = this.width.baseVal.value;
+      var height = this.height.baseVal.value;
+      var rx = this.hasAttribute("rx") ? this.rx.baseVal.value : this.ry.baseVal.value;
+      var ry = this.hasAttribute("ry") ? this.ry.baseVal.value : this.rx.baseVal.value;
+
+      var pathData = [
+        {type: "M", values: [x+rx, y]},
+        {type: "H", values: [x+width-rx]},
+        {type: "A", values: [rx, ry, 0, 0, 1, x+width, y+ry]},
+        {type: "V", values: [y+height-ry]},
+        {type: "A", values: [rx, ry, 0, 0, 1, x+width-rx, y+height]},
+        {type: "H", values: [x+rx]},
+        {type: "A", values: [rx, ry, 0, 0, 1, x, y+height-ry]},
+        {type: "V", values: [y+ry]},
+        {type: "A", values: [rx, ry, 0, 0, 1, x+rx, y]},
+        {type: "Z", values: []}
+      ];
+
+      // Get rid of redundant "A" segs when both rx and ry are 0
+      pathData = pathData.filter(function(s) {
+        return s.type === "A" && s.values[0] === 0 && s.values[1] === 0 ? false : true;
+      });
+
+      return pathData;
+    };
+
+    window.SVGCircleElement.prototype.getPathData = function() {
+      var cx = this.cx.baseVal.value;
+      var cy = this.cy.baseVal.value;
+      var r = this.r.baseVal.value;
+
+      return [
+        { type: "M",  values: [cx + r, cy] },
+        { type: "A",  values: [r, r, 0, 0, 1, cx, cy+r] },
+        { type: "A",  values: [r, r, 0, 0, 1, cx-r, cy] },
+        { type: "A",  values: [r, r, 0, 0, 1, cx, cy-r] },
+        { type: "A",  values: [r, r, 0, 0, 1, cx+r, cy] },
+        { type: "Z",  values: [] }
+      ];
+    };
+
+    window.SVGEllipseElement.prototype.getPathData = function() {
+      var cx = this.cx.baseVal.value;
+      var cy = this.cy.baseVal.value;
+      var rx = this.rx.baseVal.value;
+      var ry = this.ry.baseVal.value;
+
+      return [
+        { type: "M",  values: [cx + rx, cy] },
+        { type: "A",  values: [rx, ry, 0, 0, 1, cx, cy+ry] },
+        { type: "A",  values: [rx, ry, 0, 0, 1, cx-rx, cy] },
+        { type: "A",  values: [rx, ry, 0, 0, 1, cx, cy-ry] },
+        { type: "A",  values: [rx, ry, 0, 0, 1, cx+rx, cy] },
+        { type: "Z",  values: [] }
+      ];
+    };
+
+    window.SVGLineElement.prototype.getPathData = function() {
+      return [
+        { type: "M", values: [this.x1.baseVal.value, this.y1.baseVal.value] },
+        { type: "L", values: [this.x2.baseVal.value, this.y2.baseVal.value] }
+      ];
+    };
+
+    window.SVGPolylineElement.prototype.getPathData = function() {
+      var pathData = [];
+
+      for (var i = 0; i < this.points.numberOfItems; i += 1) {
+        var point = this.points.getItem(i);
+
+        pathData.push({
+          type: (i === 0 ? "M" : "L"),
+          values: [point.x, point.y]
+        });
+      }
+
+      return pathData;
+    };
+
+    window.SVGPolygonElement.prototype.getPathData = function() {
+      var pathData = [];
+
+      for (var i = 0; i < this.points.numberOfItems; i += 1) {
+        var point = this.points.getItem(i);
+
+        pathData.push({
+          type: (i === 0 ? "M" : "L"),
+          values: [point.x, point.y]
+        });
+      }
+
+      pathData.push({
+        type: "Z",
+        values: []
+      });
+
+      return pathData;
+    };
   })();
+}
+
 }
