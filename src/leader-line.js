@@ -135,6 +135,51 @@
       {name: 'widthSE', hasSE: true}, {name: 'heightSE', hasSE: true}
     ],
 
+    /**
+     * @typedef {Object} EFFECT_CONF
+     * @property {Function} init - (props, effectOptions)
+     * @property {Function} remove - (props)
+     * @property {Function} onSetLine - (props, setProps)
+     * @property {Function} onSetPlug - (props, setPropsSE)
+     * @property {Function} onPosition - (props, pathList)
+     * @property {Function} onUpdatePath - (props, pathList)
+     * @property {Function} onUpdateAnchorBBox - (props, i)
+     */
+    EFFECTS = {
+      dash: { // effectOptions {{dashLen, gapLen}}
+        init: function(props, effectOptions) {
+          var dashLen, gapLen;
+          if (typeof effectOptions.dashLen === 'number' && effectOptions.dashLen > 0) {
+            dashLen = props.effectOptions.dashLen = effectOptions.dashLen;
+          } else {
+            dashLen = EFFECTS.dash.getDashLen(props);
+          }
+          if (typeof effectOptions.gapLen === 'number' && effectOptions.gapLen > 0) {
+            gapLen = props.effectOptions.gapLen = effectOptions.gapLen;
+          } else {
+            gapLen = EFFECTS.dash.getGapLen(props);
+          }
+          props.lineFace.style.strokeDasharray = dashLen + ',' + gapLen;
+          props.lineFace.style.strokeDashoffset = '0';
+        },
+        remove: function(props) {
+          props.lineFace.style.strokeDasharray = 'none';
+          props.lineFace.style.strokeDashoffset = '0';
+        },
+        onSetLine: function(props, setProps) {
+          window.traceLog.push('<EFFECTS.dash.onSetLine>'); // [DEBUG/]
+          if ((!setProps || setProps.indexOf('lineSize') > -1) &&
+              (!props.effectOptions.dashLen || !props.effectOptions.gapLen)) {
+            props.lineFace.style.strokeDasharray =
+              (props.effectOptions.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+              (props.effectOptions.gapLen || EFFECTS.dash.getGapLen(props));
+          }
+        },
+        getDashLen: function(props) { return props.options.lineSize * 2; },
+        getGapLen: function(props) { return props.options.lineSize; }
+      }
+    },
+
     SOCKET_IDS = [SOCKET_TOP, SOCKET_RIGHT, SOCKET_BOTTOM, SOCKET_LEFT],
     KEYWORD_AUTO = 'auto',
     BBOX_PROP = {x: 'left', y: 'top', width: 'width', height: 'height'},
@@ -634,7 +679,7 @@
         case 'lineSize':
           window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
           props.lineShape.style.strokeWidth = options[setProp];
-          if (IS_TRIDENT) {
+          if (IS_GECKO || IS_TRIDENT) {
             forceReflow(props.lineShape);
             forceReflow(props.lineFace);
             forceReflow(props.lineMaskPlug);
@@ -643,6 +688,10 @@
         // no default
       }
     });
+
+    if (props.effect && props.effect.onSetLine) {
+      props.effect.onSetLine(props, setProps);
+    }
   }
 
   /**
@@ -781,6 +830,10 @@
     });
     props.lineMaskPlug.style.display =
       options.plugSE[0] !== PLUG_BEHIND || options.plugSE[1] !== PLUG_BEHIND ? 'inline' : 'none';
+
+    if (props.effect && props.effect.onSetPlug) {
+      props.effect.onSetPlug(props, setPropsSE);
+    }
   }
 
   /**
@@ -966,6 +1019,10 @@
       window.traceLog.push('setPathData'); // [DEBUG/]
       props.linePath.setPathData(pathVals.current.pathData);
       pathVals.applied.pathData = pathVals.current.pathData;
+
+      if (props.effect && props.effect.onUpdatePath) {
+        props.effect.onUpdatePath(props, pathList);
+      }
     }
   }
 
@@ -1857,6 +1914,10 @@
         });
       })();
 
+      if (props.effect && props.effect.onPosition) {
+        props.effect.onPosition(props, pathList);
+      }
+
       updatePath(props, pathList);
       saveProps(props.positionVals, options, POSITION_PROPS);
     }
@@ -1866,6 +1927,7 @@
     // Decide `anchorMask` (check coordinates also)
     anchorBBoxSE.forEach(function(anchorBBox, i) {
       if (props.maskVals.current.anchorHasMaskSE[i]) {
+        var update;
         ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
           var propKey = boxKey + 'SE';
           if ((anchorMaskVals.current[propKey][i] = anchorBBox[BBOX_PROP[boxKey]]) !==
@@ -1873,10 +1935,33 @@
             window.traceLog.push('anchorMask[' + i + '].' + boxKey); // [DEBUG/]
             anchorMaskVals.applied[propKey][i] =
               props.lineMaskAnchorSE[i][boxKey].baseVal.value = anchorMaskVals.current[propKey][i];
+            update = true;
           }
         });
+        if (update && props.effect && props.effect.onUpdateAnchorBBox) {
+          props.effect.onUpdateAnchorBBox(props, i);
+        }
       }
     });
+
+    return this;
+  };
+
+  LeaderLine.prototype.effect = function(newEffect, effectOptions) {
+    window.traceLog.push('<effect>'); // [DEBUG/]
+    var props = insProps[this._id];
+    if (!newEffect) {
+      if (props.effect) {
+        props.effect.remove(props);
+        props.effect = null;
+      }
+    } else if (EFFECTS[newEffect + '']) {
+      props.effect = EFFECTS[newEffect + ''];
+      props.effectOptions = {};
+      props.effect.init(props, effectOptions || {});
+    }
+
+    return this;
   };
 
   return LeaderLine;
