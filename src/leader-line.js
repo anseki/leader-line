@@ -397,6 +397,7 @@
     };
     /* eslint-enable key-spacing */
   }
+  window.getPointOnCubic = getPointOnCubic; // [DEBUG/]
 
   function getCubicLength(p0, p1, p2, p3, z) {
     function base3(t, p0v, p1v, p2v, p3v) {
@@ -512,6 +513,7 @@
       return t >= 0 && t <= 1 && lineT >= 0 && lineT <= 1;
     });
   }
+  window.getIntersections = getIntersections; // [DEBUG/]
 
   /**
    * Setup `baseWindow`, `bodyOffset`, `pathList`,
