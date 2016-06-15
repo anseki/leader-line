@@ -436,6 +436,83 @@
     return t2;
   }
 
+  // http://en.wikipedia.org/wiki/Cubic_function
+  function getIntersections(p0, p1, p2, p3, a0, a1) {
+    var bx, by,
+      wkA = a1.y - a0.y,
+      wkB = a0.x - a1.x;
+
+    function getRoots(p) {
+      var wkA = p[1] / p[0],
+        wkB = p[2] / p[0],
+        wkC = p[3] / p[0],
+        wkQ = (3 * wkB - Math.pow(wkA, 2)) / 9,
+        wkR = (9 * wkA * wkB - 27 * wkC - 2 * Math.pow(wkA, 3)) / 54,
+        wkD = Math.pow(wkQ, 3) + Math.pow(wkR, 2),
+        wkS, wkT, t, th, i;
+
+      function sdir(x) { return x < 0 ? -1 : 1; }
+      if (wkD >= 0) {
+        wkS = sdir(wkR + Math.sqrt(wkD)) * Math.pow(Math.abs(wkR + Math.sqrt(wkD)), (1 / 3));
+        wkT = sdir(wkR - Math.sqrt(wkD)) * Math.pow(Math.abs(wkR - Math.sqrt(wkD)), (1 / 3));
+        t = [
+          -wkA / 3 + (wkS + wkT),
+          -wkA / 3 - (wkS + wkT) / 2,
+          -wkA / 3 - (wkS + wkT) / 2
+        ];
+        if (Math.abs(Math.sqrt(3) * (wkS - wkT) / 2) !== 0) { t[1] = t[2] = -1; }
+      } else {
+        th = Math.acos(wkR / Math.sqrt(-Math.pow(wkQ, 3)));
+        t = [
+          2 * Math.sqrt(-wkQ) * Math.cos(th / 3) - wkA / 3,
+          2 * Math.sqrt(-wkQ) * Math.cos((th + 2 * Math.PI) / 3) - wkA / 3,
+          2 * Math.sqrt(-wkQ) * Math.cos((th + 4 * Math.PI) / 3) - wkA / 3
+        ];
+      }
+
+      for (i = 0; i <= 2; i++) { if (t[i] < 0 || t[i] > 1) { t[i] = -1; } }
+      return (function(arr) {
+        var alt, save, i, ii;
+        do {
+          alt = false;
+          for (i = 0, ii = arr.length - 1; i < ii; i++) {
+            if (arr[i + 1] >= 0 && arr[i] > arr[i + 1] ||
+                arr[i] < 0 && arr[i + 1] >= 0) {
+              save = arr[i];
+              arr[i] = arr[i + 1];
+              arr[i + 1] = save;
+              alt = true;
+            }
+          }
+        } while (alt);
+        return arr;
+      })(t);
+    }
+
+    function coeffs(p0, p1, p2, p3) {
+      return [
+        -p0 + 3 * p1 + -3 * p2 + p3,
+        3 * p0 - 6 * p1 + 3 * p2,
+        -3 * p0 + 3 * p1,
+        p0
+      ];
+    }
+
+    bx = coeffs(p0.x, p1.x, p2.x, p3.x);
+    by = coeffs(p0.y, p1.y, p2.y, p3.y);
+    return getRoots([
+      wkA * bx[0] + wkB * by[0],
+      wkA * bx[1] + wkB * by[1],
+      wkA * bx[2] + wkB * by[2],
+      wkA * bx[3] + wkB * by[3] + (a0.x * (a0.y - a1.y) + a0.y * (a1.x - a0.x))
+    ]).filter(function(t) {
+      var lineT = a1.x - a0.x !== 0 ?
+        ((bx[0] * t * t * t + bx[1] * t * t + bx[2] * t + bx[3]) - a0.x) / (a1.x - a0.x) :
+        ((by[0] * t * t * t + by[1] * t * t + by[2] * t + by[3]) - a0.y) / (a1.y - a0.y);
+      return t >= 0 && t <= 1 && lineT >= 0 && lineT <= 1;
+    });
+  }
+
   /**
    * Setup `baseWindow`, `bodyOffset`, `pathList`,
    *    `positionVals`, `pathVals`, 'viewBBoxVals', 'maskVals', 'anchorMaskVals', SVG elements.
