@@ -15,16 +15,16 @@
   /**
    * An object that simulates `DOMRect` to indicate a bounding-box.
    * @typedef {Object} BBox
-   * @property {(number|null)} left
-   * @property {(number|null)} top
-   * @property {(number|null)} right
-   * @property {(number|null)} bottom
+   * @property {(number|null)} left - ScreenCTM
+   * @property {(number|null)} top - ScreenCTM
+   * @property {(number|null)} right - ScreenCTM
+   * @property {(number|null)} bottom - ScreenCTM
    * @property {(number|null)} width
    * @property {(number|null)} height
    */
 
   /**
-   * An object that has coordinates.
+   * An object that has coordinates of ScreenCTM.
    * @typedef {Object} Point
    * @property {number} x
    * @property {number} y

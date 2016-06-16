@@ -61,14 +61,14 @@ var anim = (function() {
       anim.tasks = anim.tasks.filter(function(task) { return task.callback !== callback; });
       if (!anim.tasks.length && anim.requestID) {
         console.log('task empty'); // [DEBUG/]
-        anim.cancel.call(null, anim.requestID);
+        anim.cancel.call(window, anim.requestID);
         anim.requestID = null;
       }
     },
 
     start: function() {
       if (!anim.requestID) {
-        anim.requestID = anim.request.call(null, anim.step);
+        anim.requestID = anim.request.call(window, anim.step);
       }
     },
     step: function() {
@@ -106,7 +106,7 @@ var anim = (function() {
       });
 
       console.log('anim.tasks.length: ' + anim.tasks.length); // [DEBUG/]
-      if (anim.tasks.length) { anim.requestID = anim.request.call(null, anim.step); }
+      if (anim.tasks.length) { anim.requestID = anim.request.call(window, anim.step); }
     }
   }
   // @/EXPORT@
