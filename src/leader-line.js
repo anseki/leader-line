@@ -351,20 +351,23 @@
   }
   window.getCommonWindow = getCommonWindow; // [DEBUG/]
 
+  // Faster than SVG DOM
   function getPointsLength(p0, p1) {
     return Math.sqrt(
       Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2));
   }
 
-  function getPointOnLine(p0, p1, t) {
+  // Faster than SVG DOM
+  function getPointOnLine(p0, p1, r) {
     var xA = p1.x - p0.x, yA = p1.y - p0.y;
     return {
-      x: p0.x + xA * t,
-      y: p0.y + yA * t,
+      x: p0.x + xA * r,
+      y: p0.y + yA * r,
       angle: Math.atan2(yA, xA) / (Math.PI / 180)
     };
   }
 
+  // Faster than SVG DOM (except IE)
   function getPointOnCubic(p0, p1, p2, p3, t) {
     var
       t1 = 1 - t,
@@ -399,6 +402,7 @@
   }
   window.getPointOnCubic = getPointOnCubic; // [DEBUG/]
 
+  // Faster than SVG DOM (except IE)
   function getCubicLength(p0, p1, p2, p3, z) {
     function base3(t, p0v, p1v, p2v, p3v) {
       var t1 = -3 * p0v + 9 * p1v - 9 * p2v + 3 * p3v,
