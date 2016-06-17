@@ -351,13 +351,11 @@
   }
   window.getCommonWindow = getCommonWindow; // [DEBUG/]
 
-  // Faster than SVG DOM
   function getPointsLength(p0, p1) {
-    return Math.sqrt(
-      Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2));
+    var lx = p0.x - p1.x, ly = p0.y - p1.y;
+    return Math.sqrt(lx * lx + ly * ly);
   }
 
-  // Faster than SVG DOM
   function getPointOnLine(p0, p1, r) {
     var xA = p1.x - p0.x, yA = p1.y - p0.y;
     return {
@@ -367,16 +365,15 @@
     };
   }
 
-  // Faster than SVG DOM (except IE)
   function getPointOnCubic(p0, p1, p2, p3, t) {
     var
-      t1 = 1 - t,
-      t13 = Math.pow(t1, 3),
-      t12 = Math.pow(t1, 2),
       t2 = t * t,
       t3 = t2 * t,
-      x = t13 * p0.x + t12 * 3 * t * p1.x + t1 * 3 * t * t * p2.x + t3 * p3.x,
-      y = t13 * p0.y + t12 * 3 * t * p1.y + t1 * 3 * t * t * p2.y + t3 * p3.y,
+      t1 = 1 - t,
+      t12 = t1 * t1,
+      t13 = t12 * t1,
+      x = t13 * p0.x + 3 * t12 * t * p1.x + 3 * t1 * t2 * p2.x + t3 * p3.x,
+      y = t13 * p0.y + 3 * t12 * t * p1.y + 3 * t1 * t2 * p2.y + t3 * p3.y,
       mx = p0.x + 2 * t * (p1.x - p0.x) + t2 * (p2.x - 2 * p1.x + p0.x),
       my = p0.y + 2 * t * (p1.y - p0.y) + t2 * (p2.y - 2 * p1.y + p0.y),
       nx = p1.x + 2 * t * (p2.x - p1.x) + t2 * (p3.x - 2 * p2.x + p1.x),
@@ -402,12 +399,10 @@
   }
   window.getPointOnCubic = getPointOnCubic; // [DEBUG/]
 
-  // Faster than SVG DOM (except IE)
-  function getCubicLength(p0, p1, p2, p3, z) {
+  function getCubicLength(p0, p1, p2, p3, t) {
     function base3(t, p0v, p1v, p2v, p3v) {
-      var t1 = -3 * p0v + 9 * p1v - 9 * p2v + 3 * p3v,
-        t2 = t * t1 + 6 * p0v - 12 * p1v + 6 * p2v;
-      return t * t2 - 3 * p0v + 3 * p1v;
+      return t * (t * (-3 * p0v + 9 * p1v - 9 * p2v + 3 * p3v) +
+        6 * p0v - 12 * p1v + 6 * p2v) - 3 * p0v + 3 * p1v;
     }
 
     var
@@ -415,64 +410,64 @@
         -0.7699, 0.7699, -0.9041, 0.9041, -0.9816, 0.9816],
       CVALUES = [0.2491, 0.2491, 0.2335, 0.2335, 0.2032, 0.2032,
         0.1601, 0.1601, 0.1069, 0.1069, 0.0472, 0.0472],
-      sum = 0, n = 12, z2, ct, xbase, ybase, comb, i;
+      sum = 0, z2, ct, xbase, ybase, comb;
 
-    if (z == null) { z = 1; } // eslint-disable-line eqeqeq
-    z = z > 1 ? 1 : z < 0 ? 0 : z;
-    z2 = z / 2;
-    for (i = 0; i < n; i++) {
-      ct = z2 * TVALUES[i] + z2;
+    t = t == null || t > 1 ? 1 : t < 0 ? 0 : t; // eslint-disable-line eqeqeq
+    z2 = t / 2;
+    TVALUES.forEach(function(tValue, i) {
+      ct = z2 * tValue + z2;
       xbase = base3(ct, p0.x, p1.x, p2.x, p3.x);
       ybase = base3(ct, p0.y, p1.y, p2.y, p3.y);
       comb = xbase * xbase + ybase * ybase;
       sum += CVALUES[i] * Math.sqrt(comb);
-    }
+    });
     return z2 * sum;
   }
 
-  function getCubicT(p0, p1, p2, p3, ll) {
-    var e = 0.01, step = 1 / 2, t2 = 1 - step,
+  function getCubicT(p0, p1, p2, p3, len) {
+    var E = 0.01,
+      step = 1 / 2, t2 = 1 - step, l;
+    while (true) {
       l = getCubicLength(p0, p1, p2, p3, t2);
-    while (Math.abs(l - ll) > e) {
+      if (Math.abs(l - len) <= E) { break; }
       step /= 2;
-      t2 += (l < ll ? 1 : -1) * step;
-      l = getCubicLength(p0, p1, p2, p3, t2);
+      t2 += (l < len ? 1 : -1) * step;
     }
     return t2;
   }
 
   // http://en.wikipedia.org/wiki/Cubic_function
   function getIntersections(p0, p1, p2, p3, a0, a1) {
-    var bx, by,
-      wkA = a1.y - a0.y,
-      wkB = a0.x - a1.x;
-
     function getRoots(p) {
-      var wkA = p[1] / p[0],
+      var
+        wkA = p[1] / p[0],
+        wkA2 = wkA * wkA,
+        wkA3 = wkA2 * wkA,
         wkB = p[2] / p[0],
         wkC = p[3] / p[0],
-        wkQ = (3 * wkB - Math.pow(wkA, 2)) / 9,
-        wkR = (9 * wkA * wkB - 27 * wkC - 2 * Math.pow(wkA, 3)) / 54,
-        wkD = Math.pow(wkQ, 3) + Math.pow(wkR, 2),
-        wkS, wkT, t, th, i;
+        wkQ = (3 * wkB - wkA2) / 9,
+        wkQ3 = Math.pow(wkQ, 3),
+        wkR = (9 * wkA * wkB - 27 * wkC - 2 * wkA3) / 54,
+        wkD = wkQ3 + wkR * wkR,
+        wkDq = Math.sqrt(wkD),
+        wkS, wkT, t, th, i, wk1, wk2;
 
       function sdir(x) { return x < 0 ? -1 : 1; }
       if (wkD >= 0) {
-        wkS = sdir(wkR + Math.sqrt(wkD)) * Math.pow(Math.abs(wkR + Math.sqrt(wkD)), (1 / 3));
-        wkT = sdir(wkR - Math.sqrt(wkD)) * Math.pow(Math.abs(wkR - Math.sqrt(wkD)), (1 / 3));
-        t = [
-          -wkA / 3 + (wkS + wkT),
-          -wkA / 3 - (wkS + wkT) / 2,
-          -wkA / 3 - (wkS + wkT) / 2
-        ];
+        wk1 = 1 / 3;
+        wkS = sdir(wkR + wkDq) * Math.pow(Math.abs(wkR + wkDq), wk1);
+        wkT = sdir(wkR - wkDq) * Math.pow(Math.abs(wkR - wkDq), wk1);
+        wk1 = wkS + wkT;
+        wk2 = -wkA / 3 - wk1 / 2;
+        t = [-wkA / 3 + wk1, wk2, wk2];
         if (Math.abs(Math.sqrt(3) * (wkS - wkT) / 2) !== 0) { t[1] = t[2] = -1; }
       } else {
-        th = Math.acos(wkR / Math.sqrt(-Math.pow(wkQ, 3)));
-        t = [
-          2 * Math.sqrt(-wkQ) * Math.cos(th / 3) - wkA / 3,
-          2 * Math.sqrt(-wkQ) * Math.cos((th + 2 * Math.PI) / 3) - wkA / 3,
-          2 * Math.sqrt(-wkQ) * Math.cos((th + 4 * Math.PI) / 3) - wkA / 3
-        ];
+        th = Math.acos(wkR / Math.sqrt(-wkQ3));
+        wk1 = 2 * Math.sqrt(-wkQ);
+        wk2 = wkA / 3;
+        t = [wk1 * Math.cos(th / 3) - wk2,
+          wk1 * Math.cos((th + 2 * Math.PI) / 3) - wk2,
+          wk1 * Math.cos((th + 4 * Math.PI) / 3) - wk2];
       }
 
       for (i = 0; i <= 2; i++) { if (t[i] < 0 || t[i] > 1) { t[i] = -1; } }
@@ -503,17 +498,22 @@
       ];
     }
 
-    bx = coeffs(p0.x, p1.x, p2.x, p3.x);
-    by = coeffs(p0.y, p1.y, p2.y, p3.y);
+    var
+      bx = coeffs(p0.x, p1.x, p2.x, p3.x),
+      by = coeffs(p0.y, p1.y, p2.y, p3.y),
+      wkA = a1.y - a0.y,
+      wkB = a0.x - a1.x;
+
     return getRoots([
       wkA * bx[0] + wkB * by[0],
       wkA * bx[1] + wkB * by[1],
       wkA * bx[2] + wkB * by[2],
       wkA * bx[3] + wkB * by[3] + (a0.x * (a0.y - a1.y) + a0.y * (a1.x - a0.x))
     ]).filter(function(t) {
-      var lineT = a1.x - a0.x !== 0 ?
-        ((bx[0] * t * t * t + bx[1] * t * t + bx[2] * t + bx[3]) - a0.x) / (a1.x - a0.x) :
-        ((by[0] * t * t * t + by[1] * t * t + by[2] * t + by[3]) - a0.y) / (a1.y - a0.y);
+      var t2 = t * t, t3 = t2 * t,
+        lineT = a1.x - a0.x !== 0 ?
+          ((bx[0] * t3 + bx[1] * t2 + bx[2] * t + bx[3]) - a0.x) / (a1.x - a0.x) :
+          ((by[0] * t3 + by[1] * t2 + by[2] * t + by[3]) - a0.y) / (a1.y - a0.y);
       return t >= 0 && t <= 1 && lineT >= 0 && lineT <= 1;
     });
   }
