@@ -355,6 +355,7 @@
     var lx = p0.x - p1.x, ly = p0.y - p1.y;
     return Math.sqrt(lx * lx + ly * ly);
   }
+  window.getPointsLength = getPointsLength; // [DEBUG/]
 
   function getPointOnLine(p0, p1, r) {
     var xA = p1.x - p0.x, yA = p1.y - p0.y;
@@ -364,6 +365,7 @@
       angle: Math.atan2(yA, xA) / (Math.PI / 180)
     };
   }
+  window.getPointOnLine = getPointOnLine; // [DEBUG/]
 
   function getPointOnCubic(p0, p1, p2, p3, t) {
     var
@@ -423,6 +425,7 @@
     });
     return z2 * sum;
   }
+  window.getCubicLength = getCubicLength; // [DEBUG/]
 
   function getCubicT(p0, p1, p2, p3, len) {
     var E = 0.01,
@@ -435,6 +438,7 @@
     }
     return t2;
   }
+  window.getCubicT = getCubicT; // [DEBUG/]
 
   // http://en.wikipedia.org/wiki/Cubic_function
   function getIntersections(p0, p1, p2, p3, a0, a1) {
