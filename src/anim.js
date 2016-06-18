@@ -23,44 +23,47 @@ var anim = (function() {
 
   // @EXPORT@
   anim = {
-    KEY: {
+    FUNC_KEYS: {
       'ease': [0.25, 0.1, 0.25, 1],
       'linear': [0, 0, 1, 1],
       'ease-in': [0.42, 0, 1, 1],
       'ease-out': [0, 0, 0.58, 1],
       'ease-in-out': [0.42, 0, 0.58, 1]
     },
+    BASE_FPS: 60,
 
     tasks: [],
     request: window.requestAnimationFrame ||
       window.mozRequestAnimationFrame ||
       window.webkitRequestAnimationFrame ||
       window.msRequestAnimationFrame ||
-      function(callback) { setTimeout(callback, 1000 / 60); },
+      function(callback) { setTimeout(callback, 1000 / anim.BASE_FPS); },
     cancel: window.cancelAnimationFrame ||
       window.mozCancelAnimationFrame ||
       window.webkitCancelAnimationFrame ||
       window.msCancelAnimationFrame ||
       function(requestID) { clearTimeout(requestID); },
 
+    /**
+     * @param {callback} callback - Callback that is called each frame.
+     * @param {number} duration - ms
+     * @param {number} count - Must be >0 or -1 as infinite.
+     * @param {number[]} timing - [x1, y1, x2, y2]
+     * @returns {number} - animID to remove.
+     */
     add: function(callback, duration, count, timing) {
-      console.log('======== <add>'); // [DEBUG/]
       if (!anim.tasks.some(function(task) { return task.callback === callback; })) {
-        console.log('add new'); // [DEBUG/]
         anim.tasks.push({
           callback: callback, duration: duration, count: count, timing: timing,
           start: Date.now(),
           isLinear: timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1
         });
-        console.log('task.isLinear: ' + anim.tasks[anim.tasks.length - 1].isLinear); // [DEBUG/]
       }
       anim.start();
     },
     remove: function(callback) {
-      console.log('======== <remove>'); // [DEBUG/]
       anim.tasks = anim.tasks.filter(function(task) { return task.callback !== callback; });
       if (!anim.tasks.length && anim.requestID) {
-        console.log('task empty'); // [DEBUG/]
         anim.cancel.call(window, anim.requestID);
         anim.requestID = null;
       }
@@ -83,29 +86,29 @@ var anim = (function() {
       }
 
       var now = Date.now();
-      var i = -1; // [DEBUG/]
-      console.log('======== <step>'); // [DEBUG/]
       anim.requestID = null;
 
       anim.tasks = anim.tasks.filter(function(task) {
-        var timeLen = now - task.start, tRatio;
-        console.log('task[' + (++i) + '] timeLen: ' + timeLen); // [DEBUG/]
-        if (task.count > 0) { --task.count; }
+        var timeLen = now - task.start, tRatio, loops;
 
-        if (timeLen >= task.duration && task.count === 0) {
-          console.log('task[' + i + '] finish'); // [DEBUG/]
+        if (timeLen >= task.duration && task.count <= 1) {
           task.callback(1);
           return false;
         }
         if (timeLen > task.duration) {
-          task.start += task.duration * Math.floor(timeLen / task.duration);
+          loops = Math.floor(timeLen / task.duration);
+          if (loops >= task.count) { // Must: task.count > 1
+            task.callback(1);
+            return false;
+          }
+          task.count -= loops;
+          task.start += task.duration * loops;
           timeLen = now - task.start;
         }
         tRatio = timeLen / task.duration;
         return task.callback(task.isLinear ? tRatio : getORatio(tRatio, task.timing)) !== false;
       });
 
-      console.log('anim.tasks.length: ' + anim.tasks.length); // [DEBUG/]
       if (anim.tasks.length) { anim.requestID = anim.request.call(window, anim.step); }
     }
   }
