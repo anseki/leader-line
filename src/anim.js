@@ -42,7 +42,7 @@ var anim =
      * @property {boolean} isLinear
      * @property {number[]} rates
      * @property {(number|null)} framesStart - The time when first frame ran, or `null` if it is not running.
-     * @property {number} curCount - A counter to current loop.
+     * @property {number} loopsLeft - A counter for loop.
      */
 
     /** @type {task[]} */
@@ -50,7 +50,10 @@ var anim =
     newAnimId = -1,
     requestID;
 
+  var running; // [DEBUG/]
+
   function step() {
+    running = true; // [DEBUG/]
     var now = Date.now(), next = false;
     if (requestID) {
       cancelAnim.call(window, requestID);
@@ -58,36 +61,50 @@ var anim =
     }
 
     tasks.forEach(function(task) {
-      var timeLen, tRatio, loops;
+      var timeLen, loops;
 
       if (!task.framesStart) { return; }
       timeLen = now - task.framesStart;
 
-      if (timeLen >= task.duration && task.curCount <= 1) {
+      if (timeLen >= task.duration && task.count && task.loopsLeft <= 1) {
         task.callback(1, true);
+        task.framesStart = null;
         return;
       }
       if (timeLen > task.duration) {
         loops = Math.floor(timeLen / task.duration);
-        if (loops >= task.curCount) { // Must: task.curCount > 1
+        if (task.count && loops >= task.loopsLeft) { // Here `task.loopsLeft > 1`
           task.callback(1, true);
+          task.framesStart = null;
           return;
         }
-        task.curCount -= loops;
+        task.loopsLeft -= loops;
         task.framesStart += task.duration * loops;
         timeLen = now - task.framesStart;
       }
-      tRatio = timeLen / task.duration;
-      next = task.callback(
-        task.isLinear ? tRatio : task.rates[Math.round(timeLen / MSPF)], false) !== false || next;
+
+      if (task.callback(
+          task.isLinear ? timeLen / task.duration : task.rates[Math.round(timeLen / MSPF)],
+          false) !== false) {
+        next = true;
+      } else {
+        task.framesStart = null;
+      }
     });
 
     if (next) { requestID = requestAnim.call(window, step); }
   }
 
+  // [DEBUG]
+  setInterval(function() {
+    document.body.style.backgroundColor = running ? '#f7f6cb' : '';
+    running = false;
+  }, 500);
+  // [/DEBUG]
+
   function startTask(task) {
     task.framesStart = Date.now();
-    task.curCount = task.count;
+    task.loopsLeft = task.count;
     step();
   }
 
@@ -98,13 +115,12 @@ var anim =
      * @param {frameCallback} callback - task property
      * @param {number} duration - task property
      * @param {number} count - task property
-     * @param {number[]} timing - [x1, y1, x2, y2]
+     * @param {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
      * @returns {number} - animID to remove.
      */
     add: function(callback, duration, count, timing) {
-      var animId = ++newAnimId, task,
-        isLinear = timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1,
-        rates, stepX, stepT, nextX, t, point;
+      var animId = ++newAnimId, task, isLinear, rates,
+        stepX, stepT, nextX, t, point;
 
       function getPoint(t) {
         var t2 = t * t, t3 = t2 * t, t1 = 1 - t, t12 = t1 * t1,
@@ -114,6 +130,9 @@ var anim =
           y: p1f * timing[1] + p2f * timing[3] + t3
         };
       }
+
+      if (typeof timing === 'string') { timing = FUNC_KEYS[timing]; }
+      isLinear = timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1;
 
       if (!isLinear) {
         // Generate list
@@ -179,6 +198,14 @@ var anim =
         }
         return false;
       });
+    },
+
+    validTiming: function(timing) {
+      return typeof timing === 'string' ? FUNC_KEYS[timing] :
+        Array.isArray(timing) && [0, 1, 2, 3].every(function(i) {
+          return typeof timing[i] === 'number' && timing[i] >= 0 && timing[i] <= 1;
+        }) ? [timing[0], timing[1], timing[2], timing[3]] :
+        null;
     }
   };
 })()
