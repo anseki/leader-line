@@ -39,8 +39,7 @@ var anim =
      * @property {frameCallback} callback - Callback that is called each frame.
      * @property {number} duration
      * @property {number} count - `0` as infinite.
-     * @property {boolean} isLinear
-     * @property {number[]} rates
+     * @property {number[]} frames
      * @property {(number|null)} framesStart - The time when first frame ran, or `null` if it is not running.
      * @property {number} loopsLeft - A counter for loop.
      */
@@ -83,9 +82,7 @@ var anim =
         timeLen = now - task.framesStart;
       }
 
-      if (task.callback(
-          task.isLinear ? timeLen / task.duration : task.rates[Math.round(timeLen / MSPF)],
-          false) !== false) {
+      if (task.callback(task.frames[Math.round(timeLen / MSPF)], false) !== false) {
         next = true;
       } else {
         task.framesStart = null;
@@ -119,7 +116,7 @@ var anim =
      * @returns {number} - animID to remove.
      */
     add: function(callback, duration, count, timing) {
-      var animId = ++newAnimId, task, isLinear, rates,
+      var animId = ++newAnimId, task, frames,
         stepX, stepT, nextX, t, point;
 
       function getPoint(t) {
@@ -132,33 +129,38 @@ var anim =
       }
 
       if (typeof timing === 'string') { timing = FUNC_KEYS[timing]; }
-      isLinear = timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1;
 
-      if (!isLinear) {
-        // Generate list
-        if (duration < MSPF) {
-          rates = [0, 1];
+      // Generate `frames` list
+      if (duration < MSPF) {
+        frames = [0, 1];
+      } else {
+        stepX = MSPF / duration;
+        frames = [0];
+
+        if (timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1) { // linear
+          for (nextX = stepX; nextX <= 1; nextX += stepX) {
+            frames.push(nextX); // x === y
+          }
+
         } else {
-          stepX = MSPF / duration;
-          stepT = stepX / 10; // precision
+          stepT = stepX / 10; // precision for `t`
           nextX = stepX;
-          rates = [0];
           for (t = stepT; t <= 1; t += stepT) {
             point = getPoint(t);
             if (point.x >= nextX) {
-              rates.push(point.y);
+              frames.push(point.y);
               nextX += stepX;
             }
           }
-          rates.push(1); // for tolerance
         }
+
+        frames.push(1); // for tolerance
       }
 
       task = {
         animId: animId,
         callback: callback, duration: duration, count: count, // task properties
-        isLinear: isLinear,
-        rates: rates
+        frames: frames
       };
       tasks.push(task);
       startTask(task);
