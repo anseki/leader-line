@@ -1,58 +1,109 @@
 /* exported anim */
 
-var anim = (function() {
+var anim =
+// @EXPORT@
+(function() {
   'use strict';
 
-  var anim;
-
-  /**
-   * @callback callback
-   * @param {number} rate - Progress [0, 1].
-   * @param {boolean|null} finish
-   */
-
-  /**
-   * @typedef {Object} task
-   * @property {callback} callback
-   * @property {number} duration
-   * @property {number} count
-   * @property {boolean} isLinear
-   * @property {number[]} rates
-   * @property {number} start
-   */
-
-  // @EXPORT@
-  anim = {
-    FUNC_KEYS: {
+  var
+    FUNC_KEYS = {
       'ease': [0.25, 0.1, 0.25, 1],
       'linear': [0, 0, 1, 1],
       'ease-in': [0.42, 0, 1, 1],
       'ease-out': [0, 0, 0.58, 1],
       'ease-in-out': [0.42, 0, 0.58, 1]
     },
-    MSPF: 1000 / 60, // ms/frame (FPS: 60)
+    MSPF = 1000 / 60, // ms/frame (FPS: 60)
 
-    tasks: [],
-    request: window.requestAnimationFrame ||
+    requestAnim = window.requestAnimationFrame ||
       window.mozRequestAnimationFrame ||
       window.webkitRequestAnimationFrame ||
       window.msRequestAnimationFrame ||
-      function(callback) { setTimeout(callback, anim.MSPF); },
-    cancel: window.cancelAnimationFrame ||
+      function(callback) { setTimeout(callback, MSPF); },
+
+    cancelAnim = window.cancelAnimationFrame ||
       window.mozCancelAnimationFrame ||
       window.webkitCancelAnimationFrame ||
       window.msCancelAnimationFrame ||
       function(requestID) { clearTimeout(requestID); },
 
     /**
-     * @param {callback} callback - Callback that is called each frame.
-     * @param {number} duration - ms
-     * @param {number} count - Must be >0 or -1 as infinite.
+     * @callback frameCallback
+     * @param {number} rate - Progress [0, 1].
+     * @param {boolean} finish
+     */
+
+    /**
+     * @typedef {Object} task
+     * @property {number} animId
+     * @property {frameCallback} callback - Callback that is called each frame.
+     * @property {number} duration
+     * @property {number} count - `0` as infinite.
+     * @property {boolean} isLinear
+     * @property {number[]} rates
+     * @property {(number|null)} framesStart - The time when first frame ran, or `null` if it is not running.
+     * @property {number} curCount - A counter to current loop.
+     */
+
+    /** @type {task[]} */
+    tasks = [],
+    newAnimId = -1,
+    requestID;
+
+  function step() {
+    var now = Date.now(), next = false;
+    if (requestID) {
+      cancelAnim.call(window, requestID);
+      requestID = null;
+    }
+
+    tasks.forEach(function(task) {
+      var timeLen, tRatio, loops;
+
+      if (!task.framesStart) { return; }
+      timeLen = now - task.framesStart;
+
+      if (timeLen >= task.duration && task.curCount <= 1) {
+        task.callback(1, true);
+        return;
+      }
+      if (timeLen > task.duration) {
+        loops = Math.floor(timeLen / task.duration);
+        if (loops >= task.curCount) { // Must: task.curCount > 1
+          task.callback(1, true);
+          return;
+        }
+        task.curCount -= loops;
+        task.framesStart += task.duration * loops;
+        timeLen = now - task.framesStart;
+      }
+      tRatio = timeLen / task.duration;
+      next = task.callback(
+        task.isLinear ? tRatio : task.rates[Math.round(timeLen / MSPF)], false) !== false || next;
+    });
+
+    if (next) { requestID = requestAnim.call(window, step); }
+  }
+
+  function startTask(task) {
+    task.framesStart = Date.now();
+    task.curCount = task.count;
+    step();
+  }
+
+  window.tasks = tasks; // [DEBUG/]
+
+  return {
+    /**
+     * @param {frameCallback} callback - task property
+     * @param {number} duration - task property
+     * @param {number} count - task property
      * @param {number[]} timing - [x1, y1, x2, y2]
      * @returns {number} - animID to remove.
      */
     add: function(callback, duration, count, timing) {
-      var isLinear = timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1,
+      var animId = ++newAnimId, task,
+        isLinear = timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1,
         rates, stepX, stepT, nextX, t, point;
 
       function getPoint(t) {
@@ -64,92 +115,72 @@ var anim = (function() {
         };
       }
 
-      if (!anim.tasks.some(function(task) { return task.callback === callback; })) {
-
-        if (!isLinear) {
-          // Generate list
-          if (duration < anim.MSPF) {
-            rates = [0, 1];
-          } else {
-            stepX = anim.MSPF / duration;
-            stepT = stepX / 10; // precision
-            nextX = stepX;
-            rates = [0];
-            for (t = stepT; t <= 1; t += stepT) {
-              point = getPoint(t);
-              if (point.x >= nextX) {
-                rates.push(point.y);
-                nextX += stepX;
-              }
+      if (!isLinear) {
+        // Generate list
+        if (duration < MSPF) {
+          rates = [0, 1];
+        } else {
+          stepX = MSPF / duration;
+          stepT = stepX / 10; // precision
+          nextX = stepX;
+          rates = [0];
+          for (t = stepT; t <= 1; t += stepT) {
+            point = getPoint(t);
+            if (point.x >= nextX) {
+              rates.push(point.y);
+              nextX += stepX;
             }
-            rates.push(1); // for tolerance
           }
+          rates.push(1); // for tolerance
         }
+      }
 
-        anim.tasks.push({
-          callback: callback, duration: duration, count: count,
-          isLinear: isLinear,
-          rates: rates,
-          start: Date.now()
-        });
-      }
-      anim.start();
-    },
-    remove: function(callback) {
-      anim.tasks = anim.tasks.filter(function(task) { return task.callback !== callback; });
-      if (!anim.tasks.length && anim.requestID) {
-        anim.cancel.call(window, anim.requestID);
-        anim.requestID = null;
-      }
+      task = {
+        animId: animId,
+        callback: callback, duration: duration, count: count, // task properties
+        isLinear: isLinear,
+        rates: rates
+      };
+      tasks.push(task);
+      startTask(task);
+
+      return animId;
     },
 
-    start: function() {
-      if (!anim.requestID) {
-        anim.requestID = anim.request.call(window, anim.step);
+    remove: function(animId) {
+      var iRemove;
+      if (tasks.some(function(task, i) {
+        if (task.animId === animId) {
+          iRemove = i;
+          task.framesStart = null; // for `tasks.forEach` that is running now.
+          return true;
+        }
+        return false;
+      })) {
+        tasks.splice(iRemove, 1);
       }
     },
-    step: function() {
 
-      function getORatio(rates, timeLen) {
-        return rates[Math.round(timeLen / anim.MSPF)];
-      }
-
-      var now = Date.now();
-      anim.requestID = null;
-
-      anim.tasks = anim.tasks.filter(function(task) {
-        var timeLen = now - task.start, tRatio, loops;
-
-        if (timeLen >= task.duration && task.count <= 1) {
-          task.callback(1, true);
-          return false;
+    start: function(animId) {
+      tasks.some(function(task) {
+        if (task.animId === animId) {
+          startTask(task);
+          return true;
         }
-        if (timeLen > task.duration) {
-          loops = Math.floor(timeLen / task.duration);
-          if (loops >= task.count) { // Must: task.count > 1
-            task.callback(1, true);
-            return false;
-          }
-          task.count -= loops;
-          task.start += task.duration * loops;
-          timeLen = now - task.start;
-        }
-        tRatio = timeLen / task.duration;
-        // return task.callback(task.isLinear ? tRatio : getORatio(tRatio, task.timing)) !== false;
-
-        // debug
-        window.testTimeS();
-        var oRatio = getORatio(task.rates, timeLen);
-        window.testTimeE();
-        return task.callback(oRatio, false, tRatio) !== false;
-        // /debug
+        return false;
       });
+    },
 
-      if (anim.tasks.length) { anim.requestID = anim.request.call(window, anim.step); }
+    stop: function(animId) {
+      tasks.some(function(task) {
+        if (task.animId === animId) {
+          task.framesStart = null;
+          return true;
+        }
+        return false;
+      });
     }
-  }
-  // @/EXPORT@
-  ;
-
-  return anim;
-})();
+  };
+})()
+// @/EXPORT@
+;
