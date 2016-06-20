@@ -29,8 +29,10 @@ var anim =
 
     /**
      * @callback frameCallback
-     * @param {number} rate - Progress [0, 1].
+     * @param {} value - 
      * @param {boolean} finish
+     * @param {number} timeRatio - Progress [0, 1].
+     * @param {number} outputRatio - Progress [0, 1].
      */
 
     /**
@@ -60,20 +62,20 @@ var anim =
     }
 
     tasks.forEach(function(task) {
-      var timeLen, loops;
+      var timeLen, loops, frame;
 
       if (!task.framesStart) { return; }
       timeLen = now - task.framesStart;
 
       if (timeLen >= task.duration && task.count && task.loopsLeft <= 1) {
-        task.callback(1, true);
+        task.callback('', true, 1, 1);
         task.framesStart = null;
         return;
       }
       if (timeLen > task.duration) {
         loops = Math.floor(timeLen / task.duration);
         if (task.count && loops >= task.loopsLeft) { // Here `task.loopsLeft > 1`
-          task.callback(1, true);
+          task.callback('', true, 1, 1);
           task.framesStart = null;
           return;
         }
@@ -82,7 +84,8 @@ var anim =
         timeLen = now - task.framesStart;
       }
 
-      if (task.callback(task.frames[Math.round(timeLen / MSPF)], false) !== false) {
+      frame = task.frames[Math.round(timeLen / MSPF)];
+      if (task.callback('', false, timeLen / task.duration, frame.oRatio) !== false) {
         next = true;
       } else {
         task.framesStart = null;
@@ -93,10 +96,17 @@ var anim =
   }
 
   // [DEBUG]
-  setInterval(function() {
-    document.body.style.backgroundColor = running ? '#f7f6cb' : '';
-    running = false;
-  }, 500);
+  window.anim_lastRunning = false;
+  window.anim_watchStart = function() {
+    window.anim_watchTimer = setInterval(function() {
+      if (running !== window.anim_lastRunning) {
+        document.body.style.backgroundColor = running ? '#f7f6cb' : '';
+        window.anim_lastRunning = running;
+      }
+      running = false;
+    }, 200);
+  };
+  window.anim_watchStop = function() { clearInterval(window.anim_watchTimer); };
   // [/DEBUG]
 
   function startTask(task) {
@@ -132,14 +142,14 @@ var anim =
 
       // Generate `frames` list
       if (duration < MSPF) {
-        frames = [0, 1];
+        frames = [{oRatio: 0}, {oRatio: 1}];
       } else {
         stepX = MSPF / duration;
-        frames = [0];
+        frames = [{oRatio: 0}];
 
         if (timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1) { // linear
           for (nextX = stepX; nextX <= 1; nextX += stepX) {
-            frames.push(nextX); // x === y
+            frames.push({oRatio: nextX}); // x === y
           }
 
         } else {
@@ -148,13 +158,13 @@ var anim =
           for (t = stepT; t <= 1; t += stepT) {
             point = getPoint(t);
             if (point.x >= nextX) {
-              frames.push(point.y);
+              frames.push({oRatio: point.y});
               nextX += stepX;
             }
           }
         }
 
-        frames.push(1); // for tolerance
+        frames.push({oRatio: 1}); // for tolerance
       }
 
       task = {
