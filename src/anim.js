@@ -13,7 +13,7 @@ var anim =
       'ease-out': [0, 0, 0.58, 1],
       'ease-in-out': [0.42, 0, 0.58, 1]
     },
-    MSPF = 1000 / 60, // ms/frame (FPS: 60)
+    MSPF = 1000 / 60 / 2, // precision ms/frame (FPS: 60)
 
     requestAnim = window.requestAnimationFrame ||
       window.mozRequestAnimationFrame ||
@@ -53,6 +53,9 @@ var anim =
 
   var running; // [DEBUG/]
 
+  window.addReqFrameAnim2 = function(cb) { requestAnim = cb; }; // [DEBUG/]
+  window.delReqFrameAnim2 = function(cb) { cancelAnim = cb; }; // [DEBUG/]
+
   function step() {
     running = true; // [DEBUG/]
     var now = Date.now(), next = false;
@@ -85,7 +88,11 @@ var anim =
       }
 
       frame = task.frames[Math.round(timeLen / MSPF)];
-      if (task.callback('', false, timeLen / task.duration, frame.oRatio) !== false) {
+      if (task.callback('', false, timeLen / task.duration, frame.oRatio
+          // [DEBUG]
+          , timeLen
+          // [/DEBUG]
+          ) !== false) {
         next = true;
       } else {
         task.framesStart = null;
