@@ -44,6 +44,7 @@ var anim =
      * @property {{value, timeRatio: number, outputRatio: number}[]} frames
      * @property {(number|null)} framesStart - The time when first frame ran, or `null` if it is not running.
      * @property {number} loopsLeft - A counter for loop.
+     * @property {boolean} reverse
      */
 
     /** @type {task[]} */
@@ -51,10 +52,11 @@ var anim =
     newAnimId = -1,
     requestID;
 
-  var running; // [DEBUG/]
-
   window.addReqFrameAnim2 = function(cb) { requestAnim = cb; }; // [DEBUG/]
   window.delReqFrameAnim2 = function(cb) { cancelAnim = cb; }; // [DEBUG/]
+  window.tasks = tasks; // [DEBUG/]
+
+  var running; // [DEBUG/]
 
   function step() {
     running = true; // [DEBUG/]
@@ -71,23 +73,27 @@ var anim =
       timeLen = now - task.framesStart;
 
       if (timeLen >= task.duration && task.count && task.loopsLeft <= 1) {
-        frame = task.frames[task.frames.length - 1];
-        task.frameCallback(frame.value, true, 1, 1);
+        frame = task.frames[task.reverse ? 0 : task.frames.length - 1];
+        task.frameCallback(frame.value, true, frame.timeRatio, frame.outputRatio);
         task.framesStart = null;
         return;
       }
       if (timeLen > task.duration) {
         loops = Math.floor(timeLen / task.duration);
-        if (task.count && loops >= task.loopsLeft) { // Here `task.loopsLeft > 1`
-          task.frameCallback(frame.value, true, 1, 1);
-          task.framesStart = null;
-          return;
+        if (task.count) {
+          if (loops >= task.loopsLeft) { // Here `task.loopsLeft > 1`
+            frame = task.frames[task.reverse ? 0 : task.frames.length - 1];
+            task.frameCallback(frame.value, true, frame.timeRatio, frame.outputRatio);
+            task.framesStart = null;
+            return;
+          }
+          task.loopsLeft -= loops;
         }
-        task.loopsLeft -= loops;
         task.framesStart += task.duration * loops;
         timeLen = now - task.framesStart;
       }
 
+      if (task.reverse) { timeLen = task.duration - timeLen; }
       frame = task.frames[Math.round(timeLen / MSPF)];
       if (task.frameCallback(frame.value, false, frame.timeRatio, frame.outputRatio
           // [DEBUG]
@@ -108,7 +114,7 @@ var anim =
   window.anim_watchStart = function() {
     window.anim_watchTimer = setInterval(function() {
       if (running !== window.anim_lastRunning) {
-        document.body.style.backgroundColor = running ? '#f7f6cb' : '';
+        document.body.style.backgroundColor = running ? '#f7f6cb' : '#fff'; // not `''` for IE bug
         window.anim_lastRunning = running;
       }
       running = false;
@@ -123,8 +129,6 @@ var anim =
     step();
   }
 
-  window.tasks = tasks; // [DEBUG/]
-
   return {
     /**
      * Callback that makes value that is required by each frame.
@@ -134,14 +138,15 @@ var anim =
      */
 
     /**
-     * @param {valueCallback} valueCallback - valueCallback
+     * @param {(valueCallback|null)} valueCallback - valueCallback
      * @param {frameCallback} frameCallback - task property
      * @param {number} duration - task property
      * @param {number} count - task property
      * @param {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
+     * @param {boolean} [reverse] - running property
      * @returns {number} - animID to remove.
      */
-    add: function(valueCallback, frameCallback, duration, count, timing) {
+    add: function(valueCallback, frameCallback, duration, count, timing, reverse) {
       var animId = ++newAnimId, task, frames,
         stepX, stepT, nextX, t, point;
 
@@ -160,6 +165,7 @@ var anim =
       }
 
       if (typeof timing === 'string') { timing = FUNC_KEYS[timing]; }
+      valueCallback = valueCallback || function() {};
 
       // Generate `frames` list
       if (duration < MSPF) {
@@ -191,7 +197,8 @@ var anim =
       task = {
         animId: animId,
         frameCallback: frameCallback, duration: duration, count: count, // task properties
-        frames: frames
+        frames: frames,
+        reverse: !!reverse
       };
       tasks.push(task);
       startTask(task);
@@ -213,9 +220,10 @@ var anim =
       }
     },
 
-    start: function(animId) {
+    start: function(animId, reverse) {
       tasks.some(function(task) {
         if (task.animId === animId) {
+          task.reverse = !!reverse;
           startTask(task);
           return true;
         }
