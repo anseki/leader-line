@@ -136,7 +136,9 @@
     ],
 
     /**
-     * @typedef {Object} LINE_EFFECT_CONF
+     * All `effectParams.*` must be primitive type.
+     * @typedef {Object} EFFECT_CONF
+     * @property {Function} validParams - (props, effectParams)
      * @property {Function} init - (props, effectParams)
      * @property {Function} remove - (props)
      * @property {Function} onSetLine - (props, setProps)
@@ -145,34 +147,35 @@
      * @property {Function} onUpdatePath - (props, pathList)
      * @property {Function} onUpdateAnchorBBox - (props, i)
      */
-    LINE_EFFECTS = {
-      dash: { // effectParams {{dashLen, gapLen}}
+    EFFECTS = {
+      dash: { // effectParams: dashLen, gapLen
+        validParams: function(props, effectParams) {
+          return ['dashLen', 'gapLen'].reduce(function(params, param) {
+            if (typeof effectParams[param] === 'number' && effectParams[param] > 0) {
+              params[param] = effectParams[param];
+            }
+            return params;
+          }, {});
+        },
         init: function(props, effectParams) {
-          var dashLen, gapLen;
-          if (typeof effectParams.dashLen === 'number' && effectParams.dashLen > 0) {
-            dashLen = props.effectParams.dashLen = effectParams.dashLen;
-          } else {
-            dashLen = LINE_EFFECTS.dash.getDashLen(props);
-          }
-          if (typeof effectParams.gapLen === 'number' && effectParams.gapLen > 0) {
-            gapLen = props.effectParams.gapLen = effectParams.gapLen;
-          } else {
-            gapLen = LINE_EFFECTS.dash.getGapLen(props);
-          }
-          props.lineFace.style.strokeDasharray = dashLen + ',' + gapLen;
+          window.traceLog.push('<EFFECTS.dash.init>'); // [DEBUG/]
+          props.lineFace.style.strokeDasharray =
+            (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+            (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
           props.lineFace.style.strokeDashoffset = '0';
         },
         remove: function(props) {
+          window.traceLog.push('<EFFECTS.dash.remove>'); // [DEBUG/]
           props.lineFace.style.strokeDasharray = 'none';
           props.lineFace.style.strokeDashoffset = '0';
         },
         onSetLine: function(props, setProps) {
-          window.traceLog.push('<LINE_EFFECTS.dash.onSetLine>'); // [DEBUG/]
+          window.traceLog.push('<EFFECTS.dash.onSetLine>'); // [DEBUG/]
           if ((!setProps || setProps.indexOf('lineSize') > -1) &&
               (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
             props.lineFace.style.strokeDasharray =
-              (props.effectParams.dashLen || LINE_EFFECTS.dash.getDashLen(props)) + ',' +
-              (props.effectParams.gapLen || LINE_EFFECTS.dash.getGapLen(props));
+              (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+              (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
           }
         },
         getDashLen: function(props) { return props.options.lineSize * 2; },
@@ -442,7 +445,8 @@
 
   /**
    * Setup `baseWindow`, `bodyOffset`, `pathList`,
-   *    `positionVals`, `pathVals`, 'viewBBoxVals', 'maskVals', 'anchorMaskVals', SVG elements.
+   *    `positionVals`, `pathVals`, `viewBBoxVals`, `maskVals`, `anchorMaskVals`,
+   *    `effect`, `effectParams`, SVG elements.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -655,6 +659,8 @@
     props.viewBBoxVals.plugBCircleSE = [0, 0];
     props.viewBBoxVals.pathEdge = {};
     props.pathList = {baseVal: [], animVal: []};
+    props.effect = null;
+    props.effectParams = {};
 
     if (IS_GECKO) {
       forceReflow(props.lineFace);
@@ -945,7 +951,29 @@
     });
   }
 
+  /**
+   * Apply all of `effect`.
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @returns {void}
+   */
+  function setEffect(props) {
+    window.traceLog.push('<setEffect>'); // [DEBUG/]
+    var options = props.options,
+      effectConf, effectParams;
 
+    if (options.effect) {
+      effectConf = EFFECTS[options.effect[0]];
+      effectParams = options.effect[1];
+      if (effectConf !== props.effect) { props.effect.remove(props); }
+      effectConf.init(props, effectParams);
+      props.effect = effectConf;
+      props.effectParams = effectParams;
+    } else if (props.effect) {
+      props.effect.remove(props);
+      props.effect = null;
+      props.effectParams = {};
+    }
+  }
 
   /**
    * @param {Object} values - Saved values such as `props.positionVals`.
@@ -1232,6 +1260,22 @@
           enumerable: true
         });
       });
+    // Setup option accessor methods (*effect) e.g. ['startPlugEffect', 'plugEffectSE', 0]
+    [['effect', 'effect']]
+      .forEach(function(conf) {
+        var name = conf[0], optionName = conf[1], i = conf[2];
+        Object.defineProperty(that, name, {
+          get: function() {
+            var value = // Don't use closure.
+              i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
+              optionName ? insProps[that._id].options[optionName] :
+              insProps[that._id].options[name];
+            return value ? [value[0], shallowCopy(value[1])] : void 0;
+          },
+          set: createSetter(name),
+          enumerable: true
+        });
+      });
   }
 
   /**
@@ -1261,7 +1305,7 @@
     var props = insProps[this._id], options = props.options,
       newWindow, currentValue,
       needsWindow, needsLine, needsPlugSE = [null, null],
-      needsLineOutline, needsPlugOutlineSE = [null, null], needsPosition;
+      needsLineOutline, needsPlugOutlineSE = [null, null], needsEffect, needsPosition;
 
     function getInternal(name, optionName, index) {
       var internal = {};
@@ -1357,7 +1401,7 @@
         (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
       needsLine = needsPlugSE[0] = needsPlugSE[1] =
-        needsLineOutline = needsPlugOutlineSE[0] = needsPlugOutlineSE[1] = true;
+        needsLineOutline = needsPlugOutlineSE[0] = needsPlugOutlineSE[1] = needsEffect = true;
     }
 
     needsPosition = setValidId('path', PATH_KEY_2_ID) || needsPosition;
@@ -1949,24 +1993,6 @@
         }
       }
     });
-
-    return this;
-  };
-
-  LeaderLine.prototype.effect = function(newEffect, effectParams) {
-
-    window.traceLog.push('<effect>'); // [DEBUG/]
-    var props = insProps[this._id];
-    if (!newEffect) {
-      if (props.effect) {
-        props.effect.remove(props);
-        props.effect = null;
-      }
-    } else if (LINE_EFFECTS[newEffect + '']) {
-      props.effect = LINE_EFFECTS[newEffect + ''];
-      props.effectParams = {};
-      props.effect.init(props, effectParams || {});
-    }
 
     return this;
   };
