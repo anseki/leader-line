@@ -136,8 +136,8 @@
     ],
 
     /**
-     * @typedef {Object} EFFECT_CONF
-     * @property {Function} init - (props, effectOptions)
+     * @typedef {Object} LINE_EFFECT_CONF
+     * @property {Function} init - (props, effectParams)
      * @property {Function} remove - (props)
      * @property {Function} onSetLine - (props, setProps)
      * @property {Function} onSetPlug - (props, setPropsSE)
@@ -145,19 +145,19 @@
      * @property {Function} onUpdatePath - (props, pathList)
      * @property {Function} onUpdateAnchorBBox - (props, i)
      */
-    EFFECTS = {
-      dash: { // effectOptions {{dashLen, gapLen}}
-        init: function(props, effectOptions) {
+    LINE_EFFECTS = {
+      dash: { // effectParams {{dashLen, gapLen}}
+        init: function(props, effectParams) {
           var dashLen, gapLen;
-          if (typeof effectOptions.dashLen === 'number' && effectOptions.dashLen > 0) {
-            dashLen = props.effectOptions.dashLen = effectOptions.dashLen;
+          if (typeof effectParams.dashLen === 'number' && effectParams.dashLen > 0) {
+            dashLen = props.effectParams.dashLen = effectParams.dashLen;
           } else {
-            dashLen = EFFECTS.dash.getDashLen(props);
+            dashLen = LINE_EFFECTS.dash.getDashLen(props);
           }
-          if (typeof effectOptions.gapLen === 'number' && effectOptions.gapLen > 0) {
-            gapLen = props.effectOptions.gapLen = effectOptions.gapLen;
+          if (typeof effectParams.gapLen === 'number' && effectParams.gapLen > 0) {
+            gapLen = props.effectParams.gapLen = effectParams.gapLen;
           } else {
-            gapLen = EFFECTS.dash.getGapLen(props);
+            gapLen = LINE_EFFECTS.dash.getGapLen(props);
           }
           props.lineFace.style.strokeDasharray = dashLen + ',' + gapLen;
           props.lineFace.style.strokeDashoffset = '0';
@@ -167,12 +167,12 @@
           props.lineFace.style.strokeDashoffset = '0';
         },
         onSetLine: function(props, setProps) {
-          window.traceLog.push('<EFFECTS.dash.onSetLine>'); // [DEBUG/]
+          window.traceLog.push('<LINE_EFFECTS.dash.onSetLine>'); // [DEBUG/]
           if ((!setProps || setProps.indexOf('lineSize') > -1) &&
-              (!props.effectOptions.dashLen || !props.effectOptions.gapLen)) {
+              (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
             props.lineFace.style.strokeDasharray =
-              (props.effectOptions.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-              (props.effectOptions.gapLen || EFFECTS.dash.getGapLen(props));
+              (props.effectParams.dashLen || LINE_EFFECTS.dash.getDashLen(props)) + ',' +
+              (props.effectParams.gapLen || LINE_EFFECTS.dash.getGapLen(props));
           }
         },
         getDashLen: function(props) { return props.options.lineSize * 2; },
@@ -944,6 +944,8 @@
       }
     });
   }
+
+
 
   /**
    * @param {Object} values - Saved values such as `props.positionVals`.
@@ -1951,7 +1953,8 @@
     return this;
   };
 
-  LeaderLine.prototype.effect = function(newEffect, effectOptions) {
+  LeaderLine.prototype.effect = function(newEffect, effectParams) {
+
     window.traceLog.push('<effect>'); // [DEBUG/]
     var props = insProps[this._id];
     if (!newEffect) {
@@ -1959,10 +1962,10 @@
         props.effect.remove(props);
         props.effect = null;
       }
-    } else if (EFFECTS[newEffect + '']) {
-      props.effect = EFFECTS[newEffect + ''];
-      props.effectOptions = {};
-      props.effect.init(props, effectOptions || {});
+    } else if (LINE_EFFECTS[newEffect + '']) {
+      props.effect = LINE_EFFECTS[newEffect + ''];
+      props.effectParams = {};
+      props.effect.init(props, effectParams || {});
     }
 
     return this;
