@@ -29,7 +29,7 @@ var anim =
 
     /**
      * @callback frameCallback
-     * @param {} value - 
+     * @param {} value - A value that was made by `valueCallback`.
      * @param {boolean} finish
      * @param {number} timeRatio - Progress [0, 1].
      * @param {number} outputRatio - Progress [0, 1].
@@ -38,10 +38,10 @@ var anim =
     /**
      * @typedef {Object} task
      * @property {number} animId
-     * @property {frameCallback} callback - Callback that is called each frame.
+     * @property {frameCallback} frameCallback - Callback that is called each frame.
      * @property {number} duration
      * @property {number} count - `0` as infinite.
-     * @property {number[]} frames
+     * @property {{value, timeRatio: number, outputRatio: number}[]} frames
      * @property {(number|null)} framesStart - The time when first frame ran, or `null` if it is not running.
      * @property {number} loopsLeft - A counter for loop.
      */
@@ -71,14 +71,15 @@ var anim =
       timeLen = now - task.framesStart;
 
       if (timeLen >= task.duration && task.count && task.loopsLeft <= 1) {
-        task.callback('', true, 1, 1);
+        frame = task.frames[task.frames.length - 1];
+        task.frameCallback(frame.value, true, 1, 1);
         task.framesStart = null;
         return;
       }
       if (timeLen > task.duration) {
         loops = Math.floor(timeLen / task.duration);
         if (task.count && loops >= task.loopsLeft) { // Here `task.loopsLeft > 1`
-          task.callback('', true, 1, 1);
+          task.frameCallback(frame.value, true, 1, 1);
           task.framesStart = null;
           return;
         }
@@ -88,7 +89,7 @@ var anim =
       }
 
       frame = task.frames[Math.round(timeLen / MSPF)];
-      if (task.callback('', false, timeLen / task.duration, frame.oRatio
+      if (task.frameCallback(frame.value, false, frame.timeRatio, frame.outputRatio
           // [DEBUG]
           , timeLen
           // [/DEBUG]
@@ -126,13 +127,21 @@ var anim =
 
   return {
     /**
-     * @param {frameCallback} callback - task property
+     * Callback that makes value that is required by each frame.
+     * @callback valueCallback
+     * @param {number} outputRatio - Progress [0, 1].
+     * @returns {}
+     */
+
+    /**
+     * @param {valueCallback} valueCallback - valueCallback
+     * @param {frameCallback} frameCallback - task property
      * @param {number} duration - task property
      * @param {number} count - task property
      * @param {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
      * @returns {number} - animID to remove.
      */
-    add: function(callback, duration, count, timing) {
+    add: function(valueCallback, frameCallback, duration, count, timing) {
       var animId = ++newAnimId, task, frames,
         stepX, stepT, nextX, t, point;
 
@@ -145,18 +154,23 @@ var anim =
         };
       }
 
+      function newFrame(timeRatio, outputRatio) {
+        return {value: valueCallback(outputRatio),
+          timeRatio: timeRatio, outputRatio: outputRatio};
+      }
+
       if (typeof timing === 'string') { timing = FUNC_KEYS[timing]; }
 
       // Generate `frames` list
       if (duration < MSPF) {
-        frames = [{oRatio: 0}, {oRatio: 1}];
+        frames = [newFrame(0, 0), newFrame(1, 1)];
       } else {
         stepX = MSPF / duration;
-        frames = [{oRatio: 0}];
+        frames = [newFrame(0, 0)];
 
         if (timing[0] === 0 && timing[1] === 0 && timing[2] === 1 && timing[3] === 1) { // linear
           for (nextX = stepX; nextX <= 1; nextX += stepX) {
-            frames.push({oRatio: nextX}); // x === y
+            frames.push(newFrame(nextX, nextX)); // x === y
           }
 
         } else {
@@ -165,18 +179,18 @@ var anim =
           for (t = stepT; t <= 1; t += stepT) {
             point = getPoint(t);
             if (point.x >= nextX) {
-              frames.push({oRatio: point.y});
+              frames.push(newFrame(point.x, point.y));
               nextX += stepX;
             }
           }
         }
 
-        frames.push({oRatio: 1}); // for tolerance
+        frames.push(newFrame(1, 1)); // for tolerance
       }
 
       task = {
         animId: animId,
-        callback: callback, duration: duration, count: count, // task properties
+        frameCallback: frameCallback, duration: duration, count: count, // task properties
         frames: frames
       };
       tasks.push(task);
