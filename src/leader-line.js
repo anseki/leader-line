@@ -146,7 +146,7 @@
      * @property {Function} onUpdatePath - (props, pathList)
      * @property {Function} onUpdateAnchorBBox - (props, i)
      */
-    EFFECTS = {
+    EFFECTS =  {
       dash: { // effectParams: dashLen, gapLen
         validParams: function(props, effectParams) {
           return ['dashLen', 'gapLen'].reduce(function(params, param) {
@@ -201,9 +201,25 @@
     insProps = {}, insId = 0, svg2Supported,
 
     /* [DEBUG/]
-    pathDataPolyfill = @INCLUDE[code:pathDataPolyfill]@;
+    anim = @INCLUDE[code:anim]@,
     [DEBUG/] */
-    pathDataPolyfill = window.pathDataPolyfill; // [DEBUG/]
+    anim = window.anim, // [DEBUG/]
+    /* [DEBUG/]
+    pathDataPolyfill = @INCLUDE[code:pathDataPolyfill]@,
+    [DEBUG/] */
+    pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
+
+    isObject = (function() {
+      var toString = {}.toString, fnToString = {}.hasOwnProperty.toString,
+        objFnString = fnToString.call(Object);
+      return function(obj) {
+        var proto, cstrtr;
+        return obj && toString.call(obj) === '[object Object]' &&
+          (!(proto = Object.getPrototypeOf(obj)) ||
+            (cstrtr = proto.hasOwnProperty('constructor') && proto.constructor) &&
+            typeof cstrtr === 'function' && fnToString.call(cstrtr) === objFnString);
+      };
+    })();
 
   // [DEBUG]
   window.insProps = insProps;
@@ -217,6 +233,20 @@
       // It has to be removed first for Blink.
       parent.insertBefore(parent.removeChild(target), next);
     }, 0);
+  }
+
+  function hasChanged(a, b) {
+    var typeA;
+    return typeof a !== typeof b ||
+      (typeA = isObject(a) ? 'obj' : Array.isArray(a) ? 'array' : '') !==
+        (isObject(b) ? 'obj' : Array.isArray(b) ? 'array' : '') ||
+      (
+        typeA === 'obj' ?
+          Object.keys(a).some(function(prop) { return hasChanged(a[prop], b[prop]); }) :
+        typeA === 'array' ?
+          a.length !== b.length || a.some(function(i) { return hasChanged(a[i], b[i]); }) :
+        a !== b
+      );
   }
 
   /**
@@ -955,7 +985,7 @@
    * @param {props} props - `props` of `LeaderLine` instance.
    * @returns {void}
    */
-  function setEffect(props) {
+  function setEffect(props) { 
     window.traceLog.push('<setEffect>'); // [DEBUG/]
     var options = props.options,
       effectConf, effectParams;
@@ -1178,16 +1208,11 @@
     }
 
     function copyTree(obj) {
-      var proto, cstrtr, fnToString = {}.hasOwnProperty.toString;
       return !obj ? obj :
-        ({}.toString).call(obj) === '[object Object]' &&
-          (!(proto = Object.getPrototypeOf(obj)) ||
-            (cstrtr = proto.hasOwnProperty('constructor') && proto.constructor) &&
-            typeof cstrtr === 'function' && fnToString.call(cstrtr) === fnToString.call(Object)) ?
-          Object.keys(obj).reduce(function(copyObj, key) {
-            copyObj[key] = copyTree(obj[key]);
-            return copyObj;
-          }, {}) :
+        isObject(obj) ? Object.keys(obj).reduce(function(copyObj, key) {
+          copyObj[key] = copyTree(obj[key]);
+          return copyObj;
+        }, {}) :
         Array.isArray(obj) ? obj.map(copyTree) : obj;
     }
 
@@ -1264,7 +1289,7 @@
         });
       });
     // Setup option accessor methods (*effect) e.g. ['startPlugEffect', 'plugEffectSE', 0]
-    [['effect', 'effect']]
+    [['effect']]
       .forEach(function(conf) {
         var name = conf[0], optionName = conf[1], i = conf[2];
         Object.defineProperty(that, name, {
@@ -1522,6 +1547,32 @@
         }
       }
     });
+
+    (function() {
+      var effectName, effectParams;
+      if (newOptions.hasOwnProperty('effect')) {
+        if (newOptions.effect) {
+          if (typeof newOptions.effect === 'string') {
+            effectName = newOptions.effect;
+            effectParams = {};
+          } else if (Array.isArray(newOptions.effect) && typeof newOptions.effect[0] === 'string') {
+            effectName = newOptions.effect[0];
+            effectParams = newOptions.effect[1] || {};
+          }
+          if (EFFECTS[effectName]) {
+            effectParams = EFFECTS[effectName].validParams(props, effectParams);
+            if (!options.effect || effectName !== options.effect[0] ||
+                hasChanged(options.effect[1], effectParams)) {
+              options.effect = [effectName, effectParams];
+              needsEffect = true;
+            }
+          }
+        } else {
+          options.effect = null;
+          needsEffect = true;
+        }
+      }
+    })();
 
     if (needsLine) { // Update styles of `line`.
       setLine(props, Array.isArray(needsLine) ? needsLine : null);
