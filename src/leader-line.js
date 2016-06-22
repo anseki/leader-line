@@ -136,7 +136,6 @@
     ],
 
     /**
-     * All `effectParams.*` must be primitive type.
      * @typedef {Object} EFFECT_CONF
      * @property {Function} validParams - (props, effectParams)
      * @property {Function} init - (props, effectParams)
@@ -1178,12 +1177,18 @@
       };
     }
 
-    function shallowCopy(obj) {
-      return Array.isArray(obj) ? obj.slice() :
-        Object.keys(obj).reduce(function(copyObj, key) {
-          copyObj[key] = obj[key];
-          return copyObj;
-        }, {});
+    function copyTree(obj) {
+      var proto, cstrtr, fnToString = {}.hasOwnProperty.toString;
+      return !obj ? obj :
+        ({}.toString).call(obj) === '[object Object]' &&
+          (!(proto = Object.getPrototypeOf(obj)) ||
+            (cstrtr = proto.hasOwnProperty('constructor') && proto.constructor) &&
+            typeof cstrtr === 'function' && fnToString.call(cstrtr) === fnToString.call(Object)) ?
+          Object.keys(obj).reduce(function(copyObj, key) {
+            copyObj[key] = copyTree(obj[key]);
+            return copyObj;
+          }, {}) :
+        Array.isArray(obj) ? obj.map(copyTree) : obj;
     }
 
     Object.defineProperty(this, '_id', {value: insId++});
@@ -1230,9 +1235,7 @@
               i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
               optionName ? insProps[that._id].options[optionName] :
               insProps[that._id].options[name];
-            return value == null ? KEYWORD_AUTO : // eslint-disable-line eqeqeq
-              // eslint-disable-next-line eqeqeq
-              typeof value === 'object' && value.nodeType == null ? shallowCopy(value) : value;
+            return value == null ? KEYWORD_AUTO : copyTree(value); // eslint-disable-line eqeqeq
           },
           set: createSetter(name),
           enumerable: true
@@ -1270,7 +1273,7 @@
               i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
               optionName ? insProps[that._id].options[optionName] :
               insProps[that._id].options[name];
-            return value ? [value[0], shallowCopy(value[1])] : void 0;
+            return value ? [value[0], copyTree(value[1])] : void 0;
           },
           set: createSetter(name),
           enumerable: true
