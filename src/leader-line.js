@@ -224,6 +224,7 @@
   // [DEBUG]
   window.insProps = insProps;
   window.traceLog = [];
+  window.isObject = isObject;
   // [/DEBUG]
 
   function forceReflow(target) {
@@ -248,6 +249,7 @@
         a !== b
       );
   }
+  window.hasChanged = hasChanged; // [DEBUG/]
 
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
@@ -1215,6 +1217,7 @@
         }, {}) :
         Array.isArray(obj) ? obj.map(copyTree) : obj;
     }
+    window.copyTree = copyTree; // [DEBUG/]
 
     Object.defineProperty(this, '_id', {value: insId++});
     insProps[this._id] = props;
