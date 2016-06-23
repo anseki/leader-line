@@ -122,4 +122,128 @@ describe('hasChanged', function() {
     });
   });
 
+  describe('hasChanged', function() {
+    var hasChanged, pageDone;
+
+    beforeAll(function(beforeDone) {
+      loadPage('spec/hasChanged/hasChanged.html', function(window, document, body, done) {
+        hasChanged = window.hasChanged;
+        pageDone = done;
+        beforeDone();
+      });
+    });
+
+    afterAll(function() {
+      pageDone();
+    });
+
+    it('5, 5', function() { expect(hasChanged(5, 5)).toBe(false); });
+    it('5, \'5\'', function() { expect(hasChanged(5, '5')).toBe(true); });
+
+    it('true, true', function() { expect(hasChanged(true, true)).toBe(false); });
+    it('true, \'true\'', function() { expect(hasChanged(true, 'true')).toBe(true); });
+
+    it('false, false', function() { expect(hasChanged(false, false)).toBe(false); });
+    it('false, \'false\'', function() { expect(hasChanged(false, 'false')).toBe(true); });
+
+    it('undefined, undefined', function() { expect(hasChanged(undefined, undefined)).toBe(false); });
+    it('false, undefined', function() { expect(hasChanged(false, undefined)).toBe(true); });
+    it('{}, []', function() { expect(hasChanged({}, [])).toBe(true); });
+    it('{}, 5', function() { expect(hasChanged({}, 5)).toBe(true); });
+
+    it('{...}, {...}', function() {
+      expect(hasChanged(
+        {a: 0, b: 1},
+        {a: 0, b: 1}
+      )).toBe(false);
+      expect(hasChanged(
+        {a: 0, b: 1},
+        {a: 0, b: 2}
+      )).toBe(true);
+
+      expect(hasChanged(
+        {a: 0, b: 1, c: {d: 2, e: 3}},
+        {a: 0, b: 1, c: {d: 2, e: 3}}
+      )).toBe(false);
+      expect(hasChanged(
+        {a: 0, b: 1, c: {d: 2, e: 3}},
+        {a: 0, b: 1, c: {d: 2, e: 4}}
+      )).toBe(true);
+
+      expect(hasChanged(
+        {a: 0, b: 1, c: {d: 2, e: 3, f: {g: 4, h: 5}}},
+        {a: 0, b: 1, c: {d: 2, e: 3, f: {g: 4, h: 5}}}
+      )).toBe(false);
+      expect(hasChanged(
+        {a: 0, b: 1, c: {d: 2, e: 3, f: {g: 4, h: 5}}},
+        {a: 0, b: 1, c: {d: 2, e: 3, f: {g: 4, h: 6}}}
+      )).toBe(true);
+
+      expect(hasChanged(
+        {a: 0, b: 1, c: [2, 3]},
+        {a: 0, b: 1, c: [2, 3]}
+      )).toBe(false);
+      expect(hasChanged(
+        {a: 0, b: 1, c: [2, 3]},
+        {a: 0, b: 1, c: [2, 4]}
+      )).toBe(true);
+
+      expect(hasChanged(
+        {a: 0, b: 1, c: {d: 2, e: 3, f: [4, 5]}},
+        {a: 0, b: 1, c: {d: 2, e: 3, f: [4, 5]}}
+      )).toBe(false);
+      expect(hasChanged(
+        {a: 0, b: 1, c: {d: 2, e: 3, f: [4, 5]}},
+        {a: 0, b: 1, c: {d: 2, e: 3, f: [4, 6]}}
+      )).toBe(true);
+    });
+
+    it('[...], [...]', function() {
+      expect(hasChanged(
+        [0, 1],
+        [0, 1]
+      )).toBe(false);
+      expect(hasChanged(
+        [0, 1],
+        [0, 2]
+      )).toBe(true);
+
+      expect(hasChanged(
+        [0, 1, [2, 3]],
+        [0, 1, [2, 3]]
+      )).toBe(false);
+      expect(hasChanged(
+        [0, 1, [2, 3]],
+        [0, 1, [2, 4]]
+      )).toBe(true);
+
+      expect(hasChanged(
+        [0, 1, [2, 3, [4, 5]]],
+        [0, 1, [2, 3, [4, 5]]]
+      )).toBe(false);
+      expect(hasChanged(
+        [0, 1, [2, 3, [4, 5]]],
+        [0, 1, [2, 3, [4, 6]]]
+      )).toBe(true);
+
+      expect(hasChanged(
+        [0, 1, {a: 2, b: 3}],
+        [0, 1, {a: 2, b: 3}]
+      )).toBe(false);
+      expect(hasChanged(
+        [0, 1, {a: 2, b: 3}],
+        [0, 1, {a: 2, b: 4}]
+      )).toBe(true);
+
+      expect(hasChanged(
+        [0, 1, [2, 3, {a: 4, b: 5}]],
+        [0, 1, [2, 3, {a: 4, b: 5}]]
+      )).toBe(false);
+      expect(hasChanged(
+        [0, 1, [2, 3, {a: 4, b: 5}]],
+        [0, 1, [2, 3, {a: 4, b: 6}]]
+      )).toBe(true);
+    });
+  });
+
 });

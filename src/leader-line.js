@@ -245,7 +245,7 @@
         typeA === 'obj' ?
           Object.keys(a).some(function(prop) { return hasChanged(a[prop], b[prop]); }) :
         typeA === 'array' ?
-          a.length !== b.length || a.some(function(i) { return hasChanged(a[i], b[i]); }) :
+          a.length !== b.length || a.some(function(aVal, i) { return hasChanged(aVal, b[i]); }) :
         a !== b
       );
   }
