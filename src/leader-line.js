@@ -137,22 +137,22 @@
 
     /**
      * @typedef {Object} EFFECT_CONF
-     * @property {Function} validParams - (props, effectParams)
+     * @property {Function} validParams - (props, effectParams) All params must be added even if it is `null`.
      * @property {Function} init - (props, effectParams)
      * @property {Function} remove - (props)
-     * @property {Function} onSetLine - (props, setProps)
-     * @property {Function} onSetPlug - (props, setPropsSE)
-     * @property {Function} onPosition - (props, pathList)
-     * @property {Function} onUpdatePath - (props, pathList)
-     * @property {Function} onUpdateAnchorBBox - (props, i)
+     * @property {Function} [onSetLine] - (props, setProps)
+     * @property {Function} [onSetPlug] - (props, setPropsSE)
+     * @property {Function} [onPosition] - (props, pathList)
+     * @property {Function} [onUpdatePath] - (props, pathList)
+     * @property {Function} [onUpdateAnchorBBox] - (props, i)
      */
-    EFFECTS =  {
+    EFFECTS = {
       dash: { // effectParams: dashLen, gapLen
         validParams: function(props, effectParams) {
           return ['dashLen', 'gapLen'].reduce(function(params, param) {
-            if (typeof effectParams[param] === 'number' && effectParams[param] > 0) {
-              params[param] = effectParams[param];
-            }
+            params[param] =
+              typeof effectParams[param] === 'number' && effectParams[param] > 0 ?
+                effectParams[param] : null;
             return params;
           }, {});
         },
@@ -162,6 +162,7 @@
             (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
             (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
           props.lineFace.style.strokeDashoffset = '0';
+          window.traceLog.push('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
         },
         remove: function(props) {
           window.traceLog.push('<EFFECTS.dash.remove>'); // [DEBUG/]
@@ -175,6 +176,7 @@
             props.lineFace.style.strokeDasharray =
               (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
               (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
+            window.traceLog.push('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
           }
         },
         getDashLen: function(props) { return props.options.lineSize * 2; },
@@ -987,7 +989,7 @@
    * @param {props} props - `props` of `LeaderLine` instance.
    * @returns {void}
    */
-  function setEffect(props) { 
+  function setEffect(props) {
     window.traceLog.push('<setEffect>'); // [DEBUG/]
     var options = props.options,
       effectConf, effectParams;
@@ -995,11 +997,11 @@
     if (options.effect) {
       effectConf = EFFECTS[options.effect[0]];
       effectParams = options.effect[1];
-      if (effectConf !== props.effect) { props.effect.remove(props); }
+      if (props.effect && effectConf !== props.effect) { props.effect.remove(props); }
       effectConf.init(props, effectParams);
       props.effect = effectConf;
       props.effectParams = effectParams;
-    } else if (props.effect) {
+    } else if (props.effect) { // Since it might have been called by `bindWindow`, check `props.effect`.
       props.effect.remove(props);
       props.effect = null;
       props.effectParams = {};
@@ -1570,7 +1572,7 @@
               needsEffect = true;
             }
           }
-        } else {
+        } else if (options.effect) { // on -> off
           options.effect = null;
           needsEffect = true;
         }
@@ -1599,6 +1601,10 @@
     }
     if (needsPosition) { // Call `position()`.
       this.position();
+    }
+    // Since current EFFECT_CONF might have event-handlers, call `setEffect` at the end.
+    if (needsEffect) { // Update `effect`.
+      setEffect(props);
     }
 
     return this;

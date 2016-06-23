@@ -101,7 +101,43 @@ describe('options', function() {
       'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
       // 'new-anchorMask[0]', 'new-plugMask[1]',
       'mask.x', 'mask.y', 'mask.width', 'mask.height',
-      'anchorMask[0].x', 'anchorMask[0].y', 'anchorMask[0].width', 'anchorMask[0].height'
+      'anchorMask[0].x', 'anchorMask[0].y', 'anchorMask[0].width', 'anchorMask[0].height',
+      '<setEffect>'
+    ]);
+
+    // Change to element in iframe, `baseWindow` is not changed, `effect` is not changed too
+    ll.setOptions({
+      start: document.getElementById('elm2'),
+      end: document.getElementById('elm3'),
+      effect: 'dash'
+    });
+    window.traceLog = [];
+    ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<position>', 'propsHasChanged:socketXYSE[1]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.width', 'viewBox.height',
+      'mask.width', 'mask.height'
+    ]);
+
+    // Change to element in iframe, `baseWindow` is changed, `effect` is changed too
+    window.traceLog = [];
+    ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<bindWindow>',
+      '<setLine>', 'lineColor=coral', 'lineSize=4',
+      '<setPlug>', 'plug[0]=behind', 'plug[1]=arrow1', 'plugColor[1]=coral', 'plugSize[1]=1',
+      '<setLineOutline>', 'lineOutlineEnabled=false',
+      '<setPlugOutline>', 'plugOutlineEnabled[0]=false', 'plugOutlineEnabled[1]=false',
+      '<position>', 'propsHasChanged:socketXYSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      // 'new-anchorMask[0]', 'new-plugMask[1]',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height',
+      'anchorMask[0].x', 'anchorMask[0].y', 'anchorMask[0].width', 'anchorMask[0].height',
+      '<setEffect>', '<EFFECTS.dash.init>', 'strokeDasharray=8,4'
     ]);
 
     pageDone();
@@ -1149,6 +1185,108 @@ describe('options', function() {
     ]);
     expect(props.options.socketGravitySE[0]).toBe(0);
     expect(ll.startSocketGravity).toBe(0);
+
+    pageDone();
+  });
+
+  it(registerTitle('setOptions - effect'), function() {
+    var props = window.insProps[ll._id];
+
+    // valid ID
+    window.traceLog = [];
+    ll.effect = 'dash';
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setEffect>', '<EFFECTS.dash.init>', 'strokeDasharray=8,4'
+    ]);
+    expect(typeof props.effect).toBe('object'); // EFFECT_CONF
+    expect(props.effectParams).toEqual({dashLen: null, gapLen: null});
+    expect(props.options.effect).toEqual(['dash', {dashLen: null, gapLen: null}]);
+    expect(ll.effect).toEqual(['dash', {dashLen: null, gapLen: null}]);
+    expect(props.options.effect === ll.effect).toBe(false); // copied object is returned
+
+    // invalid ID, ignored
+    window.traceLog = [];
+    ll.effect = 'dashx';
+    expect(window.traceLog).toEqual([
+      '<setOptions>' // `setEffect` is not called
+    ]);
+    expect(ll.effect).toEqual(['dash', {dashLen: null, gapLen: null}]);
+
+    // same ID, ignored
+    window.traceLog = [];
+    ll.effect = 'dash';
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(ll.effect).toEqual(['dash', {dashLen: null, gapLen: null}]);
+
+    // same ID as array, ignored
+    window.traceLog = [];
+    ll.effect = ['dash'];
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(ll.effect).toEqual(['dash', {dashLen: null, gapLen: null}]);
+
+    // with params
+    window.traceLog = [];
+    ll.effect = ['dash', {dashLen: 10, gapLen: 5}];
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setEffect>', '<EFFECTS.dash.init>', 'strokeDasharray=10,5'
+    ]);
+    expect(typeof props.effect).toBe('object'); // EFFECT_CONF
+    expect(props.effectParams).toEqual({dashLen: 10, gapLen: 5});
+    expect(props.options.effect).toEqual(['dash', {dashLen: 10, gapLen: 5}]);
+    expect(ll.effect).toEqual(['dash', {dashLen: 10, gapLen: 5}]);
+    expect(props.options.effect === ll.effect).toBe(false); // copied object is returned
+
+    // same params, ignored
+    window.traceLog = [];
+    ll.effect = ['dash', {dashLen: 10, gapLen: 5}];
+    expect(window.traceLog).toEqual([
+      '<setOptions>'
+    ]);
+    expect(ll.effect).toEqual(['dash', {dashLen: 10, gapLen: 5}]);
+
+    // change param
+    window.traceLog = [];
+    ll.effect = ['dash', {dashLen: 10, gapLen: 6}];
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setEffect>', '<EFFECTS.dash.init>', 'strokeDasharray=10,6'
+    ]);
+    expect(typeof props.effect).toBe('object'); // EFFECT_CONF
+    expect(props.effectParams).toEqual({dashLen: 10, gapLen: 6});
+    expect(props.options.effect).toEqual(['dash', {dashLen: 10, gapLen: 6}]);
+    expect(ll.effect).toEqual(['dash', {dashLen: 10, gapLen: 6}]);
+    expect(props.options.effect === ll.effect).toBe(false); // copied object is returned
+
+    // invalid param is considered as `null` (auto), not ignored
+    window.traceLog = [];
+    ll.effect = ['dash', {dashLen: 0, gapLen: 6}];
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setEffect>', '<EFFECTS.dash.init>', 'strokeDasharray=8,6'
+    ]);
+    expect(typeof props.effect).toBe('object'); // EFFECT_CONF
+    expect(props.effectParams).toEqual({dashLen: null, gapLen: 6});
+    expect(props.options.effect).toEqual(['dash', {dashLen: null, gapLen: 6}]);
+    expect(ll.effect).toEqual(['dash', {dashLen: null, gapLen: 6}]);
+    expect(props.options.effect === ll.effect).toBe(false); // copied object is returned
+
+    // off
+    window.traceLog = [];
+    ll.effect = undefined;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setEffect>', '<EFFECTS.dash.remove>'
+    ]);
+    expect(props.effect).toBe(null);
+    expect(props.effectParams).toEqual({});
+    expect(props.options.effect).toEqual(null); // `null` for internal, `undefined` for API
+    expect(ll.effect).toEqual(undefined);
 
     pageDone();
   });

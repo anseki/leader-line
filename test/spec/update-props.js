@@ -116,4 +116,40 @@ describe('update-props', function() {
     pageDone();
   });
 
+  it(registerTitle('effect events - dash'), function() {
+    ll.effect = 'dash';
+
+    // onSetLine
+    ll.endPlug = 'behind'; // to avoid changing padding by symbol
+    window.traceLog = [];
+    ll.size = 5;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLine>', 'lineSize=5',
+      '<EFFECTS.dash.onSetLine>', 'strokeDasharray=10,5',
+      '<setPlug>',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+
+    // onSetLine - not auto
+    ll.effect = ['dash', {dashLen: 12, gapLen: 6}];
+    window.traceLog = [];
+    ll.size = 4;
+    expect(window.traceLog).toEqual([
+      '<setOptions>',
+      '<setLine>', 'lineSize=4',
+      '<EFFECTS.dash.onSetLine>',
+      '<setPlug>',
+      '<position>', 'propsHasChanged:plugOverheadSE[0]', 'new-pathList.baseVal',
+      'propsHasChanged:pathData', 'setPathData',
+      'viewBox.x', 'viewBox.y', 'viewBox.width', 'viewBox.height',
+      'mask.x', 'mask.y', 'mask.width', 'mask.height'
+    ]);
+
+    pageDone();
+  });
+
 });
