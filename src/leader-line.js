@@ -278,6 +278,7 @@
       parent.insertBefore(parent.removeChild(target), next);
     }, 0);
   }
+  window.forceReflow = forceReflow; // [DEBUG/]
 
   function hasChanged(a, b) {
     var typeA;
@@ -736,11 +737,6 @@
     props.effect = null;
     if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
     props.effectParams = {};
-
-    if (IS_GECKO) {
-      forceReflow(props.lineFace);
-      forceReflow(props.plugsFace);
-    }
   }
   window.bindWindow = bindWindow; // [DEBUG/]
 
@@ -759,21 +755,20 @@
         case 'lineColor':
           window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
           props.lineFace.style.stroke = options[setProp];
-          if (IS_TRIDENT) {
-            forceReflow(props.lineMaskCaps);
-          }
           break;
 
         case 'lineSize':
           window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
           props.lineShape.style.strokeWidth = options[setProp];
           if (IS_GECKO || IS_TRIDENT) {
+            // [IE] plugsFace is not updated when lineSize is changed
+            // [FF] plugsFace is ignored
             forceReflow(props.lineShape);
-            forceReflow(props.lineFace);
-            forceReflow(props.lineMaskPlug);
             if (IS_TRIDENT) {
+              // [IE] lineColor is ignored
+              forceReflow(props.lineFace);
+              // [IE] lineMaskCaps is ignored when lineSize is changed
               forceReflow(props.lineMaskCaps);
-              forceReflow(props.lineOutlineFace);
             }
           }
           break;
@@ -830,6 +825,7 @@
     baseVal.width = bBox.width;
     baseVal.height = bBox.height;
 
+    // [IE] markerOrient is not updated when plugSE is changed
     if (IS_TRIDENT) { forceReflow(marked); }
   }
 
@@ -878,12 +874,17 @@
               setMarkerOrient(props.lineMaskMarkerSE[i], orient,
                 symbolConf.bBox, props.svg, props.lineMaskMarkerShapeSE[i], props.lineMaskPlug);
               props.lineMaskAnchorSE[i].style.display = 'none';
+              if (IS_GECKO) {
+                // [FF] plugsFace is not updated when plugSE is changed
+                forceReflow(props.plugsFace);
+                forceReflow(props.lineMaskPlug);
+                forceReflow(props.lineFace);
+              }
               break;
 
             case 'plugColor':
               window.traceLog.push(setProp + '[' + i + ']=' + (options.plugColorSE[i] || options.lineColor)); // [DEBUG/]
               props.plugFaceSE[i].style.fill = options.plugColorSE[i] || options.lineColor;
-              if (IS_BLINK) { forceReflow(props.plugsFace); }
               break;
 
             case 'plugSize':
@@ -951,10 +952,6 @@
           case 'lineOutlineColor':
             window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
             props.lineOutlineFace.style.stroke = options[setProp];
-            if (IS_TRIDENT) {
-              forceReflow(props.lineOutlineMaskCaps);
-              forceReflow(props.lineOutlineFace);
-            }
             break;
 
           case 'lineOutlineSize':
@@ -964,7 +961,9 @@
             props.lineOutlineMaskOutline.style.strokeWidth =
               options.lineSize - (options.lineSize * options.lineOutlineSize + SHAPE_GAP) * 2;
             if (IS_TRIDENT) {
+              // [IE] lineOutlineMaskCaps is ignored when lineSize is changed
               forceReflow(props.lineOutlineMaskCaps);
+              // [IE] lineOutlineColor is ignored
               forceReflow(props.lineOutlineFace);
             }
             break;
@@ -1009,9 +1008,6 @@
               window.traceLog.push(setProp + '[' + i + ']=' + (options.plugOutlineColorSE[i] || options.lineOutlineColor)); // [DEBUG/]
               props.plugOutlineFaceSE[i].style.fill =
                 options.plugOutlineColorSE[i] || options.lineOutlineColor;
-              if (IS_BLINK) {
-                forceReflow(props.plugOutlineFaceSE[i]);
-              }
               break;
 
             case 'plugOutlineSize':
@@ -1023,6 +1019,7 @@
               props.plugOutlineIShapeSE[i].style.strokeWidth =
                 symbolConf.outlineBase * options.plugOutlineSizeSE[i] * 2;
               if (IS_BLINK) {
+                // [Ch] plugOutlineSizeSE is ignored when exists plug is changed
                 forceReflow(props.plugOutlineIShapeSE[i]);
               }
               break;
@@ -1142,6 +1139,16 @@
       window.traceLog.push('setPathData'); // [DEBUG/]
       props.linePath.setPathData(pathVals.current.pathData);
       pathVals.applied.pathData = pathVals.current.pathData;
+
+      if (IS_TRIDENT) {
+        // [IE] markerOrient is not updated when path is changed
+        forceReflow(props.plugsFace);
+        // [IE] lineMaskCaps is ignored when path is changed
+        forceReflow(props.lineMaskCaps);
+      } else if (IS_GECKO) {
+        // [FF] path is not updated when path is changed
+        forceReflow(props.linePath);
+      }
 
       if (props.effect && props.effect.onUpdatePath) {
         props.effect.onUpdatePath(props, pathList);
@@ -2114,6 +2121,15 @@
     });
 
     return this;
+  };
+
+  LeaderLine.prototype.remove = function() {
+    window.traceLog.push('<remove>'); // [DEBUG/]
+    var props = insProps[this._id];
+    if (props.baseWindow && props.svg) {
+      props.baseWindow.document.body.removeChild(props.svg);
+    }
+    delete insProps[this._id];
   };
 
   return LeaderLine;
