@@ -86,6 +86,26 @@
       plugOutlineSizeSE: [1, 1]
     },
 
+    isObject = (function() {
+      var toString = {}.toString, fnToString = {}.hasOwnProperty.toString,
+        objFnString = fnToString.call(Object);
+      return function(obj) {
+        var proto, cstrtr;
+        return obj && toString.call(obj) === '[object Object]' &&
+          (!(proto = Object.getPrototypeOf(obj)) ||
+            (cstrtr = proto.hasOwnProperty('constructor') && proto.constructor) &&
+            typeof cstrtr === 'function' && fnToString.call(cstrtr) === objFnString);
+      };
+    })(),
+    /* [DEBUG/]
+    anim = @INCLUDE[code:anim]@,
+    [DEBUG/] */
+    anim = window.anim, // [DEBUG/]
+    /* [DEBUG/]
+    pathDataPolyfill = @INCLUDE[code:pathDataPolyfill]@,
+    [DEBUG/] */
+    pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
+
     /**
      * @typedef {{name, hasSE, hasProps, isOption, hasChanged}[]} PROP_CONF
      */
@@ -181,6 +201,47 @@
         },
         getDashLen: function(props) { return props.options.lineSize * 2; },
         getGapLen: function(props) { return props.options.lineSize; }
+      },
+
+      dashAnim: { // effectParams: dashLen, gapLen, duration
+        validParams: function(props, effectParams) {
+          var params = ['dashLen', 'gapLen'].reduce(function(params, param) {
+            params[param] =
+              typeof effectParams[param] === 'number' && effectParams[param] > 0 ?
+                effectParams[param] : null;
+            return params;
+          }, {});
+          params.duration =
+            typeof effectParams.duration === 'number' && effectParams.duration > 10 ?
+              effectParams.duration : null;
+          return params;
+        },
+        init: function(props, effectParams) {
+          window.traceLog.push('<EFFECTS.dashAnim.init>'); // [DEBUG/]
+          if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
+          props.lineFace.style.strokeDasharray =
+            (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+            (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
+          props.lineFace.style.strokeDashoffset = '0';
+          window.traceLog.push('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+          // effectParams.animId = animId;
+        },
+        remove: function(props) {
+          window.traceLog.push('<EFFECTS.dashAnim.remove>'); // [DEBUG/]
+          props.lineFace.style.strokeDasharray = 'none';
+          props.lineFace.style.strokeDashoffset = '0';
+          if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
+        },
+        onSetLine: function(props, setProps) {
+          window.traceLog.push('<EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
+          if ((!setProps || setProps.indexOf('lineSize') > -1) &&
+              (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
+            props.lineFace.style.strokeDasharray =
+              (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+              (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
+            window.traceLog.push('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+          }
+        }
       }
     },
 
@@ -200,28 +261,7 @@
     /**
      * @typedef {Object.<_id: number, props>} insProps
      */
-    insProps = {}, insId = 0, svg2Supported,
-
-    /* [DEBUG/]
-    anim = @INCLUDE[code:anim]@,
-    [DEBUG/] */
-    anim = window.anim, // [DEBUG/]
-    /* [DEBUG/]
-    pathDataPolyfill = @INCLUDE[code:pathDataPolyfill]@,
-    [DEBUG/] */
-    pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
-
-    isObject = (function() {
-      var toString = {}.toString, fnToString = {}.hasOwnProperty.toString,
-        objFnString = fnToString.call(Object);
-      return function(obj) {
-        var proto, cstrtr;
-        return obj && toString.call(obj) === '[object Object]' &&
-          (!(proto = Object.getPrototypeOf(obj)) ||
-            (cstrtr = proto.hasOwnProperty('constructor') && proto.constructor) &&
-            typeof cstrtr === 'function' && fnToString.call(cstrtr) === objFnString);
-      };
-    })();
+    insProps = {}, insId = 0, svg2Supported;
 
   // [DEBUG]
   window.insProps = insProps;
@@ -693,6 +733,7 @@
     props.viewBBoxVals.pathEdge = {};
     props.pathList = {baseVal: [], animVal: []};
     props.effect = null;
+    if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
     props.effectParams = {};
 
     if (IS_GECKO) {
