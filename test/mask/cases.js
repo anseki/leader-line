@@ -1,4 +1,4 @@
-/* global LeaderLine:false */
+/* global LeaderLine:false, forceReflow:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
 window.addEventListener('load', function() {
@@ -10,15 +10,6 @@ window.addEventListener('load', function() {
     IS_TRIDENT = !!document.uniqueID,
 
     SVG_NS = 'http://www.w3.org/2000/svg';
-
-  function forceReflow(target) {
-    // for IE (and Blink) bug (reflow like `offsetWidth` can't update)
-    setTimeout(function() {
-      var parent = target.parentNode;
-      // It has to be removed first for Blink.
-      parent.insertBefore(parent.removeChild(target), target.nextSibling);
-    }, 0);
-  }
   /* eslint-enable no-unused-vars, indent */
   // ================ /context
 

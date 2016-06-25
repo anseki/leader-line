@@ -46,7 +46,7 @@ window.addEventListener('load', function() {
             outline: true,
             outlineColor: 'rgba(255, 0, 0, 0.5)'
           });
-          // [IE] plugsFace is not updated when lineSize is changed
+          // [TRIDENT] plugsFace is not updated when lineSize is changed
           setTimeout(function() {
             ll.size += 2;
           }, 500);
@@ -54,9 +54,9 @@ window.addEventListener('load', function() {
       },
       {
         fnc: function() {
-          // [IE] lineColor is ignored
-          // [IE] lineOutlineColor is ignored
-          // [FF] plugsFace is ignored
+          // [TRIDENT] lineColor is ignored
+          // [TRIDENT] lineOutlineColor is ignored
+          // [GECKO] plugsFace is ignored
           ll.setOptions({
             startPlug: 'arrow2',
             outline: true,
@@ -84,7 +84,7 @@ window.addEventListener('load', function() {
       },
       {
         fnc: function() {
-          // [Ch] plugOutlineSizeSE is ignored when exists plug is changed
+          // [BLINK] plugOutlineSizeSE is ignored when exists plug is changed
           ll.setOptions({
             startPlug: 'arrow2'
           });
@@ -105,8 +105,8 @@ window.addEventListener('load', function() {
           ll.setOptions({
             path: 'straight'
           });
-          // [IE] markerOrient is not updated when plugSE is changed
-          // [FF] plugsFace is not updated when plugSE is changed
+          // [TRIDENT] markerOrient is not updated when plugSE is changed
+          // [GECKO] plugsFace is not updated when plugSE is changed
           setTimeout(function() {
             ll.setOptions({
               startPlug: 'arrow1',
@@ -120,9 +120,9 @@ window.addEventListener('load', function() {
           ll.setOptions({
             startPlug: 'arrow1'
           });
-          // [IE] markerOrient is not updated when path is changed
-          // [IE] lineMaskCaps is ignored when path is changed
-          // [FF] path is not updated when path is changed
+          // [TRIDENT] markerOrient is not updated when path is changed
+          // [TRIDENT] lineMaskCaps is ignored when path is changed
+          // [GECKO] path is not updated when path is changed
           setTimeout(function() {
             ll.setOptions({
               path: 'straight'
@@ -137,8 +137,8 @@ window.addEventListener('load', function() {
             outline: true,
             outlineColor: 'rgba(255, 0, 0, 0.5)'
           });
-          // [IE] lineMaskCaps is ignored when lineSize is changed
-          // [IE] lineOutlineMaskCaps is ignored when lineSize is changed
+          // [TRIDENT] lineMaskCaps is ignored when lineSize is changed
+          // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
           setTimeout(function() {
             ll.size += 2;
           }, 500);
@@ -151,7 +151,7 @@ window.addEventListener('load', function() {
             outline: true,
             outlineColor: 'rgba(255, 0, 0, 0.5)'
           });
-          // [IE] alpha of outlineColor is removed when lineSize is changed
+          // [TRIDENT] alpha of outlineColor is removed when lineSize is changed
           setTimeout(function() {
             ll.size += 2;
           }, 500);

@@ -114,7 +114,7 @@ var anim =
   window.anim_watchStart = function() {
     window.anim_watchTimer = setInterval(function() {
       if (running !== window.anim_lastRunning) {
-        document.body.style.backgroundColor = running ? '#f7f6cb' : '#fff'; // not `''` for IE bug
+        document.body.style.backgroundColor = running ? '#f7f6cb' : '#fff'; // not `''` for TRIDENT bug
         window.anim_lastRunning = running;
       }
       running = false;

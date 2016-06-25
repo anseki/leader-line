@@ -271,10 +271,10 @@
   // [/DEBUG]
 
   function forceReflow(target) {
-    // for IE (and Blink) bug (reflow like `offsetWidth` can't update)
+    // for TRIDENT and BLINK bug (reflow like `offsetWidth` can't update)
     setTimeout(function() {
       var parent = target.parentNode, next = target.nextSibling;
-      // It has to be removed first for Blink.
+      // It has to be removed first for BLINK.
       parent.insertBefore(parent.removeChild(target), next);
     }, 0);
   }
@@ -799,13 +799,13 @@
           window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
           props.lineShape.style.strokeWidth = options[setProp];
           if (IS_GECKO || IS_TRIDENT) {
-            // [IE] plugsFace is not updated when lineSize is changed
-            // [FF] plugsFace is ignored
+            // [TRIDENT] plugsFace is not updated when lineSize is changed
+            // [GECKO] plugsFace is ignored
             forceReflow(props.lineShape);
             if (IS_TRIDENT) {
-              // [IE] lineColor is ignored
+              // [TRIDENT] lineColor is ignored
               forceReflow(props.lineFace);
-              // [IE] lineMaskCaps is ignored when lineSize is changed
+              // [TRIDENT] lineMaskCaps is ignored when lineSize is changed
               forceReflow(props.lineMaskCaps);
             }
           }
@@ -863,7 +863,7 @@
     baseVal.width = bBox.width;
     baseVal.height = bBox.height;
 
-    // [IE] markerOrient is not updated when plugSE is changed
+    // [TRIDENT] markerOrient is not updated when plugSE is changed
     if (IS_TRIDENT) { forceReflow(marked); }
   }
 
@@ -905,7 +905,7 @@
                 mask.width.baseVal.value = symbolConf.bBox.width;
                 mask.height.baseVal.value = symbolConf.bBox.height;
               });
-              // Since IE doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
+              // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
               props.plugsFace.style[markerProp] = 'url(#' + props.plugMarkerIdSE[i] + ')';
               props.lineMaskPlug.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
               setMarkerOrient(props.plugMarkerSE[i], orient,
@@ -914,7 +914,7 @@
                 symbolConf.bBox, props.svg, props.lineMaskMarkerShapeSE[i], props.lineMaskPlug);
               props.lineMaskAnchorSE[i].style.display = 'none';
               if (IS_GECKO) {
-                // [FF] plugsFace is not updated when plugSE is changed
+                // [GECKO] plugsFace is not updated when plugSE is changed
                 forceReflow(props.plugsFace);
                 forceReflow(props.lineMaskPlug);
                 forceReflow(props.lineFace);
@@ -1004,9 +1004,9 @@
             props.lineOutlineMaskOutline.style.strokeWidth =
               options.lineSize - (options.lineSize * options.lineOutlineSize + SHAPE_GAP) * 2;
             if (IS_TRIDENT) {
-              // [IE] lineOutlineMaskCaps is ignored when lineSize is changed
+              // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
               forceReflow(props.lineOutlineMaskCaps);
-              // [IE] lineOutlineColor is ignored
+              // [TRIDENT] lineOutlineColor is ignored
               forceReflow(props.lineOutlineFace);
             }
             break;
@@ -1063,7 +1063,7 @@
               props.plugOutlineIShapeSE[i].style.strokeWidth =
                 symbolConf.outlineBase * options.plugOutlineSizeSE[i] * 2;
               if (IS_BLINK) {
-                // [Ch] plugOutlineSizeSE is ignored when exists plug is changed
+                // [BLINK] plugOutlineSizeSE is ignored when exists plug is changed
                 forceReflow(props.plugOutlineIShapeSE[i]);
               }
               break;
@@ -1185,12 +1185,12 @@
       pathVals.applied.pathData = pathVals.current.pathData;
 
       if (IS_TRIDENT) {
-        // [IE] markerOrient is not updated when path is changed
+        // [TRIDENT] markerOrient is not updated when path is changed
         forceReflow(props.plugsFace);
-        // [IE] lineMaskCaps is ignored when path is changed
+        // [TRIDENT] lineMaskCaps is ignored when path is changed
         forceReflow(props.lineMaskCaps);
       } else if (IS_GECKO) {
-        // [FF] path is not updated when path is changed
+        // [GECKO] path is not updated when path is changed
         forceReflow(props.linePath);
       }
 
