@@ -133,7 +133,7 @@ window.addEventListener('load', () => {
   <!--
      A symbol has `id` and `symbol` class.
      `rect.size` is required for `BBox`.
-     `use.outline-base` and `use.outline-max` are required for `outlineBase` and `outlineMax`.
+     `use.outline-base` and `use.outline-max` are required for `outlineBase` and `outlineMax`. (stroke-width / 2 = *size)
      A symbol is able to have classes:
      - `prop-*` :       Add a `*` property. e.g. `prop-noRotate`
      - `varId-*` :      Add a variable that has `*` as name and `id` as value. e.g. `varId-DEFAULT_END_PLUG`
@@ -174,7 +174,7 @@ window.addEventListener('load', () => {
       points="-8,-8 8,0 -8,8 -5,0" />
 
     <rect class="size"          x="-8" y="-8" width="16" height="16" />
-    <use class="outline-base"   stroke-width="2" />
+    <use class="outline-base"   stroke-width="4" />
     <use class="outline-max"    stroke-width="6" />
 
   </svg>

@@ -31,20 +31,20 @@ $app_id: leader-line;
   stroke: rgba(0, 0, 0, 0); /* `transparent` might not be supported */
 }
 
-.#{$app_id}-line-mask-outline {
+.#{$app_id}-line-mask-shape {
   stroke: white;
 }
 
-.#{$app_id}-line-outline-mask-outline {
+.#{$app_id}-line-outline-mask-shape {
   stroke: black;
 }
 
-.#{$app_id}-plug-mask-outline {
+.#{$app_id}-plug-mask-shape {
   fill: white;
   stroke: black;
 }
 
-.#{$app_id}-plug-outline-mask-ishape {
+.#{$app_id}-plug-outline-mask-shape {
   fill: black;
   stroke: white;
 }

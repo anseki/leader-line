@@ -672,10 +672,10 @@
     props.lineMask = setupMask(props.lineMaskId);
     props.lineMaskBG = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskBG.href.baseVal = '#' + props.lineMaskBGRectId;
-    props.lineMaskOutline = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineMaskOutline.className.baseVal = APP_ID + '-line-mask-outline';
-    props.lineMaskOutline.href.baseVal = '#' + props.linePathId;
-    props.lineMaskOutline.style.display = 'none';
+    props.lineMaskShape = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.lineMaskShape.className.baseVal = APP_ID + '-line-mask-shape';
+    props.lineMaskShape.href.baseVal = '#' + props.linePathId;
+    props.lineMaskShape.style.display = 'none';
     props.lineMaskCaps = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskCaps.href.baseVal = '#' + props.lineMaskCapsId;
     // ==== /lineMask
@@ -684,9 +684,9 @@
     props.lineOutlineMask = setupMask(props.lineOutlineMaskId);
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.href.baseVal = '#' + props.lineMaskBGRectId;
-    props.lineOutlineMaskOutline = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineOutlineMaskOutline.className.baseVal = APP_ID + '-line-outline-mask-outline';
-    props.lineOutlineMaskOutline.href.baseVal = '#' + props.linePathId;
+    props.lineOutlineMaskShape = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.lineOutlineMaskShape.className.baseVal = APP_ID + '-line-outline-mask-shape';
+    props.lineOutlineMaskShape.href.baseVal = '#' + props.linePathId;
     props.lineOutlineMaskCaps = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineOutlineMaskCaps.href.baseVal = '#' + props.lineMaskCapsId;
     // ==== /lineOutlineMask
@@ -700,28 +700,20 @@
     props.lineOutlineFace.style.mask = 'url(#' + props.lineOutlineMaskId + ')';
     props.lineOutlineFace.style.display = 'none';
 
-    props.plugOutlineIShapeSE = [0, 1].map(function(i) {
-      var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-      element.id = props.plugOutlineIShapeIdSE[i];
-      return element;
-    });
-
     // ==== plugMaskSE
     props.plugMaskSE = [0, 1].map(function(i) { return setupMask(props.plugMaskIdSE[i]); });
-    props.plugMaskOutlineSE = [0, 1].map(function(i) {
+    props.plugMaskShapeSE = [0, 1].map(function(i) {
       var element = props.plugMaskSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-      element.className.baseVal = APP_ID + '-plug-mask-outline';
-      element.href.baseVal = '#' + props.plugOutlineIShapeIdSE[i];
+      element.className.baseVal = APP_ID + '-plug-mask-shape';
       return element;
     });
     // ==== /plugMaskSE
 
     // ==== plugOutlineMaskSE
-    props.plugOutlineMaskSE = [0, 1].map(function(i) {
-      var element = setupMask(props.plugOutlineMaskIdSE[i]),
-        shape = element.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-      shape.className.baseVal = APP_ID + '-plug-outline-mask-ishape';
-      shape.href.baseVal = '#' + props.plugOutlineIShapeIdSE[i];
+    props.plugOutlineMaskSE = [0, 1].map(function(i) { return setupMask(props.plugOutlineMaskIdSE[i]); });
+    props.plugOutlineMaskShapeSE = [0, 1].map(function(i) {
+      var element = props.plugOutlineMaskSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      element.className.baseVal = APP_ID + '-plug-outline-mask-shape';
       return element;
     });
     // ==== /plugOutlineMaskSE
@@ -897,7 +889,8 @@
 
               props.plugFaceSE[i].href.baseVal =
                 props.plugOutlineFaceSE[i].href.baseVal =
-                props.plugOutlineIShapeSE[i].href.baseVal =
+                props.plugMaskShapeSE[i].href.baseVal =
+                props.plugOutlineMaskShapeSE[i].href.baseVal =
                 props.lineMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
               [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
                 mask.x.baseVal.value = symbolConf.bBox.left;
@@ -985,7 +978,7 @@
         switch (setProp) {
           case 'lineOutlineEnabled':
             window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
-            props.lineMaskOutline.style.display = 'inline';
+            props.lineMaskShape.style.display = 'inline';
             props.lineMaskBG.style.display = 'none';
             props.lineOutlineFace.style.display = 'inline';
             break;
@@ -999,9 +992,9 @@
 
           case 'lineOutlineSize':
             window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
-            props.lineMaskOutline.style.strokeWidth =
+            props.lineMaskShape.style.strokeWidth =
               options.lineSize - options.lineSize * options.lineOutlineSize * 2;
-            props.lineOutlineMaskOutline.style.strokeWidth =
+            props.lineOutlineMaskShape.style.strokeWidth =
               options.lineSize - (options.lineSize * options.lineOutlineSize + SHAPE_GAP) * 2;
             if (IS_TRIDENT) {
               // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
@@ -1017,7 +1010,7 @@
     } else {
       if (!setProps || setProps.indexOf('lineOutlineEnabled') > -1) {
         window.traceLog.push('lineOutlineEnabled=' + options.lineOutlineEnabled); // [DEBUG/]
-        props.lineMaskOutline.style.display = 'none';
+        props.lineMaskShape.style.display = 'none';
         props.lineMaskBG.style.display = 'inline';
         props.lineOutlineFace.style.display = 'none';
       }
@@ -1060,11 +1053,15 @@
                 options.plugOutlineSizeSE[i] = symbolConf.outlineMax;
               }
               window.traceLog.push(setProp + '[' + i + ']=' + options.plugOutlineSizeSE[i]); // [DEBUG/]
-              props.plugOutlineIShapeSE[i].style.strokeWidth =
+              props.plugMaskShapeSE[i].style.strokeWidth =
                 symbolConf.outlineBase * options.plugOutlineSizeSE[i] * 2;
+              props.plugOutlineMaskShapeSE[i].style.strokeWidth =
+                (symbolConf.outlineBase * options.plugOutlineSizeSE[i] +
+                  2 / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i]) * 2;
+              console.log(2 / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i]);
               if (IS_BLINK) {
                 // [BLINK] plugOutlineSizeSE is ignored when exists plug is changed
-                forceReflow(props.plugOutlineIShapeSE[i]);
+                // forceReflow(props.plugOutlineIShapeSE[i]);
               }
               break;
             // no default
@@ -1341,7 +1338,6 @@
     props.lineOutlineMaskId = prefix + '-line-outline-mask';
     props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
     props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
-    props.plugOutlineIShapeIdSE = [prefix + '-plug-outline-ishape-0', prefix + '-plug-outline-ishape-1'];
     props.plugOutlineMaskIdSE = [prefix + '-plug-outline-mask-0', prefix + '-plug-outline-mask-1'];
 
     if (arguments.length === 1) {
@@ -1597,6 +1593,9 @@
           function(value) { return value > 0; })) {
         needsPlugSE[i] = addPropList('plugSize', needsPlugSE[i]);
         needsPosition = true;
+        if (options.plugOutlineEnabledSE[i]) {
+          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
+        }
       }
     });
 
@@ -1645,6 +1644,11 @@
       if (options.lineOutlineEnabled) {
         needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
       }
+      [0, 1].forEach(function(i) {
+        if (options.plugOutlineEnabledSE[i]) {
+          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
+        }
+      });
     }
 
     [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {

@@ -140,6 +140,10 @@ module.exports = grunt => {
                 .replace(/\'/g, '\\\'') + '\'';
             Object.keys(DEFINED_VAR).forEach(codeVar => { code[codeVar] = getCode(DEFINED_VAR[codeVar]); });
             Object.keys(codeSrc).forEach(codeVar => { code[codeVar] = getCode(codeSrc[codeVar]); });
+
+            // for debug
+            fs.writeFileSync(`${SRC_PATH}/symbols.json`, JSON.stringify(codeSrc.SYMBOLS));
+
             return `var ${Object.keys(code).map(codeVar => `${codeVar}=${code[codeVar]}`).join(',')};`;
           }
         },
