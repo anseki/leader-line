@@ -296,6 +296,31 @@
   window.hasChanged = hasChanged; // [DEBUG/]
 
   /**
+   * Parse and get an alpha channel in color notation.
+   * @param {string} color - A color notation such as `'rgba(10, 20, 30, 0.6)'`.
+   * @returns {number} - A value of alpha channel ([0, 1]) such as `0.6`.
+   */
+  function getAlpha(color) {
+    var matches;
+/*
+ = <rgb()>
+ | <rgba()>
+ | <hsl()>
+ | <hsla()>
+ | <hwb()>
+ | <gray()>
+ | <device-cmyk()>
+ | <color()>
+ | <hex-color>
+ | <named-color>
+ | currentcolor
+*/
+    if (/x/) {
+
+    }
+  }
+
+  /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
    * @param {Element} element - Target element.
    * @param {boolean} [relWindow] - Whether it's relative to the element's window, or document (i.e. `<html>`).
@@ -1511,6 +1536,9 @@
       }
       // Update at least `options` even if `plugOutlineEnabled` and visual is not changed.
       if (setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i)) {
+        if (typeof options.plugOutlineColorSE[i] === 'string' && options.plugOutlineColorSE[i]) {
+          options.plugOutlineColorSE[i] = options.plugOutlineColorSE[i].trim();
+        }
         needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
       }
       if (setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
@@ -1537,6 +1565,9 @@
       }
       // Update at least `options` even if `PLUG_BEHIND` and visual is not changed.
       if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
+        if (typeof options.plugColorSE[i] === 'string' && options.plugColorSE[i]) {
+          options.plugColorSE[i] = options.plugColorSE[i].trim();
+        }
         needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
       }
       if (setValidType(name + 'Size', null, 'plugSizeSE', i,
@@ -1557,6 +1588,9 @@
     }
     // Update at least `options` even if `lineOutlineEnabled` and visual is not changed.
     if (setValidType('outlineColor', null, 'lineOutlineColor')) {
+      if (typeof options.lineOutlineColor === 'string' && options.lineOutlineColor) {
+        options.lineOutlineColor = options.lineOutlineColor.trim();
+      }
       needsLineOutline = addPropList('lineOutlineColor', needsLineOutline);
       options.plugSE.forEach(function(plug, i) {
         if (plug !== PLUG_BEHIND && options.plugOutlineEnabledSE[i] && !options.plugOutlineColorSE[i]) {
@@ -1570,6 +1604,9 @@
     }
 
     if (setValidType('color', null, 'lineColor')) {
+      if (typeof options.lineColor === 'string' && options.lineColor) {
+        options.lineColor = options.lineColor.trim();
+      }
       needsLine = addPropList('lineColor', needsLine);
       options.plugSE.forEach(function(plug, i) {
         if (plug !== PLUG_BEHIND && !options.plugColorSE[i]) {
