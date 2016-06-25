@@ -629,10 +629,6 @@
       props.lineMaskBGRect[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
     });
 
-    // props.lineOutlineIShape = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    // props.lineOutlineIShape.id = props.lineOutlineIShapeId;
-    // props.lineOutlineIShape.href.baseVal = '#' + props.linePathId;
-
     // ==== lineMask
     props.lineMask = setupMask(props.lineMaskId);
     props.lineMaskBG = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
@@ -1294,7 +1290,6 @@
     props.lineMaskMarkerIdSE = [prefix + '-line-mask-marker-0', prefix + '-line-mask-marker-1'];
     props.lineMaskCapsId = prefix + '-line-mask-caps';
     props.lineMaskBGRectId = prefix + '-line-mask-bg-rect';
-    // props.lineOutlineIShapeId = prefix + '-line-outline-ishape';
     props.lineOutlineMaskId = prefix + '-line-outline-mask';
     props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
     props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
