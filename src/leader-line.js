@@ -560,7 +560,7 @@
   /**
    * Setup `baseWindow`, `bodyOffset`, `pathList`,
    *    `positionVals`, `pathVals`, `viewBBoxVals`, `maskVals`, `anchorMaskVals`,
-   *    `effect`, `effectParams`, SVG elements.
+   *    `hasTransparency`, `effect`, `effectParams`, SVG elements.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -769,6 +769,7 @@
     props.viewBBoxVals.plugBCircleSE = [0, 0];
     props.viewBBoxVals.pathEdge = {};
     props.pathList = {baseVal: [], animVal: []};
+    props.hasTransparency = {plugColorSE: [], plugOutlineColorSE: []};
     props.effect = null;
     if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
     props.effectParams = {};
@@ -783,13 +784,15 @@
    */
   function setLine(props, setProps) {
     window.traceLog.push('<setLine>'); // [DEBUG/]
-    var options = props.options;
+    var options = props.options, value;
 
     (setProps || ['lineColor', 'lineSize']).forEach(function(setProp) {
       switch (setProp) {
         case 'lineColor':
-          window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
-          props.lineFace.style.stroke = options[setProp];
+          value = options[setProp];
+          window.traceLog.push(setProp + '=' + value); // [DEBUG/]
+          props.lineFace.style.stroke = value;
+          props.hasTransparency.lineColor = getAlpha(value) < 1;
           break;
 
         case 'lineSize':
@@ -877,7 +880,8 @@
       curPosition = props.positionVals.current,
       plugBCircleSE = props.viewBBoxVals.plugBCircleSE,
       plugHasMaskSE = props.maskVals.current.plugHasMaskSE,
-      anchorHasMaskSE = props.maskVals.current.anchorHasMaskSE;
+      anchorHasMaskSE = props.maskVals.current.anchorHasMaskSE,
+      value;
 
     setPropsSE.forEach(function(setProps, i) {
       var plugId = options.plugSE[i], symbolConf, orient, markerProp;
@@ -918,8 +922,10 @@
               break;
 
             case 'plugColor':
-              window.traceLog.push(setProp + '[' + i + ']=' + (options.plugColorSE[i] || options.lineColor)); // [DEBUG/]
-              props.plugFaceSE[i].style.fill = options.plugColorSE[i] || options.lineColor;
+              value = options.plugColorSE[i] || options.lineColor;
+              window.traceLog.push(setProp + '[' + i + ']=' + value); // [DEBUG/]
+              props.plugFaceSE[i].style.fill = value;
+              props.hasTransparency.plugColorSE[i] = getAlpha(value) < 1;
               break;
 
             case 'plugSize':
@@ -972,7 +978,7 @@
    */
   function setLineOutline(props, setProps) {
     window.traceLog.push('<setLineOutline>'); // [DEBUG/]
-    var options = props.options;
+    var options = props.options, value;
 
     if (options.lineOutlineEnabled) {
       (setProps || ['lineOutlineEnabled', 'lineOutlineColor', 'lineOutlineSize']).forEach(function(setProp) {
@@ -985,8 +991,10 @@
             break;
 
           case 'lineOutlineColor':
-            window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
-            props.lineOutlineFace.style.stroke = options[setProp];
+            value = options[setProp];
+            window.traceLog.push(setProp + '=' + value); // [DEBUG/]
+            props.lineOutlineFace.style.stroke = value;
+            props.hasTransparency.lineOutlineColor = getAlpha(value) < 1;
             break;
 
           case 'lineOutlineSize':
@@ -1027,7 +1035,7 @@
     var options = props.options;
 
     setPropsSE.forEach(function(setProps, i) {
-      var plugId = options.plugSE[i], symbolConf;
+      var plugId = options.plugSE[i], symbolConf, value;
 
       // Disable it when `plugId === PLUG_BEHIND` even if `plugOutlineEnabledSE`.
       if (options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND) {
@@ -1040,9 +1048,10 @@
               break;
 
             case 'plugOutlineColor':
-              window.traceLog.push(setProp + '[' + i + ']=' + (options.plugOutlineColorSE[i] || options.lineOutlineColor)); // [DEBUG/]
-              props.plugOutlineFaceSE[i].style.fill =
-                options.plugOutlineColorSE[i] || options.lineOutlineColor;
+              value = options.plugOutlineColorSE[i] || options.lineOutlineColor;
+              window.traceLog.push(setProp + '[' + i + ']=' + (value)); // [DEBUG/]
+              props.plugOutlineFaceSE[i].style.fill = value;
+              props.hasTransparency.plugOutlineColorSE[i] = getAlpha(value) < 1;
               break;
 
             case 'plugOutlineSize':
