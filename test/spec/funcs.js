@@ -250,4 +250,86 @@ describe('funcs', function() {
 
   });
 
+  describe('getAlpha', function() {
+    var getAlpha, pageDone;
+
+    beforeAll(function(beforeDone) {
+      loadPage('spec/funcs/funcs.html', function(window, document, body, done) {
+        getAlpha = window.getAlpha;
+        pageDone = done;
+        beforeDone();
+      });
+    });
+
+    afterAll(function() {
+      pageDone();
+    });
+
+    it('ignored notations', function() {
+      expect(getAlpha('')).toBe(1);
+      expect(getAlpha('rgba')).toBe(1);
+      expect(getAlpha('rgb(10, 20, 30)')).toBe(1);
+      expect(getAlpha('#aabbcc')).toBe(1);
+      expect(getAlpha('#abc')).toBe(1);
+      expect(getAlpha('aabbcc99')).toBe(1);
+      expect(getAlpha('abc9')).toBe(1);
+      expect(getAlpha('red')).toBe(1);
+    });
+
+    it('rgba, hsla, hwb', function() {
+      expect(getAlpha('rgba(10, 20, 30, 0.6)')).toBe(0.6);
+      expect(getAlpha('hsla(10, 20, 30, 0.6)')).toBe(0.6);
+      expect(getAlpha('hwb(10, 20, 30, 0.6)')).toBe(0.6);
+      expect(getAlpha('rgba(10, 20, 30)')).toBe(1);
+
+      expect(getAlpha('  rGBa  (  10  , 20  , 30  , 0.6  )  ')).toBe(0.6);
+    });
+
+    it('gray', function() {
+      expect(getAlpha('gray(10, 0.6)')).toBe(0.6);
+      expect(getAlpha('gray(10)')).toBe(1);
+
+      expect(getAlpha('  gRAy  (  10 ,  0.6  )  ')).toBe(0.6);
+    });
+
+    it('device-cmyk', function() {
+      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%, 0.6)')).toBe(0.6);
+      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%, 0.6, red)')).toBe(0.6);
+      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%)')).toBe(1);
+
+      expect(getAlpha('  device-cMYk  (  10%  , 20%  , 30%  , 40%  , 0.6  )  ')).toBe(0.6);
+    });
+
+    it('parseAlpha', function() {
+      expect(getAlpha('rgba(10, 20, 30, 60%)')).toBe(0.6);
+      expect(getAlpha('rgba(10, 20, 30, 60.5%)')).toBe(0.605);
+      expect(getAlpha('rgba(10, 20, 30, 100%)')).toBe(1);
+      expect(getAlpha('rgba(10, 20, 30, -10%)')).toBe(1);
+      expect(getAlpha('rgba(10, 20, 30, 110%)')).toBe(1);
+      expect(getAlpha('rgba(10, 20, 30, 1)')).toBe(1);
+      expect(getAlpha('rgba(10, 20, 30, -0.1)')).toBe(1);
+      expect(getAlpha('rgba(10, 20, 30, 1.1)')).toBe(1);
+
+      expect(getAlpha('rgba(10, 20, 30, 60 % )')).toBe(0.6);
+      expect(getAlpha('  device-cmyk  (  10%  , 20%  , 30%  , 40%  , 60 % ,  red  )  ')).toBe(0.6);
+    });
+
+    it('RGB-Hex', function() {
+      expect(getAlpha('#aabbcc99')).toBe(0.6);
+      expect(getAlpha('#abc9')).toBe(0.6);
+      expect(getAlpha('#aabbcc00')).toBe(0);
+      expect(getAlpha('#abc0')).toBe(0);
+      expect(getAlpha('#aabbccff')).toBe(1);
+      expect(getAlpha('#abcf')).toBe(1);
+
+      expect(getAlpha('  #aaBBCc99  ')).toBe(0.6);
+      expect(getAlpha('  #aBC9  ')).toBe(0.6);
+    });
+
+    it('transparent', function() {
+      expect(getAlpha('transparent')).toBe(0);
+      expect(getAlpha('  trANSPARent  ')).toBe(0);
+    });
+  });
+
 });

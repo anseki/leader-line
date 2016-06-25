@@ -301,24 +301,38 @@
    * @returns {number} - A value of alpha channel ([0, 1]) such as `0.6`.
    */
   function getAlpha(color) {
-    var matches;
-/*
- = <rgb()>
- | <rgba()>
- | <hsl()>
- | <hsla()>
- | <hwb()>
- | <gray()>
- | <device-cmyk()>
- | <color()>
- | <hex-color>
- | <named-color>
- | currentcolor
-*/
-    if (/x/) {
+    var matches, func, args, alpha = 1;
 
+    function parseAlpha(value) {
+      var alpha = 1, matches = /^\s*([\d\.]+)\s*(\%)?\s*$/.exec(value);
+      if (matches) {
+        alpha = parseFloat(matches[1]);
+        if (matches[2]) {
+          alpha = alpha >= 0 && alpha <= 100 ? alpha / 100 : 1;
+        } else if (alpha < 0 || alpha > 1) {
+          alpha = 1;
+        }
+      }
+      return alpha;
     }
+
+    // Unsupported: `currentcolor`, `color()`, `deprecated-system-color`
+    if ((matches = /^\s*(rgba|hsla|hwb|gray|device\-cmyk)\s*\(([\s\S]+)\)\s*$/i.exec(color))) {
+      func = matches[1].toLowerCase();
+      args = matches[2].split(',');
+      alpha =
+        (func === 'rgba' || func === 'hsla' || func === 'hwb') && args.length === 4 ? parseAlpha(args[3]) :
+        func === 'gray' && args.length === 2 ? parseAlpha(args[1]) :
+        func === 'device-cmyk' && args.length >= 5 ? parseAlpha(args[4]) :
+        1;
+    } else if ((matches = /^\s*\#(?:[\da-f]{6}([\da-f]{2})|[\da-f]{3}([\da-f]))\s*$/i.exec(color))) {
+      alpha = parseInt(matches[1] ? matches[1] : matches[2] + matches[2], 16) / 255;
+    } else if (/^\s*transparent\s*$/i.test(color)) {
+      alpha = 0;
+    }
+    return alpha;
   }
+  window.getAlpha = getAlpha; // [DEBUG/]
 
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
