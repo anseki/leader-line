@@ -85,7 +85,7 @@
     IS_TRIDENT = !!document.uniqueID,
     IS_BLINK = !!(window.chrome && window.chrome.webstore),
     IS_GECKO = 'MozAppearance' in document.documentElement.style,
-    SHAPE_GAP = IS_TRIDENT ? 0.8 : 0.3,
+    SHAPE_GAP = IS_TRIDENT ? 0.8 : 0.1,
 
     DEFAULT_OPTIONS = {
       path: PATH_FLUID,
