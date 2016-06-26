@@ -993,9 +993,9 @@
           case 'lineOutlineSize':
             window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
             props.lineMaskShape.style.strokeWidth =
-              options.lineSize - options.lineSize * options.lineOutlineSize * 2;
+              options.lineSize - (options.lineSize * options.lineOutlineSize - SHAPE_GAP) * 2;
             props.lineOutlineMaskShape.style.strokeWidth =
-              options.lineSize - (options.lineSize * options.lineOutlineSize + SHAPE_GAP) * 2;
+              options.lineSize - options.lineSize * options.lineOutlineSize * 2;
             if (IS_TRIDENT) {
               // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
               forceReflow(props.lineOutlineMaskCaps);
