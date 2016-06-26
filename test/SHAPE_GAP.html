@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <style>
+
+    .item {
+      width: 40px;
+      height: 40px;
+      position: absolute;
+    }
+
+    .item-0 { background-color: rgba(25, 83, 234, 0.5); }
+    .item-1 { background-color: rgba(196, 67, 161, 0.5); }
+
+    .item-a0 { left: 0; top: 40px; }
+    .item-a1 { left: 360px; top: 220px; }
+    .item-b0 { left: 0; top: 180px; }
+    .item-b1 { left: 360px; top: 360px; }
+
+    .view {
+      display: inline-block;
+      position: relative;
+      margin: 10px;
+      width: 400px;
+      height: 400px;
+      border: 1px solid #bbb;
+    }
+
+    code {
+      display: block;
+      font-size: 2em;
+    }
+
+  </style>
+
+<script src="../src/defs.js"></script>
+<script src="../src/path-data-polyfill/path-data-polyfill.js"></script>
+<script src="../src/leader-line.js"></script>
+<script>
+
+// ================ context
+/* eslint-disable no-unused-vars, indent */
+var
+    DEFAULT_OPTIONS = {
+      lineSize: 4
+    };
+/* eslint-enable no-unused-vars, indent */
+// ================ /context
+
+window.addEventListener('load', function() {
+  var txtGap = document.getElementById('txt-gap');
+
+  [
+    ['coral', 'coral'],
+    ['black', 'black'],
+    ['limegreen', 'limegreen'],
+    ['rgba(255, 130, 0, 0.7)', 'rgba(255, 130, 0, 0.7)'],
+    ['rgba(0, 59, 255, 0.5)', 'rgba(0, 59, 255, 0.5)'],
+    ['rgba(255, 0, 0, 0.5)', 'rgba(255, 0, 0, 0.5)']
+  ].forEach(function(colors) {
+    var code = document.body.appendChild(document.createElement('code')),
+      row = document.body.appendChild(document.createElement('div'));
+    code.textContent = colors.join(', ');
+
+    [12, 26].forEach(function(size) {
+
+      var view = row.appendChild(document.createElement('div')),
+        itemA0 = view.appendChild(document.createElement('div')),
+        itemA1 = view.appendChild(document.createElement('div')),
+        itemB0 = view.appendChild(document.createElement('div')),
+        itemB1 = view.appendChild(document.createElement('div')),
+        options = {
+          startPlug: 'arrow2',
+          outline: true,
+          startPlugOutline: true,
+          endPlugOutline: true,
+
+          size: size,
+          color: colors[0],
+          outlineColor: colors[1]
+        },
+        llA, llB;
+
+      view.setAttribute('class', 'view');
+      itemA0.setAttribute('class', 'item item-0 item-a0');
+      itemA1.setAttribute('class', 'item item-1 item-a1');
+      itemB0.setAttribute('class', 'item item-0 item-b0');
+      itemB1.setAttribute('class', 'item item-1 item-b1');
+
+      llA = new LeaderLine(itemA0, itemA1, options);
+      options.path = 'straight';
+      llB = new LeaderLine(itemB0, itemB1, options);
+
+    });
+  });
+
+  document.getElementById('btn-set').addEventListener('click', function() {
+    var gap = parseFloat(txtGap.value);
+    if (isNaN(gap)) { return; }
+
+    Object.keys(window.insProps).forEach(function(id) {
+      var props = window.insProps[id],
+        options = props.options;
+      props.lineMaskShape.style.strokeWidth =
+        options.lineSize - (options.lineSize * options.lineOutlineSize - gap) * 2;
+
+      [0, 1].forEach(function(i) {
+        var plugId = options.plugSE[i],
+          symbolConf = window.SYMBOLS[window.PLUG_2_SYMBOL[plugId]];
+        props.plugOutlineMaskShapeSE[i].style.strokeWidth =
+          (symbolConf.outlineBase * options.plugOutlineSizeSE[i] +
+            gap / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i]) * 2;
+      });
+    });
+
+  }, false);
+}, false);
+
+</script>
+
+</head>
+<body>
+
+<input type="text" value="0.1" id="txt-gap">
+<button id="btn-set">SET</button>
+
+</body>
+</html>

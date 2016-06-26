@@ -82,10 +82,15 @@
     MIN_ADJUST_LEN = 10, MIN_GRID_LEN = 30,
 
     CIRCLE_CP = 0.5522847, CIRCLE_8_RAD = 1 / 4 * Math.PI,
+
     IS_TRIDENT = !!document.uniqueID,
     IS_BLINK = !!(window.chrome && window.chrome.webstore),
     IS_GECKO = 'MozAppearance' in document.documentElement.style,
-    SHAPE_GAP = IS_TRIDENT ? 0.8 : 0.1,
+    IS_EDGE = '-ms-scroll-limit' in document.documentElement.style &&
+      '-ms-ime-align' in document.documentElement.style && !window.navigator.msPointerEnabled,
+    IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
+
+    SHAPE_GAP = IS_TRIDENT || IS_EDGE ? 0.2 : 0.1,
 
     DEFAULT_OPTIONS = {
       path: PATH_FLUID,
