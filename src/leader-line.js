@@ -641,6 +641,10 @@
     props.linePath = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
     props.linePath.id = props.linePathId;
     props.linePath.className.baseVal = APP_ID + '-line-path';
+    if (IS_WEBKIT) {
+      // [WEBKIT] style in `use` is not updated
+      props.linePath.style.fill = 'none';
+    }
 
     props.lineShape = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineShape.id = props.lineShapeId;
@@ -672,6 +676,10 @@
     ['width', 'height'].forEach(function(prop) {
       props.lineMaskBGRect[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
     });
+    if (IS_WEBKIT) {
+      // [WEBKIT] style in `use` is not updated
+      props.lineMaskBGRect.style.fill = 'white';
+    }
 
     // ==== lineMask
     props.lineMask = setupMask(props.lineMaskId);
