@@ -731,7 +731,14 @@
     });
     // ==== /plugOutlineMaskSE
 
-    props.plugMarkerSE = [0, 1].map(function(i) { return setupMarker(props.plugMarkerIdSE[i]); });
+    props.plugMarkerSE = [0, 1].map(function(i) {
+      var element = setupMarker(props.plugMarkerIdSE[i]);
+      if (IS_WEBKIT) {
+        // [WEBKIT] mask in marker is resized with rasterise
+        element.markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_USERSPACEONUSE;
+      }
+      return element;
+    });
     props.plugMarkerShapeSE = [0, 1].map(function(i) {
       return props.plugMarkerSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
     });
@@ -936,12 +943,24 @@
 
             case 'plugSize':
               window.traceLog.push(setProp + '[' + i + ']=' + options.plugSizeSE[i]); // [DEBUG/]
-              props.plugMarkerSE[i].markerWidth.baseVal.value =
+              if (IS_WEBKIT) {
+                // [WEBKIT] mask in marker is resized with rasterise
                 props.lineMaskMarkerSE[i].markerWidth.baseVal.value =
-                symbolConf.widthR * options.plugSizeSE[i];
-              props.plugMarkerSE[i].markerHeight.baseVal.value =
+                  symbolConf.widthR * options.plugSizeSE[i];
                 props.lineMaskMarkerSE[i].markerHeight.baseVal.value =
-                symbolConf.heightR * options.plugSizeSE[i];
+                  symbolConf.heightR * options.plugSizeSE[i];
+                props.plugMarkerSE[i].markerWidth.baseVal.value =
+                  symbolConf.widthR * options.plugSizeSE[i] * options.lineSize;
+                props.plugMarkerSE[i].markerHeight.baseVal.value =
+                  symbolConf.heightR * options.plugSizeSE[i] * options.lineSize;
+              } else {
+                props.plugMarkerSE[i].markerWidth.baseVal.value =
+                  props.lineMaskMarkerSE[i].markerWidth.baseVal.value =
+                  symbolConf.widthR * options.plugSizeSE[i];
+                props.plugMarkerSE[i].markerHeight.baseVal.value =
+                  props.lineMaskMarkerSE[i].markerHeight.baseVal.value =
+                  symbolConf.heightR * options.plugSizeSE[i];
+              }
               break;
             // no default
           }
@@ -1067,15 +1086,10 @@
               }
               window.traceLog.push(setProp + '[' + i + ']=' + options.plugOutlineSizeSE[i]); // [DEBUG/]
               props.plugMaskShapeSE[i].style.strokeWidth =
-                symbolConf.outlineBase * options.plugOutlineSizeSE[i] * 2;
+                (symbolConf.outlineBase * options.plugOutlineSizeSE[i] -
+                  SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i]) * 2;
               props.plugOutlineMaskShapeSE[i].style.strokeWidth =
-                (symbolConf.outlineBase * options.plugOutlineSizeSE[i] +
-                  2 / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i]) * 2;
-              console.log(2 / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i]);
-              if (IS_BLINK) {
-                // [BLINK] plugOutlineSizeSE is ignored when exists plug is changed
-                // forceReflow(props.plugOutlineIShapeSE[i]);
-              }
+                symbolConf.outlineBase * options.plugOutlineSizeSE[i] * 2;
               break;
             // no default
           }

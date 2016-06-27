@@ -72,7 +72,8 @@ window.addEventListener('load', function() {
         itemB0 = view.appendChild(document.createElement('div')),
         itemB1 = view.appendChild(document.createElement('div')),
         options = {
-          startPlug: 'arrow2',
+          startPlug: 'square',
+//          startPlug: 'arrow2',
           outline: true,
           startPlugOutline: true,
           endPlugOutline: true,
@@ -109,8 +110,8 @@ window.addEventListener('load', function() {
       [0, 1].forEach(function(i) {
         var plugId = options.plugSE[i],
           symbolConf = window.SYMBOLS[window.PLUG_2_SYMBOL[plugId]];
-        props.plugOutlineMaskShapeSE[i].style.strokeWidth =
-          (symbolConf.outlineBase * options.plugOutlineSizeSE[i] +
+        props.plugMaskShapeSE[i].style.strokeWidth =
+          (symbolConf.outlineBase * options.plugOutlineSizeSE[i] -
             gap / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i]) * 2;
       });
     });
