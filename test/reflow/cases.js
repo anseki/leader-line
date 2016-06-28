@@ -84,7 +84,7 @@ window.addEventListener('load', function() {
       },
       {
         fnc: function() {
-          // [BLINK] plugOutlineSizeSE is ignored when exists plug is changed
+          // [None] plugOutlineSizeSE is ignored when exists plug is changed
           ll.setOptions({
             startPlug: 'arrow2'
           });

@@ -164,14 +164,23 @@
     ],
 
     MASK_PROPS = [
-      {name: 'plugHasMaskSE', hasSE: true},
-      {name: 'anchorHasMaskSE', hasSE: true},
-      {name: 'x'}, {name: 'y'}, {name: 'width'}, {name: 'height'}
+      {name: 'lineMaskEnabled'},
+      {name: 'lineMaskX'}, {name: 'lineMaskY'},
+      {name: 'lineOutlineMaskX'}, {name: 'lineOutlineMaskY'}
     ],
 
-    ANCHOR_MASK_PROPS = [
+    CAPS_MASK_ANCHOR_PROPS = [
+      {name: 'enabledSE', hasSE: true},
       {name: 'xSE', hasSE: true}, {name: 'ySE', hasSE: true},
       {name: 'widthSE', hasSE: true}, {name: 'heightSE', hasSE: true}
+    ],
+
+    CAPS_MASK_PLUG_PROPS = [
+      {name: 'enabledSE', hasSE: true}
+    ],
+
+    MASK_BG_RECT_PROPS = [
+      {name: 'x'}, {name: 'y'}
     ],
 
     /**
@@ -564,8 +573,8 @@
 
   /**
    * Setup `baseWindow`, `bodyOffset`, `pathList`,
-   *    `positionVals`, `pathVals`, `viewBBoxVals`, `maskVals`, `anchorMaskVals`,
-   *    `hasTransparency`, `effect`, `effectParams`, SVG elements.
+   *    `positionVals`, `pathVals`, `viewBBoxVals`, `maskVals`, `capsMaskAnchorVals`, `capsMaskPlugVals`,
+   *    `maskBGRectVals`, `hasTransparency`, `effect`, `effectParams`, SVG elements.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -597,6 +606,12 @@
         element.setAttribute('viewBox', '0 0 0 0'); // for Firefox bug
       }
       return element;
+    }
+
+    function setWH100(element) {
+      ['width', 'height'].forEach(function(prop) {
+        element[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
+      });
     }
 
     if (props.baseWindow && props.svg) {
@@ -653,38 +668,35 @@
     maskCaps = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
     maskCaps.id = props.lineMaskCapsId;
 
-    props.lineMaskAnchorSE = [0, 1].map(function() {
+    props.capsMaskAnchorSE = [0, 1].map(function() {
       var element = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
-      element.className.baseVal = APP_ID + '-line-mask-anchor';
+      element.className.baseVal = APP_ID + '-caps-mask-anchor';
       return element;
     });
 
-    props.lineMaskMarkerSE = [0, 1].map(function(i) { return setupMarker(props.lineMaskMarkerIdSE[i]); });
-    props.lineMaskMarkerShapeSE = [0, 1].map(function(i) {
-      var element = props.lineMaskMarkerSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-      element.className.baseVal = APP_ID + '-line-mask-marker-shape';
+    props.capsMaskMarkerSE = [0, 1].map(function(i) { return setupMarker(props.lineMaskMarkerIdSE[i]); });
+    props.capsMaskMarkerShapeSE = [0, 1].map(function(i) {
+      var element = props.capsMaskMarkerSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+      element.className.baseVal = APP_ID + '-caps-mask-marker-shape';
       return element;
     });
 
-    props.lineMaskPlug = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineMaskPlug.className.baseVal = APP_ID + '-line-mask-plug';
-    props.lineMaskPlug.href.baseVal = '#' + props.lineShapeId;
+    props.capsMaskLine = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.capsMaskLine.className.baseVal = APP_ID + '-caps-mask-line';
+    props.capsMaskLine.href.baseVal = '#' + props.lineShapeId;
 
-    props.lineMaskBGRect = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
-    props.lineMaskBGRect.id = props.lineMaskBGRectId;
-    props.lineMaskBGRect.className.baseVal = APP_ID + '-line-mask-bg-rect';
-    ['width', 'height'].forEach(function(prop) {
-      props.lineMaskBGRect[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
-    });
+    props.maskBGRect = setWH100(elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
+    props.maskBGRect.id = props.maskBGRectId;
+    props.maskBGRect.className.baseVal = APP_ID + '-mask-bg-rect';
     if (IS_WEBKIT) {
       // [WEBKIT] style in `use` is not updated
-      props.lineMaskBGRect.style.fill = 'white';
+      props.maskBGRect.style.fill = 'white';
     }
 
     // ==== lineMask
-    props.lineMask = setupMask(props.lineMaskId);
+    props.lineMask = setWH100(setupMask(props.lineMaskId));
     props.lineMaskBG = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineMaskBG.href.baseVal = '#' + props.lineMaskBGRectId;
+    props.lineMaskBG.href.baseVal = '#' + props.maskBGRectId;
     props.lineMaskShape = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskShape.className.baseVal = APP_ID + '-line-mask-shape';
     props.lineMaskShape.href.baseVal = '#' + props.linePathId;
@@ -694,9 +706,9 @@
     // ==== /lineMask
 
     // ==== lineOutlineMask
-    props.lineOutlineMask = setupMask(props.lineOutlineMaskId);
+    props.lineOutlineMask = setWH100(setupMask(props.lineOutlineMaskId));
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    element.href.baseVal = '#' + props.lineMaskBGRectId;
+    element.href.baseVal = '#' + props.maskBGRectId;
     props.lineOutlineMaskShape = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineOutlineMaskShape.className.baseVal = APP_ID + '-line-outline-mask-shape';
     props.lineOutlineMaskShape.href.baseVal = '#' + props.linePathId;
@@ -706,7 +718,6 @@
 
     props.lineFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineFace.href.baseVal = '#' + props.lineShapeId;
-    props.lineFace.style.mask = 'url(#' + props.lineMaskId + ')';
 
     props.lineOutlineFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineOutlineFace.href.baseVal = '#' + props.lineShapeId;
@@ -760,7 +771,8 @@
     props.svg = baseDocument.body.appendChild(svg);
 
     [['positionVals', POSITION_PROPS], ['pathVals', PATH_PROPS], ['viewBBoxVals', VIEW_BBOX_PROPS],
-        ['maskVals', MASK_PROPS], ['anchorMaskVals', ANCHOR_MASK_PROPS]]
+        ['maskVals', MASK_PROPS], ['capsMaskAnchorVals', CAPS_MASK_ANCHOR_PROPS],
+        ['capsMaskPlugVals', CAPS_MASK_PLUG_PROPS], ['maskBGRectVals', MASK_BG_RECT_PROPS]]
       .forEach(function(propNameConf) {
         props[propNameConf[0]] = propNameConf[1].reduce(function(values, propConf) {
           if (propConf.hasSE) {
@@ -889,10 +901,10 @@
   function setPlug(props, setPropsSE) {
     window.traceLog.push('<setPlug>'); // [DEBUG/]
     var options = props.options,
-      curPosition = props.positionVals.current,
       plugBCircleSE = props.viewBBoxVals.plugBCircleSE,
-      plugHasMaskSE = props.maskVals.current.plugHasMaskSE,
-      anchorHasMaskSE = props.maskVals.current.anchorHasMaskSE,
+      curPosition = props.positionVals.current,
+      curCapsMaskAnchorEnabledSE = props.capsMaskAnchorVals.current.enabledSE,
+      curCapsMaskPlugEnabledSE = props.capsMaskPlugVals.current.enabledSE,
       value;
 
     setPropsSE.forEach(function(setProps, i) {
@@ -911,7 +923,7 @@
                 props.plugOutlineFaceSE[i].href.baseVal =
                 props.plugMaskShapeSE[i].href.baseVal =
                 props.plugOutlineMaskShapeSE[i].href.baseVal =
-                props.lineMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+                props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
               [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
                 mask.x.baseVal.value = symbolConf.bBox.left;
                 mask.y.baseVal.value = symbolConf.bBox.top;
@@ -920,16 +932,15 @@
               });
               // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
               props.plugsFace.style[markerProp] = 'url(#' + props.plugMarkerIdSE[i] + ')';
-              props.lineMaskPlug.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
+              props.capsMaskLine.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
               setMarkerOrient(props.plugMarkerSE[i], orient,
                 symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
-              setMarkerOrient(props.lineMaskMarkerSE[i], orient,
-                symbolConf.bBox, props.svg, props.lineMaskMarkerShapeSE[i], props.lineMaskPlug);
-              props.lineMaskAnchorSE[i].style.display = 'none';
+              setMarkerOrient(props.capsMaskMarkerSE[i], orient,
+                symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
               if (IS_GECKO) {
                 // [GECKO] plugsFace is not updated when plugSE is changed
                 forceReflow(props.plugsFace);
-                forceReflow(props.lineMaskPlug);
+                forceReflow(props.capsMaskLine);
                 forceReflow(props.lineFace);
               }
               break;
@@ -939,15 +950,16 @@
               window.traceLog.push(setProp + '[' + i + ']=' + value); // [DEBUG/]
               props.plugFaceSE[i].style.fill = value;
               props.hasTransparency.plugColorSE[i] = getAlpha(value) < 1;
+              //props.hasTransparency.plugColorSE[i];
               break;
 
             case 'plugSize':
               window.traceLog.push(setProp + '[' + i + ']=' + options.plugSizeSE[i]); // [DEBUG/]
               if (IS_WEBKIT) {
                 // [WEBKIT] mask in marker is resized with rasterise
-                props.lineMaskMarkerSE[i].markerWidth.baseVal.value =
+                props.capsMaskMarkerSE[i].markerWidth.baseVal.value =
                   symbolConf.widthR * options.plugSizeSE[i];
-                props.lineMaskMarkerSE[i].markerHeight.baseVal.value =
+                props.capsMaskMarkerSE[i].markerHeight.baseVal.value =
                   symbolConf.heightR * options.plugSizeSE[i];
                 props.plugMarkerSE[i].markerWidth.baseVal.value =
                   symbolConf.widthR * options.plugSizeSE[i] * options.lineSize;
@@ -955,10 +967,10 @@
                   symbolConf.heightR * options.plugSizeSE[i] * options.lineSize;
               } else {
                 props.plugMarkerSE[i].markerWidth.baseVal.value =
-                  props.lineMaskMarkerSE[i].markerWidth.baseVal.value =
+                  props.capsMaskMarkerSE[i].markerWidth.baseVal.value =
                   symbolConf.widthR * options.plugSizeSE[i];
                 props.plugMarkerSE[i].markerHeight.baseVal.value =
-                  props.lineMaskMarkerSE[i].markerHeight.baseVal.value =
+                  props.capsMaskMarkerSE[i].markerHeight.baseVal.value =
                   symbolConf.heightR * options.plugSizeSE[i];
               }
               break;
@@ -970,24 +982,23 @@
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
         plugBCircleSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
-        plugHasMaskSE[i] = true;
-        anchorHasMaskSE[i] = false;
+        curCapsMaskPlugEnabledSE[i] = true;
+        curCapsMaskAnchorEnabledSE[i] = false;
 
       } else {
         if (!setProps || setProps.indexOf('plug') > -1) {
           window.traceLog.push('plug[' + i + ']=' + plugId); // [DEBUG/]
           markerProp = i ? 'markerEnd' : 'markerStart';
-          props.plugsFace.style[markerProp] = props.lineMaskPlug.style[markerProp] = 'none';
-          props.lineMaskAnchorSE[i].style.display = 'inline';
+          props.plugsFace.style[markerProp] = props.capsMaskLine.style[markerProp] = 'none';
         }
         // Update shape always for `options.lineSize` that might have been changed.
         curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
         plugBCircleSE[i] = 0;
-        plugHasMaskSE[i] = false;
-        anchorHasMaskSE[i] = true;
+        curCapsMaskPlugEnabledSE[i] = false;
+        curCapsMaskAnchorEnabledSE[i] = true;
       }
     });
-    props.lineMaskPlug.style.display =
+    props.capsMaskLine.style.display =
       options.plugSE[0] !== PLUG_BEHIND || options.plugSE[1] !== PLUG_BEHIND ? 'inline' : 'none';
 
     if (props.effect && props.effect.onSetPlug) {
@@ -1178,12 +1189,452 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
+   * @returns {boolean} - `true` if it was changed.
+   */
+  function updatePosition(props) {
+    window.traceLog.push('<position>'); // [DEBUG/]
+    var options = props.options,
+      curPosition = props.positionVals.current,
+      curPositionSocketXYSE = curPosition.socketXYSE,
+      capsMaskAnchorVals = props.capsMaskAnchorVals,
+      anchorBBoxSE, pathList,
+      update = false;
+
+    function getSocketXY(bBox, socketId) {
+      var socketXY = (
+        socketId === SOCKET_TOP ? {x: bBox.left + bBox.width / 2, y: bBox.top} :
+        socketId === SOCKET_RIGHT ? {x: bBox.right, y: bBox.top + bBox.height / 2} :
+        socketId === SOCKET_BOTTOM ? {x: bBox.left + bBox.width / 2, y: bBox.bottom} :
+                    /* SOCKET_LEFT */ {x: bBox.left, y: bBox.top + bBox.height / 2});
+      socketXY.socketId = socketId;
+      return socketXY;
+    }
+
+    function socketXY2Point(socketXY) { return {x: socketXY.x, y: socketXY.y}; }
+
+    anchorBBoxSE = [0, 1].map(function(i) {
+      var anchorBBox = getBBoxNest(options.anchorSE[i], props.baseWindow);
+      ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+        var propKey = boxKey + 'SE';
+        capsMaskAnchorVals.current[propKey][i] = anchorBBox[BBOX_PROP[boxKey]];
+      });
+      return anchorBBox;
+    });
+
+    // Decide each socket
+    (function() {
+      var socketXYsWk, socketsLenMin = -1, iFix, iAuto;
+      if (options.socketSE[0] && options.socketSE[1]) {
+        curPositionSocketXYSE[0] = getSocketXY(anchorBBoxSE[0], options.socketSE[0]);
+        curPositionSocketXYSE[1] = getSocketXY(anchorBBoxSE[1], options.socketSE[1]);
+
+      } else if (!options.socketSE[0] && !options.socketSE[1]) {
+        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[1], socketId); });
+        SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[0], socketId); })
+          .forEach(function(socketXY0) {
+            socketXYsWk.forEach(function(socketXY1) {
+              var len = getPointsLength(socketXY0, socketXY1);
+              if (len < socketsLenMin || socketsLenMin === -1) {
+                curPositionSocketXYSE[0] = socketXY0;
+                curPositionSocketXYSE[1] = socketXY1;
+                socketsLenMin = len;
+              }
+            });
+          });
+
+      } else {
+        if (options.socketSE[0]) {
+          iFix = 0;
+          iAuto = 1;
+        } else {
+          iFix = 1;
+          iAuto = 0;
+        }
+        curPositionSocketXYSE[iFix] = getSocketXY(anchorBBoxSE[iFix], options.socketSE[iFix]);
+        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[iAuto], socketId); });
+        socketXYsWk.forEach(function(socketXY) {
+          var len = getPointsLength(socketXY, curPositionSocketXYSE[iFix]);
+          if (len < socketsLenMin || socketsLenMin === -1) {
+            curPositionSocketXYSE[iAuto] = socketXY;
+            socketsLenMin = len;
+          }
+        });
+      }
+    })();
+
+    // New position
+    if (propsHasChanged(props.positionVals, options, POSITION_PROPS)) {
+      window.traceLog.push('new-pathList.baseVal'); // [DEBUG/]
+      pathList = props.pathList.baseVal = [];
+
+      // Generate path segments
+      switch (options.path) {
+
+        case PATH_STRAIGHT:
+          pathList.push([socketXY2Point(curPositionSocketXYSE[0]), socketXY2Point(curPositionSocketXYSE[1])]);
+          break;
+
+        case PATH_ARC:
+          (function() {
+            var
+              downward =
+                typeof options.socketGravitySE[0] === 'number' && options.socketGravitySE[0] > 0 ||
+                typeof options.socketGravitySE[1] === 'number' && options.socketGravitySE[1] > 0,
+              circle8rad = CIRCLE_8_RAD * (downward ? -1 : 1),
+              angle = Math.atan2(curPositionSocketXYSE[1].y - curPositionSocketXYSE[0].y, curPositionSocketXYSE[1].x - curPositionSocketXYSE[0].x),
+              cp1Angle = -angle + circle8rad,
+              cp2Angle = Math.PI - angle - circle8rad,
+              crLen = getPointsLength(curPositionSocketXYSE[0], curPositionSocketXYSE[1]) / Math.sqrt(2) * CIRCLE_CP,
+              cp1 = {
+                x: curPositionSocketXYSE[0].x + Math.cos(cp1Angle) * crLen,
+                y: curPositionSocketXYSE[0].y + Math.sin(cp1Angle) * crLen * -1},
+              cp2 = {
+                x: curPositionSocketXYSE[1].x + Math.cos(cp2Angle) * crLen,
+                y: curPositionSocketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
+            pathList.push([socketXY2Point(curPositionSocketXYSE[0]), cp1, cp2, socketXY2Point(curPositionSocketXYSE[1])]);
+          })();
+          break;
+
+        case PATH_FLUID:
+        case PATH_MAGNET:
+          (/* @EXPORT[file:../test/spec/func/PATH_FLUID]@ */function(socketGravitySE) {
+            var cx = [], cy = [];
+            curPositionSocketXYSE.forEach(function(socketXY, i) {
+              var gravity = socketGravitySE[i], offset, anotherSocketXY, overhead, minGravity, len;
+              if (Array.isArray(gravity)) { // offset
+                offset = {x: gravity[0], y: gravity[1]};
+              } else if (typeof gravity === 'number') { // distance
+                offset =
+                  socketXY.socketId === SOCKET_TOP ? {x: 0, y: -gravity} :
+                  socketXY.socketId === SOCKET_RIGHT ? {x: gravity, y: 0} :
+                  socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity} :
+                                      /* SOCKET_LEFT */ {x: -gravity, y: 0};
+              } else { // auto
+                anotherSocketXY = curPositionSocketXYSE[i ? 0 : 1];
+                overhead = curPosition.plugOverheadSE[i];
+                minGravity = overhead > 0 ?
+                  MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
+                    (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
+                  MIN_GRAVITY + (options.lineSize > MIN_GRAVITY_SIZE ?
+                    (options.lineSize - MIN_GRAVITY_SIZE) * MIN_GRAVITY_R : 0);
+                if (socketXY.socketId === SOCKET_TOP) {
+                  len = (socketXY.y - anotherSocketXY.y) / 2;
+                  if (len < minGravity) { len = minGravity; }
+                  offset = {x: 0, y: -len};
+                } else if (socketXY.socketId === SOCKET_RIGHT) {
+                  len = (anotherSocketXY.x - socketXY.x) / 2;
+                  if (len < minGravity) { len = minGravity; }
+                  offset = {x: len, y: 0};
+                } else if (socketXY.socketId === SOCKET_BOTTOM) {
+                  len = (anotherSocketXY.y - socketXY.y) / 2;
+                  if (len < minGravity) { len = minGravity; }
+                  offset = {x: 0, y: len};
+                } else { // SOCKET_LEFT
+                  len = (socketXY.x - anotherSocketXY.x) / 2;
+                  if (len < minGravity) { len = minGravity; }
+                  offset = {x: -len, y: 0};
+                }
+              }
+              cx[i] = socketXY.x + offset.x;
+              cy[i] = socketXY.y + offset.y;
+            });
+            pathList.push([socketXY2Point(curPositionSocketXYSE[0]),
+              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(curPositionSocketXYSE[1])]);
+          }/* @/EXPORT@ */)([options.socketGravitySE[0],
+            options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
+          break;
+
+        case PATH_GRID:
+          (/* @EXPORT[file:../test/spec/func/PATH_GRID]@ */function() {
+            /**
+             * @typedef {Object} DirPoint
+             * @property {number} dirId - DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT
+             * @property {number} x
+             * @property {number} y
+             */
+            var
+              DIR_UP = 1, DIR_RIGHT = 2, DIR_DOWN = 3, DIR_LEFT = 4, // Correspond with `socketId`
+              dpList = [[], []], curDirPoint = [], curPoint;
+
+            function reverseDir(dirId) {
+              return dirId === DIR_UP ? DIR_DOWN :
+                dirId === DIR_RIGHT ? DIR_LEFT :
+                dirId === DIR_DOWN ? DIR_UP : DIR_RIGHT;
+            }
+
+            function getAxis(dirId) {
+              return dirId === DIR_RIGHT || dirId === DIR_LEFT ? 'x' : 'y';
+            }
+
+            function getNextDirPoint(dirPoint, len, dirId) {
+              var newDirPoint = {x: dirPoint.x, y: dirPoint.y};
+              if (dirId) {
+                if (dirId === reverseDir(dirPoint.dirId)) { throw new Error('Invalid dirId: ' + dirId); }
+                newDirPoint.dirId = dirId;
+              } else {
+                newDirPoint.dirId = dirPoint.dirId;
+              }
+
+              if (newDirPoint.dirId === DIR_UP) {
+                newDirPoint.y -= len;
+              } else if (newDirPoint.dirId === DIR_RIGHT) {
+                newDirPoint.x += len;
+              } else if (newDirPoint.dirId === DIR_DOWN) {
+                newDirPoint.y += len;
+              } else { // DIR_LEFT
+                newDirPoint.x -= len;
+              }
+              return newDirPoint;
+            }
+
+            function inAxisScope(point, dirPoint) {
+              return dirPoint.dirId === DIR_UP ? point.y <= dirPoint.y :
+                dirPoint.dirId === DIR_RIGHT ? point.x >= dirPoint.x :
+                dirPoint.dirId === DIR_DOWN ? point.y >= dirPoint.y :
+                  point.x <= dirPoint.x;
+            }
+
+            function onAxisLine(point, dirPoint) {
+              return dirPoint.dirId === DIR_UP || dirPoint.dirId === DIR_DOWN ?
+                point.x === dirPoint.x : point.y === dirPoint.y;
+            }
+
+            // Must `scopeContains[0] !== scopeContains[1]`
+            function getIndexWithScope(scopeContains) {
+              return scopeContains[0] ? {contain: 0, notContain: 1} : {contain: 1, notContain: 0};
+            }
+
+            function getAxisDistance(point1, point2, axis) {
+              return Math.abs(point2[axis] - point1[axis]);
+            }
+
+            // Must `fromPoint.[x|y] !== toPoint.[x|y]`
+            function getDirIdWithAxis(fromPoint, toPoint, axis) {
+              return axis === 'x' ?
+                (fromPoint.x < toPoint.x ? DIR_RIGHT : DIR_LEFT) :
+                (fromPoint.y < toPoint.y ? DIR_DOWN : DIR_UP);
+            }
+
+            function joinPoints() {
+              var scopeContains = [
+                  inAxisScope(curDirPoint[1], curDirPoint[0]),
+                  inAxisScope(curDirPoint[0], curDirPoint[1])],
+                axis = [getAxis(curDirPoint[0].dirId), getAxis(curDirPoint[1].dirId)],
+                center, axisScope, distance, points;
+
+              if (axis[0] === axis[1]) { // Same axis
+                if (scopeContains[0] && scopeContains[1]) {
+                  if (!onAxisLine(curDirPoint[1], curDirPoint[0])) {
+                    if (curDirPoint[0][axis[0]] === curDirPoint[1][axis[1]]) { // vertical
+                      dpList[0].push(curDirPoint[0]);
+                      dpList[1].push(curDirPoint[1]);
+                    } else {
+                      center = curDirPoint[0][axis[0]] +
+                        (curDirPoint[1][axis[1]] - curDirPoint[0][axis[0]]) / 2;
+                      dpList[0].push(
+                        getNextDirPoint(curDirPoint[0], Math.abs(center - curDirPoint[0][axis[0]])));
+                      dpList[1].push(
+                        getNextDirPoint(curDirPoint[1], Math.abs(center - curDirPoint[1][axis[1]])));
+                    }
+                  }
+                  return false;
+
+                } else if (scopeContains[0] !== scopeContains[1]) { // turn notContain 90deg
+                  axisScope = getIndexWithScope(scopeContains);
+                  distance = getAxisDistance(curDirPoint[axisScope.notContain],
+                    curDirPoint[axisScope.contain], axis[axisScope.notContain]);
+                  if (distance < MIN_GRID_LEN) {
+                    curDirPoint[axisScope.notContain] =
+                      getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN - distance);
+                  }
+                  dpList[axisScope.notContain].push(curDirPoint[axisScope.notContain]);
+                  curDirPoint[axisScope.notContain] =
+                    getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
+                      onAxisLine(curDirPoint[axisScope.contain], curDirPoint[axisScope.notContain]) ?
+                        (axis[axisScope.notContain] === 'x' ? DIR_DOWN : DIR_RIGHT) :
+                        getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
+                          (axis[axisScope.notContain] === 'x' ? 'y' : 'x')));
+
+                } else { // turn both 90deg
+                  distance =
+                    getAxisDistance(curDirPoint[0], curDirPoint[1], axis[0] === 'x' ? 'y' : 'x');
+                  dpList.forEach(function(targetDpList, iTarget) {
+                    var iAnother = iTarget === 0 ? 1 : 0;
+                    targetDpList.push(curDirPoint[iTarget]);
+                    curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN,
+                      distance >= MIN_GRID_LEN * 2 ?
+                        getDirIdWithAxis(curDirPoint[iTarget], curDirPoint[iAnother],
+                          (axis[iTarget] === 'x' ? 'y' : 'x')) :
+                        (axis[iTarget] === 'x' ? DIR_DOWN : DIR_RIGHT));
+                  });
+                }
+
+              } else { // Different axis
+                if (scopeContains[0] && scopeContains[1]) {
+                  if (onAxisLine(curDirPoint[1], curDirPoint[0])) {
+                    dpList[1].push(curDirPoint[1]); // Drop curDirPoint[0]
+                  } else if (onAxisLine(curDirPoint[0], curDirPoint[1])) {
+                    dpList[0].push(curDirPoint[0]); // Drop curDirPoint[1]
+                  } else { // Drop curDirPoint[0] and end
+                    dpList[0].push(axis[0] === 'x' ?
+                      {x: curDirPoint[1].x, y: curDirPoint[0].y} :
+                      {x: curDirPoint[0].x, y: curDirPoint[1].y});
+                  }
+                  return false;
+
+                } else if (scopeContains[0] !== scopeContains[1]) { // turn notContain 90deg
+                  axisScope = getIndexWithScope(scopeContains);
+                  dpList[axisScope.notContain].push(curDirPoint[axisScope.notContain]);
+                  curDirPoint[axisScope.notContain] =
+                    getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
+                      getAxisDistance(curDirPoint[axisScope.notContain],
+                          curDirPoint[axisScope.contain], axis[axisScope.contain]) >= MIN_GRID_LEN ?
+                        getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
+                          axis[axisScope.contain]) :
+                        curDirPoint[axisScope.contain].dirId);
+
+                } else { // turn both 90deg
+                  points = [{x: curDirPoint[0].x, y: curDirPoint[0].y},
+                    {x: curDirPoint[1].x, y: curDirPoint[1].y}];
+                  dpList.forEach(function(targetDpList, iTarget) {
+                    var iAnother = iTarget === 0 ? 1 : 0,
+                      distance = getAxisDistance(points[iTarget], points[iAnother], axis[iTarget]);
+                    if (distance < MIN_GRID_LEN) {
+                      curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN - distance);
+                    }
+                    targetDpList.push(curDirPoint[iTarget]);
+                    curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN,
+                      getDirIdWithAxis(curDirPoint[iTarget], curDirPoint[iAnother], axis[iAnother]));
+                  });
+                }
+              }
+              return true;
+            }
+
+            curPositionSocketXYSE.forEach(function(socketXY, i) {
+              var dirPoint = socketXY2Point(socketXY),
+                len = options.socketGravitySE[i];
+              (function(dirLen) {
+                dirPoint.dirId = dirLen[0];
+                len = dirLen[1];
+              })(Array.isArray(len) ? ( // offset
+                  len[0] < 0 ? [DIR_LEFT, -len[0]] : // ignore Y
+                  len[0] > 0 ? [DIR_RIGHT, len[0]] : // ignore Y
+                  len[1] < 0 ? [DIR_UP, -len[1]] :
+                  len[1] > 0 ? [DIR_DOWN, len[1]] :
+                                [socketXY.socketId, 0] // (0, 0)
+                ) :
+                typeof len !== 'number' ? [socketXY.socketId, MIN_GRID_LEN] : // auto
+                len >= 0 ? [socketXY.socketId, len] : // distance
+                            [reverseDir(socketXY.socketId), -len]);
+              dpList[i].push(dirPoint);
+              curDirPoint[i] = getNextDirPoint(dirPoint, len);
+            });
+            while (joinPoints()) { /* empty */ }
+
+            dpList[1].reverse();
+            dpList[0].concat(dpList[1]).forEach(function(dirPoint, i) {
+              var point = {x: dirPoint.x, y: dirPoint.y};
+              if (i > 0) { pathList.push([curPoint, point]); }
+              curPoint = point;
+            });
+          }/* @/EXPORT@ */)();
+          break;
+
+        // no default
+      }
+
+      // Adjust path with plugs
+      (function() {
+        var pathSegsLen = [];
+        curPosition.plugOverheadSE.forEach(function(plugOverhead, i) {
+          var start = !i, pathPoints, iSeg, point, sp, cp, angle, len,
+            socketId, axis, dir, minAdjustOffset;
+          if (plugOverhead > 0) {
+            pathPoints = pathList[(iSeg = start ? 0 : pathList.length - 1)];
+
+            if (pathPoints.length === 2) { // Straight line
+              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getPointsLength.apply(null, pathPoints);
+              if (pathSegsLen[iSeg] > MIN_ADJUST_LEN) {
+                if (pathSegsLen[iSeg] - plugOverhead < MIN_ADJUST_LEN) {
+                  plugOverhead = pathSegsLen[iSeg] - MIN_ADJUST_LEN;
+                }
+                point = getPointOnLine(pathPoints[0], pathPoints[1],
+                  (start ? plugOverhead : pathSegsLen[iSeg] - plugOverhead) / pathSegsLen[iSeg]);
+                pathList[iSeg] = start ? [point, pathPoints[1]] : [pathPoints[0], point];
+                pathSegsLen[iSeg] -= plugOverhead;
+              }
+
+            } else { // Cubic bezier
+              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getCubicLength.apply(null, pathPoints);
+              if (pathSegsLen[iSeg] > MIN_ADJUST_LEN) {
+                if (pathSegsLen[iSeg] - plugOverhead < MIN_ADJUST_LEN) {
+                  plugOverhead = pathSegsLen[iSeg] - MIN_ADJUST_LEN;
+                }
+                point = getPointOnCubic(pathPoints[0], pathPoints[1], pathPoints[2], pathPoints[3],
+                  getCubicT(pathPoints[0], pathPoints[1], pathPoints[2], pathPoints[3],
+                    start ? plugOverhead : pathSegsLen[iSeg] - plugOverhead));
+
+                // Get direct distance and angle
+                if (start) {
+                  sp = pathPoints[0];
+                  cp = point.toP1;
+                } else {
+                  sp = pathPoints[3];
+                  cp = point.fromP2;
+                }
+                angle = Math.atan2(sp.y - point.y, point.x - sp.x);
+                len = getPointsLength(point, cp);
+                point.x = sp.x + Math.cos(angle) * plugOverhead;
+                point.y = sp.y + Math.sin(angle) * plugOverhead * -1;
+                cp.x = point.x + Math.cos(angle) * len;
+                cp.y = point.y + Math.sin(angle) * len * -1;
+
+                pathList[iSeg] = start ?
+                  [point, point.toP1, point.toP2, pathPoints[3]] :
+                  [pathPoints[0], point.fromP1, point.fromP2, point];
+                pathSegsLen[iSeg] = null; // to re-calculate
+              }
+
+            }
+          } else if (plugOverhead < 0) {
+            pathPoints = pathList[(iSeg = start ? 0 : pathList.length - 1)];
+            socketId = curPositionSocketXYSE[i].socketId;
+            axis = socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y';
+            minAdjustOffset = -(anchorBBoxSE[i][axis === 'x' ? 'width' : 'height']);
+            if (plugOverhead < minAdjustOffset) { plugOverhead = minAdjustOffset; }
+            dir = plugOverhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
+            if (pathPoints.length === 2) { // Straight line
+              pathPoints[start ? 0 : pathPoints.length - 1][axis] += dir;
+            } else { // Cubic bezier
+              (start ? [0, 1] : [pathPoints.length - 2, pathPoints.length - 1]).forEach(
+                function(i) { pathPoints[i][axis] += dir; });
+            }
+            pathSegsLen[iSeg] = null; // to re-calculate
+          }
+        });
+      })();
+
+      saveProps(props.positionVals, options, POSITION_PROPS);
+      update = true;
+
+      if (props.effect && props.effect.onPosition) {
+        props.effect.onPosition(props, pathList);
+      }
+    }
+    return update;
+  }
+
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Array.<Point[]>} pathList - Array contains points.
    * @returns {void}
    */
-  function updatePath(props, pathList) {
-    var pathVals = props.pathVals,
+  function updatePath(props) {
+    var pathList = props.pathList.baseVal,
+      pathVals = props.pathVals,
       pathEdge = props.viewBBoxVals.pathEdge;
+
     // Convert to `pathData`.
     pathVals.current.pathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
     pathEdge.x1 = pathEdge.x2 = pathList[0][0].x;
@@ -1239,7 +1690,7 @@
         x2: viewBBoxVals.pathEdge.x2 + padding,
         y2: viewBBoxVals.pathEdge.y2 + padding
       },
-      viewHasChanged = false;
+      update = false;
 
     viewBBoxVals.current.x = pointsVal.x1;
     viewBBoxVals.current.y = pointsVal.y1;
@@ -1254,67 +1705,90 @@
           viewBBoxVals.applied[boxKey] = baseVal[boxKey] = viewBBoxVals.current[boxKey];
           styles[BBOX_PROP[boxKey]] = viewBBoxVals.current[boxKey] +
             (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
-          viewHasChanged = true;
+          update = true;
         }
       });
     })(props.svg.viewBox.baseVal, props.svg.style);
 
-    return viewHasChanged;
+    return update;
   }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {boolean} viewHasChanged - `true` if it was changed.
    * @returns {void}
    */
-  function updateMask(props, viewHasChanged) {
-    var maskVals = props.maskVals,
-      plugHasMaskSE = maskVals.current.plugHasMaskSE,
-      anchorHasMaskSE = maskVals.current.anchorHasMaskSE,
-      // plugMaskIsNewSE = [], anchorMaskIsNewSE = [],
-      viewBBoxVals;
+  function updateMask(props) {
+    var options = props.options,
+      maskVals = props.maskVals,
+      capsMaskAnchorVals = props.capsMaskAnchorVals,
+      curCapsMaskAnchor = capsMaskAnchorVals.current,
+      maskBGRectVals = props.maskBGRectVals,
+      curViewBBox = props.viewBBoxVals.current,
 
-    // In current version, masks are used anytime and those were already updated when `viewHasChanged`.
-    // Therefore, those are not updated when any `*MaskIsNewSE` is `true`.
+      curCapsMaskAnchorEnabledSE = curCapsMaskAnchor.enabledSE,
+      curCapsMaskPlugEnabledSE = props.capsMaskPlugVals.current.enabledSE,
+      maskCapsEnabled = curCapsMaskAnchorEnabledSE[0] || curCapsMaskAnchorEnabledSE[1] ||
+        curCapsMaskPlugEnabledSE[0] || curCapsMaskPlugEnabledSE[1];
 
     [0, 1].forEach(function(i) {
-      /*
-      var curPlugHasMask = plugHasMaskSE[i],
-        aplPlugHasMaskSE = maskVals.applied.plugHasMaskSE,
-        curAnchorHasMask = anchorHasMaskSE[i],
-        aplAnchorHasMaskSE = maskVals.applied.anchorHasMaskSE;
-
-      if (!aplPlugHasMaskSE[i] && curPlugHasMask) { // off -> on
-        window.traceLog.push('new-plugMask[' + i + ']'); // [DEBUG/]
-        plugMaskIsNewSE[i] = true;
+      var update;
+      if (curCapsMaskAnchorEnabledSE[i]) {
+        ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+          var propKey = boxKey + 'SE';
+          if (curCapsMaskAnchor[propKey][i] !== capsMaskAnchorVals.applied[propKey][i]) {
+            window.traceLog.push('anchorMask[' + i + '].' + boxKey); // [DEBUG/]
+            capsMaskAnchorVals.applied[propKey][i] =
+              props.capsMaskAnchorSE[i][boxKey].baseVal.value = curCapsMaskAnchor[propKey][i];
+            update = true;
+          }
+        });
       }
-      aplPlugHasMaskSE[i] = curPlugHasMask;
-
-      if (!aplAnchorHasMaskSE[i] && curAnchorHasMask) { // off -> on
-        window.traceLog.push('new-anchorMask[' + i + ']'); // [DEBUG/]
-        anchorMaskIsNewSE[i] = true;
+      if (curCapsMaskAnchorEnabledSE[i] !== capsMaskAnchorVals.applied.enabledSE[i]) {
+        window.traceLog.push('lineMask.enabled=' + curCapsMaskAnchorEnabledSE[i]); // [DEBUG/]
+        props.capsMaskAnchorSE[i].style.display =
+          (capsMaskAnchorVals.applied.enabledSE[i] = curCapsMaskAnchorEnabledSE[i]) ?
+            'inline' : 'none';
+        update = true;
       }
-      aplAnchorHasMaskSE[i] = curAnchorHasMask;
-      */
-      maskVals.applied.plugHasMaskSE[i] = plugHasMaskSE[i];
-      maskVals.applied.anchorHasMaskSE[i] = anchorHasMaskSE[i];
+      if (update && props.effect && props.effect.onUpdateAnchorBBox) {
+        props.effect.onUpdateAnchorBBox(props, i);
+      }
     });
 
-    // Update `<mask>`s that are positioned based on `viewBox`
-    if (viewHasChanged && ( // `viewBox` was changed and `<mask>`s are used
-          plugHasMaskSE[0] || plugHasMaskSE[1] || anchorHasMaskSE[0] || anchorHasMaskSE[1])/* ||
-        // Or, `<mask>`s that might not yet be positioned are used
-        plugMaskIsNewSE[0] || plugMaskIsNewSE[1] || anchorMaskIsNewSE[0] || anchorMaskIsNewSE[1] */) {
-      viewBBoxVals = props.viewBBoxVals.current;
-      ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-        if ((maskVals.current[boxKey] = viewBBoxVals[boxKey]) !== maskVals.applied[boxKey]) {
-          window.traceLog.push('mask.' + boxKey); // [DEBUG/]
-          maskVals.applied[boxKey] =
-            props.lineMask[boxKey].baseVal.value =
-            props.lineOutlineMask[boxKey].baseVal.value = maskVals.current[boxKey];
-          if (boxKey === 'x' || boxKey === 'y') {
-            props.lineMaskBGRect[boxKey].baseVal.value = maskVals.current[boxKey];
-          }
+    // maskBGRect
+    if (maskVals.current.lineMaskEnabled && !options.lineOutlineEnabled || options.lineOutlineEnabled) {
+      ['x', 'y'].forEach(function(boxKey) {
+        if ((maskBGRectVals.current[boxKey] = curViewBBox[boxKey]) !== maskBGRectVals.applied[boxKey]) {
+          window.traceLog.push('maskBGRect.' + boxKey); // [DEBUG/]
+          maskBGRectVals.applied[boxKey] = props.maskBGRect[boxKey].baseVal.value = maskBGRectVals.current[boxKey];
+        }
+      });
+    }
+
+    // lineMask
+    if ((maskVals.current.lineMaskEnabled = !!(options.lineOutlineEnabled || maskCapsEnabled))) {
+      ['x', 'y'].forEach(function(boxKey) {
+        var valsKey = 'lineMask' + boxKey.toUpperCase();
+        if ((maskVals.current[valsKey] = curViewBBox[boxKey]) !== maskVals.applied[valsKey]) {
+          window.traceLog.push('lineMask.' + boxKey); // [DEBUG/]
+          maskVals.applied[valsKey] = props.lineMask[boxKey].baseVal.value = maskVals.current[valsKey];
+        }
+      });
+    }
+    if (maskVals.current.lineMaskEnabled !== maskVals.applied.lineMaskEnabled) {
+      window.traceLog.push('lineMask.enabled=' + maskVals.current.lineMaskEnabled); // [DEBUG/]
+      props.lineFace.style.mask =
+        (maskVals.applied.lineMaskEnabled = maskVals.current.lineMaskEnabled) ?
+          'url(#' + props.lineMaskId + ')' : 'none';
+    }
+
+    // lineOutlineMask
+    if (options.lineOutlineEnabled) {
+      ['x', 'y'].forEach(function(boxKey) {
+        var valsKey = 'lineOutlineMask' + boxKey.toUpperCase();
+        if ((maskVals.current[valsKey] = curViewBBox[boxKey]) !== maskVals.applied[valsKey]) {
+          window.traceLog.push('lineOutlineMask.' + boxKey); // [DEBUG/]
+          maskVals.applied[valsKey] = props.lineOutlineMask[boxKey].baseVal.value = maskVals.current[valsKey];
         }
       });
     }
@@ -1359,9 +1833,9 @@
     props.linePathId = prefix + '-line-path';
     props.lineShapeId = prefix + '-line-shape';
     props.lineMaskId = prefix + '-line-mask';
-    props.lineMaskMarkerIdSE = [prefix + '-line-mask-marker-0', prefix + '-line-mask-marker-1'];
+    props.lineMaskMarkerIdSE = [prefix + '-caps-mask-marker-0', prefix + '-caps-mask-marker-1'];
     props.lineMaskCapsId = prefix + '-line-mask-caps';
-    props.lineMaskBGRectId = prefix + '-line-mask-bg-rect';
+    props.maskBGRectId = prefix + '-mask-bg-rect';
     props.lineOutlineMaskId = prefix + '-line-outline-mask';
     props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
     props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
@@ -1760,451 +2234,14 @@
   };
 
   LeaderLine.prototype.position = function() {
-    window.traceLog.push('<position>'); // [DEBUG/]
-    var props = insProps[this._id],
-      options = props.options,
-      curPosition = props.positionVals.current, socketXYSE = curPosition.socketXYSE,
-      anchorMaskVals = props.anchorMaskVals,
-      anchorBBoxSE, pathList;
+    var props = insProps[this._id];
 
-    function getSocketXY(bBox, socketId) {
-      var socketXY = (
-        socketId === SOCKET_TOP ? {x: bBox.left + bBox.width / 2, y: bBox.top} :
-        socketId === SOCKET_RIGHT ? {x: bBox.right, y: bBox.top + bBox.height / 2} :
-        socketId === SOCKET_BOTTOM ? {x: bBox.left + bBox.width / 2, y: bBox.bottom} :
-                    /* SOCKET_LEFT */ {x: bBox.left, y: bBox.top + bBox.height / 2});
-      socketXY.socketId = socketId;
-      return socketXY;
+    if (updatePosition(props)) {
+      updatePath(props);
     }
 
-    function socketXY2Point(socketXY) { return {x: socketXY.x, y: socketXY.y}; }
-
-    anchorBBoxSE = [getBBoxNest(options.anchorSE[0], props.baseWindow),
-      getBBoxNest(options.anchorSE[1], props.baseWindow)];
-
-    // Decide each socket
-    (function() {
-      var socketXYsWk, socketsLenMin = -1, iFix, iAuto;
-      if (options.socketSE[0] && options.socketSE[1]) {
-        socketXYSE[0] = getSocketXY(anchorBBoxSE[0], options.socketSE[0]);
-        socketXYSE[1] = getSocketXY(anchorBBoxSE[1], options.socketSE[1]);
-
-      } else if (!options.socketSE[0] && !options.socketSE[1]) {
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[1], socketId); });
-        SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[0], socketId); })
-          .forEach(function(socketXY0) {
-            socketXYsWk.forEach(function(socketXY1) {
-              var len = getPointsLength(socketXY0, socketXY1);
-              if (len < socketsLenMin || socketsLenMin === -1) {
-                socketXYSE[0] = socketXY0;
-                socketXYSE[1] = socketXY1;
-                socketsLenMin = len;
-              }
-            });
-          });
-
-      } else {
-        if (options.socketSE[0]) {
-          iFix = 0;
-          iAuto = 1;
-        } else {
-          iFix = 1;
-          iAuto = 0;
-        }
-        socketXYSE[iFix] = getSocketXY(anchorBBoxSE[iFix], options.socketSE[iFix]);
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[iAuto], socketId); });
-        socketXYsWk.forEach(function(socketXY) {
-          var len = getPointsLength(socketXY, socketXYSE[iFix]);
-          if (len < socketsLenMin || socketsLenMin === -1) {
-            socketXYSE[iAuto] = socketXY;
-            socketsLenMin = len;
-          }
-        });
-      }
-    })();
-
-    // New position
-    if (propsHasChanged(props.positionVals, options, POSITION_PROPS)) {
-      window.traceLog.push('new-pathList.baseVal'); // [DEBUG/]
-      pathList = props.pathList.baseVal = [];
-
-      // Generate path segments
-      switch (options.path) {
-
-        case PATH_STRAIGHT:
-          pathList.push([socketXY2Point(socketXYSE[0]), socketXY2Point(socketXYSE[1])]);
-          break;
-
-        case PATH_ARC:
-          (function() {
-            var
-              downward =
-                typeof options.socketGravitySE[0] === 'number' && options.socketGravitySE[0] > 0 ||
-                typeof options.socketGravitySE[1] === 'number' && options.socketGravitySE[1] > 0,
-              circle8rad = CIRCLE_8_RAD * (downward ? -1 : 1),
-              angle = Math.atan2(socketXYSE[1].y - socketXYSE[0].y, socketXYSE[1].x - socketXYSE[0].x),
-              cp1Angle = -angle + circle8rad,
-              cp2Angle = Math.PI - angle - circle8rad,
-              crLen = getPointsLength(socketXYSE[0], socketXYSE[1]) / Math.sqrt(2) * CIRCLE_CP,
-              cp1 = {
-                x: socketXYSE[0].x + Math.cos(cp1Angle) * crLen,
-                y: socketXYSE[0].y + Math.sin(cp1Angle) * crLen * -1},
-              cp2 = {
-                x: socketXYSE[1].x + Math.cos(cp2Angle) * crLen,
-                y: socketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
-            pathList.push([socketXY2Point(socketXYSE[0]), cp1, cp2, socketXY2Point(socketXYSE[1])]);
-          })();
-          break;
-
-        case PATH_FLUID:
-        case PATH_MAGNET:
-          (/* @EXPORT[file:../test/spec/func/PATH_FLUID]@ */function(socketGravitySE) {
-            var cx = [], cy = [];
-            socketXYSE.forEach(function(socketXY, i) {
-              var gravity = socketGravitySE[i], offset, anotherSocketXY, overhead, minGravity, len;
-              if (Array.isArray(gravity)) { // offset
-                offset = {x: gravity[0], y: gravity[1]};
-              } else if (typeof gravity === 'number') { // distance
-                offset =
-                  socketXY.socketId === SOCKET_TOP ? {x: 0, y: -gravity} :
-                  socketXY.socketId === SOCKET_RIGHT ? {x: gravity, y: 0} :
-                  socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity} :
-                                      /* SOCKET_LEFT */ {x: -gravity, y: 0};
-              } else { // auto
-                anotherSocketXY = socketXYSE[i ? 0 : 1];
-                overhead = curPosition.plugOverheadSE[i];
-                minGravity = overhead > 0 ?
-                  MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
-                    (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
-                  MIN_GRAVITY + (options.lineSize > MIN_GRAVITY_SIZE ?
-                    (options.lineSize - MIN_GRAVITY_SIZE) * MIN_GRAVITY_R : 0);
-                if (socketXY.socketId === SOCKET_TOP) {
-                  len = (socketXY.y - anotherSocketXY.y) / 2;
-                  if (len < minGravity) { len = minGravity; }
-                  offset = {x: 0, y: -len};
-                } else if (socketXY.socketId === SOCKET_RIGHT) {
-                  len = (anotherSocketXY.x - socketXY.x) / 2;
-                  if (len < minGravity) { len = minGravity; }
-                  offset = {x: len, y: 0};
-                } else if (socketXY.socketId === SOCKET_BOTTOM) {
-                  len = (anotherSocketXY.y - socketXY.y) / 2;
-                  if (len < minGravity) { len = minGravity; }
-                  offset = {x: 0, y: len};
-                } else { // SOCKET_LEFT
-                  len = (socketXY.x - anotherSocketXY.x) / 2;
-                  if (len < minGravity) { len = minGravity; }
-                  offset = {x: -len, y: 0};
-                }
-              }
-              cx[i] = socketXY.x + offset.x;
-              cy[i] = socketXY.y + offset.y;
-            });
-            pathList.push([socketXY2Point(socketXYSE[0]),
-              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(socketXYSE[1])]);
-          }/* @/EXPORT@ */)([options.socketGravitySE[0],
-            options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
-          break;
-
-        case PATH_GRID:
-          (/* @EXPORT[file:../test/spec/func/PATH_GRID]@ */function() {
-            /**
-             * @typedef {Object} DirPoint
-             * @property {number} dirId - DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT
-             * @property {number} x
-             * @property {number} y
-             */
-            var
-              DIR_UP = 1, DIR_RIGHT = 2, DIR_DOWN = 3, DIR_LEFT = 4, // Correspond with `socketId`
-              dpList = [[], []], curDirPoint = [], curPoint;
-
-            function reverseDir(dirId) {
-              return dirId === DIR_UP ? DIR_DOWN :
-                dirId === DIR_RIGHT ? DIR_LEFT :
-                dirId === DIR_DOWN ? DIR_UP : DIR_RIGHT;
-            }
-
-            function getAxis(dirId) {
-              return dirId === DIR_RIGHT || dirId === DIR_LEFT ? 'x' : 'y';
-            }
-
-            function getNextDirPoint(dirPoint, len, dirId) {
-              var newDirPoint = {x: dirPoint.x, y: dirPoint.y};
-              if (dirId) {
-                if (dirId === reverseDir(dirPoint.dirId)) { throw new Error('Invalid dirId: ' + dirId); }
-                newDirPoint.dirId = dirId;
-              } else {
-                newDirPoint.dirId = dirPoint.dirId;
-              }
-
-              if (newDirPoint.dirId === DIR_UP) {
-                newDirPoint.y -= len;
-              } else if (newDirPoint.dirId === DIR_RIGHT) {
-                newDirPoint.x += len;
-              } else if (newDirPoint.dirId === DIR_DOWN) {
-                newDirPoint.y += len;
-              } else { // DIR_LEFT
-                newDirPoint.x -= len;
-              }
-              return newDirPoint;
-            }
-
-            function inAxisScope(point, dirPoint) {
-              return dirPoint.dirId === DIR_UP ? point.y <= dirPoint.y :
-                dirPoint.dirId === DIR_RIGHT ? point.x >= dirPoint.x :
-                dirPoint.dirId === DIR_DOWN ? point.y >= dirPoint.y :
-                  point.x <= dirPoint.x;
-            }
-
-            function onAxisLine(point, dirPoint) {
-              return dirPoint.dirId === DIR_UP || dirPoint.dirId === DIR_DOWN ?
-                point.x === dirPoint.x : point.y === dirPoint.y;
-            }
-
-            // Must `scopeContains[0] !== scopeContains[1]`
-            function getIndexWithScope(scopeContains) {
-              return scopeContains[0] ? {contain: 0, notContain: 1} : {contain: 1, notContain: 0};
-            }
-
-            function getAxisDistance(point1, point2, axis) {
-              return Math.abs(point2[axis] - point1[axis]);
-            }
-
-            // Must `fromPoint.[x|y] !== toPoint.[x|y]`
-            function getDirIdWithAxis(fromPoint, toPoint, axis) {
-              return axis === 'x' ?
-                (fromPoint.x < toPoint.x ? DIR_RIGHT : DIR_LEFT) :
-                (fromPoint.y < toPoint.y ? DIR_DOWN : DIR_UP);
-            }
-
-            function joinPoints() {
-              var scopeContains = [
-                  inAxisScope(curDirPoint[1], curDirPoint[0]),
-                  inAxisScope(curDirPoint[0], curDirPoint[1])],
-                axis = [getAxis(curDirPoint[0].dirId), getAxis(curDirPoint[1].dirId)],
-                center, axisScope, distance, points;
-
-              if (axis[0] === axis[1]) { // Same axis
-                if (scopeContains[0] && scopeContains[1]) {
-                  if (!onAxisLine(curDirPoint[1], curDirPoint[0])) {
-                    if (curDirPoint[0][axis[0]] === curDirPoint[1][axis[1]]) { // vertical
-                      dpList[0].push(curDirPoint[0]);
-                      dpList[1].push(curDirPoint[1]);
-                    } else {
-                      center = curDirPoint[0][axis[0]] +
-                        (curDirPoint[1][axis[1]] - curDirPoint[0][axis[0]]) / 2;
-                      dpList[0].push(
-                        getNextDirPoint(curDirPoint[0], Math.abs(center - curDirPoint[0][axis[0]])));
-                      dpList[1].push(
-                        getNextDirPoint(curDirPoint[1], Math.abs(center - curDirPoint[1][axis[1]])));
-                    }
-                  }
-                  return false;
-
-                } else if (scopeContains[0] !== scopeContains[1]) { // turn notContain 90deg
-                  axisScope = getIndexWithScope(scopeContains);
-                  distance = getAxisDistance(curDirPoint[axisScope.notContain],
-                    curDirPoint[axisScope.contain], axis[axisScope.notContain]);
-                  if (distance < MIN_GRID_LEN) {
-                    curDirPoint[axisScope.notContain] =
-                      getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN - distance);
-                  }
-                  dpList[axisScope.notContain].push(curDirPoint[axisScope.notContain]);
-                  curDirPoint[axisScope.notContain] =
-                    getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
-                      onAxisLine(curDirPoint[axisScope.contain], curDirPoint[axisScope.notContain]) ?
-                        (axis[axisScope.notContain] === 'x' ? DIR_DOWN : DIR_RIGHT) :
-                        getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
-                          (axis[axisScope.notContain] === 'x' ? 'y' : 'x')));
-
-                } else { // turn both 90deg
-                  distance =
-                    getAxisDistance(curDirPoint[0], curDirPoint[1], axis[0] === 'x' ? 'y' : 'x');
-                  dpList.forEach(function(targetDpList, iTarget) {
-                    var iAnother = iTarget === 0 ? 1 : 0;
-                    targetDpList.push(curDirPoint[iTarget]);
-                    curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN,
-                      distance >= MIN_GRID_LEN * 2 ?
-                        getDirIdWithAxis(curDirPoint[iTarget], curDirPoint[iAnother],
-                          (axis[iTarget] === 'x' ? 'y' : 'x')) :
-                        (axis[iTarget] === 'x' ? DIR_DOWN : DIR_RIGHT));
-                  });
-                }
-
-              } else { // Different axis
-                if (scopeContains[0] && scopeContains[1]) {
-                  if (onAxisLine(curDirPoint[1], curDirPoint[0])) {
-                    dpList[1].push(curDirPoint[1]); // Drop curDirPoint[0]
-                  } else if (onAxisLine(curDirPoint[0], curDirPoint[1])) {
-                    dpList[0].push(curDirPoint[0]); // Drop curDirPoint[1]
-                  } else { // Drop curDirPoint[0] and end
-                    dpList[0].push(axis[0] === 'x' ?
-                      {x: curDirPoint[1].x, y: curDirPoint[0].y} :
-                      {x: curDirPoint[0].x, y: curDirPoint[1].y});
-                  }
-                  return false;
-
-                } else if (scopeContains[0] !== scopeContains[1]) { // turn notContain 90deg
-                  axisScope = getIndexWithScope(scopeContains);
-                  dpList[axisScope.notContain].push(curDirPoint[axisScope.notContain]);
-                  curDirPoint[axisScope.notContain] =
-                    getNextDirPoint(curDirPoint[axisScope.notContain], MIN_GRID_LEN,
-                      getAxisDistance(curDirPoint[axisScope.notContain],
-                          curDirPoint[axisScope.contain], axis[axisScope.contain]) >= MIN_GRID_LEN ?
-                        getDirIdWithAxis(curDirPoint[axisScope.notContain], curDirPoint[axisScope.contain],
-                          axis[axisScope.contain]) :
-                        curDirPoint[axisScope.contain].dirId);
-
-                } else { // turn both 90deg
-                  points = [{x: curDirPoint[0].x, y: curDirPoint[0].y},
-                    {x: curDirPoint[1].x, y: curDirPoint[1].y}];
-                  dpList.forEach(function(targetDpList, iTarget) {
-                    var iAnother = iTarget === 0 ? 1 : 0,
-                      distance = getAxisDistance(points[iTarget], points[iAnother], axis[iTarget]);
-                    if (distance < MIN_GRID_LEN) {
-                      curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN - distance);
-                    }
-                    targetDpList.push(curDirPoint[iTarget]);
-                    curDirPoint[iTarget] = getNextDirPoint(curDirPoint[iTarget], MIN_GRID_LEN,
-                      getDirIdWithAxis(curDirPoint[iTarget], curDirPoint[iAnother], axis[iAnother]));
-                  });
-                }
-              }
-              return true;
-            }
-
-            socketXYSE.forEach(function(socketXY, i) {
-              var dirPoint = socketXY2Point(socketXY),
-                len = options.socketGravitySE[i];
-              (function(dirLen) {
-                dirPoint.dirId = dirLen[0];
-                len = dirLen[1];
-              })(Array.isArray(len) ? ( // offset
-                  len[0] < 0 ? [DIR_LEFT, -len[0]] : // ignore Y
-                  len[0] > 0 ? [DIR_RIGHT, len[0]] : // ignore Y
-                  len[1] < 0 ? [DIR_UP, -len[1]] :
-                  len[1] > 0 ? [DIR_DOWN, len[1]] :
-                                [socketXY.socketId, 0] // (0, 0)
-                ) :
-                typeof len !== 'number' ? [socketXY.socketId, MIN_GRID_LEN] : // auto
-                len >= 0 ? [socketXY.socketId, len] : // distance
-                            [reverseDir(socketXY.socketId), -len]);
-              dpList[i].push(dirPoint);
-              curDirPoint[i] = getNextDirPoint(dirPoint, len);
-            });
-            while (joinPoints()) { /* empty */ }
-
-            dpList[1].reverse();
-            dpList[0].concat(dpList[1]).forEach(function(dirPoint, i) {
-              var point = {x: dirPoint.x, y: dirPoint.y};
-              if (i > 0) { pathList.push([curPoint, point]); }
-              curPoint = point;
-            });
-          }/* @/EXPORT@ */)();
-          break;
-
-        // no default
-      }
-
-      // Adjust path with plugs
-      (function() {
-        var pathSegsLen = [];
-        curPosition.plugOverheadSE.forEach(function(plugOverhead, i) {
-          var start = !i, pathPoints, iSeg, point, sp, cp, angle, len,
-            socketId, axis, dir, minAdjustOffset;
-          if (plugOverhead > 0) {
-            pathPoints = pathList[(iSeg = start ? 0 : pathList.length - 1)];
-
-            if (pathPoints.length === 2) { // Straight line
-              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getPointsLength.apply(null, pathPoints);
-              if (pathSegsLen[iSeg] > MIN_ADJUST_LEN) {
-                if (pathSegsLen[iSeg] - plugOverhead < MIN_ADJUST_LEN) {
-                  plugOverhead = pathSegsLen[iSeg] - MIN_ADJUST_LEN;
-                }
-                point = getPointOnLine(pathPoints[0], pathPoints[1],
-                  (start ? plugOverhead : pathSegsLen[iSeg] - plugOverhead) / pathSegsLen[iSeg]);
-                pathList[iSeg] = start ? [point, pathPoints[1]] : [pathPoints[0], point];
-                pathSegsLen[iSeg] -= plugOverhead;
-              }
-
-            } else { // Cubic bezier
-              pathSegsLen[iSeg] = pathSegsLen[iSeg] || getCubicLength.apply(null, pathPoints);
-              if (pathSegsLen[iSeg] > MIN_ADJUST_LEN) {
-                if (pathSegsLen[iSeg] - plugOverhead < MIN_ADJUST_LEN) {
-                  plugOverhead = pathSegsLen[iSeg] - MIN_ADJUST_LEN;
-                }
-                point = getPointOnCubic(pathPoints[0], pathPoints[1], pathPoints[2], pathPoints[3],
-                  getCubicT(pathPoints[0], pathPoints[1], pathPoints[2], pathPoints[3],
-                    start ? plugOverhead : pathSegsLen[iSeg] - plugOverhead));
-
-                // Get direct distance and angle
-                if (start) {
-                  sp = pathPoints[0];
-                  cp = point.toP1;
-                } else {
-                  sp = pathPoints[3];
-                  cp = point.fromP2;
-                }
-                angle = Math.atan2(sp.y - point.y, point.x - sp.x);
-                len = getPointsLength(point, cp);
-                point.x = sp.x + Math.cos(angle) * plugOverhead;
-                point.y = sp.y + Math.sin(angle) * plugOverhead * -1;
-                cp.x = point.x + Math.cos(angle) * len;
-                cp.y = point.y + Math.sin(angle) * len * -1;
-
-                pathList[iSeg] = start ?
-                  [point, point.toP1, point.toP2, pathPoints[3]] :
-                  [pathPoints[0], point.fromP1, point.fromP2, point];
-                pathSegsLen[iSeg] = null; // to re-calculate
-              }
-
-            }
-          } else if (plugOverhead < 0) {
-            pathPoints = pathList[(iSeg = start ? 0 : pathList.length - 1)];
-            socketId = socketXYSE[i].socketId;
-            axis = socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y';
-            minAdjustOffset = -(anchorBBoxSE[i][axis === 'x' ? 'width' : 'height']);
-            if (plugOverhead < minAdjustOffset) { plugOverhead = minAdjustOffset; }
-            dir = plugOverhead * (socketId === SOCKET_LEFT || socketId === SOCKET_TOP ? -1 : 1);
-            if (pathPoints.length === 2) { // Straight line
-              pathPoints[start ? 0 : pathPoints.length - 1][axis] += dir;
-            } else { // Cubic bezier
-              (start ? [0, 1] : [pathPoints.length - 2, pathPoints.length - 1]).forEach(
-                function(i) { pathPoints[i][axis] += dir; });
-            }
-            pathSegsLen[iSeg] = null; // to re-calculate
-          }
-        });
-      })();
-
-      if (props.effect && props.effect.onPosition) {
-        props.effect.onPosition(props, pathList);
-      }
-
-      updatePath(props, pathList);
-      saveProps(props.positionVals, options, POSITION_PROPS);
-    }
-
-    updateMask(props, updateViewBBox(props));
-
-    // Decide `anchorMask` (check coordinates also)
-    anchorBBoxSE.forEach(function(anchorBBox, i) {
-      if (props.maskVals.current.anchorHasMaskSE[i]) {
-        var update;
-        ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-          var propKey = boxKey + 'SE';
-          if ((anchorMaskVals.current[propKey][i] = anchorBBox[BBOX_PROP[boxKey]]) !==
-              anchorMaskVals.applied[propKey][i]) {
-            window.traceLog.push('anchorMask[' + i + '].' + boxKey); // [DEBUG/]
-            anchorMaskVals.applied[propKey][i] =
-              props.lineMaskAnchorSE[i][boxKey].baseVal.value = anchorMaskVals.current[propKey][i];
-            update = true;
-          }
-        });
-        if (update && props.effect && props.effect.onUpdateAnchorBBox) {
-          props.effect.onUpdateAnchorBBox(props, i);
-        }
-      }
-    });
+    updateViewBBox(props);
+    updateMask(props);
 
     return this;
   };
