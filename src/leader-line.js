@@ -126,62 +126,77 @@
     pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
 
     /**
-     * @typedef {{name, hasSE, hasProps, isOption, hasChanged}[]} PROP_CONF
+     * @typedef {{hasSE, hasProps, isOption, hasChanged}} StatConf
      */
-    POSITION_PROPS = [ // `anchorSE` is checked always.
-      {name: 'socketXYSE', hasSE: true, hasProps: true,
-        hasChanged: function(a, b) {
-          return ['x', 'y', 'socketId'].some(function(prop) { return a[prop] !== b[prop]; });
-        }},
-      {name: 'plugOverheadSE', hasSE: true},
-      {name: 'path', isOption: true},
-      {name: 'lineSize', isOption: true},
-      {name: 'socketGravitySE', hasSE: true, isOption: true,
-        hasChanged: function(a, b) {
-          var aType = a == null ? 'auto' : Array.isArray(a) ? 'array' : 'number', // eslint-disable-line eqeqeq
-            bType = b == null ? 'auto' : Array.isArray(b) ? 'array' : 'number'; // eslint-disable-line eqeqeq
-          return aType !== bType ? true :
-            aType === 'array' ? [0, 1].some(function(i) { return a[i] !== b[i]; }) :
-            a !== b;
-        }}
-    ],
 
-    PATH_PROPS = [
-      {name: 'pathData',
-        hasChanged: function(a, b) {
-          return a == null || b == null || // eslint-disable-line eqeqeq
-            a.length !== b.length || a.some(function(aSeg, i) {
-              var bSeg = b[i];
-              return aSeg.type !== bSeg.type ||
-                aSeg.values.some(function(aSegValue, i) { return aSegValue !== bSeg.values[i]; });
-            });
-        }}
-    ],
+    /**
+     * @typedef {{group: {name: StatConf}}} StatConfGroups
+     */
 
-    VIEW_BBOX_PROPS = [
-      {name: 'x'}, {name: 'y'}, {name: 'width'}, {name: 'height'}
-      // `props.viewBBoxVals` contains `plugBCircleSE` and `pathEdge` to calculate.
-    ],
-
-    MASK_PROPS = [
-      {name: 'lineMaskEnabled'},
-      {name: 'lineMaskX'}, {name: 'lineMaskY'},
-      {name: 'lineOutlineMaskX'}, {name: 'lineOutlineMaskY'}
-    ],
-
-    CAPS_MASK_ANCHOR_PROPS = [
-      {name: 'enabledSE', hasSE: true},
-      {name: 'xSE', hasSE: true}, {name: 'ySE', hasSE: true},
-      {name: 'widthSE', hasSE: true}, {name: 'heightSE', hasSE: true}
-    ],
-
-    CAPS_MASK_PLUG_PROPS = [
-      {name: 'enabledSE', hasSE: true}
-    ],
-
-    MASK_BG_RECT_PROPS = [
-      {name: 'x'}, {name: 'y'}
-    ],
+    STATS = {
+      Line: {
+        lineColor: {isOption: true}, lineSize: {isOption: true}
+      },
+      Plug: {
+        plugSE: {hasSE: true, isOption: true},
+        plugColorSE: {hasSE: true},
+        plugColorTraSE: {hasSE: true},
+        plugSizeSE: {hasSE: true, isOption: true},
+        orientSE: {hasSE: true}
+      },
+      Position: {
+        socketXYSE: {hasSE: true, hasProps: true,
+          hasChanged: function(a, b) {
+            return ['x', 'y', 'socketId'].some(function(prop) { return a[prop] !== b[prop]; });
+          }},
+        plugOverheadSE: {hasSE: true},
+        path: {isOption: true},
+        lineSize: {isOption: true},
+        socketGravitySE: {hasSE: true, isOption: true,
+          hasChanged: function(a, b) {
+            var aType = a == null ? 'auto' : Array.isArray(a) ? 'array' : 'number', // eslint-disable-line eqeqeq
+              bType = b == null ? 'auto' : Array.isArray(b) ? 'array' : 'number'; // eslint-disable-line eqeqeq
+            return aType !== bType ? true :
+              aType === 'array' ? [0, 1].some(function(i) { return a[i] !== b[i]; }) :
+              a !== b;
+          }}
+      },
+      Path: {
+        pathData: {
+          hasChanged: function(a, b) {
+            return a == null || b == null || // eslint-disable-line eqeqeq
+              a.length !== b.length || a.some(function(aSeg, i) {
+                var bSeg = b[i];
+                return aSeg.type !== bSeg.type ||
+                  aSeg.values.some(function(aSegValue, i) { return aSegValue !== bSeg.values[i]; });
+              });
+          }}
+      },
+      ViewBBox: {
+        x: {}, y: {}, width: {}, height: {}
+        // `props.viewBBoxVals` contains `plugBCircleSE` and `pathEdge` to calculate.
+      },
+      Mask: {
+        lineMaskEnabled: {},
+        lineMaskX: {}, lineMaskY: {},
+        lineOutlineMaskX: {}, lineOutlineMaskY: {}
+      },
+      CapsMaskAnchor: {
+        enabledSE: {hasSE: true},
+        xSE: {hasSE: true}, ySE: {hasSE: true},
+        widthSE: {hasSE: true}, heightSE: {hasSE: true}
+      },
+      CapsMaskPlug: {
+        enabledSE: {hasSE: true}
+      },
+      MaskBGRect: {
+        x: {}, y: {}
+      }
+    },
+    STAT_NAMES = Object.keys(STATS).reduce(function(statsConf, group) {
+      statsConf[group] = Object.keys(STATS[group]);
+      return statsConf;
+    }, {}),
 
     /**
      * @typedef {Object} EFFECT_CONF
@@ -571,10 +586,61 @@
   }
   window.getCubicT = getCubicT; // [DEBUG/]
 
+  function getCurStat(props, group, name) {
+    return props[STATS[group][name].isOption ? 'options' : 'cur' + group][name];
+  }
+
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {string} group - Group name of `StatConfGroups`.
+   * @returns {boolean} - `true` if it was changed.
+   */
+  function statsHasChanged(props, group) {
+    var aplStats = props['apl' + group];
+    // [DEBUG]
+    function log(out, name) {
+      if (out) {
+        window.traceLog.push('statsHasChanged:' + name); // eslint-disable-line eqeqeq
+      }
+      return out;
+    }
+    // [/DEBUG]
+    return STAT_NAMES[group].some(function(name) {
+      var statConf = STATS[group][name],
+        curValue = getCurStat(props, group, name),
+        aplValue = aplStats[name];
+      return statConf.hasSE ?
+        [0, 1].some(function(i) {
+          return (
+            log( // [DEBUG/]
+            statConf.hasChanged ?
+              statConf.hasChanged(aplValue[i], curValue[i]) : aplValue[i] !== curValue[i]
+            , name + '[' + i + ']') // [DEBUG/]
+            );
+        }) :
+        log( // [DEBUG/]
+        statConf.hasChanged ? statConf.hasChanged(aplValue, curValue) : aplValue !== curValue
+        , name) // [DEBUG/]
+        ;
+    });
+  }
+
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {string} group - Group name of `StatConfGroups`.
+   * @returns {void}
+   */
+  function applyStats(props, group) {
+    var aplStats = props['apl' + group];
+    STAT_NAMES[group].forEach(function(name) {
+      var statConf = STATS[group][name], curValue = getCurStat(props, group, name);
+      aplStats[name] = statConf.hasSE ? [curValue[0], curValue[1]] : curValue;
+    });
+  }
+
   /**
    * Setup `baseWindow`, `bodyOffset`, `pathList`,
-   *    `positionVals`, `pathVals`, `viewBBoxVals`, `maskVals`, `capsMaskAnchorVals`, `capsMaskPlugVals`,
-   *    `maskBGRectVals`, `hasTransparency`, `effect`, `effectParams`, SVG elements.
+   *    stats (`cur*` and `apl*`), `hasTransparency`, `effect`, `effectParams`, SVG elements.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -770,28 +836,28 @@
 
     props.svg = baseDocument.body.appendChild(svg);
 
-    [['positionVals', POSITION_PROPS], ['pathVals', PATH_PROPS], ['viewBBoxVals', VIEW_BBOX_PROPS],
-        ['maskVals', MASK_PROPS], ['capsMaskAnchorVals', CAPS_MASK_ANCHOR_PROPS],
-        ['capsMaskPlugVals', CAPS_MASK_PLUG_PROPS], ['maskBGRectVals', MASK_BG_RECT_PROPS]]
-      .forEach(function(propNameConf) {
-        props[propNameConf[0]] = propNameConf[1].reduce(function(values, propConf) {
-          if (propConf.hasSE) {
-            if (propConf.hasProps) {
-              if (!propConf.isOption) { values.current[propConf.name] = [{}, {}]; }
-              values.applied[propConf.name] = [{}, {}];
-            } else {
-              if (!propConf.isOption) { values.current[propConf.name] = []; }
-              values.applied[propConf.name] = [];
-            }
-          } else if (propConf.hasProps) {
-            if (!propConf.isOption) { values.current[propConf.name] = {}; }
-            values.applied[propConf.name] = {};
+    Object.keys(STATS).forEach(function(group) {
+      var curStats = props['cur' + group] = {}, aplStats = props['apl' + group] = {};
+      STAT_NAMES[group].forEach(function(name) {
+        var statConf = STATS[group][name];
+        if (statConf.hasSE) {
+          if (statConf.hasProps) {
+            if (!statConf.isOption) { curStats[name] = [{}, {}]; }
+            aplStats[name] = [{}, {}];
+          } else {
+            if (!statConf.isOption) { curStats[name] = []; }
+            aplStats[name] = [];
           }
-          return values;
-        }, {current: {}, applied: {}});
+        } else if (statConf.hasProps) {
+          if (!statConf.isOption) { curStats[name] = {}; }
+          aplStats[name] = {};
+        }
       });
+    });
+
     props.viewBBoxVals.plugBCircleSE = [0, 0];
     props.viewBBoxVals.pathEdge = {};
+
     props.pathList = {baseVal: [], animVal: []};
     props.hasTransparency = {plugColorSE: [], plugOutlineColorSE: []};
     props.effect = null;
@@ -803,43 +869,41 @@
   /**
    * Apply `lineColor`, `lineSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {Array} [setProps] - To limit properties. `[]` and `['']` don't change.
    * @returns {void}
    */
-  function setLine(props, setProps) {
-    window.traceLog.push('<setLine>'); // [DEBUG/]
-    var options = props.options, value;
+  function setLine(props) {
+    var options = props.options,
+      aplLine = props.aplLine, value;
 
-    (setProps || ['lineColor', 'lineSize']).forEach(function(setProp) {
-      switch (setProp) {
-        case 'lineColor':
-          value = options[setProp];
-          window.traceLog.push(setProp + '=' + value); // [DEBUG/]
-          props.lineFace.style.stroke = value;
-          props.hasTransparency.lineColor = getAlpha(value) < 1;
-          break;
+    // lineColor
+    if ((value = options.lineColor) !== aplLine.lineColor) {
+      window.traceLog.push('lineColor=' + value); // [DEBUG/]
+      props.lineFace.style.stroke = aplLine.lineColor = value;
 
-        case 'lineSize':
-          window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
-          props.lineShape.style.strokeWidth = options[setProp];
-          if (IS_GECKO || IS_TRIDENT) {
-            // [TRIDENT] plugsFace is not updated when lineSize is changed
-            // [GECKO] plugsFace is ignored
-            forceReflow(props.lineShape);
-            if (IS_TRIDENT) {
-              // [TRIDENT] lineColor is ignored
-              forceReflow(props.lineFace);
-              // [TRIDENT] lineMaskCaps is ignored when lineSize is changed
-              forceReflow(props.lineMaskCaps);
-            }
-          }
-          break;
-        // no default
+      if (props.effect && props.effect.onLineColor) {
+        props.effect.onLineColor(props, value);
       }
-    });
+    }
 
-    if (props.effect && props.effect.onSetLine) {
-      props.effect.onSetLine(props, setProps);
+    // lineSize
+    if ((value = options.lineSize) !== aplLine.lineSize) {
+      window.traceLog.push('lineSize=' + value); // [DEBUG/]
+      props.lineShape.style.strokeWidth = aplLine.lineSize = value;
+      if (IS_GECKO || IS_TRIDENT) {
+        // [TRIDENT] plugsFace is not updated when lineSize is changed
+        // [GECKO] plugsFace is ignored
+        forceReflow(props.lineShape);
+        if (IS_TRIDENT) {
+          // [TRIDENT] lineColor is ignored
+          forceReflow(props.lineFace);
+          // [TRIDENT] lineMaskCaps is ignored when lineSize is changed
+          forceReflow(props.lineMaskCaps);
+        }
+      }
+
+      if (props.effect && props.effect.onLineSize) {
+        props.effect.onLineSize(props, value);
+      }
     }
   }
 
@@ -899,6 +963,113 @@
    * @returns {void}
    */
   function setPlug(props, setPropsSE) {
+    var options = props.options,
+      curPlug = props.curPlug, aplPlug = props.aplPlug, value;
+
+    [0, 1].forEach(function(i) {
+      var plugId = options.plugSE[i],
+        symbolConf, orient, markerProp;
+
+      curPlug.plugColorSE[i] = value = options.plugColorSE[i] || options.lineColor;
+      curPlug.plugColorTraSE[i] = getAlpha(value) < 1;
+
+      if (plugId !== PLUG_BEHIND) {
+        symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+
+        // plugColorSE
+        if ((value = curPlug.plugColorSE[i]) !== aplPlug.plugColorSE[i]) {
+          window.traceLog.push('plugColorSE[' + i + ']=' + value); // [DEBUG/]
+          props.plugFaceSE[i].style.fill = aplPlug.plugColorSE[i] = value;
+
+          if (props.effect && props.effect.onPlugColorSE) {
+            props.effect.onPlugColorSE(props, value, i);
+          }
+        }
+
+        // plugSE
+
+        (setProps || ['plug', 'plugColor', 'plugSize']).forEach(function(setProp) {
+          switch (setProp) {
+            case 'plug':
+              window.traceLog.push(setProp + '[' + i + ']=' + plugId); // [DEBUG/]
+              orient = symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse';
+              markerProp = i ? 'markerEnd' : 'markerStart';
+
+              props.plugFaceSE[i].href.baseVal =
+                props.plugOutlineFaceSE[i].href.baseVal =
+                props.plugMaskShapeSE[i].href.baseVal =
+                props.plugOutlineMaskShapeSE[i].href.baseVal =
+                props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+              [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
+                mask.x.baseVal.value = symbolConf.bBox.left;
+                mask.y.baseVal.value = symbolConf.bBox.top;
+                mask.width.baseVal.value = symbolConf.bBox.width;
+                mask.height.baseVal.value = symbolConf.bBox.height;
+              });
+              // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
+              props.plugsFace.style[markerProp] = 'url(#' + props.plugMarkerIdSE[i] + ')';
+              props.capsMaskLine.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
+              setMarkerOrient(props.plugMarkerSE[i], orient,
+                symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
+              setMarkerOrient(props.capsMaskMarkerSE[i], orient,
+                symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
+              if (IS_GECKO) {
+                // [GECKO] plugsFace is not updated when plugSE is changed
+                forceReflow(props.plugsFace);
+                forceReflow(props.capsMaskLine);
+                forceReflow(props.lineFace);
+              }
+              break;
+
+
+            case 'plugSize':
+              window.traceLog.push(setProp + '[' + i + ']=' + options.plugSizeSE[i]); // [DEBUG/]
+              if (IS_WEBKIT) {
+                // [WEBKIT] mask in marker is resized with rasterise
+                props.capsMaskMarkerSE[i].markerWidth.baseVal.value =
+                  symbolConf.widthR * options.plugSizeSE[i];
+                props.capsMaskMarkerSE[i].markerHeight.baseVal.value =
+                  symbolConf.heightR * options.plugSizeSE[i];
+                props.plugMarkerSE[i].markerWidth.baseVal.value =
+                  symbolConf.widthR * options.plugSizeSE[i] * options.lineSize;
+                props.plugMarkerSE[i].markerHeight.baseVal.value =
+                  symbolConf.heightR * options.plugSizeSE[i] * options.lineSize;
+              } else {
+                props.plugMarkerSE[i].markerWidth.baseVal.value =
+                  props.capsMaskMarkerSE[i].markerWidth.baseVal.value =
+                  symbolConf.widthR * options.plugSizeSE[i];
+                props.plugMarkerSE[i].markerHeight.baseVal.value =
+                  props.capsMaskMarkerSE[i].markerHeight.baseVal.value =
+                  symbolConf.heightR * options.plugSizeSE[i];
+              }
+              break;
+            // no default
+          }
+        });
+        // Update shape always for `options.lineSize` that might have been changed.
+        curPosition.plugOverheadSE[i] =
+          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
+        plugBCircleSE[i] =
+          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
+        curCapsMaskPlugEnabledSE[i] = true;
+        curCapsMaskAnchorEnabledSE[i] = false;
+
+      } else {
+        if (!setProps || setProps.indexOf('plug') > -1) {
+          window.traceLog.push('plug[' + i + ']=' + plugId); // [DEBUG/]
+          markerProp = i ? 'markerEnd' : 'markerStart';
+          props.plugsFace.style[markerProp] = props.capsMaskLine.style[markerProp] = 'none';
+        }
+        // Update shape always for `options.lineSize` that might have been changed.
+        curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
+        plugBCircleSE[i] = 0;
+        curCapsMaskPlugEnabledSE[i] = false;
+        curCapsMaskAnchorEnabledSE[i] = true;
+      }
+    });
+
+
+
     window.traceLog.push('<setPlug>'); // [DEBUG/]
     var options = props.options,
       plugBCircleSE = props.viewBBoxVals.plugBCircleSE,
@@ -1141,53 +1312,6 @@
   }
 
   /**
-   * @param {Object} values - Saved values such as `props.positionVals`.
-   * @param {Object} options - `props.options` of `LeaderLine` instance.
-   * @param {Object} conf - Config such as `POSITION_PROPS`.
-   * @returns {boolean} - `true` if it was changed.
-   */
-  function propsHasChanged(values, options, conf) {
-    // [DEBUG]
-    function log(out, name) {
-      if (out) {
-        window.traceLog.push('propsHasChanged:' + name); // eslint-disable-line eqeqeq
-      }
-      return out;
-    }
-    // [/DEBUG]
-    return conf.some(function(propConf) {
-      var curValue = (propConf.isOption ? options : values.current)[propConf.name],
-        aplValue = values.applied[propConf.name];
-      return propConf.hasSE ?
-        [0, 1].some(function(i) {
-          return (
-            log( // [DEBUG/]
-            propConf.hasChanged ?
-              propConf.hasChanged(aplValue[i], curValue[i]) : aplValue[i] !== curValue[i]
-            , propConf.name + '[' + i + ']') // [DEBUG/]
-            );
-        }) :
-        log( // [DEBUG/]
-        propConf.hasChanged ? propConf.hasChanged(aplValue, curValue) : aplValue !== curValue
-        , propConf.name) // [DEBUG/]
-        ;
-    });
-  }
-
-  /**
-   * @param {Object} values - Values that are saved such as `props.positionVals`.
-   * @param {Object} options - `props.options` of `LeaderLine` instance.
-   * @param {Object} conf - Config such as `POSITION_PROPS`.
-   * @returns {void}
-   */
-  function saveProps(values, options, conf) {
-    conf.forEach(function(propConf) {
-      var curValue = (propConf.isOption ? options : values.current)[propConf.name];
-      values.applied[propConf.name] = propConf.hasSE ? [curValue[0], curValue[1]] : curValue;
-    });
-  }
-
-  /**
    * @param {props} props - `props` of `LeaderLine` instance.
    * @returns {boolean} - `true` if it was changed.
    */
@@ -1263,8 +1387,8 @@
     })();
 
     // New position
-    if (propsHasChanged(props.positionVals, options, POSITION_PROPS)) {
-      window.traceLog.push('new-pathList.baseVal'); // [DEBUG/]
+    if (statsHasChanged(props, 'Position')) {
+      window.traceLog.push('new-position'); // [DEBUG/]
       pathList = props.pathList.baseVal = [];
 
       // Generate path segments
@@ -1615,7 +1739,7 @@
         });
       })();
 
-      saveProps(props.positionVals, options, POSITION_PROPS);
+      applyStats(props, 'Position');
       update = true;
 
       if (props.effect && props.effect.onPosition) {
@@ -1654,7 +1778,7 @@
     });
 
     // Apply `pathData`
-    if (propsHasChanged(pathVals, props.options, PATH_PROPS)) {
+    if (statsHasChanged(props, 'Path')) {
       window.traceLog.push('setPathData'); // [DEBUG/]
       props.linePath.setPathData(pathVals.current.pathData);
       pathVals.applied.pathData = pathVals.current.pathData;
@@ -1737,8 +1861,8 @@
           var propKey = boxKey + 'SE';
           if (curCapsMaskAnchor[propKey][i] !== capsMaskAnchorVals.applied[propKey][i]) {
             window.traceLog.push('anchorMask[' + i + '].' + boxKey); // [DEBUG/]
-            capsMaskAnchorVals.applied[propKey][i] =
-              props.capsMaskAnchorSE[i][boxKey].baseVal.value = curCapsMaskAnchor[propKey][i];
+            props.capsMaskAnchorSE[i][boxKey].baseVal.value =
+              capsMaskAnchorVals.applied[propKey][i] = curCapsMaskAnchor[propKey][i];
             update = true;
           }
         });
@@ -1760,7 +1884,8 @@
       ['x', 'y'].forEach(function(boxKey) {
         if ((maskBGRectVals.current[boxKey] = curViewBBox[boxKey]) !== maskBGRectVals.applied[boxKey]) {
           window.traceLog.push('maskBGRect.' + boxKey); // [DEBUG/]
-          maskBGRectVals.applied[boxKey] = props.maskBGRect[boxKey].baseVal.value = maskBGRectVals.current[boxKey];
+          props.maskBGRect[boxKey].baseVal.value =
+            maskBGRectVals.applied[boxKey] = maskBGRectVals.current[boxKey];
         }
       });
     }
@@ -1771,7 +1896,8 @@
         var valsKey = 'lineMask' + boxKey.toUpperCase();
         if ((maskVals.current[valsKey] = curViewBBox[boxKey]) !== maskVals.applied[valsKey]) {
           window.traceLog.push('lineMask.' + boxKey); // [DEBUG/]
-          maskVals.applied[valsKey] = props.lineMask[boxKey].baseVal.value = maskVals.current[valsKey];
+          props.lineMask[boxKey].baseVal.value =
+            maskVals.applied[valsKey] = maskVals.current[valsKey];
         }
       });
     }
@@ -1788,7 +1914,8 @@
         var valsKey = 'lineOutlineMask' + boxKey.toUpperCase();
         if ((maskVals.current[valsKey] = curViewBBox[boxKey]) !== maskVals.applied[valsKey]) {
           window.traceLog.push('lineOutlineMask.' + boxKey); // [DEBUG/]
-          maskVals.applied[valsKey] = props.lineOutlineMask[boxKey].baseVal.value = maskVals.current[valsKey];
+          props.lineOutlineMask[boxKey].baseVal.value =
+            maskVals.applied[valsKey] = maskVals.current[valsKey];
         }
       });
     }
