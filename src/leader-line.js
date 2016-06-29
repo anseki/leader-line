@@ -141,8 +141,19 @@
         plugSE: {hasSE: true, isOption: true},
         plugColorSE: {hasSE: true},
         plugColorTraSE: {hasSE: true},
-        plugSizeSE: {hasSE: true, isOption: true},
-        orientSE: {hasSE: true}
+        plugSizeSE: {hasSE: true, isOption: true}
+      },
+      LineOutline: {
+        lineOutlineEnabled: {isOption: true},
+        lineOutlineColor: {isOption: true},
+        lineOutlineColorTra: {},
+        lineOutlineSize: {}
+      },
+      PlugOutline: {
+        plugOutlineEnabledSE: {hasSE: true, isOption: true},
+        plugOutlineColorSE: {hasSE: true},
+        plugOutlineColorTraSE: {hasSE: true},
+        plugOutlineSizeSE: {hasSE: true}
       },
       Position: {
         socketXYSE: {hasSE: true, hasProps: true,
@@ -174,7 +185,7 @@
       },
       ViewBBox: {
         x: {}, y: {}, width: {}, height: {}
-        // `props.viewBBoxVals` contains `plugBCircleSE` and `pathEdge` to calculate.
+        // `props.curViewBBoxVals` contains `plugBCircleSE` and `pathEdge` to calculate.
       },
       Mask: {
         lineMaskEnabled: {},
@@ -186,16 +197,18 @@
         xSE: {hasSE: true}, ySE: {hasSE: true},
         widthSE: {hasSE: true}, heightSE: {hasSE: true}
       },
-      CapsMaskPlug: {
-        enabledSE: {hasSE: true}
+      CapsMaskMarker: {
+        enabledSE: {hasSE: true},
+        plugSE: {hasSE: true},
+        widthSE: {hasSE: true}, heightSE: {hasSE: true}
       },
       MaskBGRect: {
         x: {}, y: {}
       }
     },
-    STAT_NAMES = Object.keys(STATS).reduce(function(statsConf, group) {
-      statsConf[group] = Object.keys(STATS[group]);
-      return statsConf;
+    STAT_NAMES = Object.keys(STATS).reduce(function(names, group) {
+      names[group] = Object.keys(STATS[group]);
+      return names;
     }, {}),
 
     /**
@@ -640,7 +653,7 @@
 
   /**
    * Setup `baseWindow`, `bodyOffset`, `pathList`,
-   *    stats (`cur*` and `apl*`), `hasTransparency`, `effect`, `effectParams`, SVG elements.
+   *    stats (`cur*` and `apl*`), `effect`, `effectParams`, SVG elements.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -855,11 +868,10 @@
       });
     });
 
-    props.viewBBoxVals.plugBCircleSE = [0, 0];
-    props.viewBBoxVals.pathEdge = {};
+    props.curViewBBoxVals.plugBCircleSE = [0, 0];
+    props.curViewBBoxVals.pathEdge = {};
 
     props.pathList = {baseVal: [], animVal: []};
-    props.hasTransparency = {plugColorSE: [], plugOutlineColorSE: []};
     props.effect = null;
     if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
     props.effectParams = {};
@@ -867,18 +879,17 @@
   window.bindWindow = bindWindow; // [DEBUG/]
 
   /**
-   * Apply `lineColor`, `lineSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @returns {void}
    */
-  function setLine(props) {
+  function updateLine(props) {
     var options = props.options,
-      aplLine = props.aplLine, value;
+      aplStats = props.aplLine, value;
 
     // lineColor
-    if ((value = options.lineColor) !== aplLine.lineColor) {
+    if ((value = options.lineColor) !== aplStats.lineColor) {
       window.traceLog.push('lineColor=' + value); // [DEBUG/]
-      props.lineFace.style.stroke = aplLine.lineColor = value;
+      props.lineFace.style.stroke = aplStats.lineColor = value;
 
       if (props.effect && props.effect.onLineColor) {
         props.effect.onLineColor(props, value);
@@ -886,9 +897,9 @@
     }
 
     // lineSize
-    if ((value = options.lineSize) !== aplLine.lineSize) {
+    if ((value = options.lineSize) !== aplStats.lineSize) {
       window.traceLog.push('lineSize=' + value); // [DEBUG/]
-      props.lineShape.style.strokeWidth = aplLine.lineSize = value;
+      props.lineShape.style.strokeWidth = aplStats.lineSize = value;
       if (IS_GECKO || IS_TRIDENT) {
         // [TRIDENT] plugsFace is not updated when lineSize is changed
         // [GECKO] plugsFace is ignored
@@ -955,333 +966,246 @@
     if (IS_TRIDENT) { forceReflow(marked); }
   }
 
+  function getMarkerProps(i, symbolConf) {
+    return {
+      prop: i ? 'markerEnd' : 'markerStart',
+      orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
+    };
+  }
+
   /**
-   * Apply `plug`, `plugColor`, `plugSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {(Array|null)[]} setPropsSE - To limit properties.
-   *    Each `[]` and `['']` change only each `plugOverhead` and `plugBCircle`.
    * @returns {void}
    */
-  function setPlug(props, setPropsSE) {
+  function updatePlug(props) {
     var options = props.options,
-      curPlug = props.curPlug, aplPlug = props.aplPlug, value;
+      curStats = props.curPlug, aplStats = props.aplPlug;
 
     [0, 1].forEach(function(i) {
-      var plugId = options.plugSE[i],
-        symbolConf, orient, markerProp;
+      var plugId = options.plugSE[i], symbolConf, marker, value;
 
-      curPlug.plugColorSE[i] = value = options.plugColorSE[i] || options.lineColor;
-      curPlug.plugColorTraSE[i] = getAlpha(value) < 1;
+      curStats.plugColorSE[i] = value = options.plugColorSE[i] || options.lineColor;
+      curStats.plugColorTraSE[i] = getAlpha(value) < 1;
 
       if (plugId !== PLUG_BEHIND) {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
 
+        // plugSE
+        if (plugId !== aplStats.plugSE[i]) {
+          window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
+          aplStats.plugSE[i] = plugId;
+          marker = getMarkerProps(i, symbolConf);
+          props.plugFaceSE[i].href.baseVal = '#' + symbolConf.elmId;
+          // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
+          props.plugsFace.style[marker.prop] = 'url(#' + props.plugMarkerIdSE[i] + ')';
+          setMarkerOrient(props.plugMarkerSE[i], marker.orient,
+            symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
+          if (IS_GECKO) {
+            // [GECKO] plugsFace is not updated when plugSE is changed
+            forceReflow(props.plugsFace);
+          }
+
+          if (props.effect && props.effect.onPlugSE) {
+            props.effect.onPlugSE(props, plugId, i);
+          }
+        }
+
         // plugColorSE
-        if ((value = curPlug.plugColorSE[i]) !== aplPlug.plugColorSE[i]) {
+        if ((value = curStats.plugColorSE[i]) !== aplStats.plugColorSE[i]) {
           window.traceLog.push('plugColorSE[' + i + ']=' + value); // [DEBUG/]
-          props.plugFaceSE[i].style.fill = aplPlug.plugColorSE[i] = value;
+          props.plugFaceSE[i].style.fill = aplStats.plugColorSE[i] = value;
 
           if (props.effect && props.effect.onPlugColorSE) {
             props.effect.onPlugColorSE(props, value, i);
           }
         }
 
+        // plugSizeSE
+        if ((value = options.plugSizeSE[i]) !== aplStats.plugSizeSE[i]) {
+          window.traceLog.push('plugSizeSE[' + i + ']=' + value); // [DEBUG/]
+          aplStats.plugSizeSE[i] = value;
+          if (IS_WEBKIT) {
+            // [WEBKIT] mask in marker is resized with rasterise
+            props.plugMarkerSE[i].markerWidth.baseVal.value = symbolConf.widthR * value * options.lineSize;
+            props.plugMarkerSE[i].markerHeight.baseVal.value = symbolConf.heightR * value * options.lineSize;
+          } else {
+            props.plugMarkerSE[i].markerWidth.baseVal.value = symbolConf.widthR * value;
+            props.plugMarkerSE[i].markerHeight.baseVal.value = symbolConf.heightR * value;
+          }
+
+          if (props.effect && props.effect.onPlugSizeSE) {
+            props.effect.onPlugSizeSE(props, value, i);
+          }
+        }
+
+        props.curPosition.plugOverheadSE[i] =
+          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
+        props.curViewBBoxVals.plugBCircleSE[i] =
+          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
+
+      } else {
+
         // plugSE
+        if (plugId !== aplStats.plugSE[i]) {
+          window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
+          aplStats.plugSE[i] = plugId;
+          marker = getMarkerProps(i);
+          props.plugsFace.style[marker.prop] = 'none';
 
-        (setProps || ['plug', 'plugColor', 'plugSize']).forEach(function(setProp) {
-          switch (setProp) {
-            case 'plug':
-              window.traceLog.push(setProp + '[' + i + ']=' + plugId); // [DEBUG/]
-              orient = symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse';
-              markerProp = i ? 'markerEnd' : 'markerStart';
-
-              props.plugFaceSE[i].href.baseVal =
-                props.plugOutlineFaceSE[i].href.baseVal =
-                props.plugMaskShapeSE[i].href.baseVal =
-                props.plugOutlineMaskShapeSE[i].href.baseVal =
-                props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
-              [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
-                mask.x.baseVal.value = symbolConf.bBox.left;
-                mask.y.baseVal.value = symbolConf.bBox.top;
-                mask.width.baseVal.value = symbolConf.bBox.width;
-                mask.height.baseVal.value = symbolConf.bBox.height;
-              });
-              // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
-              props.plugsFace.style[markerProp] = 'url(#' + props.plugMarkerIdSE[i] + ')';
-              props.capsMaskLine.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
-              setMarkerOrient(props.plugMarkerSE[i], orient,
-                symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
-              setMarkerOrient(props.capsMaskMarkerSE[i], orient,
-                symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
-              if (IS_GECKO) {
-                // [GECKO] plugsFace is not updated when plugSE is changed
-                forceReflow(props.plugsFace);
-                forceReflow(props.capsMaskLine);
-                forceReflow(props.lineFace);
-              }
-              break;
-
-
-            case 'plugSize':
-              window.traceLog.push(setProp + '[' + i + ']=' + options.plugSizeSE[i]); // [DEBUG/]
-              if (IS_WEBKIT) {
-                // [WEBKIT] mask in marker is resized with rasterise
-                props.capsMaskMarkerSE[i].markerWidth.baseVal.value =
-                  symbolConf.widthR * options.plugSizeSE[i];
-                props.capsMaskMarkerSE[i].markerHeight.baseVal.value =
-                  symbolConf.heightR * options.plugSizeSE[i];
-                props.plugMarkerSE[i].markerWidth.baseVal.value =
-                  symbolConf.widthR * options.plugSizeSE[i] * options.lineSize;
-                props.plugMarkerSE[i].markerHeight.baseVal.value =
-                  symbolConf.heightR * options.plugSizeSE[i] * options.lineSize;
-              } else {
-                props.plugMarkerSE[i].markerWidth.baseVal.value =
-                  props.capsMaskMarkerSE[i].markerWidth.baseVal.value =
-                  symbolConf.widthR * options.plugSizeSE[i];
-                props.plugMarkerSE[i].markerHeight.baseVal.value =
-                  props.capsMaskMarkerSE[i].markerHeight.baseVal.value =
-                  symbolConf.heightR * options.plugSizeSE[i];
-              }
-              break;
-            // no default
+          if (props.effect && props.effect.onPlugSE) {
+            props.effect.onPlugSE(props, plugId, i);
           }
-        });
-        // Update shape always for `options.lineSize` that might have been changed.
-        curPosition.plugOverheadSE[i] =
-          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
-        plugBCircleSE[i] =
-          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
-        curCapsMaskPlugEnabledSE[i] = true;
-        curCapsMaskAnchorEnabledSE[i] = false;
-
-      } else {
-        if (!setProps || setProps.indexOf('plug') > -1) {
-          window.traceLog.push('plug[' + i + ']=' + plugId); // [DEBUG/]
-          markerProp = i ? 'markerEnd' : 'markerStart';
-          props.plugsFace.style[markerProp] = props.capsMaskLine.style[markerProp] = 'none';
         }
-        // Update shape always for `options.lineSize` that might have been changed.
-        curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
-        plugBCircleSE[i] = 0;
-        curCapsMaskPlugEnabledSE[i] = false;
-        curCapsMaskAnchorEnabledSE[i] = true;
+
+        props.curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
+        props.curViewBBoxVals.plugBCircleSE[i] = 0;
       }
+      props.curPlugOutline.plugSE[i] = plugId;
     });
-
-
-
-    window.traceLog.push('<setPlug>'); // [DEBUG/]
-    var options = props.options,
-      plugBCircleSE = props.viewBBoxVals.plugBCircleSE,
-      curPosition = props.positionVals.current,
-      curCapsMaskAnchorEnabledSE = props.capsMaskAnchorVals.current.enabledSE,
-      curCapsMaskPlugEnabledSE = props.capsMaskPlugVals.current.enabledSE,
-      value;
-
-    setPropsSE.forEach(function(setProps, i) {
-      var plugId = options.plugSE[i], symbolConf, orient, markerProp;
-
-      if (plugId !== PLUG_BEHIND) {
-        symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
-        (setProps || ['plug', 'plugColor', 'plugSize']).forEach(function(setProp) {
-          switch (setProp) {
-            case 'plug':
-              window.traceLog.push(setProp + '[' + i + ']=' + plugId); // [DEBUG/]
-              orient = symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse';
-              markerProp = i ? 'markerEnd' : 'markerStart';
-
-              props.plugFaceSE[i].href.baseVal =
-                props.plugOutlineFaceSE[i].href.baseVal =
-                props.plugMaskShapeSE[i].href.baseVal =
-                props.plugOutlineMaskShapeSE[i].href.baseVal =
-                props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
-              [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
-                mask.x.baseVal.value = symbolConf.bBox.left;
-                mask.y.baseVal.value = symbolConf.bBox.top;
-                mask.width.baseVal.value = symbolConf.bBox.width;
-                mask.height.baseVal.value = symbolConf.bBox.height;
-              });
-              // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
-              props.plugsFace.style[markerProp] = 'url(#' + props.plugMarkerIdSE[i] + ')';
-              props.capsMaskLine.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
-              setMarkerOrient(props.plugMarkerSE[i], orient,
-                symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
-              setMarkerOrient(props.capsMaskMarkerSE[i], orient,
-                symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
-              if (IS_GECKO) {
-                // [GECKO] plugsFace is not updated when plugSE is changed
-                forceReflow(props.plugsFace);
-                forceReflow(props.capsMaskLine);
-                forceReflow(props.lineFace);
-              }
-              break;
-
-            case 'plugColor':
-              value = options.plugColorSE[i] || options.lineColor;
-              window.traceLog.push(setProp + '[' + i + ']=' + value); // [DEBUG/]
-              props.plugFaceSE[i].style.fill = value;
-              props.hasTransparency.plugColorSE[i] = getAlpha(value) < 1;
-              //props.hasTransparency.plugColorSE[i];
-              break;
-
-            case 'plugSize':
-              window.traceLog.push(setProp + '[' + i + ']=' + options.plugSizeSE[i]); // [DEBUG/]
-              if (IS_WEBKIT) {
-                // [WEBKIT] mask in marker is resized with rasterise
-                props.capsMaskMarkerSE[i].markerWidth.baseVal.value =
-                  symbolConf.widthR * options.plugSizeSE[i];
-                props.capsMaskMarkerSE[i].markerHeight.baseVal.value =
-                  symbolConf.heightR * options.plugSizeSE[i];
-                props.plugMarkerSE[i].markerWidth.baseVal.value =
-                  symbolConf.widthR * options.plugSizeSE[i] * options.lineSize;
-                props.plugMarkerSE[i].markerHeight.baseVal.value =
-                  symbolConf.heightR * options.plugSizeSE[i] * options.lineSize;
-              } else {
-                props.plugMarkerSE[i].markerWidth.baseVal.value =
-                  props.capsMaskMarkerSE[i].markerWidth.baseVal.value =
-                  symbolConf.widthR * options.plugSizeSE[i];
-                props.plugMarkerSE[i].markerHeight.baseVal.value =
-                  props.capsMaskMarkerSE[i].markerHeight.baseVal.value =
-                  symbolConf.heightR * options.plugSizeSE[i];
-              }
-              break;
-            // no default
-          }
-        });
-        // Update shape always for `options.lineSize` that might have been changed.
-        curPosition.plugOverheadSE[i] =
-          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
-        plugBCircleSE[i] =
-          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
-        curCapsMaskPlugEnabledSE[i] = true;
-        curCapsMaskAnchorEnabledSE[i] = false;
-
-      } else {
-        if (!setProps || setProps.indexOf('plug') > -1) {
-          window.traceLog.push('plug[' + i + ']=' + plugId); // [DEBUG/]
-          markerProp = i ? 'markerEnd' : 'markerStart';
-          props.plugsFace.style[markerProp] = props.capsMaskLine.style[markerProp] = 'none';
-        }
-        // Update shape always for `options.lineSize` that might have been changed.
-        curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
-        plugBCircleSE[i] = 0;
-        curCapsMaskPlugEnabledSE[i] = false;
-        curCapsMaskAnchorEnabledSE[i] = true;
-      }
-    });
-    props.capsMaskLine.style.display =
-      options.plugSE[0] !== PLUG_BEHIND || options.plugSE[1] !== PLUG_BEHIND ? 'inline' : 'none';
-
-    if (props.effect && props.effect.onSetPlug) {
-      props.effect.onSetPlug(props, setPropsSE);
-    }
   }
 
   /**
-   * Apply `lineOutlineEnabled`, `lineOutlineColor`, `lineOutlineSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {Array} [setProps] - To limit properties. `[]` and `['']` don't change.
    * @returns {void}
    */
-  function setLineOutline(props, setProps) {
-    window.traceLog.push('<setLineOutline>'); // [DEBUG/]
-    var options = props.options, value;
+  function updateLineOutline(props) {
+    var options = props.options,
+      curStats = props.curLineOutline, aplStats = props.aplLineOutline, value;
+
+    curStats.lineOutlineColorTra = getAlpha(options.lineOutlineColor) < 1;
+    curStats.lineOutlineSize = options.lineSize - options.lineSize * options.lineOutlineSize * 2;
 
     if (options.lineOutlineEnabled) {
-      (setProps || ['lineOutlineEnabled', 'lineOutlineColor', 'lineOutlineSize']).forEach(function(setProp) {
-        switch (setProp) {
-          case 'lineOutlineEnabled':
-            window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
-            props.lineMaskShape.style.display = 'inline';
-            props.lineMaskBG.style.display = 'none';
-            props.lineOutlineFace.style.display = 'inline';
-            break;
 
-          case 'lineOutlineColor':
-            value = options[setProp];
-            window.traceLog.push(setProp + '=' + value); // [DEBUG/]
-            props.lineOutlineFace.style.stroke = value;
-            props.hasTransparency.lineOutlineColor = getAlpha(value) < 1;
-            break;
+      // lineOutlineColor
+      if ((value = options.lineOutlineColor) !== aplStats.lineOutlineColor) {
+        window.traceLog.push('lineOutlineColor=' + value); // [DEBUG/]
+        props.lineOutlineFace.style.stroke = aplStats.lineOutlineColor = value;
 
-          case 'lineOutlineSize':
-            window.traceLog.push(setProp + '=' + options[setProp]); // [DEBUG/]
-            props.lineMaskShape.style.strokeWidth =
-              options.lineSize - (options.lineSize * options.lineOutlineSize - SHAPE_GAP) * 2;
-            props.lineOutlineMaskShape.style.strokeWidth =
-              options.lineSize - options.lineSize * options.lineOutlineSize * 2;
-            if (IS_TRIDENT) {
-              // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
-              forceReflow(props.lineOutlineMaskCaps);
-              // [TRIDENT] lineOutlineColor is ignored
-              forceReflow(props.lineOutlineFace);
-            }
-            break;
-          // no default
+        if (props.effect && props.effect.onLineOutlineColor) {
+          props.effect.onLineOutlineColor(props, value);
         }
-      });
+      }
 
-    } else {
-      if (!setProps || setProps.indexOf('lineOutlineEnabled') > -1) {
-        window.traceLog.push('lineOutlineEnabled=' + options.lineOutlineEnabled); // [DEBUG/]
+      // lineOutlineSize
+      if ((value = curStats.lineOutlineSize) !== aplStats.lineOutlineSize) {
+        window.traceLog.push('lineOutlineSize=' + value); // [DEBUG/]
+        props.lineOutlineMaskShape.style.strokeWidth = aplStats.lineOutlineSize = value;
+        props.lineMaskShape.style.strokeWidth = value + SHAPE_GAP * 2;
+        if (IS_TRIDENT) {
+          // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
+          forceReflow(props.lineOutlineMaskCaps);
+          // [TRIDENT] lineOutlineColor is ignored
+          forceReflow(props.lineOutlineFace);
+        }
+
+        if (props.effect && props.effect.onLineOutlineSize) {
+          props.effect.onLineOutlineSize(props, value);
+        }
+      }
+    }
+
+    // lineOutlineEnabled
+    if ((value = options.lineOutlineEnabled) !== aplStats.lineOutlineEnabled) {
+      window.traceLog.push('lineOutlineEnabled=' + value); // [DEBUG/]
+      if ((aplStats.lineOutlineEnabled = value)) {
+        props.lineMaskShape.style.display = 'inline';
+        props.lineMaskBG.style.display = 'none';
+        props.lineOutlineFace.style.display = 'inline';
+      } else {
         props.lineMaskShape.style.display = 'none';
         props.lineMaskBG.style.display = 'inline';
         props.lineOutlineFace.style.display = 'none';
       }
+
+      if (props.effect && props.effect.onLineOutlineEnabled) {
+        props.effect.onLineOutlineEnabled(props, value);
+      }
     }
   }
 
   /**
-   * Apply `plugOutlineEnabled`, `plugOutlineColor`, `plugOutlineSize`.
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {(Array|null)[]} setPropsSE - To limit properties.
    * @returns {void}
    */
-  function setPlugOutline(props, setPropsSE) {
-    window.traceLog.push('<setPlugOutline>'); // [DEBUG/]
-    var options = props.options;
+  function updatePlugOutline(props) {
+    var options = props.options,
+      curStats = props.curPlugOutline, aplStats = props.aplPlugOutline;
 
-    setPropsSE.forEach(function(setProps, i) {
+    [0, 1].forEach(function(i) {
       var plugId = options.plugSE[i], symbolConf, value;
 
-      // Disable it when `plugId === PLUG_BEHIND` even if `plugOutlineEnabledSE`.
+      curStats.plugOutlineColorSE[i] = value = options.plugOutlineColorSE[i] || options.lineOutlineColor;
+      curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
+
+      if (plugId !== PLUG_BEHIND) {
+        symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+        curStats.plugOutlineSizeSE[i] = options.plugOutlineSizeSE[i];
+        if (curStats.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
+          curStats.plugOutlineSizeSE[i] = symbolConf.outlineMax;
+        }
+        curStats.plugOutlineSizeSE[i] *= symbolConf.outlineBase * 2;
+      }
+
       if (options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND) {
-        (setProps || ['plugOutlineEnabled', 'plugOutlineColor', 'plugOutlineSize']).forEach(function(setProp) {
-          switch (setProp) {
-            case 'plugOutlineEnabled':
-              window.traceLog.push(setProp + '[' + i + ']=' + options.plugOutlineEnabledSE[i]); // [DEBUG/]
-              props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
-              props.plugOutlineFaceSE[i].style.display = 'inline';
-              break;
 
-            case 'plugOutlineColor':
-              value = options.plugOutlineColorSE[i] || options.lineOutlineColor;
-              window.traceLog.push(setProp + '[' + i + ']=' + (value)); // [DEBUG/]
-              props.plugOutlineFaceSE[i].style.fill = value;
-              props.hasTransparency.plugOutlineColorSE[i] = getAlpha(value) < 1;
-              break;
+        // plugOutlineEnabledSE, plugSE
+        if (!aplStats.plugOutlineEnabledSE || plugId !== aplStats.plugSE[i]) {
+          window.traceLog.push('plugOutlineEnabledSE[' + i + ']=true'); // [DEBUG/]
+          window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
+          aplStats.plugOutlineEnabledSE[i] = true;
+          aplStats.plugSE[i] = plugId;
+          props.plugOutlineFaceSE[i].href.baseVal =
+            props.plugMaskShapeSE[i].href.baseVal =
+            props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+          [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
+            mask.x.baseVal.value = symbolConf.bBox.left;
+            mask.y.baseVal.value = symbolConf.bBox.top;
+            mask.width.baseVal.value = symbolConf.bBox.width;
+            mask.height.baseVal.value = symbolConf.bBox.height;
+          });
+          props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
+          props.plugOutlineFaceSE[i].style.display = 'inline';
 
-            case 'plugOutlineSize':
-              symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
-              if (options.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
-                options.plugOutlineSizeSE[i] = symbolConf.outlineMax;
-              }
-              window.traceLog.push(setProp + '[' + i + ']=' + options.plugOutlineSizeSE[i]); // [DEBUG/]
-              props.plugMaskShapeSE[i].style.strokeWidth =
-                (symbolConf.outlineBase * options.plugOutlineSizeSE[i] -
-                  SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i]) * 2;
-              props.plugOutlineMaskShapeSE[i].style.strokeWidth =
-                symbolConf.outlineBase * options.plugOutlineSizeSE[i] * 2;
-              break;
-            // no default
+          if (props.effect && props.effect.onPlugOutlineEnabledSE) {
+            props.effect.onPlugOutlineEnabledSE(props, true, i);
           }
-        });
+        }
+
+        // plugOutlineColorSE
+        if ((value = curStats.plugOutlineColorSE[i]) !== aplStats.plugOutlineColorSE[i]) {
+          window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
+          props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
+
+          if (props.effect && props.effect.onPlugOutlineColorSE) {
+            props.effect.onPlugOutlineColorSE(props, value, i);
+          }
+        }
+
+        // plugOutlineSizeSE
+        if ((value = curStats.plugOutlineSizeSE[i]) !== aplStats.plugOutlineSizeSE[i]) {
+          window.traceLog.push('plugOutlineSizeSE[' + i + ']=' + value); // [DEBUG/]
+          props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
+          props.plugMaskShapeSE[i].style.strokeWidth =
+            value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
+
+          if (props.effect && props.effect.onPlugOutlineSizeSE) {
+            props.effect.onPlugOutlineSizeSE(props, value, i);
+          }
+        }
 
       } else {
-        if (!setProps || setProps.indexOf('plugOutlineEnabled') > -1) {
-          window.traceLog.push('plugOutlineEnabled[' + i + ']=' + options.plugOutlineEnabledSE[i]); // [DEBUG/]
+
+        // plugOutlineEnabledSE
+        if (plugId !== aplStats.plugOutlineEnabledSE[i]) {
+          window.traceLog.push('plugOutlineEnabledSE[' + i + ']=false'); // [DEBUG/]
+          aplStats.plugOutlineEnabledSE[i] = false;
           props.plugFaceSE[i].style.mask = 'none';
           props.plugOutlineFaceSE[i].style.display = 'none';
+
+          if (props.effect && props.effect.onPlugOutlineEnabledSE) {
+            props.effect.onPlugOutlineEnabledSE(props, plugId, i);
+          }
         }
       }
     });
@@ -1856,6 +1780,7 @@
 
     [0, 1].forEach(function(i) {
       var update;
+      // capsMaskAnchorSE
       if (curCapsMaskAnchorEnabledSE[i]) {
         ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
           var propKey = boxKey + 'SE';
@@ -1877,6 +1802,28 @@
       if (update && props.effect && props.effect.onUpdateAnchorBBox) {
         props.effect.onUpdateAnchorBBox(props, i);
       }
+
+
+
+      // capsMaskAnchorSE
+      update = false;
+      props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+      props.capsMaskLine.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
+      setMarkerOrient(props.capsMaskMarkerSE[i], orient,
+        symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
+      if (IS_GECKO) {
+        // [GECKO] plugsFace is not updated when plugSE is changed
+        forceReflow(props.capsMaskLine);
+        forceReflow(props.lineFace);
+      }
+
+      //size
+      props.capsMaskMarkerSE[i].markerWidth.baseVal.value = symbolConf.widthR * options.plugSizeSE[i];
+      props.capsMaskMarkerSE[i].markerHeight.baseVal.value = symbolConf.heightR * options.plugSizeSE[i];
+
+      //hide
+      props.capsMaskLine.style[marker.prop] = 'none';
+
     });
 
     // maskBGRect
@@ -2330,20 +2277,20 @@
     })();
 
     if (needsLine) { // Update styles of `line`.
-      setLine(props, Array.isArray(needsLine) ? needsLine : null);
+      updateLine(props, Array.isArray(needsLine) ? needsLine : null);
     }
     if (needsPlugSE[0] || needsPlugSE[1]) { // Update plugs.
-      setPlug(props, [
+      updatePlug(props, [
         /* eslint-disable eqeqeq */
         needsPlugSE[0] == null ? [] : Array.isArray(needsPlugSE[0]) ? needsPlugSE[0] : null,
         needsPlugSE[1] == null ? [] : Array.isArray(needsPlugSE[1]) ? needsPlugSE[1] : null]);
         /* eslint-enable eqeqeq */
     }
     if (needsLineOutline) { // Update `lineOutline`.
-      setLineOutline(props, Array.isArray(needsLineOutline) ? needsLineOutline : null);
+      updateLineOutline(props, Array.isArray(needsLineOutline) ? needsLineOutline : null);
     }
     if (needsPlugOutlineSE[0] || needsPlugOutlineSE[1]) { // Update `plugOutline`.
-      setPlugOutline(props, [
+      updatePlugOutline(props, [
         needsPlugOutlineSE[0] == null ? [] : // eslint-disable-line eqeqeq
           Array.isArray(needsPlugOutlineSE[0]) ? needsPlugOutlineSE[0] : null,
         needsPlugOutlineSE[1] == null ? [] : // eslint-disable-line eqeqeq
