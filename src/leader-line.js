@@ -1077,6 +1077,19 @@
 
     if (options.lineOutlineEnabled) {
 
+      // lineOutlineEnabled
+      if (!aplStats.lineOutlineEnabled) {
+        window.traceLog.push('lineOutlineEnabled=true'); // [DEBUG/]
+        aplStats.lineOutlineEnabled = true;
+        props.lineMaskShape.style.display = 'inline';
+        props.lineMaskBG.style.display = 'none';
+        props.lineOutlineFace.style.display = 'inline';
+
+        if (props.effect && props.effect.onLineOutlineEnabled) {
+          props.effect.onLineOutlineEnabled(props, value);
+        }
+      }
+
       // lineOutlineColor
       if ((value = options.lineOutlineColor) !== aplStats.lineOutlineColor) {
         window.traceLog.push('lineOutlineColor=' + value); // [DEBUG/]
@@ -1103,23 +1116,20 @@
           props.effect.onLineOutlineSize(props, value);
         }
       }
-    }
 
-    // lineOutlineEnabled
-    if ((value = options.lineOutlineEnabled) !== aplStats.lineOutlineEnabled) {
-      window.traceLog.push('lineOutlineEnabled=' + value); // [DEBUG/]
-      if ((aplStats.lineOutlineEnabled = value)) {
-        props.lineMaskShape.style.display = 'inline';
-        props.lineMaskBG.style.display = 'none';
-        props.lineOutlineFace.style.display = 'inline';
-      } else {
+    } else {
+
+      // lineOutlineEnabled
+      if (aplStats.lineOutlineEnabled) {
+        window.traceLog.push('lineOutlineEnabled=false'); // [DEBUG/]
+        aplStats.lineOutlineEnabled = false;
         props.lineMaskShape.style.display = 'none';
         props.lineMaskBG.style.display = 'inline';
         props.lineOutlineFace.style.display = 'none';
-      }
 
-      if (props.effect && props.effect.onLineOutlineEnabled) {
-        props.effect.onLineOutlineEnabled(props, value);
+        if (props.effect && props.effect.onLineOutlineEnabled) {
+          props.effect.onLineOutlineEnabled(props, value);
+        }
       }
     }
   }
@@ -1150,7 +1160,7 @@
       if (options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND) {
 
         // plugOutlineEnabledSE, plugSE
-        if (!aplStats.plugOutlineEnabledSE || plugId !== aplStats.plugSE[i]) {
+        if (!aplStats.plugOutlineEnabledSE[i] || plugId !== aplStats.plugSE[i]) {
           window.traceLog.push('plugOutlineEnabledSE[' + i + ']=true'); // [DEBUG/]
           window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
           aplStats.plugOutlineEnabledSE[i] = true;
@@ -1197,7 +1207,7 @@
       } else {
 
         // plugOutlineEnabledSE
-        if (plugId !== aplStats.plugOutlineEnabledSE[i]) {
+        if (aplStats.plugOutlineEnabledSE[i]) {
           window.traceLog.push('plugOutlineEnabledSE[' + i + ']=false'); // [DEBUG/]
           aplStats.plugOutlineEnabledSE[i] = false;
           props.plugFaceSE[i].style.mask = 'none';
