@@ -192,7 +192,8 @@
       Mask: {
         lineMaskEnabled: {},
         lineMaskX: {}, lineMaskY: {},
-        lineOutlineMaskX: {}, lineOutlineMaskY: {}
+        lineOutlineMaskX: {}, lineOutlineMaskY: {},
+        capsEnabled: {}, capsMarkersEnabled: {}
       },
       CapsMaskAnchor: {
         enabledSE: {hasSE: true},
@@ -205,7 +206,7 @@
         widthSE: {hasSE: true}, heightSE: {hasSE: true}
       },
       MaskBGRect: {
-        enabled: {}, x: {}, y: {}
+        x: {}, y: {}
       }
     },
     STAT_NAMES = Object.keys(STATS).reduce(function(names, group) {
@@ -989,8 +990,10 @@
       if (plugId !== PLUG_BEHIND) {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
 
-        curStats.widthSE[i] = props.curCapsMaskMarker.widthSE[i] = symbolConf.widthR * value;
-        curStats.heightSE[i] = props.curCapsMaskMarker.heightSE[i] = symbolConf.heightR * value;
+        curStats.widthSE[i] = props.curCapsMaskMarker.widthSE[i] =
+          symbolConf.widthR * options.plugSizeSE[i];
+        curStats.heightSE[i] = props.curCapsMaskMarker.heightSE[i] =
+          symbolConf.heightR * options.plugSizeSE[i];
         if (IS_WEBKIT) {
           // [WEBKIT] mask in marker is resized with rasterise
           curStats.widthSE[i] *= options.lineSize;
@@ -1027,25 +1030,18 @@
           }
         }
 
-        // widthSE
-        if ((value = curStats.widthSE[i]) !== aplStats.widthSE[i]) {
-          window.traceLog.push('widthSE[' + i + ']=' + value); // [DEBUG/]
-          props.plugMarkerSE[i].markerWidth.baseVal.value = aplStats.widthSE[i] = value;
+        [['markerWidth', 'widthSE', 'onPlugWidthSE'], ['markerHeight', 'heightSE', 'onPlugHeightSE']]
+          .forEach(function(whKeys) {
+            var markerKey = whKeys[0], statKey = whKeys[1], eventKey = whKeys[2];
+            if ((value = curStats[statKey][i]) !== aplStats[statKey][i]) {
+              window.traceLog.push('Plug.' + statKey + '[' + i + ']'); // [DEBUG/]
+              props.plugMarkerSE[i][markerKey].baseVal.value = aplStats[statKey][i] = value;
 
-          if (props.effect && props.effect.onPlugWidthSE) {
-            props.effect.onPlugWidthSE(props, value, i);
-          }
-        }
-
-        // heightSE
-        if ((value = curStats.heightSE[i]) !== aplStats.heightSE[i]) {
-          window.traceLog.push('heightSE[' + i + ']=' + value); // [DEBUG/]
-          props.plugMarkerSE[i].markerHeight.baseVal.value = aplStats.heightSE[i] = value;
-
-          if (props.effect && props.effect.onPlugHeightSE) {
-            props.effect.onPlugHeightSE(props, value, i);
-          }
-        }
+              if (props.effect && props.effect[eventKey]) {
+                props.effect[eventKey](props, value, i);
+              }
+            }
+          });
 
         props.curPosition.plugOverheadSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
@@ -1794,99 +1790,145 @@
       curMaskBGRect = props.curMaskBGRect, aplMaskBGRect = props.aplMaskBGRect,
       curPlug = props.curPlug,
       curPlugOutline = props.curPlugOutline,
-      capsEnabled, lineMaskBGEnabled;
+      lineMaskBGEnabled, value;
 
     [0, 1].forEach(function(i) {
       curCapsMaskMarker.enabledSE[i] =
         curCapsMaskMarker.plugSE[i] !== PLUG_BEHIND && curPlug.plugColorTraSE[i] ||
         curPlugOutline.plugOutlineEnabledSE[i] && curPlugOutline.plugOutlineColorTraSE[i];
     });
-    capsEnabled = curCapsMaskAnchor.enabledSE[0] || curCapsMaskAnchor.enabledSE[1] ||
-      curCapsMaskMarker.enabledSE[0] || curCapsMaskMarker.enabledSE[1];
-    curMask.lineMaskEnabled = options.lineOutlineEnabled || capsEnabled;
-    lineMaskBGEnabled = !options.lineOutlineEnabled && capsEnabled;
-    curMaskBGRect.enabled = options.lineOutlineEnabled || lineMaskBGEnabled;
-
-
-
-
-
-
-    [0, 1].forEach(function(i) {
-      var update;
-      // capsMaskAnchorSE
-      if (curCapsMaskAnchor.enabledSE[i]) {
-        ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-          var propKey = boxKey + 'SE';
-          if (curCapsMaskAnchor[propKey][i] !== aplCapsMaskAnchor[propKey][i]) {
-            window.traceLog.push('anchorMask[' + i + '].' + boxKey); // [DEBUG/]
-            props.capsMaskAnchorSE[i][boxKey].baseVal.value =
-              aplCapsMaskAnchor[propKey][i] = curCapsMaskAnchor[propKey][i];
-            update = true;
-          }
-        });
-      }
-      if (curCapsMaskAnchor.enabledSE[i] !== aplCapsMaskAnchor.enabledSE[i]) {
-        window.traceLog.push('lineMask.enabled=' + curCapsMaskAnchor.enabledSE[i]); // [DEBUG/]
-        props.capsMaskAnchorSE[i].style.display =
-          (aplCapsMaskAnchor.enabledSE[i] = curCapsMaskAnchor.enabledSE[i]) ?
-            'inline' : 'none';
-        update = true;
-      }
-      if (update && props.effect && props.effect.onUpdateAnchorBBox) {
-        props.effect.onUpdateAnchorBBox(props, i);
-      }
-
-
-
-      // capsMaskAnchorSE
-      update = false;
-      props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
-      props.capsMaskLine.style[markerProp] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
-      setMarkerOrient(props.capsMaskMarkerSE[i], orient,
-        symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
-      if (IS_GECKO) {
-        // [GECKO] plugsFace is not updated when plugSE is changed
-        forceReflow(props.capsMaskLine);
-        forceReflow(props.lineFace);
-      }
-
-      //size
-      props.capsMaskMarkerSE[i].markerWidth.baseVal.value = symbolConf.widthR * options.plugSizeSE[i];
-      props.capsMaskMarkerSE[i].markerHeight.baseVal.value = symbolConf.heightR * options.plugSizeSE[i];
-
-      //hide
-      props.capsMaskLine.style[marker.prop] = 'none';
-
-    });
+    curMask.capsMarkersEnabled = curCapsMaskMarker.enabledSE[0] || curCapsMaskMarker.enabledSE[1];
+    curMask.capsEnabled = curMask.capsMarkersEnabled ||
+      curCapsMaskAnchor.enabledSE[0] || curCapsMaskAnchor.enabledSE[1];
+    curMask.lineMaskEnabled = curMask.capsEnabled || options.lineOutlineEnabled;
+    lineMaskBGEnabled = curMask.lineMaskEnabled && !options.lineOutlineEnabled;
 
     // maskBGRect
-    if (curMask.lineMaskEnabled && !options.lineOutlineEnabled || options.lineOutlineEnabled) {
+    if (lineMaskBGEnabled || options.lineOutlineEnabled) {
       ['x', 'y'].forEach(function(boxKey) {
-        if (curMaskBGRect[boxKey] !== aplMaskBGRect[boxKey]) {
+        if ((value = curMaskBGRect[boxKey]) !== aplMaskBGRect[boxKey]) {
           window.traceLog.push('maskBGRect.' + boxKey); // [DEBUG/]
-          props.maskBGRect[boxKey].baseVal.value =
-            aplMaskBGRect[boxKey] = curMaskBGRect[boxKey];
+          props.maskBGRect[boxKey].baseVal.value = aplMaskBGRect[boxKey] = value;
         }
       });
     }
 
-    // lineMask
-    if (curMask.lineMaskEnabled) {
+    if (curMask.lineMaskEnabled) { // Includes `lineOutlineEnabled`
+
+      if (curMask.capsEnabled) {
+
+        // capsEnabled
+        if (!aplMask.capsEnabled) {
+          window.traceLog.push('capsEnabled=true'); // [DEBUG/]
+          aplMask.capsEnabled = true;
+          props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display = 'inline';
+        }
+
+        // CapsMaskAnchor
+        [0, 1].forEach(function(i) {
+          if (curCapsMaskAnchor.enabledSE[i]) {
+            if (!aplCapsMaskAnchor.enabledSE[i]) {
+              window.traceLog.push('CapsMaskAnchor.enabledSE[' + i + ']=true'); // [DEBUG/]
+              aplCapsMaskAnchor.enabledSE[i] = true;
+              props.capsMaskAnchorSE[i].style.display = 'inline';
+            }
+            ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+              var statKey = boxKey + 'SE';
+              if ((value = curCapsMaskAnchor[statKey][i]) !== aplCapsMaskAnchor[statKey][i]) {
+                window.traceLog.push('CapsMaskAnchor.' + boxKey + '[' + i + ']'); // [DEBUG/]
+                props.capsMaskAnchorSE[i][boxKey].baseVal.value = aplCapsMaskAnchor[statKey][i] = value;
+              }
+            });
+          } else if (aplCapsMaskAnchor.enabledSE[i]) {
+            window.traceLog.push('CapsMaskAnchor.enabledSE[' + i + ']=false'); // [DEBUG/]
+            aplCapsMaskAnchor.enabledSE[i] = false;
+            props.capsMaskAnchorSE[i].style.display = 'none';
+          }
+        });
+
+        if (curMask.capsMarkersEnabled) {
+
+          // capsMarkersEnabled
+          if (!aplMask.capsMarkersEnabled) {
+            window.traceLog.push('capsMarkersEnabled=true'); // [DEBUG/]
+            aplMask.capsMarkersEnabled = true;
+            props.capsMaskLine.style.display = 'inline';
+          }
+
+          // CapsMaskMarker
+          [0, 1].forEach(function(i) {
+            var plugId, symbolConf, marker;
+
+            if (curCapsMaskMarker.enabledSE[i]) {
+              plugId = curCapsMaskMarker.plugSE[i];
+              symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+              marker = getMarkerProps(i, symbolConf);
+
+              if (!aplCapsMaskMarker.enabledSE[i] || plugId !== aplCapsMaskMarker.plugSE[i]) {
+                window.traceLog.push('CapsMaskMarker.enabledSE[' + i + ']=true'); // [DEBUG/]
+                window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
+                aplCapsMaskMarker.enabledSE[i] = true;
+                aplCapsMaskMarker.plugSE[i] = plugId;
+                props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+                props.capsMaskLine.style[marker.prop] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
+                setMarkerOrient(props.capsMaskMarkerSE[i], marker.orient,
+                  symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
+                if (IS_GECKO) {
+                  // [GECKO] plugsFace is not updated when plugSE is changed
+                  forceReflow(props.capsMaskLine);
+                  forceReflow(props.lineFace);
+                }
+              }
+
+              [['markerWidth', 'widthSE'], ['markerHeight', 'heightSE']].forEach(function(markerStatKey) {
+                var markerKey = markerStatKey[0], statKey = markerStatKey[1];
+                if ((value = curCapsMaskMarker[statKey][i]) !== aplCapsMaskMarker[statKey][i]) {
+                  window.traceLog.push('CapsMaskMarker.' + statKey + '[' + i + ']'); // [DEBUG/]
+                  props.capsMaskMarkerSE[i][markerKey].baseVal.value = aplCapsMaskMarker[statKey][i] = value;
+                }
+              });
+
+            } else if (aplCapsMaskMarker.enabledSE[i]) {
+              window.traceLog.push('CapsMaskMarker.enabledSE[' + i + ']=false'); // [DEBUG/]
+              aplCapsMaskMarker.enabledSE[i] = false;
+              marker = getMarkerProps(i);
+              props.capsMaskLine.style[marker.prop] = 'none';
+            }
+          });
+
+        } else if (aplMask.capsMarkersEnabled) {
+          // capsMarkersEnabled
+          window.traceLog.push('capsMarkersEnabled=false'); // [DEBUG/]
+          aplMask.capsMarkersEnabled = false;
+          props.capsMaskLine.style.display = 'none';
+        }
+
+      } else if (aplMask.capsEnabled) {
+        // capsEnabled
+        window.traceLog.push('capsEnabled=false'); // [DEBUG/]
+        aplMask.capsEnabled = false;
+        props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display = 'none';
+      }
+
+      // lineMask
+      if (!aplMask.lineMaskEnabled) {
+        window.traceLog.push('lineMaskEnabled=true'); // [DEBUG/]
+        aplMask.lineMaskEnabled = true;
+        props.lineFace.style.mask = 'url(#' + props.lineMaskId + ')';
+      }
       ['x', 'y'].forEach(function(boxKey) {
-        var valsKey = 'lineMask' + boxKey.toUpperCase();
-        if (curMask[valsKey] !== aplMask[valsKey]) {
+        var statKey = 'lineMask' + boxKey.toUpperCase();
+        if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('lineMask.' + boxKey); // [DEBUG/]
-          props.lineMask[boxKey].baseVal.value =
-            aplMask[valsKey] = curMask[valsKey];
+          props.lineMask[boxKey].baseVal.value = aplMask[statKey] = value;
         }
       });
-    }
-    if (curMask.lineMaskEnabled !== aplMask.lineMaskEnabled) {
-      window.traceLog.push('lineMask.enabled=' + curMask.lineMaskEnabled); // [DEBUG/]
-      props.lineFace.style.mask =
-        (aplMask.lineMaskEnabled = curMask.lineMaskEnabled) ?
-          'url(#' + props.lineMaskId + ')' : 'none';
+
+    } else if (aplMask.lineMaskEnabled) {
+      // lineMask
+      window.traceLog.push('lineMaskEnabled=false'); // [DEBUG/]
+      aplMask.lineMaskEnabled = false;
+      props.lineFace.style.mask = 'none';
     }
 
     // lineOutlineMask
