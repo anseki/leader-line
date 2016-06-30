@@ -141,7 +141,7 @@
         plugSE: {hasSE: true, isOption: true},
         plugColorSE: {hasSE: true},
         plugColorTraSE: {hasSE: true},
-        plugSizeSE: {hasSE: true, isOption: true}
+        widthSE: {hasSE: true}, heightSE: {hasSE: true}
       },
       LineOutline: {
         lineOutlineEnabled: {isOption: true},
@@ -150,7 +150,8 @@
         lineOutlineSize: {}
       },
       PlugOutline: {
-        plugOutlineEnabledSE: {hasSE: true, isOption: true},
+        plugSE: {hasSE: true},//tsukau?
+        plugOutlineEnabledSE: {hasSE: true},
         plugOutlineColorSE: {hasSE: true},
         plugOutlineColorTraSE: {hasSE: true},
         plugOutlineSizeSE: {hasSE: true}
@@ -184,8 +185,9 @@
           }}
       },
       ViewBBox: {
-        x: {}, y: {}, width: {}, height: {}
-        // `props.curViewBBoxVals` contains `plugBCircleSE` and `pathEdge` to calculate.
+        x: {}, y: {}, width: {}, height: {},
+        plugBCircleSE: {hasSE: true},
+        pathEdge: {hasProps: true}
       },
       Mask: {
         lineMaskEnabled: {},
@@ -203,7 +205,7 @@
         widthSE: {hasSE: true}, heightSE: {hasSE: true}
       },
       MaskBGRect: {
-        x: {}, y: {}
+        enabled: {}, x: {}, y: {}
       }
     },
     STAT_NAMES = Object.keys(STATS).reduce(function(names, group) {
@@ -868,15 +870,60 @@
       });
     });
 
-    props.curViewBBoxVals.plugBCircleSE = [0, 0];
-    props.curViewBBoxVals.pathEdge = {};
-
     props.pathList = {baseVal: [], animVal: []};
     props.effect = null;
     if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
     props.effectParams = {};
   }
   window.bindWindow = bindWindow; // [DEBUG/]
+
+  /**
+   * Apply `orient` to `marker`.
+   * @param {SVGMarkerElement} marker - Target `<marker>` element.
+   * @param {string} orient - `'auto'`, `'auto-start-reverse'` or angle.
+   * @param {BBox} bBox - `BBox` as `viewBox` of the marker.
+   * @param {SVGSVGElement} svg - Parent `<svg>` element.
+   * @param {SVGElement} shape - An element that is shown as marker.
+   * @param {SVGElement} marked - Target element that has `marker-start/end` such as `<path>`.
+   * @returns {void}
+   */
+  function setMarkerOrient(marker, orient, bBox, svg, shape, marked) {
+    var transform, viewBox, reverseView;
+    // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of
+    // `SVGMarkerElement` don't work in browsers other than Chrome.
+    if (orient === 'auto-start-reverse') {
+      if (typeof svg2Supported !== 'boolean') {
+        marker.setAttribute('orient', 'auto-start-reverse');
+        svg2Supported = marker.orientType.baseVal === SVGMarkerElement.SVG_MARKER_ORIENT_UNKNOWN;
+      }
+      if (svg2Supported) {
+        marker.setAttribute('orient', orient);
+      } else {
+        transform = svg.createSVGTransform();
+        transform.setRotate(180, 0, 0);
+        shape.transform.baseVal.appendItem(transform);
+        marker.setAttribute('orient', 'auto');
+        reverseView = true;
+      }
+    } else {
+      marker.setAttribute('orient', orient);
+      if (svg2Supported === false) { shape.transform.baseVal.clear(); }
+    }
+
+    viewBox = marker.viewBox.baseVal;
+    if (reverseView) {
+      viewBox.x = -bBox.right;
+      viewBox.y = -bBox.bottom;
+    } else {
+      viewBox.x = bBox.left;
+      viewBox.y = bBox.top;
+    }
+    viewBox.width = bBox.width;
+    viewBox.height = bBox.height;
+
+    // [TRIDENT] markerOrient is not updated when plugSE is changed
+    if (IS_TRIDENT) { forceReflow(marked); }
+  }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
@@ -918,54 +965,6 @@
     }
   }
 
-  /**
-   * Apply `orient` to `marker`.
-   * @param {SVGMarkerElement} marker - Target `<marker>` element.
-   * @param {string} orient - `'auto'`, `'auto-start-reverse'` or angle.
-   * @param {BBox} bBox - `BBox` as `viewBox` of the marker.
-   * @param {SVGSVGElement} svg - Parent `<svg>` element.
-   * @param {SVGElement} shape - An element that is shown as marker.
-   * @param {SVGElement} marked - Target element that has `marker-start/end` such as `<path>`.
-   * @returns {void}
-   */
-  function setMarkerOrient(marker, orient, bBox, svg, shape, marked) {
-    var transform, baseVal, reverseView;
-    // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of
-    // `SVGMarkerElement` don't work in browsers other than Chrome.
-    if (orient === 'auto-start-reverse') {
-      if (typeof svg2Supported !== 'boolean') {
-        marker.setAttribute('orient', 'auto-start-reverse');
-        svg2Supported = marker.orientType.baseVal === SVGMarkerElement.SVG_MARKER_ORIENT_UNKNOWN;
-      }
-      if (svg2Supported) {
-        marker.setAttribute('orient', orient);
-      } else {
-        transform = svg.createSVGTransform();
-        transform.setRotate(180, 0, 0);
-        shape.transform.baseVal.appendItem(transform);
-        marker.setAttribute('orient', 'auto');
-        reverseView = true;
-      }
-    } else {
-      marker.setAttribute('orient', orient);
-      if (svg2Supported === false) { shape.transform.baseVal.clear(); }
-    }
-
-    baseVal = marker.viewBox.baseVal;
-    if (reverseView) {
-      baseVal.x = -bBox.right;
-      baseVal.y = -bBox.bottom;
-    } else {
-      baseVal.x = bBox.left;
-      baseVal.y = bBox.top;
-    }
-    baseVal.width = bBox.width;
-    baseVal.height = bBox.height;
-
-    // [TRIDENT] markerOrient is not updated when plugSE is changed
-    if (IS_TRIDENT) { forceReflow(marked); }
-  }
-
   function getMarkerProps(i, symbolConf) {
     return {
       prop: i ? 'markerEnd' : 'markerStart',
@@ -989,6 +988,14 @@
 
       if (plugId !== PLUG_BEHIND) {
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+
+        curStats.widthSE[i] = props.curCapsMaskMarker.widthSE[i] = symbolConf.widthR * value;
+        curStats.heightSE[i] = props.curCapsMaskMarker.heightSE[i] = symbolConf.heightR * value;
+        if (IS_WEBKIT) {
+          // [WEBKIT] mask in marker is resized with rasterise
+          curStats.widthSE[i] *= options.lineSize;
+          curStats.heightSE[i] *= options.lineSize;
+        }
 
         // plugSE
         if (plugId !== aplStats.plugSE[i]) {
@@ -1020,28 +1027,31 @@
           }
         }
 
-        // plugSizeSE
-        if ((value = options.plugSizeSE[i]) !== aplStats.plugSizeSE[i]) {
-          window.traceLog.push('plugSizeSE[' + i + ']=' + value); // [DEBUG/]
-          aplStats.plugSizeSE[i] = value;
-          if (IS_WEBKIT) {
-            // [WEBKIT] mask in marker is resized with rasterise
-            props.plugMarkerSE[i].markerWidth.baseVal.value = symbolConf.widthR * value * options.lineSize;
-            props.plugMarkerSE[i].markerHeight.baseVal.value = symbolConf.heightR * value * options.lineSize;
-          } else {
-            props.plugMarkerSE[i].markerWidth.baseVal.value = symbolConf.widthR * value;
-            props.plugMarkerSE[i].markerHeight.baseVal.value = symbolConf.heightR * value;
-          }
+        // widthSE
+        if ((value = curStats.widthSE[i]) !== aplStats.widthSE[i]) {
+          window.traceLog.push('widthSE[' + i + ']=' + value); // [DEBUG/]
+          props.plugMarkerSE[i].markerWidth.baseVal.value = aplStats.widthSE[i] = value;
 
-          if (props.effect && props.effect.onPlugSizeSE) {
-            props.effect.onPlugSizeSE(props, value, i);
+          if (props.effect && props.effect.onPlugWidthSE) {
+            props.effect.onPlugWidthSE(props, value, i);
+          }
+        }
+
+        // heightSE
+        if ((value = curStats.heightSE[i]) !== aplStats.heightSE[i]) {
+          window.traceLog.push('heightSE[' + i + ']=' + value); // [DEBUG/]
+          props.plugMarkerSE[i].markerHeight.baseVal.value = aplStats.heightSE[i] = value;
+
+          if (props.effect && props.effect.onPlugHeightSE) {
+            props.effect.onPlugHeightSE(props, value, i);
           }
         }
 
         props.curPosition.plugOverheadSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
-        props.curViewBBoxVals.plugBCircleSE[i] =
+        props.curViewBBox.plugBCircleSE[i] =
           options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
+        props.curCapsMaskAnchor.enabledSE[i] = false;
 
       } else {
 
@@ -1058,9 +1068,10 @@
         }
 
         props.curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
-        props.curViewBBoxVals.plugBCircleSE[i] = 0;
+        props.curViewBBox.plugBCircleSE[i] = 0;
+        props.curCapsMaskAnchor.enabledSE[i] = true;
       }
-      props.curPlugOutline.plugSE[i] = plugId;
+      props.curCapsMaskMarker.plugSE[i] = plugId;
     });
   }
 
@@ -1143,7 +1154,7 @@
       curStats = props.curPlugOutline, aplStats = props.aplPlugOutline;
 
     [0, 1].forEach(function(i) {
-      var plugId = options.plugSE[i], symbolConf, value;
+      var plugId = curStats.plugSE[i] = options.plugSE[i], symbolConf, value;
 
       curStats.plugOutlineColorSE[i] = value = options.plugOutlineColorSE[i] || options.lineOutlineColor;
       curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
@@ -1157,7 +1168,8 @@
         curStats.plugOutlineSizeSE[i] *= symbolConf.outlineBase * 2;
       }
 
-      if (options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND) {
+      if ((curStats.plugOutlineEnabledSE[i] =
+          options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND)) {
 
         // plugOutlineEnabledSE, plugSE
         if (!aplStats.plugOutlineEnabledSE[i] || plugId !== aplStats.plugSE[i]) {
@@ -1252,9 +1264,9 @@
   function updatePosition(props) {
     window.traceLog.push('<position>'); // [DEBUG/]
     var options = props.options,
-      curPosition = props.positionVals.current,
-      curPositionSocketXYSE = curPosition.socketXYSE,
-      capsMaskAnchorVals = props.capsMaskAnchorVals,
+      curStats = props.curPosition,
+      curStatsSocketXYSE = curStats.socketXYSE,
+      curCapsMaskAnchor = props.curCapsMaskAnchor,
       anchorBBoxSE, pathList,
       update = false;
 
@@ -1273,8 +1285,7 @@
     anchorBBoxSE = [0, 1].map(function(i) {
       var anchorBBox = getBBoxNest(options.anchorSE[i], props.baseWindow);
       ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-        var propKey = boxKey + 'SE';
-        capsMaskAnchorVals.current[propKey][i] = anchorBBox[BBOX_PROP[boxKey]];
+        curCapsMaskAnchor[boxKey + 'SE'][i] = anchorBBox[BBOX_PROP[boxKey]];
       });
       return anchorBBox;
     });
@@ -1283,8 +1294,8 @@
     (function() {
       var socketXYsWk, socketsLenMin = -1, iFix, iAuto;
       if (options.socketSE[0] && options.socketSE[1]) {
-        curPositionSocketXYSE[0] = getSocketXY(anchorBBoxSE[0], options.socketSE[0]);
-        curPositionSocketXYSE[1] = getSocketXY(anchorBBoxSE[1], options.socketSE[1]);
+        curStatsSocketXYSE[0] = getSocketXY(anchorBBoxSE[0], options.socketSE[0]);
+        curStatsSocketXYSE[1] = getSocketXY(anchorBBoxSE[1], options.socketSE[1]);
 
       } else if (!options.socketSE[0] && !options.socketSE[1]) {
         socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[1], socketId); });
@@ -1293,8 +1304,8 @@
             socketXYsWk.forEach(function(socketXY1) {
               var len = getPointsLength(socketXY0, socketXY1);
               if (len < socketsLenMin || socketsLenMin === -1) {
-                curPositionSocketXYSE[0] = socketXY0;
-                curPositionSocketXYSE[1] = socketXY1;
+                curStatsSocketXYSE[0] = socketXY0;
+                curStatsSocketXYSE[1] = socketXY1;
                 socketsLenMin = len;
               }
             });
@@ -1308,12 +1319,12 @@
           iFix = 1;
           iAuto = 0;
         }
-        curPositionSocketXYSE[iFix] = getSocketXY(anchorBBoxSE[iFix], options.socketSE[iFix]);
+        curStatsSocketXYSE[iFix] = getSocketXY(anchorBBoxSE[iFix], options.socketSE[iFix]);
         socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[iAuto], socketId); });
         socketXYsWk.forEach(function(socketXY) {
-          var len = getPointsLength(socketXY, curPositionSocketXYSE[iFix]);
+          var len = getPointsLength(socketXY, curStatsSocketXYSE[iFix]);
           if (len < socketsLenMin || socketsLenMin === -1) {
-            curPositionSocketXYSE[iAuto] = socketXY;
+            curStatsSocketXYSE[iAuto] = socketXY;
             socketsLenMin = len;
           }
         });
@@ -1329,7 +1340,7 @@
       switch (options.path) {
 
         case PATH_STRAIGHT:
-          pathList.push([socketXY2Point(curPositionSocketXYSE[0]), socketXY2Point(curPositionSocketXYSE[1])]);
+          pathList.push([socketXY2Point(curStatsSocketXYSE[0]), socketXY2Point(curStatsSocketXYSE[1])]);
           break;
 
         case PATH_ARC:
@@ -1339,17 +1350,17 @@
                 typeof options.socketGravitySE[0] === 'number' && options.socketGravitySE[0] > 0 ||
                 typeof options.socketGravitySE[1] === 'number' && options.socketGravitySE[1] > 0,
               circle8rad = CIRCLE_8_RAD * (downward ? -1 : 1),
-              angle = Math.atan2(curPositionSocketXYSE[1].y - curPositionSocketXYSE[0].y, curPositionSocketXYSE[1].x - curPositionSocketXYSE[0].x),
+              angle = Math.atan2(curStatsSocketXYSE[1].y - curStatsSocketXYSE[0].y, curStatsSocketXYSE[1].x - curStatsSocketXYSE[0].x),
               cp1Angle = -angle + circle8rad,
               cp2Angle = Math.PI - angle - circle8rad,
-              crLen = getPointsLength(curPositionSocketXYSE[0], curPositionSocketXYSE[1]) / Math.sqrt(2) * CIRCLE_CP,
+              crLen = getPointsLength(curStatsSocketXYSE[0], curStatsSocketXYSE[1]) / Math.sqrt(2) * CIRCLE_CP,
               cp1 = {
-                x: curPositionSocketXYSE[0].x + Math.cos(cp1Angle) * crLen,
-                y: curPositionSocketXYSE[0].y + Math.sin(cp1Angle) * crLen * -1},
+                x: curStatsSocketXYSE[0].x + Math.cos(cp1Angle) * crLen,
+                y: curStatsSocketXYSE[0].y + Math.sin(cp1Angle) * crLen * -1},
               cp2 = {
-                x: curPositionSocketXYSE[1].x + Math.cos(cp2Angle) * crLen,
-                y: curPositionSocketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
-            pathList.push([socketXY2Point(curPositionSocketXYSE[0]), cp1, cp2, socketXY2Point(curPositionSocketXYSE[1])]);
+                x: curStatsSocketXYSE[1].x + Math.cos(cp2Angle) * crLen,
+                y: curStatsSocketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
+            pathList.push([socketXY2Point(curStatsSocketXYSE[0]), cp1, cp2, socketXY2Point(curStatsSocketXYSE[1])]);
           })();
           break;
 
@@ -1357,7 +1368,7 @@
         case PATH_MAGNET:
           (/* @EXPORT[file:../test/spec/func/PATH_FLUID]@ */function(socketGravitySE) {
             var cx = [], cy = [];
-            curPositionSocketXYSE.forEach(function(socketXY, i) {
+            curStatsSocketXYSE.forEach(function(socketXY, i) {
               var gravity = socketGravitySE[i], offset, anotherSocketXY, overhead, minGravity, len;
               if (Array.isArray(gravity)) { // offset
                 offset = {x: gravity[0], y: gravity[1]};
@@ -1368,8 +1379,8 @@
                   socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity} :
                                       /* SOCKET_LEFT */ {x: -gravity, y: 0};
               } else { // auto
-                anotherSocketXY = curPositionSocketXYSE[i ? 0 : 1];
-                overhead = curPosition.plugOverheadSE[i];
+                anotherSocketXY = curStatsSocketXYSE[i ? 0 : 1];
+                overhead = curStats.plugOverheadSE[i];
                 minGravity = overhead > 0 ?
                   MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
                     (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
@@ -1396,8 +1407,8 @@
               cx[i] = socketXY.x + offset.x;
               cy[i] = socketXY.y + offset.y;
             });
-            pathList.push([socketXY2Point(curPositionSocketXYSE[0]),
-              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(curPositionSocketXYSE[1])]);
+            pathList.push([socketXY2Point(curStatsSocketXYSE[0]),
+              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(curStatsSocketXYSE[1])]);
           }/* @/EXPORT@ */)([options.socketGravitySE[0],
             options.path === PATH_MAGNET ? 0 : options.socketGravitySE[1]]);
           break;
@@ -1569,7 +1580,7 @@
               return true;
             }
 
-            curPositionSocketXYSE.forEach(function(socketXY, i) {
+            curStatsSocketXYSE.forEach(function(socketXY, i) {
               var dirPoint = socketXY2Point(socketXY),
                 len = options.socketGravitySE[i];
               (function(dirLen) {
@@ -1605,7 +1616,7 @@
       // Adjust path with plugs
       (function() {
         var pathSegsLen = [];
-        curPosition.plugOverheadSE.forEach(function(plugOverhead, i) {
+        curStats.plugOverheadSE.forEach(function(plugOverhead, i) {
           var start = !i, pathPoints, iSeg, point, sp, cp, angle, len,
             socketId, axis, dir, minAdjustOffset;
           if (plugOverhead > 0) {
@@ -1657,7 +1668,7 @@
             }
           } else if (plugOverhead < 0) {
             pathPoints = pathList[(iSeg = start ? 0 : pathList.length - 1)];
-            socketId = curPositionSocketXYSE[i].socketId;
+            socketId = curStatsSocketXYSE[i].socketId;
             axis = socketId === SOCKET_LEFT || socketId === SOCKET_RIGHT ? 'x' : 'y';
             minAdjustOffset = -(anchorBBoxSE[i][axis === 'x' ? 'width' : 'height']);
             if (plugOverhead < minAdjustOffset) { plugOverhead = minAdjustOffset; }
@@ -1685,37 +1696,34 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {Array.<Point[]>} pathList - Array contains points.
    * @returns {void}
    */
   function updatePath(props) {
-    var pathList = props.pathList.baseVal,
-      pathVals = props.pathVals,
-      pathEdge = props.viewBBoxVals.pathEdge;
+    var curStatsPathData,
+      pathList = props.pathList.baseVal,
+      pathEdge = props.curViewBBox.pathEdge;
 
     // Convert to `pathData`.
-    pathVals.current.pathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
+    curStatsPathData = props.curPath.pathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
     pathEdge.x1 = pathEdge.x2 = pathList[0][0].x;
     pathEdge.y1 = pathEdge.y2 = pathList[0][0].y;
     pathList.forEach(function(points) {
-      pathVals.current.pathData.push(points.length === 2 ?
+      curStatsPathData.push(points.length === 2 ?
         {type: 'L', values: [points[1].x, points[1].y]} :
         {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
       points.forEach(function(point) {
-        /* eslint-disable eqeqeq */
         if (point.x < pathEdge.x1) { pathEdge.x1 = point.x; }
         if (point.x > pathEdge.x2) { pathEdge.x2 = point.x; }
         if (point.y < pathEdge.y1) { pathEdge.y1 = point.y; }
         if (point.y > pathEdge.y2) { pathEdge.y2 = point.y; }
-        /* eslint-enable eqeqeq */
       });
     });
 
     // Apply `pathData`
     if (statsHasChanged(props, 'Path')) {
       window.traceLog.push('setPathData'); // [DEBUG/]
-      props.linePath.setPathData(pathVals.current.pathData);
-      pathVals.applied.pathData = pathVals.current.pathData;
+      props.linePath.setPathData(curStatsPathData);
+      props.aplPath.pathData = curStatsPathData;
 
       if (IS_TRIDENT) {
         // [TRIDENT] markerOrient is not updated when path is changed
@@ -1727,8 +1735,8 @@
         forceReflow(props.linePath);
       }
 
-      if (props.effect && props.effect.onUpdatePath) {
-        props.effect.onUpdatePath(props, pathList);
+      if (props.effect && props.effect.onSetPathData) {
+        props.effect.onSetPathData(props, pathList);
       }
     }
   }
@@ -1738,30 +1746,33 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateViewBBox(props) {
-    var viewBBoxVals = props.viewBBoxVals,
-      padding = Math.max(
-        props.options.lineSize / 2, viewBBoxVals.plugBCircleSE[0], viewBBoxVals.plugBCircleSE[1]),
+    var curStats = props.curViewBBox, aplStats = props.aplViewBBox,
+      curStatsPathEdge = curStats.pathEdge,
+      padding = Math.max(props.options.lineSize / 2,
+        curStats.plugBCircleSE[0] || 0, curStats.plugBCircleSE[1] || 0),
       // Expand bBox with `line` or symbols
       pointsVal = {
-        x1: viewBBoxVals.pathEdge.x1 - padding,
-        y1: viewBBoxVals.pathEdge.y1 - padding,
-        x2: viewBBoxVals.pathEdge.x2 + padding,
-        y2: viewBBoxVals.pathEdge.y2 + padding
+        x1: curStatsPathEdge.x1 - padding,
+        y1: curStatsPathEdge.y1 - padding,
+        x2: curStatsPathEdge.x2 + padding,
+        y2: curStatsPathEdge.y2 + padding
       },
-      update = false;
+      update = false,
+      curMask = props.curMask, curMaskBGRect = props.curMaskBGRect;
 
-    viewBBoxVals.current.x = pointsVal.x1;
-    viewBBoxVals.current.y = pointsVal.y1;
-    viewBBoxVals.current.width = pointsVal.x2 - pointsVal.x1;
-    viewBBoxVals.current.height = pointsVal.y2 - pointsVal.y1;
+    curStats.x = curMask.lineMaskX = curMask.lineOutlineMaskX = curMaskBGRect.x = pointsVal.x1;
+    curStats.y = curMask.lineMaskY = curMask.lineOutlineMaskY = curMaskBGRect.y = pointsVal.y1;
+    curStats.width = pointsVal.x2 - pointsVal.x1;
+    curStats.height = pointsVal.y2 - pointsVal.y1;
 
     // Position `<svg>` element and set its `viewBox`
-    (function(baseVal, styles) {
+    (function(viewBox, styles) {
       ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-        if (viewBBoxVals.current[boxKey] !== viewBBoxVals.applied[boxKey]) {
+        var value;
+        if ((value = curStats[boxKey]) !== aplStats[boxKey]) {
           window.traceLog.push('viewBox.' + boxKey); // [DEBUG/]
-          viewBBoxVals.applied[boxKey] = baseVal[boxKey] = viewBBoxVals.current[boxKey];
-          styles[BBOX_PROP[boxKey]] = viewBBoxVals.current[boxKey] +
+          viewBox[boxKey] = aplStats[boxKey] = value;
+          styles[BBOX_PROP[boxKey]] = value +
             (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
           update = true;
         }
@@ -1777,35 +1788,48 @@
    */
   function updateMask(props) {
     var options = props.options,
-      maskVals = props.maskVals,
-      capsMaskAnchorVals = props.capsMaskAnchorVals,
-      curCapsMaskAnchor = capsMaskAnchorVals.current,
-      maskBGRectVals = props.maskBGRectVals,
-      curViewBBox = props.viewBBoxVals.current,
+      curMask = props.curMask, aplMask = props.aplMask,
+      curCapsMaskAnchor = props.curCapsMaskAnchor, aplCapsMaskAnchor = props.aplCapsMaskAnchor,
+      curCapsMaskMarker = props.curCapsMaskMarker, aplCapsMaskMarker = props.aplCapsMaskMarker,
+      curMaskBGRect = props.curMaskBGRect, aplMaskBGRect = props.aplMaskBGRect,
+      curPlug = props.curPlug,
+      curPlugOutline = props.curPlugOutline,
+      capsEnabled, lineMaskBGEnabled;
 
-      curCapsMaskAnchorEnabledSE = curCapsMaskAnchor.enabledSE,
-      curCapsMaskPlugEnabledSE = props.capsMaskPlugVals.current.enabledSE,
-      maskCapsEnabled = curCapsMaskAnchorEnabledSE[0] || curCapsMaskAnchorEnabledSE[1] ||
-        curCapsMaskPlugEnabledSE[0] || curCapsMaskPlugEnabledSE[1];
+    [0, 1].forEach(function(i) {
+      curCapsMaskMarker.enabledSE[i] =
+        curCapsMaskMarker.plugSE[i] !== PLUG_BEHIND && curPlug.plugColorTraSE[i] ||
+        curPlugOutline.plugOutlineEnabledSE[i] && curPlugOutline.plugOutlineColorTraSE[i];
+    });
+    capsEnabled = curCapsMaskAnchor.enabledSE[0] || curCapsMaskAnchor.enabledSE[1] ||
+      curCapsMaskMarker.enabledSE[0] || curCapsMaskMarker.enabledSE[1];
+    curMask.lineMaskEnabled = options.lineOutlineEnabled || capsEnabled;
+    lineMaskBGEnabled = !options.lineOutlineEnabled && capsEnabled;
+    curMaskBGRect.enabled = options.lineOutlineEnabled || lineMaskBGEnabled;
+
+
+
+
+
 
     [0, 1].forEach(function(i) {
       var update;
       // capsMaskAnchorSE
-      if (curCapsMaskAnchorEnabledSE[i]) {
+      if (curCapsMaskAnchor.enabledSE[i]) {
         ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
           var propKey = boxKey + 'SE';
-          if (curCapsMaskAnchor[propKey][i] !== capsMaskAnchorVals.applied[propKey][i]) {
+          if (curCapsMaskAnchor[propKey][i] !== aplCapsMaskAnchor[propKey][i]) {
             window.traceLog.push('anchorMask[' + i + '].' + boxKey); // [DEBUG/]
             props.capsMaskAnchorSE[i][boxKey].baseVal.value =
-              capsMaskAnchorVals.applied[propKey][i] = curCapsMaskAnchor[propKey][i];
+              aplCapsMaskAnchor[propKey][i] = curCapsMaskAnchor[propKey][i];
             update = true;
           }
         });
       }
-      if (curCapsMaskAnchorEnabledSE[i] !== capsMaskAnchorVals.applied.enabledSE[i]) {
-        window.traceLog.push('lineMask.enabled=' + curCapsMaskAnchorEnabledSE[i]); // [DEBUG/]
+      if (curCapsMaskAnchor.enabledSE[i] !== aplCapsMaskAnchor.enabledSE[i]) {
+        window.traceLog.push('lineMask.enabled=' + curCapsMaskAnchor.enabledSE[i]); // [DEBUG/]
         props.capsMaskAnchorSE[i].style.display =
-          (capsMaskAnchorVals.applied.enabledSE[i] = curCapsMaskAnchorEnabledSE[i]) ?
+          (aplCapsMaskAnchor.enabledSE[i] = curCapsMaskAnchor.enabledSE[i]) ?
             'inline' : 'none';
         update = true;
       }
@@ -1837,31 +1861,31 @@
     });
 
     // maskBGRect
-    if (maskVals.current.lineMaskEnabled && !options.lineOutlineEnabled || options.lineOutlineEnabled) {
+    if (curMask.lineMaskEnabled && !options.lineOutlineEnabled || options.lineOutlineEnabled) {
       ['x', 'y'].forEach(function(boxKey) {
-        if ((maskBGRectVals.current[boxKey] = curViewBBox[boxKey]) !== maskBGRectVals.applied[boxKey]) {
+        if (curMaskBGRect[boxKey] !== aplMaskBGRect[boxKey]) {
           window.traceLog.push('maskBGRect.' + boxKey); // [DEBUG/]
           props.maskBGRect[boxKey].baseVal.value =
-            maskBGRectVals.applied[boxKey] = maskBGRectVals.current[boxKey];
+            aplMaskBGRect[boxKey] = curMaskBGRect[boxKey];
         }
       });
     }
 
     // lineMask
-    if ((maskVals.current.lineMaskEnabled = !!(options.lineOutlineEnabled || maskCapsEnabled))) {
+    if (curMask.lineMaskEnabled) {
       ['x', 'y'].forEach(function(boxKey) {
         var valsKey = 'lineMask' + boxKey.toUpperCase();
-        if ((maskVals.current[valsKey] = curViewBBox[boxKey]) !== maskVals.applied[valsKey]) {
+        if (curMask[valsKey] !== aplMask[valsKey]) {
           window.traceLog.push('lineMask.' + boxKey); // [DEBUG/]
           props.lineMask[boxKey].baseVal.value =
-            maskVals.applied[valsKey] = maskVals.current[valsKey];
+            aplMask[valsKey] = curMask[valsKey];
         }
       });
     }
-    if (maskVals.current.lineMaskEnabled !== maskVals.applied.lineMaskEnabled) {
-      window.traceLog.push('lineMask.enabled=' + maskVals.current.lineMaskEnabled); // [DEBUG/]
+    if (curMask.lineMaskEnabled !== aplMask.lineMaskEnabled) {
+      window.traceLog.push('lineMask.enabled=' + curMask.lineMaskEnabled); // [DEBUG/]
       props.lineFace.style.mask =
-        (maskVals.applied.lineMaskEnabled = maskVals.current.lineMaskEnabled) ?
+        (aplMask.lineMaskEnabled = curMask.lineMaskEnabled) ?
           'url(#' + props.lineMaskId + ')' : 'none';
     }
 
@@ -1869,10 +1893,10 @@
     if (options.lineOutlineEnabled) {
       ['x', 'y'].forEach(function(boxKey) {
         var valsKey = 'lineOutlineMask' + boxKey.toUpperCase();
-        if ((maskVals.current[valsKey] = curViewBBox[boxKey]) !== maskVals.applied[valsKey]) {
+        if (curMask[valsKey] !== aplMask[valsKey]) {
           window.traceLog.push('lineOutlineMask.' + boxKey); // [DEBUG/]
           props.lineOutlineMask[boxKey].baseVal.value =
-            maskVals.applied[valsKey] = maskVals.current[valsKey];
+            aplMask[valsKey] = curMask[valsKey];
         }
       });
     }
