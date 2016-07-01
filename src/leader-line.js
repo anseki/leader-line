@@ -749,7 +749,7 @@
     props.lineShape.href.baseVal = '#' + props.linePathId;
 
     maskCaps = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
-    maskCaps.id = props.lineMaskCapsId;
+    maskCaps.id = props.capsId;
 
     props.capsMaskAnchorSE = [0, 1].map(function() {
       var element = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
@@ -785,7 +785,7 @@
     props.lineMaskShape.href.baseVal = '#' + props.linePathId;
     props.lineMaskShape.style.display = 'none';
     props.lineMaskCaps = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineMaskCaps.href.baseVal = '#' + props.lineMaskCapsId;
+    props.lineMaskCaps.href.baseVal = '#' + props.capsId;
     // ==== /lineMask
 
     // ==== lineOutlineMask
@@ -796,7 +796,7 @@
     props.lineOutlineMaskShape.className.baseVal = APP_ID + '-line-outline-mask-shape';
     props.lineOutlineMaskShape.href.baseVal = '#' + props.linePathId;
     props.lineOutlineMaskCaps = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineOutlineMaskCaps.href.baseVal = '#' + props.lineMaskCapsId;
+    props.lineOutlineMaskCaps.href.baseVal = '#' + props.capsId;
     // ==== /lineOutlineMask
 
     props.face = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
@@ -1987,7 +1987,7 @@
     props.lineShapeId = prefix + '-line-shape';
     props.lineMaskId = prefix + '-line-mask';
     props.lineMaskMarkerIdSE = [prefix + '-caps-mask-marker-0', prefix + '-caps-mask-marker-1'];
-    props.lineMaskCapsId = prefix + '-line-mask-caps';
+    props.capsId = prefix + '-caps';
     props.maskBGRectId = prefix + '-mask-bg-rect';
     props.lineOutlineMaskId = prefix + '-line-outline-mask';
     props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
