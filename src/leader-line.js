@@ -141,7 +141,8 @@
         plugSE: {hasSE: true, isOption: true},
         plugColorSE: {hasSE: true},
         plugColorTraSE: {hasSE: true},
-        widthSE: {hasSE: true}, heightSE: {hasSE: true}
+        widthSE: {hasSE: true}, heightSE: {hasSE: true},
+        plugsEnabled: {}
       },
       LineOutline: {
         lineOutlineEnabled: {isOption: true},
@@ -150,7 +151,7 @@
         lineOutlineSize: {}
       },
       PlugOutline: {
-        plugSE: {hasSE: true},//tsukau?
+        plugSE: {hasSE: true},
         plugOutlineEnabledSE: {hasSE: true},
         plugOutlineColorSE: {hasSE: true},
         plugOutlineColorTraSE: {hasSE: true},
@@ -929,6 +930,13 @@
     if (IS_TRIDENT) { forceReflow(marked); }
   }
 
+  function getMarkerProps(i, symbolConf) {
+    return {
+      prop: i ? 'markerEnd' : 'markerStart',
+      orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
+    };
+  }
+
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
    * @returns {void}
@@ -969,13 +977,6 @@
     }
   }
 
-  function getMarkerProps(i, symbolConf) {
-    return {
-      prop: i ? 'markerEnd' : 'markerStart',
-      orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
-    };
-  }
-
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
    * @returns {void}
@@ -984,94 +985,131 @@
     var options = props.options,
       curStats = props.curPlug, aplStats = props.aplPlug;
 
-    [0, 1].forEach(function(i) {
-      var plugId = options.plugSE[i], symbolConf, marker, value;
+    curStats.plugsEnabled = options.plugSE[0] !== PLUG_BEHIND || options.plugSE[1] !== PLUG_BEHIND;
 
-      curStats.plugColorSE[i] = value = options.plugColorSE[i] || options.lineColor;
-      curStats.plugColorTraSE[i] = getAlpha(value) < 1;
+    if (curStats.plugsEnabled) {
 
-      if (plugId !== PLUG_BEHIND) {
-        symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+      // plugsEnabled
+      if (!aplStats.plugsEnabled) {
+        window.traceLog.push('plugsEnabled=true'); // [DEBUG/]
+        aplStats.plugsEnabled = true;
+        props.plugsFace.style.display = 'inline';
 
-        curStats.widthSE[i] = props.curCapsMaskMarker.widthSE[i] =
-          symbolConf.widthR * options.plugSizeSE[i];
-        curStats.heightSE[i] = props.curCapsMaskMarker.heightSE[i] =
-          symbolConf.heightR * options.plugSizeSE[i];
-        if (IS_WEBKIT) {
-          // [WEBKIT] mask in marker is resized with rasterise
-          curStats.widthSE[i] *= options.lineSize;
-          curStats.heightSE[i] *= options.lineSize;
+        if (props.effect && props.effect.onPlugsEnabled) {
+          props.effect.onPlugsEnabled(props, true);
         }
+      }
 
-        // plugSE
-        if (plugId !== aplStats.plugSE[i]) {
-          window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
-          aplStats.plugSE[i] = plugId;
-          marker = getMarkerProps(i, symbolConf);
-          props.plugFaceSE[i].href.baseVal = '#' + symbolConf.elmId;
-          // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
-          props.plugsFace.style[marker.prop] = 'url(#' + props.plugMarkerIdSE[i] + ')';
-          setMarkerOrient(props.plugMarkerSE[i], marker.orient,
-            symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
-          if (IS_GECKO) {
-            // [GECKO] plugsFace is not updated when plugSE is changed
-            forceReflow(props.plugsFace);
+      [0, 1].forEach(function(i) {
+        var plugId = options.plugSE[i], symbolConf, marker, value;
+
+        curStats.plugColorSE[i] = value = options.plugColorSE[i] || options.lineColor;
+        curStats.plugColorTraSE[i] = getAlpha(value) < 1;
+
+        if (plugId !== PLUG_BEHIND) {
+          symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+
+          curStats.widthSE[i] = props.curCapsMaskMarker.widthSE[i] =
+            symbolConf.widthR * options.plugSizeSE[i];
+          curStats.heightSE[i] = props.curCapsMaskMarker.heightSE[i] =
+            symbolConf.heightR * options.plugSizeSE[i];
+          if (IS_WEBKIT) {
+            // [WEBKIT] mask in marker is resized with rasterise
+            curStats.widthSE[i] *= options.lineSize;
+            curStats.heightSE[i] *= options.lineSize;
           }
 
-          if (props.effect && props.effect.onPlugSE) {
-            props.effect.onPlugSE(props, plugId, i);
-          }
-        }
-
-        // plugColorSE
-        if ((value = curStats.plugColorSE[i]) !== aplStats.plugColorSE[i]) {
-          window.traceLog.push('plugColorSE[' + i + ']=' + value); // [DEBUG/]
-          props.plugFaceSE[i].style.fill = aplStats.plugColorSE[i] = value;
-
-          if (props.effect && props.effect.onPlugColorSE) {
-            props.effect.onPlugColorSE(props, value, i);
-          }
-        }
-
-        [['markerWidth', 'widthSE', 'onPlugWidthSE'], ['markerHeight', 'heightSE', 'onPlugHeightSE']]
-          .forEach(function(whKeys) {
-            var markerKey = whKeys[0], statKey = whKeys[1], eventKey = whKeys[2];
-            if ((value = curStats[statKey][i]) !== aplStats[statKey][i]) {
-              window.traceLog.push('Plug.' + statKey + '[' + i + ']'); // [DEBUG/]
-              props.plugMarkerSE[i][markerKey].baseVal.value = aplStats[statKey][i] = value;
-
-              if (props.effect && props.effect[eventKey]) {
-                props.effect[eventKey](props, value, i);
-              }
+          // plugSE
+          if (plugId !== aplStats.plugSE[i]) {
+            window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
+            aplStats.plugSE[i] = plugId;
+            marker = getMarkerProps(i, symbolConf);
+            props.plugFaceSE[i].href.baseVal = '#' + symbolConf.elmId;
+            // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
+            props.plugsFace.style[marker.prop] = 'url(#' + props.plugMarkerIdSE[i] + ')';
+            setMarkerOrient(props.plugMarkerSE[i], marker.orient,
+              symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
+            if (IS_GECKO) {
+              // [GECKO] plugsFace is not updated when plugSE is changed
+              forceReflow(props.plugsFace);
             }
-          });
 
-        props.curPosition.plugOverheadSE[i] =
-          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
-        props.curViewBBox.plugBCircleSE[i] =
-          options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
-        props.curCapsMaskAnchor.enabledSE[i] = false;
-
-      } else {
-
-        // plugSE
-        if (plugId !== aplStats.plugSE[i]) {
-          window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
-          aplStats.plugSE[i] = plugId;
-          marker = getMarkerProps(i);
-          props.plugsFace.style[marker.prop] = 'none';
-
-          if (props.effect && props.effect.onPlugSE) {
-            props.effect.onPlugSE(props, plugId, i);
+            if (props.effect && props.effect.onPlugSE) {
+              props.effect.onPlugSE(props, plugId, i);
+            }
           }
+
+          // plugColorSE
+          if ((value = curStats.plugColorSE[i]) !== aplStats.plugColorSE[i]) {
+            window.traceLog.push('plugColorSE[' + i + ']=' + value); // [DEBUG/]
+            props.plugFaceSE[i].style.fill = aplStats.plugColorSE[i] = value;
+
+            if (props.effect && props.effect.onPlugColorSE) {
+              props.effect.onPlugColorSE(props, value, i);
+            }
+          }
+
+          [['markerWidth', 'widthSE', 'onPlugWidthSE'], ['markerHeight', 'heightSE', 'onPlugHeightSE']]
+            .forEach(function(whKeys) {
+              var markerKey = whKeys[0], statKey = whKeys[1], eventKey = whKeys[2];
+              if ((value = curStats[statKey][i]) !== aplStats[statKey][i]) {
+                window.traceLog.push('Plug.' + statKey + '[' + i + ']'); // [DEBUG/]
+                props.plugMarkerSE[i][markerKey].baseVal.value = aplStats[statKey][i] = value;
+
+                if (props.effect && props.effect[eventKey]) {
+                  props.effect[eventKey](props, value, i);
+                }
+              }
+            });
+
+          props.curPosition.plugOverheadSE[i] =
+            options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
+          props.curViewBBox.plugBCircleSE[i] =
+            options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
+          props.curCapsMaskAnchor.enabledSE[i] = false;
+
+        } else {
+
+          // plugSE
+          if (plugId !== aplStats.plugSE[i]) {
+            window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
+            aplStats.plugSE[i] = plugId;
+            marker = getMarkerProps(i);
+            props.plugsFace.style[marker.prop] = 'none';
+
+            if (props.effect && props.effect.onPlugSE) {
+              props.effect.onPlugSE(props, plugId, i);
+            }
+          }
+
+          props.curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
+          props.curViewBBox.plugBCircleSE[i] = 0;
+          props.curCapsMaskAnchor.enabledSE[i] = true;
         }
 
+        props.curPlugOutline.plugSE[i] = props.curCapsMaskMarker.plugSE[i] = plugId;
+      });
+
+    } else {
+
+      // plugsEnabled
+      if (aplStats.plugsEnabled) {
+        window.traceLog.push('plugsEnabled=false'); // [DEBUG/]
+        aplStats.plugsEnabled = false;
+        props.plugsFace.style.display = 'none';
+
+        if (props.effect && props.effect.onPlugsEnabled) {
+          props.effect.onPlugsEnabled(props, false);
+        }
+      }
+
+      [0, 1].forEach(function(i) {
+        props.curPlugOutline.plugSE[i] = props.curCapsMaskMarker.plugSE[i] = PLUG_BEHIND;
         props.curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
         props.curViewBBox.plugBCircleSE[i] = 0;
         props.curCapsMaskAnchor.enabledSE[i] = true;
-      }
-      props.curCapsMaskMarker.plugSE[i] = plugId;
-    });
+      });
+    }
   }
 
   /**
@@ -1086,17 +1124,14 @@
     curStats.lineOutlineSize = options.lineSize - options.lineSize * options.lineOutlineSize * 2;
 
     if (options.lineOutlineEnabled) {
-
       // lineOutlineEnabled
       if (!aplStats.lineOutlineEnabled) {
         window.traceLog.push('lineOutlineEnabled=true'); // [DEBUG/]
-        aplStats.lineOutlineEnabled = true;
-        props.lineMaskShape.style.display = 'inline';
-        props.lineMaskBG.style.display = 'none';
+        aplStats.lineOutlineEnabled = props.curMask.lineMaskLineOutlineEnabled = true;
         props.lineOutlineFace.style.display = 'inline';
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
-          props.effect.onLineOutlineEnabled(props, value);
+          props.effect.onLineOutlineEnabled(props, true);
         }
       }
 
@@ -1132,13 +1167,11 @@
       // lineOutlineEnabled
       if (aplStats.lineOutlineEnabled) {
         window.traceLog.push('lineOutlineEnabled=false'); // [DEBUG/]
-        aplStats.lineOutlineEnabled = false;
-        props.lineMaskShape.style.display = 'none';
-        props.lineMaskBG.style.display = 'inline';
+        aplStats.lineOutlineEnabled = props.curMask.lineMaskLineOutlineEnabled = false;
         props.lineOutlineFace.style.display = 'none';
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
-          props.effect.onLineOutlineEnabled(props, value);
+          props.effect.onLineOutlineEnabled(props, false);
         }
       }
     }
@@ -1152,84 +1185,90 @@
     var options = props.options,
       curStats = props.curPlugOutline, aplStats = props.aplPlugOutline;
 
-    [0, 1].forEach(function(i) {
-      var plugId = curStats.plugSE[i] = options.plugSE[i], symbolConf, value;
+    if (props.curPlug.plugsEnabled) {
 
-      curStats.plugOutlineColorSE[i] = value = options.plugOutlineColorSE[i] || options.lineOutlineColor;
-      curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
+      [0, 1].forEach(function(i) {
+        var plugId = curStats.plugSE[i], symbolConf, value;
 
-      if (plugId !== PLUG_BEHIND) {
-        symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
-        curStats.plugOutlineSizeSE[i] = options.plugOutlineSizeSE[i];
-        if (curStats.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
-          curStats.plugOutlineSizeSE[i] = symbolConf.outlineMax;
+        curStats.plugOutlineColorSE[i] = value = options.plugOutlineColorSE[i] || options.lineOutlineColor;
+        curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
+
+        if (plugId !== PLUG_BEHIND) {
+          symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+          curStats.plugOutlineSizeSE[i] = options.plugOutlineSizeSE[i];
+          if (curStats.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
+            curStats.plugOutlineSizeSE[i] = symbolConf.outlineMax;
+          }
+          curStats.plugOutlineSizeSE[i] *= symbolConf.outlineBase * 2;
         }
-        curStats.plugOutlineSizeSE[i] *= symbolConf.outlineBase * 2;
-      }
 
-      if ((curStats.plugOutlineEnabledSE[i] =
-          options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND)) {
+        if ((curStats.plugOutlineEnabledSE[i] =
+            options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND)) {
 
-        // plugOutlineEnabledSE, plugSE
-        if (!aplStats.plugOutlineEnabledSE[i] || plugId !== aplStats.plugSE[i]) {
-          window.traceLog.push('plugOutlineEnabledSE[' + i + ']=true'); // [DEBUG/]
-          window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
-          aplStats.plugOutlineEnabledSE[i] = true;
-          aplStats.plugSE[i] = plugId;
-          props.plugOutlineFaceSE[i].href.baseVal =
-            props.plugMaskShapeSE[i].href.baseVal =
-            props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
-          [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
-            mask.x.baseVal.value = symbolConf.bBox.left;
-            mask.y.baseVal.value = symbolConf.bBox.top;
-            mask.width.baseVal.value = symbolConf.bBox.width;
-            mask.height.baseVal.value = symbolConf.bBox.height;
-          });
-          props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
-          props.plugOutlineFaceSE[i].style.display = 'inline';
+          // plugOutlineEnabledSE, plugSE
+          if (!aplStats.plugOutlineEnabledSE[i] || plugId !== aplStats.plugSE[i]) {
+            window.traceLog.push('plugOutlineEnabledSE[' + i + ']=true'); // [DEBUG/]
+            window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
+            aplStats.plugOutlineEnabledSE[i] = true;
+            aplStats.plugSE[i] = plugId;
+            props.plugOutlineFaceSE[i].href.baseVal =
+              props.plugMaskShapeSE[i].href.baseVal =
+              props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+            [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
+              mask.x.baseVal.value = symbolConf.bBox.left;
+              mask.y.baseVal.value = symbolConf.bBox.top;
+              mask.width.baseVal.value = symbolConf.bBox.width;
+              mask.height.baseVal.value = symbolConf.bBox.height;
+            });
+            props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
+            props.plugOutlineFaceSE[i].style.display = 'inline';
 
-          if (props.effect && props.effect.onPlugOutlineEnabledSE) {
-            props.effect.onPlugOutlineEnabledSE(props, true, i);
+            if (props.effect && props.effect.onPlugOutlineEnabledSE) {
+              props.effect.onPlugOutlineEnabledSE(props, true, i);
+            }
+          }
+
+          // plugOutlineColorSE
+          if ((value = curStats.plugOutlineColorSE[i]) !== aplStats.plugOutlineColorSE[i]) {
+            window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
+            props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
+
+            if (props.effect && props.effect.onPlugOutlineColorSE) {
+              props.effect.onPlugOutlineColorSE(props, value, i);
+            }
+          }
+
+          // plugOutlineSizeSE
+          if ((value = curStats.plugOutlineSizeSE[i]) !== aplStats.plugOutlineSizeSE[i]) {
+            window.traceLog.push('plugOutlineSizeSE[' + i + ']=' + value); // [DEBUG/]
+            props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
+            props.plugMaskShapeSE[i].style.strokeWidth =
+              value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
+
+            if (props.effect && props.effect.onPlugOutlineSizeSE) {
+              props.effect.onPlugOutlineSizeSE(props, value, i);
+            }
+          }
+
+        } else {
+
+          // plugOutlineEnabledSE
+          if (aplStats.plugOutlineEnabledSE[i]) {
+            window.traceLog.push('plugOutlineEnabledSE[' + i + ']=false'); // [DEBUG/]
+            aplStats.plugOutlineEnabledSE[i] = false;
+            props.plugFaceSE[i].style.mask = 'none';
+            props.plugOutlineFaceSE[i].style.display = 'none';
+
+            if (props.effect && props.effect.onPlugOutlineEnabledSE) {
+              props.effect.onPlugOutlineEnabledSE(props, plugId, i);
+            }
           }
         }
+      });
 
-        // plugOutlineColorSE
-        if ((value = curStats.plugOutlineColorSE[i]) !== aplStats.plugOutlineColorSE[i]) {
-          window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
-          props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
-
-          if (props.effect && props.effect.onPlugOutlineColorSE) {
-            props.effect.onPlugOutlineColorSE(props, value, i);
-          }
-        }
-
-        // plugOutlineSizeSE
-        if ((value = curStats.plugOutlineSizeSE[i]) !== aplStats.plugOutlineSizeSE[i]) {
-          window.traceLog.push('plugOutlineSizeSE[' + i + ']=' + value); // [DEBUG/]
-          props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
-          props.plugMaskShapeSE[i].style.strokeWidth =
-            value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
-
-          if (props.effect && props.effect.onPlugOutlineSizeSE) {
-            props.effect.onPlugOutlineSizeSE(props, value, i);
-          }
-        }
-
-      } else {
-
-        // plugOutlineEnabledSE
-        if (aplStats.plugOutlineEnabledSE[i]) {
-          window.traceLog.push('plugOutlineEnabledSE[' + i + ']=false'); // [DEBUG/]
-          aplStats.plugOutlineEnabledSE[i] = false;
-          props.plugFaceSE[i].style.mask = 'none';
-          props.plugOutlineFaceSE[i].style.display = 'none';
-
-          if (props.effect && props.effect.onPlugOutlineEnabledSE) {
-            props.effect.onPlugOutlineEnabledSE(props, plugId, i);
-          }
-        }
-      }
-    });
+    } else {
+      curStats.plugOutlineEnabledSE[0] = curStats.plugOutlineEnabledSE[1] = false;
+    }
   }
 
   /**
@@ -1795,11 +1834,15 @@
       curPlugOutline = props.curPlugOutline,
       lineMaskBGEnabled, value;
 
-    [0, 1].forEach(function(i) {
-      curCapsMaskMarker.enabledSE[i] =
-        curCapsMaskMarker.plugSE[i] !== PLUG_BEHIND && curPlug.plugColorTraSE[i] ||
-        curPlugOutline.plugOutlineEnabledSE[i] && curPlugOutline.plugOutlineColorTraSE[i];
-    });
+    if (curPlug.plugsEnabled) {
+      [0, 1].forEach(function(i) {
+        curCapsMaskMarker.enabledSE[i] =
+          curCapsMaskMarker.plugSE[i] !== PLUG_BEHIND && curPlug.plugColorTraSE[i] ||
+          curPlugOutline.plugOutlineEnabledSE[i] && curPlugOutline.plugOutlineColorTraSE[i];
+      });
+    } else {
+      curCapsMaskMarker.enabledSE[0] = curCapsMaskMarker.enabledSE[1] = false;
+    }
     curMask.capsMarkersEnabled = curCapsMaskMarker.enabledSE[0] || curCapsMaskMarker.enabledSE[1];
     curMask.capsEnabled = curMask.capsMarkersEnabled ||
       curCapsMaskAnchor.enabledSE[0] || curCapsMaskAnchor.enabledSE[1];
@@ -1817,6 +1860,18 @@
     }
 
     if (curMask.lineMaskEnabled) { // Includes `lineOutlineEnabled`
+
+      // Switch lineMask when it is shown.
+      if ((value = curMask.lineMaskLineOutlineEnabled) !== aplMask.lineMaskLineOutlineEnabled) {
+        window.traceLog.push('lineMaskLineOutlineEnabled=' + value); // [DEBUG/]
+        if ((aplMask.lineMaskLineOutlineEnabled = value)) {
+          props.lineMaskBG.style.display = 'none';
+          props.lineMaskShape.style.display = 'inline';
+        } else {
+          props.lineMaskBG.style.display = 'inline';
+          props.lineMaskShape.style.display = 'none';
+        }
+      }
 
       if (curMask.capsEnabled) {
 
