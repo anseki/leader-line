@@ -694,6 +694,7 @@
       ['width', 'height'].forEach(function(prop) {
         element[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
       });
+      return element;
     }
 
     if (props.baseWindow && props.svg) {
@@ -798,10 +799,12 @@
     props.lineOutlineMaskCaps.href.baseVal = '#' + props.lineMaskCapsId;
     // ==== /lineOutlineMask
 
-    props.lineFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.face = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
+
+    props.lineFace = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineFace.href.baseVal = '#' + props.lineShapeId;
 
-    props.lineOutlineFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.lineOutlineFace = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineOutlineFace.href.baseVal = '#' + props.lineShapeId;
     props.lineOutlineFace.style.mask = 'url(#' + props.lineOutlineMaskId + ')';
     props.lineOutlineFace.style.display = 'none';
@@ -846,7 +849,7 @@
       return element;
     });
 
-    props.plugsFace = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.plugsFace = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.plugsFace.className.baseVal = APP_ID + '-plugs-face';
     props.plugsFace.href.baseVal = '#' + props.lineShapeId;
 
