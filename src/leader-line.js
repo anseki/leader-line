@@ -192,9 +192,11 @@
       },
       Mask: {
         lineMaskEnabled: {},
+        lineOutlineEnabled: {},
         lineMaskX: {}, lineMaskY: {},
         lineOutlineMaskX: {}, lineOutlineMaskY: {},
-        capsEnabled: {}, capsMarkersEnabled: {}
+        capsEnabled: {}, capsMarkersEnabled: {},
+        maskBGRectX: {}, maskBGRectY: {}
       },
       CapsMaskAnchor: {
         enabledSE: {hasSE: true},
@@ -205,9 +207,6 @@
         enabledSE: {hasSE: true},
         plugSE: {hasSE: true},
         widthSE: {hasSE: true}, heightSE: {hasSE: true}
-      },
-      MaskBGRect: {
-        x: {}, y: {}
       }
     },
     STAT_NAMES = Object.keys(STATS).reduce(function(names, group) {
@@ -1127,7 +1126,7 @@
       // lineOutlineEnabled
       if (!aplStats.lineOutlineEnabled) {
         window.traceLog.push('lineOutlineEnabled=true'); // [DEBUG/]
-        aplStats.lineOutlineEnabled = props.curMask.lineMaskLineOutlineEnabled = true;
+        aplStats.lineOutlineEnabled = props.curMask.lineOutlineEnabled = true;
         props.lineOutlineFace.style.display = 'inline';
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
@@ -1167,7 +1166,7 @@
       // lineOutlineEnabled
       if (aplStats.lineOutlineEnabled) {
         window.traceLog.push('lineOutlineEnabled=false'); // [DEBUG/]
-        aplStats.lineOutlineEnabled = props.curMask.lineMaskLineOutlineEnabled = false;
+        aplStats.lineOutlineEnabled = props.curMask.lineOutlineEnabled = false;
         props.lineOutlineFace.style.display = 'none';
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
@@ -1796,10 +1795,10 @@
         y2: curStatsPathEdge.y2 + padding
       },
       update = false,
-      curMask = props.curMask, curMaskBGRect = props.curMaskBGRect;
+      curMask = props.curMask;
 
-    curStats.x = curMask.lineMaskX = curMask.lineOutlineMaskX = curMaskBGRect.x = pointsVal.x1;
-    curStats.y = curMask.lineMaskY = curMask.lineOutlineMaskY = curMaskBGRect.y = pointsVal.y1;
+    curStats.x = curMask.lineMaskX = curMask.lineOutlineMaskX = curMask.maskBGRectX = pointsVal.x1;
+    curStats.y = curMask.lineMaskY = curMask.lineOutlineMaskY = curMask.maskBGRectY = pointsVal.y1;
     curStats.width = pointsVal.x2 - pointsVal.x1;
     curStats.height = pointsVal.y2 - pointsVal.y1;
 
@@ -1829,7 +1828,6 @@
       curMask = props.curMask, aplMask = props.aplMask,
       curCapsMaskAnchor = props.curCapsMaskAnchor, aplCapsMaskAnchor = props.aplCapsMaskAnchor,
       curCapsMaskMarker = props.curCapsMaskMarker, aplCapsMaskMarker = props.aplCapsMaskMarker,
-      curMaskBGRect = props.curMaskBGRect, aplMaskBGRect = props.aplMaskBGRect,
       curPlug = props.curPlug,
       curPlugOutline = props.curPlugOutline,
       lineMaskBGEnabled, value;
@@ -1852,9 +1850,10 @@
     // maskBGRect
     if (lineMaskBGEnabled || options.lineOutlineEnabled) {
       ['x', 'y'].forEach(function(boxKey) {
-        if ((value = curMaskBGRect[boxKey]) !== aplMaskBGRect[boxKey]) {
+        var statKey = 'maskBGRect' + boxKey.toUpperCase();
+        if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('maskBGRect.' + boxKey); // [DEBUG/]
-          props.maskBGRect[boxKey].baseVal.value = aplMaskBGRect[boxKey] = value;
+          props.maskBGRect[boxKey].baseVal.value = aplMask[statKey] = value;
         }
       });
     }
@@ -1862,9 +1861,9 @@
     if (curMask.lineMaskEnabled) { // Includes `lineOutlineEnabled`
 
       // Switch lineMask when it is shown.
-      if ((value = curMask.lineMaskLineOutlineEnabled) !== aplMask.lineMaskLineOutlineEnabled) {
-        window.traceLog.push('lineMaskLineOutlineEnabled=' + value); // [DEBUG/]
-        if ((aplMask.lineMaskLineOutlineEnabled = value)) {
+      if ((value = curMask.lineOutlineEnabled) !== aplMask.lineOutlineEnabled) {
+        window.traceLog.push('lineOutlineEnabled=' + value); // [DEBUG/]
+        if ((aplMask.lineOutlineEnabled = value)) {
           props.lineMaskBG.style.display = 'none';
           props.lineMaskShape.style.display = 'inline';
         } else {
