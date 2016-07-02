@@ -776,7 +776,7 @@
       props.maskBGRect.style.fill = 'white';
     }
 
-    // ==== lineMask
+    // lineMask
     props.lineMask = setWH100(setupMask(props.lineMaskId));
     props.lineMaskBG = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskBG.href.baseVal = '#' + props.maskBGRectId;
@@ -786,9 +786,8 @@
     props.lineMaskShape.style.display = 'none';
     props.lineMaskCaps = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineMaskCaps.href.baseVal = '#' + props.capsId;
-    // ==== /lineMask
 
-    // ==== lineOutlineMask
+    // lineOutlineMask
     props.lineOutlineMask = setWH100(setupMask(props.lineOutlineMaskId));
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.href.baseVal = '#' + props.maskBGRectId;
@@ -797,7 +796,6 @@
     props.lineOutlineMaskShape.href.baseVal = '#' + props.linePathId;
     props.lineOutlineMaskCaps = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineOutlineMaskCaps.href.baseVal = '#' + props.capsId;
-    // ==== /lineOutlineMask
 
     props.face = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
 
@@ -809,23 +807,21 @@
     props.lineOutlineFace.style.mask = 'url(#' + props.lineOutlineMaskId + ')';
     props.lineOutlineFace.style.display = 'none';
 
-    // ==== plugMaskSE
+    // plugMaskSE
     props.plugMaskSE = [0, 1].map(function(i) { return setupMask(props.plugMaskIdSE[i]); });
     props.plugMaskShapeSE = [0, 1].map(function(i) {
       var element = props.plugMaskSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
       element.className.baseVal = APP_ID + '-plug-mask-shape';
       return element;
     });
-    // ==== /plugMaskSE
 
-    // ==== plugOutlineMaskSE
+    // plugOutlineMaskSE
     props.plugOutlineMaskSE = [0, 1].map(function(i) { return setupMask(props.plugOutlineMaskIdSE[i]); });
     props.plugOutlineMaskShapeSE = [0, 1].map(function(i) {
       var element = props.plugOutlineMaskSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
       element.className.baseVal = APP_ID + '-plug-outline-mask-shape';
       return element;
     });
-    // ==== /plugOutlineMaskSE
 
     props.plugMarkerSE = [0, 1].map(function(i) {
       var element = setupMarker(props.plugMarkerIdSE[i]);
@@ -982,11 +978,13 @@
    */
   function updatePlug(props) {
     var options = props.options,
-      curStats = props.curPlug, aplStats = props.aplPlug;
+      curStats = props.curPlug, aplStats = props.aplPlug,
+      curPlugOutline = props.curPlugOutline, curPosition = props.curPosition,
+      curViewBBox = props.curViewBBox, curCapsMaskAnchor = props.curCapsMaskAnchor,
+      curCapsMaskMarker = props.curCapsMaskMarker;
 
-    curStats.plugsEnabled = options.plugSE[0] !== PLUG_BEHIND || options.plugSE[1] !== PLUG_BEHIND;
-
-    if (curStats.plugsEnabled) {
+    if ((curStats.plugsEnabled =
+        options.plugSE[0] !== PLUG_BEHIND || options.plugSE[1] !== PLUG_BEHIND)) {
 
       // plugsEnabled
       if (!aplStats.plugsEnabled) {
@@ -1002,21 +1000,8 @@
       [0, 1].forEach(function(i) {
         var plugId = options.plugSE[i], symbolConf, marker, value;
 
-        curStats.plugColorSE[i] = value = options.plugColorSE[i] || options.lineColor;
-        curStats.plugColorTraSE[i] = getAlpha(value) < 1;
-
         if (plugId !== PLUG_BEHIND) {
           symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
-
-          curStats.widthSE[i] = props.curCapsMaskMarker.widthSE[i] =
-            symbolConf.widthR * options.plugSizeSE[i];
-          curStats.heightSE[i] = props.curCapsMaskMarker.heightSE[i] =
-            symbolConf.heightR * options.plugSizeSE[i];
-          if (IS_WEBKIT) {
-            // [WEBKIT] mask in marker is resized with rasterise
-            curStats.widthSE[i] *= options.lineSize;
-            curStats.heightSE[i] *= options.lineSize;
-          }
 
           // plugSE
           if (plugId !== aplStats.plugSE[i]) {
@@ -1039,8 +1024,10 @@
           }
 
           // plugColorSE
-          if ((value = curStats.plugColorSE[i]) !== aplStats.plugColorSE[i]) {
+          curStats.plugColorSE[i] = value = options.plugColorSE[i] || options.lineColor;
+          if (value !== aplStats.plugColorSE[i]) {
             window.traceLog.push('plugColorSE[' + i + ']=' + value); // [DEBUG/]
+            curStats.plugColorTraSE[i] = getAlpha(value) < 1;
             props.plugFaceSE[i].style.fill = aplStats.plugColorSE[i] = value;
 
             if (props.effect && props.effect.onPlugColorSE) {
@@ -1048,6 +1035,14 @@
             }
           }
 
+          // widthSE, heightSE
+          curStats.widthSE[i] = curCapsMaskMarker.widthSE[i] = symbolConf.widthR * options.plugSizeSE[i];
+          curStats.heightSE[i] = curCapsMaskMarker.heightSE[i] = symbolConf.heightR * options.plugSizeSE[i];
+          if (IS_WEBKIT) {
+            // [WEBKIT] mask in marker is resized with rasterise
+            curStats.widthSE[i] *= options.lineSize;
+            curStats.heightSE[i] *= options.lineSize;
+          }
           [['markerWidth', 'widthSE', 'onPlugWidthSE'], ['markerHeight', 'heightSE', 'onPlugHeightSE']]
             .forEach(function(whKeys) {
               var markerKey = whKeys[0], statKey = whKeys[1], eventKey = whKeys[2];
@@ -1061,11 +1056,11 @@
               }
             });
 
-          props.curPosition.plugOverheadSE[i] =
+          curPosition.plugOverheadSE[i] =
             options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.overhead * options.plugSizeSE[i];
-          props.curViewBBox.plugBCircleSE[i] =
+          curViewBBox.plugBCircleSE[i] =
             options.lineSize / DEFAULT_OPTIONS.lineSize * symbolConf.bCircle * options.plugSizeSE[i];
-          props.curCapsMaskAnchor.enabledSE[i] = false;
+          curCapsMaskAnchor.enabledSE[i] = false;
 
         } else {
 
@@ -1081,12 +1076,12 @@
             }
           }
 
-          props.curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
-          props.curViewBBox.plugBCircleSE[i] = 0;
-          props.curCapsMaskAnchor.enabledSE[i] = true;
+          curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
+          curViewBBox.plugBCircleSE[i] = 0;
+          curCapsMaskAnchor.enabledSE[i] = true;
         }
 
-        props.curPlugOutline.plugSE[i] = props.curCapsMaskMarker.plugSE[i] = plugId;
+        curPlugOutline.plugSE[i] = curCapsMaskMarker.plugSE[i] = plugId;
       });
 
     } else {
@@ -1103,10 +1098,10 @@
       }
 
       [0, 1].forEach(function(i) {
-        props.curPlugOutline.plugSE[i] = props.curCapsMaskMarker.plugSE[i] = PLUG_BEHIND;
-        props.curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
-        props.curViewBBox.plugBCircleSE[i] = 0;
-        props.curCapsMaskAnchor.enabledSE[i] = true;
+        curPlugOutline.plugSE[i] = curCapsMaskMarker.plugSE[i] = PLUG_BEHIND;
+        curPosition.plugOverheadSE[i] = -(options.lineSize / 2);
+        curViewBBox.plugBCircleSE[i] = 0;
+        curCapsMaskAnchor.enabledSE[i] = true;
       });
     }
   }
@@ -1119,14 +1114,12 @@
     var options = props.options,
       curStats = props.curLineOutline, aplStats = props.aplLineOutline, value;
 
-    curStats.lineOutlineColorTra = getAlpha(options.lineOutlineColor) < 1;
-    curStats.lineOutlineSize = options.lineSize - options.lineSize * options.lineOutlineSize * 2;
-
     if (options.lineOutlineEnabled) {
+
       // lineOutlineEnabled
       if (!aplStats.lineOutlineEnabled) {
         window.traceLog.push('lineOutlineEnabled=true'); // [DEBUG/]
-        aplStats.lineOutlineEnabled = props.curMask.lineOutlineEnabled = true;
+        aplStats.lineOutlineEnabled = true;
         props.lineOutlineFace.style.display = 'inline';
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
@@ -1137,6 +1130,7 @@
       // lineOutlineColor
       if ((value = options.lineOutlineColor) !== aplStats.lineOutlineColor) {
         window.traceLog.push('lineOutlineColor=' + value); // [DEBUG/]
+        curStats.lineOutlineColorTra = getAlpha(value) < 1;
         props.lineOutlineFace.style.stroke = aplStats.lineOutlineColor = value;
 
         if (props.effect && props.effect.onLineOutlineColor) {
@@ -1145,7 +1139,9 @@
       }
 
       // lineOutlineSize
-      if ((value = curStats.lineOutlineSize) !== aplStats.lineOutlineSize) {
+      curStats.lineOutlineSize = value =
+        options.lineSize - options.lineSize * options.lineOutlineSize * 2;
+      if (value !== aplStats.lineOutlineSize) {
         window.traceLog.push('lineOutlineSize=' + value); // [DEBUG/]
         props.lineOutlineMaskShape.style.strokeWidth = aplStats.lineOutlineSize = value;
         props.lineMaskShape.style.strokeWidth = value + SHAPE_GAP * 2;
@@ -1166,7 +1162,7 @@
       // lineOutlineEnabled
       if (aplStats.lineOutlineEnabled) {
         window.traceLog.push('lineOutlineEnabled=false'); // [DEBUG/]
-        aplStats.lineOutlineEnabled = props.curMask.lineOutlineEnabled = false;
+        aplStats.lineOutlineEnabled = false;
         props.lineOutlineFace.style.display = 'none';
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
@@ -1174,6 +1170,7 @@
         }
       }
     }
+    props.curMask.lineOutlineEnabled = options.lineOutlineEnabled;
   }
 
   /**
@@ -1187,79 +1184,76 @@
     if (props.curPlug.plugsEnabled) {
 
       [0, 1].forEach(function(i) {
-        var plugId = curStats.plugSE[i], symbolConf, value;
+        var plugId, symbolConf, value;
 
-        curStats.plugOutlineColorSE[i] = value = options.plugOutlineColorSE[i] || options.lineOutlineColor;
-        curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
+        if ((plugId = curStats.plugSE[i]) !== PLUG_BEHIND) {
+          if ((curStats.plugOutlineEnabledSE[i] = options.plugOutlineEnabledSE[i])) {
+            symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
 
-        if (plugId !== PLUG_BEHIND) {
-          symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
-          curStats.plugOutlineSizeSE[i] = options.plugOutlineSizeSE[i];
-          if (curStats.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
-            curStats.plugOutlineSizeSE[i] = symbolConf.outlineMax;
-          }
-          curStats.plugOutlineSizeSE[i] *= symbolConf.outlineBase * 2;
-        }
+            // plugOutlineEnabledSE, plugSE
+            if (!aplStats.plugOutlineEnabledSE[i] || plugId !== aplStats.plugSE[i]) {
+              window.traceLog.push('plugOutlineEnabledSE[' + i + ']=true', 'plugSE[' + i + ']=' + plugId); // [DEBUG/]
+              aplStats.plugOutlineEnabledSE[i] = true;
+              aplStats.plugSE[i] = plugId;
+              props.plugOutlineFaceSE[i].href.baseVal =
+                props.plugMaskShapeSE[i].href.baseVal =
+                props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+              [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
+                mask.x.baseVal.value = symbolConf.bBox.left;
+                mask.y.baseVal.value = symbolConf.bBox.top;
+                mask.width.baseVal.value = symbolConf.bBox.width;
+                mask.height.baseVal.value = symbolConf.bBox.height;
+              });
+              props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
+              props.plugOutlineFaceSE[i].style.display = 'inline';
 
-        if ((curStats.plugOutlineEnabledSE[i] =
-            options.plugOutlineEnabledSE[i] && plugId !== PLUG_BEHIND)) {
-
-          // plugOutlineEnabledSE, plugSE
-          if (!aplStats.plugOutlineEnabledSE[i] || plugId !== aplStats.plugSE[i]) {
-            window.traceLog.push('plugOutlineEnabledSE[' + i + ']=true'); // [DEBUG/]
-            window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
-            aplStats.plugOutlineEnabledSE[i] = true;
-            aplStats.plugSE[i] = plugId;
-            props.plugOutlineFaceSE[i].href.baseVal =
-              props.plugMaskShapeSE[i].href.baseVal =
-              props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
-            [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
-              mask.x.baseVal.value = symbolConf.bBox.left;
-              mask.y.baseVal.value = symbolConf.bBox.top;
-              mask.width.baseVal.value = symbolConf.bBox.width;
-              mask.height.baseVal.value = symbolConf.bBox.height;
-            });
-            props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
-            props.plugOutlineFaceSE[i].style.display = 'inline';
-
-            if (props.effect && props.effect.onPlugOutlineEnabledSE) {
-              props.effect.onPlugOutlineEnabledSE(props, true, i);
+              if (props.effect && props.effect.onPlugOutlineEnabledSE) {
+                props.effect.onPlugOutlineEnabledSE(props, true, i);
+              }
             }
-          }
 
-          // plugOutlineColorSE
-          if ((value = curStats.plugOutlineColorSE[i]) !== aplStats.plugOutlineColorSE[i]) {
-            window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
-            props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
+            // plugOutlineColorSE
+            curStats.plugOutlineColorSE[i] = value =
+              options.plugOutlineColorSE[i] || options.lineOutlineColor;
+            if (value !== aplStats.plugOutlineColorSE[i]) {
+              window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
+              curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
+              props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
 
-            if (props.effect && props.effect.onPlugOutlineColorSE) {
-              props.effect.onPlugOutlineColorSE(props, value, i);
+              if (props.effect && props.effect.onPlugOutlineColorSE) {
+                props.effect.onPlugOutlineColorSE(props, value, i);
+              }
             }
-          }
 
-          // plugOutlineSizeSE
-          if ((value = curStats.plugOutlineSizeSE[i]) !== aplStats.plugOutlineSizeSE[i]) {
-            window.traceLog.push('plugOutlineSizeSE[' + i + ']=' + value); // [DEBUG/]
-            props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
-            props.plugMaskShapeSE[i].style.strokeWidth =
-              value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
-
-            if (props.effect && props.effect.onPlugOutlineSizeSE) {
-              props.effect.onPlugOutlineSizeSE(props, value, i);
+            // plugOutlineSizeSE
+            curStats.plugOutlineSizeSE[i] = options.plugOutlineSizeSE[i];
+            if (curStats.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
+              curStats.plugOutlineSizeSE[i] = symbolConf.outlineMax;
             }
-          }
+            curStats.plugOutlineSizeSE[i] *= symbolConf.outlineBase * 2;
+            if ((value = curStats.plugOutlineSizeSE[i]) !== aplStats.plugOutlineSizeSE[i]) {
+              window.traceLog.push('plugOutlineSizeSE[' + i + ']=' + value); // [DEBUG/]
+              props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
+              props.plugMaskShapeSE[i].style.strokeWidth =
+                value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
 
-        } else {
+              if (props.effect && props.effect.onPlugOutlineSizeSE) {
+                props.effect.onPlugOutlineSizeSE(props, value, i);
+              }
+            }
 
-          // plugOutlineEnabledSE
-          if (aplStats.plugOutlineEnabledSE[i]) {
-            window.traceLog.push('plugOutlineEnabledSE[' + i + ']=false'); // [DEBUG/]
-            aplStats.plugOutlineEnabledSE[i] = false;
-            props.plugFaceSE[i].style.mask = 'none';
-            props.plugOutlineFaceSE[i].style.display = 'none';
+          } else {
 
-            if (props.effect && props.effect.onPlugOutlineEnabledSE) {
-              props.effect.onPlugOutlineEnabledSE(props, plugId, i);
+            // plugOutlineEnabledSE
+            if (aplStats.plugOutlineEnabledSE[i]) {
+              window.traceLog.push('plugOutlineEnabledSE[' + i + ']=false'); // [DEBUG/]
+              aplStats.plugOutlineEnabledSE[i] = false;
+              props.plugFaceSE[i].style.mask = 'none';
+              props.plugOutlineFaceSE[i].style.display = 'none';
+
+              if (props.effect && props.effect.onPlugOutlineEnabledSE) {
+                props.effect.onPlugOutlineEnabledSE(props, plugId, i);
+              }
             }
           }
         }
@@ -1267,30 +1261,6 @@
 
     } else {
       curStats.plugOutlineEnabledSE[0] = curStats.plugOutlineEnabledSE[1] = false;
-    }
-  }
-
-  /**
-   * Apply all of `effect`.
-   * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {void}
-   */
-  function setEffect(props) {
-    window.traceLog.push('<setEffect>'); // [DEBUG/]
-    var options = props.options,
-      effectConf, effectParams;
-
-    if (options.effect) {
-      effectConf = EFFECTS[options.effect[0]];
-      effectParams = options.effect[1];
-      if (props.effect && effectConf !== props.effect) { props.effect.remove(props); }
-      effectConf.init(props, effectParams);
-      props.effect = effectConf;
-      props.effectParams = effectParams;
-    } else if (props.effect) { // Since it might have been called by `bindWindow`, check `props.effect`.
-      props.effect.remove(props);
-      props.effect = null;
-      props.effectParams = {};
     }
   }
 
@@ -1844,11 +1814,11 @@
     curMask.capsMarkersEnabled = curCapsMaskMarker.enabledSE[0] || curCapsMaskMarker.enabledSE[1];
     curMask.capsEnabled = curMask.capsMarkersEnabled ||
       curCapsMaskAnchor.enabledSE[0] || curCapsMaskAnchor.enabledSE[1];
-    curMask.lineMaskEnabled = curMask.capsEnabled || options.lineOutlineEnabled;
-    lineMaskBGEnabled = curMask.lineMaskEnabled && !options.lineOutlineEnabled;
+    curMask.lineMaskEnabled = curMask.capsEnabled || curMask.lineOutlineEnabled;
+    lineMaskBGEnabled = curMask.lineMaskEnabled && !curMask.lineOutlineEnabled;
 
     // maskBGRect
-    if (lineMaskBGEnabled || options.lineOutlineEnabled) {
+    if (lineMaskBGEnabled || curMask.lineOutlineEnabled) {
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'maskBGRect' + boxKey.toUpperCase();
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
@@ -1989,15 +1959,38 @@
     }
 
     // lineOutlineMask
-    if (options.lineOutlineEnabled) {
+    if (curMask.lineOutlineEnabled) {
       ['x', 'y'].forEach(function(boxKey) {
-        var valsKey = 'lineOutlineMask' + boxKey.toUpperCase();
-        if (curMask[valsKey] !== aplMask[valsKey]) {
+        var statKey = 'lineOutlineMask' + boxKey.toUpperCase();
+        if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('lineOutlineMask.' + boxKey); // [DEBUG/]
-          props.lineOutlineMask[boxKey].baseVal.value =
-            aplMask[valsKey] = curMask[valsKey];
+          props.lineOutlineMask[boxKey].baseVal.value = aplMask[statKey] = value;
         }
       });
+    }
+  }
+
+  /**
+   * Apply all of `effect`.
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @returns {void}
+   */
+  function setEffect(props) {
+    window.traceLog.push('<setEffect>'); // [DEBUG/]
+    var options = props.options,
+      effectConf, effectParams;
+
+    if (options.effect) {
+      effectConf = EFFECTS[options.effect[0]];
+      effectParams = options.effect[1];
+      if (props.effect && effectConf !== props.effect) { props.effect.remove(props); }
+      effectConf.init(props, effectParams);
+      props.effect = effectConf;
+      props.effectParams = effectParams;
+    } else if (props.effect) { // Since it might have been called by `bindWindow`, check `props.effect`.
+      props.effect.remove(props);
+      props.effect = null;
+      props.effectParams = {};
     }
   }
 
