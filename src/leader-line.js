@@ -1184,76 +1184,84 @@
     if (props.curPlug.plugsEnabled) {
 
       [0, 1].forEach(function(i) {
-        var plugId, symbolConf, value;
+        var plugId = curStats.plugSE[i], symbolConf, value;
 
-        if ((plugId = curStats.plugSE[i]) !== PLUG_BEHIND) {
-          if ((curStats.plugOutlineEnabledSE[i] = options.plugOutlineEnabledSE[i])) {
-            symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+        if ((curStats.plugOutlineEnabledSE[i] =
+            plugId !== PLUG_BEHIND && options.plugOutlineEnabledSE[i])) {
+          symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
 
-            // plugOutlineEnabledSE, plugSE
-            if (!aplStats.plugOutlineEnabledSE[i] || plugId !== aplStats.plugSE[i]) {
-              window.traceLog.push('plugOutlineEnabledSE[' + i + ']=true', 'plugSE[' + i + ']=' + plugId); // [DEBUG/]
-              aplStats.plugOutlineEnabledSE[i] = true;
-              aplStats.plugSE[i] = plugId;
-              props.plugOutlineFaceSE[i].href.baseVal =
-                props.plugMaskShapeSE[i].href.baseVal =
-                props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
-              [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
-                mask.x.baseVal.value = symbolConf.bBox.left;
-                mask.y.baseVal.value = symbolConf.bBox.top;
-                mask.width.baseVal.value = symbolConf.bBox.width;
-                mask.height.baseVal.value = symbolConf.bBox.height;
-              });
-              props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
-              props.plugOutlineFaceSE[i].style.display = 'inline';
+          // plugOutlineEnabledSE
+          if (!aplStats.plugOutlineEnabledSE[i]) {
+            window.traceLog.push('plugOutlineEnabledSE[' + i + ']=true'); // [DEBUG/]
+            aplStats.plugOutlineEnabledSE[i] = true;
+            props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
+            props.plugOutlineFaceSE[i].style.display = 'inline';
 
-              if (props.effect && props.effect.onPlugOutlineEnabledSE) {
-                props.effect.onPlugOutlineEnabledSE(props, true, i);
-              }
+            if (props.effect && props.effect.onPlugSE) {
+              props.effect.onPlugSE(props, plugId, i);
             }
+          }
 
-            // plugOutlineColorSE
-            curStats.plugOutlineColorSE[i] = value =
-              options.plugOutlineColorSE[i] || options.lineOutlineColor;
-            if (value !== aplStats.plugOutlineColorSE[i]) {
-              window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
-              curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
-              props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
+          // plugSE
+          if (plugId !== aplStats.plugSE[i]) {
+            window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
+            aplStats.plugSE[i] = plugId;
+            props.plugOutlineFaceSE[i].href.baseVal =
+              props.plugMaskShapeSE[i].href.baseVal =
+              props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+            [props.plugMaskSE[i], props.plugOutlineMaskSE[i]].forEach(function(mask) {
+              mask.x.baseVal.value = symbolConf.bBox.left;
+              mask.y.baseVal.value = symbolConf.bBox.top;
+              mask.width.baseVal.value = symbolConf.bBox.width;
+              mask.height.baseVal.value = symbolConf.bBox.height;
+            });
 
-              if (props.effect && props.effect.onPlugOutlineColorSE) {
-                props.effect.onPlugOutlineColorSE(props, value, i);
-              }
+            if (props.effect && props.effect.onPlugOutlineEnabledSE) {
+              props.effect.onPlugOutlineEnabledSE(props, true, i);
             }
+          }
 
-            // plugOutlineSizeSE
-            curStats.plugOutlineSizeSE[i] = options.plugOutlineSizeSE[i];
-            if (curStats.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
-              curStats.plugOutlineSizeSE[i] = symbolConf.outlineMax;
+          // plugOutlineColorSE
+          curStats.plugOutlineColorSE[i] = value =
+            options.plugOutlineColorSE[i] || options.lineOutlineColor;
+          if (value !== aplStats.plugOutlineColorSE[i]) {
+            window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
+            curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
+            props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
+
+            if (props.effect && props.effect.onPlugOutlineColorSE) {
+              props.effect.onPlugOutlineColorSE(props, value, i);
             }
-            curStats.plugOutlineSizeSE[i] *= symbolConf.outlineBase * 2;
-            if ((value = curStats.plugOutlineSizeSE[i]) !== aplStats.plugOutlineSizeSE[i]) {
-              window.traceLog.push('plugOutlineSizeSE[' + i + ']=' + value); // [DEBUG/]
-              props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
-              props.plugMaskShapeSE[i].style.strokeWidth =
-                value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
+          }
 
-              if (props.effect && props.effect.onPlugOutlineSizeSE) {
-                props.effect.onPlugOutlineSizeSE(props, value, i);
-              }
+          // plugOutlineSizeSE
+          curStats.plugOutlineSizeSE[i] = options.plugOutlineSizeSE[i];
+          if (curStats.plugOutlineSizeSE[i] > symbolConf.outlineMax) {
+            curStats.plugOutlineSizeSE[i] = symbolConf.outlineMax;
+          }
+          curStats.plugOutlineSizeSE[i] *= symbolConf.outlineBase * 2;
+          if ((value = curStats.plugOutlineSizeSE[i]) !== aplStats.plugOutlineSizeSE[i]) {
+            window.traceLog.push('plugOutlineSizeSE[' + i + ']=' + value); // [DEBUG/]
+            props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
+            props.plugMaskShapeSE[i].style.strokeWidth =
+              value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
+
+            if (props.effect && props.effect.onPlugOutlineSizeSE) {
+              props.effect.onPlugOutlineSizeSE(props, value, i);
             }
+          }
 
-          } else {
+        } else if (plugId !== PLUG_BEHIND) { // disable plugOutline only when plug is enabled
 
-            // plugOutlineEnabledSE
-            if (aplStats.plugOutlineEnabledSE[i]) {
-              window.traceLog.push('plugOutlineEnabledSE[' + i + ']=false'); // [DEBUG/]
-              aplStats.plugOutlineEnabledSE[i] = false;
-              props.plugFaceSE[i].style.mask = 'none';
-              props.plugOutlineFaceSE[i].style.display = 'none';
+          // plugOutlineEnabledSE
+          if (aplStats.plugOutlineEnabledSE[i]) {
+            window.traceLog.push('plugOutlineEnabledSE[' + i + ']=false'); // [DEBUG/]
+            aplStats.plugOutlineEnabledSE[i] = false;
+            props.plugFaceSE[i].style.mask = 'none';
+            props.plugOutlineFaceSE[i].style.display = 'none';
 
-              if (props.effect && props.effect.onPlugOutlineEnabledSE) {
-                props.effect.onPlugOutlineEnabledSE(props, plugId, i);
-              }
+            if (props.effect && props.effect.onPlugOutlineEnabledSE) {
+              props.effect.onPlugOutlineEnabledSE(props, plugId, i);
             }
           }
         }
@@ -1794,8 +1802,7 @@
    * @returns {void}
    */
   function updateMask(props) {
-    var options = props.options,
-      curMask = props.curMask, aplMask = props.aplMask,
+    var curMask = props.curMask, aplMask = props.aplMask,
       curCapsMaskAnchor = props.curCapsMaskAnchor, aplCapsMaskAnchor = props.aplCapsMaskAnchor,
       curCapsMaskMarker = props.curCapsMaskMarker, aplCapsMaskMarker = props.aplCapsMaskMarker,
       curPlug = props.curPlug,
