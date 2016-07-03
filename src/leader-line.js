@@ -307,7 +307,7 @@
     /**
      * @typedef {Object.<_id: number, props>} insProps
      */
-    insProps = {}, insId = 0, svg2Supported;
+    insProps = {}, insId = 0, svg2Supported, forceReflowTargets = [];
 
   // [DEBUG]
   window.insProps = insProps;
@@ -324,6 +324,15 @@
     }, 0);
   }
   window.forceReflow = forceReflow; // [DEBUG/]
+
+  function forceReflowAdd(target) {
+    if (forceReflowTargets.indexOf(target) < 0) { forceReflowTargets.push(target); }
+  }
+
+  function forceReflowApply() {
+    forceReflowTargets.forEach(function(target) { forceReflow(target); });
+    forceReflowTargets = [];
+  }
 
   function hasChanged(a, b) {
     var typeA;
@@ -878,7 +887,7 @@
   window.bindWindow = bindWindow; // [DEBUG/]
 
   /**
-   * Apply `orient` to `marker`.
+   * Apply `orient` (and `viewBox`) to `marker`.
    * @param {SVGMarkerElement} marker - Target `<marker>` element.
    * @param {string} orient - `'auto'`, `'auto-start-reverse'` or angle.
    * @param {BBox} bBox - `BBox` as `viewBox` of the marker.
@@ -922,7 +931,7 @@
     viewBox.height = bBox.height;
 
     // [TRIDENT] markerOrient is not updated when plugSE is changed
-    if (IS_TRIDENT) { forceReflow(marked); }
+    if (IS_TRIDENT) { forceReflowAdd(marked); }
   }
 
   function getMarkerProps(i, symbolConf) {
@@ -934,16 +943,17 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {void}
+   * @returns {boolean} - `true` if it was changed.
    */
   function updateLine(props) {
-    var options = props.options,
+    var options = props.options, update = false,
       aplStats = props.aplLine, value;
 
     // lineColor
     if ((value = options.lineColor) !== aplStats.lineColor) {
       window.traceLog.push('lineColor=' + value); // [DEBUG/]
       props.lineFace.style.stroke = aplStats.lineColor = value;
+      update = true;
 
       if (props.effect && props.effect.onLineColor) {
         props.effect.onLineColor(props, value);
@@ -954,15 +964,16 @@
     if ((value = options.lineSize) !== aplStats.lineSize) {
       window.traceLog.push('lineSize=' + value); // [DEBUG/]
       props.lineShape.style.strokeWidth = aplStats.lineSize = value;
+      update = true;
       if (IS_GECKO || IS_TRIDENT) {
         // [TRIDENT] plugsFace is not updated when lineSize is changed
         // [GECKO] plugsFace is ignored
-        forceReflow(props.lineShape);
+        forceReflowAdd(props.lineShape);
         if (IS_TRIDENT) {
           // [TRIDENT] lineColor is ignored
-          forceReflow(props.lineFace);
+          forceReflowAdd(props.lineFace);
           // [TRIDENT] lineMaskCaps is ignored when lineSize is changed
-          forceReflow(props.lineMaskCaps);
+          forceReflowAdd(props.lineMaskCaps);
         }
       }
 
@@ -970,14 +981,15 @@
         props.effect.onLineSize(props, value);
       }
     }
+    return update;
   }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {void}
+   * @returns {boolean} - `true` if it was changed.
    */
   function updatePlug(props) {
-    var options = props.options,
+    var options = props.options, update = false,
       curStats = props.curPlug, aplStats = props.aplPlug,
       curPlugOutline = props.curPlugOutline, curPosition = props.curPosition,
       curViewBBox = props.curViewBBox, curCapsMaskAnchor = props.curCapsMaskAnchor,
@@ -991,6 +1003,7 @@
         window.traceLog.push('plugsEnabled=true'); // [DEBUG/]
         aplStats.plugsEnabled = true;
         props.plugsFace.style.display = 'inline';
+        update = true;
 
         if (props.effect && props.effect.onPlugsEnabled) {
           props.effect.onPlugsEnabled(props, true);
@@ -1013,9 +1026,10 @@
             props.plugsFace.style[marker.prop] = 'url(#' + props.plugMarkerIdSE[i] + ')';
             setMarkerOrient(props.plugMarkerSE[i], marker.orient,
               symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
+            update = true;
             if (IS_GECKO) {
               // [GECKO] plugsFace is not updated when plugSE is changed
-              forceReflow(props.plugsFace);
+              forceReflowAdd(props.plugsFace);
             }
 
             if (props.effect && props.effect.onPlugSE) {
@@ -1029,6 +1043,7 @@
             window.traceLog.push('plugColorSE[' + i + ']=' + value); // [DEBUG/]
             curStats.plugColorTraSE[i] = getAlpha(value) < 1;
             props.plugFaceSE[i].style.fill = aplStats.plugColorSE[i] = value;
+            update = true;
 
             if (props.effect && props.effect.onPlugColorSE) {
               props.effect.onPlugColorSE(props, value, i);
@@ -1049,6 +1064,7 @@
               if ((value = curStats[statKey][i]) !== aplStats[statKey][i]) {
                 window.traceLog.push('Plug.' + statKey + '[' + i + ']'); // [DEBUG/]
                 props.plugMarkerSE[i][markerKey].baseVal.value = aplStats[statKey][i] = value;
+                update = true;
 
                 if (props.effect && props.effect[eventKey]) {
                   props.effect[eventKey](props, value, i);
@@ -1070,6 +1086,7 @@
             aplStats.plugSE[i] = plugId;
             marker = getMarkerProps(i);
             props.plugsFace.style[marker.prop] = 'none';
+            update = true;
 
             if (props.effect && props.effect.onPlugSE) {
               props.effect.onPlugSE(props, plugId, i);
@@ -1091,6 +1108,7 @@
         window.traceLog.push('plugsEnabled=false'); // [DEBUG/]
         aplStats.plugsEnabled = false;
         props.plugsFace.style.display = 'none';
+        update = true;
 
         if (props.effect && props.effect.onPlugsEnabled) {
           props.effect.onPlugsEnabled(props, false);
@@ -1104,14 +1122,15 @@
         curCapsMaskAnchor.enabledSE[i] = true;
       });
     }
+    return update;
   }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {void}
+   * @returns {boolean} - `true` if it was changed.
    */
   function updateLineOutline(props) {
-    var options = props.options,
+    var options = props.options, update = false,
       curStats = props.curLineOutline, aplStats = props.aplLineOutline, value;
 
     if (options.lineOutlineEnabled) {
@@ -1121,6 +1140,7 @@
         window.traceLog.push('lineOutlineEnabled=true'); // [DEBUG/]
         aplStats.lineOutlineEnabled = true;
         props.lineOutlineFace.style.display = 'inline';
+        update = true;
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
           props.effect.onLineOutlineEnabled(props, true);
@@ -1132,6 +1152,7 @@
         window.traceLog.push('lineOutlineColor=' + value); // [DEBUG/]
         curStats.lineOutlineColorTra = getAlpha(value) < 1;
         props.lineOutlineFace.style.stroke = aplStats.lineOutlineColor = value;
+        update = true;
 
         if (props.effect && props.effect.onLineOutlineColor) {
           props.effect.onLineOutlineColor(props, value);
@@ -1145,11 +1166,12 @@
         window.traceLog.push('lineOutlineSize=' + value); // [DEBUG/]
         props.lineOutlineMaskShape.style.strokeWidth = aplStats.lineOutlineSize = value;
         props.lineMaskShape.style.strokeWidth = value + SHAPE_GAP * 2;
+        update = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
-          forceReflow(props.lineOutlineMaskCaps);
+          forceReflowAdd(props.lineOutlineMaskCaps);
           // [TRIDENT] lineOutlineColor is ignored
-          forceReflow(props.lineOutlineFace);
+          forceReflowAdd(props.lineOutlineFace);
         }
 
         if (props.effect && props.effect.onLineOutlineSize) {
@@ -1164,6 +1186,7 @@
         window.traceLog.push('lineOutlineEnabled=false'); // [DEBUG/]
         aplStats.lineOutlineEnabled = false;
         props.lineOutlineFace.style.display = 'none';
+        update = true;
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
           props.effect.onLineOutlineEnabled(props, false);
@@ -1171,14 +1194,15 @@
       }
     }
     props.curMask.lineOutlineEnabled = options.lineOutlineEnabled;
+    return update;
   }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {void}
+   * @returns {boolean} - `true` if it was changed.
    */
   function updatePlugOutline(props) {
-    var options = props.options,
+    var options = props.options, update = false,
       curStats = props.curPlugOutline, aplStats = props.aplPlugOutline;
 
     if (props.curPlug.plugsEnabled) {
@@ -1196,6 +1220,7 @@
             aplStats.plugOutlineEnabledSE[i] = true;
             props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
             props.plugOutlineFaceSE[i].style.display = 'inline';
+            update = true;
 
             if (props.effect && props.effect.onPlugSE) {
               props.effect.onPlugSE(props, plugId, i);
@@ -1215,6 +1240,7 @@
               mask.width.baseVal.value = symbolConf.bBox.width;
               mask.height.baseVal.value = symbolConf.bBox.height;
             });
+            update = true;
 
             if (props.effect && props.effect.onPlugOutlineEnabledSE) {
               props.effect.onPlugOutlineEnabledSE(props, true, i);
@@ -1228,6 +1254,7 @@
             window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
             curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
             props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
+            update = true;
 
             if (props.effect && props.effect.onPlugOutlineColorSE) {
               props.effect.onPlugOutlineColorSE(props, value, i);
@@ -1245,6 +1272,7 @@
             props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
             props.plugMaskShapeSE[i].style.strokeWidth =
               value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
+            update = true;
 
             if (props.effect && props.effect.onPlugOutlineSizeSE) {
               props.effect.onPlugOutlineSizeSE(props, value, i);
@@ -1259,6 +1287,7 @@
             aplStats.plugOutlineEnabledSE[i] = false;
             props.plugFaceSE[i].style.mask = 'none';
             props.plugOutlineFaceSE[i].style.display = 'none';
+            update = true;
 
             if (props.effect && props.effect.onPlugOutlineEnabledSE) {
               props.effect.onPlugOutlineEnabledSE(props, plugId, i);
@@ -1270,6 +1299,7 @@
     } else {
       curStats.plugOutlineEnabledSE[0] = curStats.plugOutlineEnabledSE[1] = false;
     }
+    return update;
   }
 
   /**
@@ -1278,12 +1308,11 @@
    */
   function updatePosition(props) {
     window.traceLog.push('<position>'); // [DEBUG/]
-    var options = props.options,
+    var options = props.options, update = false,
       curStats = props.curPosition,
       curStatsSocketXYSE = curStats.socketXYSE,
       curCapsMaskAnchor = props.curCapsMaskAnchor,
-      anchorBBoxSE, pathList,
-      update = false;
+      anchorBBoxSE, pathList;
 
     function getSocketXY(bBox, socketId) {
       var socketXY = (
@@ -1711,10 +1740,10 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {void}
+   * @returns {boolean} - `true` if it was changed.
    */
   function updatePath(props) {
-    var curStatsPathData,
+    var update = false, curStatsPathData,
       pathList = props.pathList.baseVal,
       pathEdge = props.curViewBBox.pathEdge;
 
@@ -1739,29 +1768,31 @@
       window.traceLog.push('setPathData'); // [DEBUG/]
       props.linePath.setPathData(curStatsPathData);
       props.aplPath.pathData = curStatsPathData;
+      update = true;
 
       if (IS_TRIDENT) {
         // [TRIDENT] markerOrient is not updated when path is changed
-        forceReflow(props.plugsFace);
+        forceReflowAdd(props.plugsFace);
         // [TRIDENT] lineMaskCaps is ignored when path is changed
-        forceReflow(props.lineMaskCaps);
+        forceReflowAdd(props.lineMaskCaps);
       } else if (IS_GECKO) {
         // [GECKO] path is not updated when path is changed
-        forceReflow(props.linePath);
+        forceReflowAdd(props.linePath);
       }
 
       if (props.effect && props.effect.onSetPathData) {
         props.effect.onSetPathData(props, pathList);
       }
     }
+    return update;
   }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {void}
+   * @returns {boolean} - `true` if it was changed.
    */
   function updateViewBBox(props) {
-    var curStats = props.curViewBBox, aplStats = props.aplViewBBox,
+    var update = false, curStats = props.curViewBBox, aplStats = props.aplViewBBox,
       curStatsPathEdge = curStats.pathEdge,
       padding = Math.max(props.options.lineSize / 2,
         curStats.plugBCircleSE[0] || 0, curStats.plugBCircleSE[1] || 0),
@@ -1772,33 +1803,33 @@
         x2: curStatsPathEdge.x2 + padding,
         y2: curStatsPathEdge.y2 + padding
       },
-      curMask = props.curMask;
+      curMask = props.curMask,
+      viewBox = props.svg.viewBox.baseVal, styles = props.svg.style;
 
     curStats.x = curMask.lineMaskX = curMask.lineOutlineMaskX = curMask.maskBGRectX = pointsVal.x1;
     curStats.y = curMask.lineMaskY = curMask.lineOutlineMaskY = curMask.maskBGRectY = pointsVal.y1;
     curStats.width = pointsVal.x2 - pointsVal.x1;
     curStats.height = pointsVal.y2 - pointsVal.y1;
 
-    // Position `<svg>` element and set its `viewBox`
-    (function(viewBox, styles) {
-      ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-        var value;
-        if ((value = curStats[boxKey]) !== aplStats[boxKey]) {
-          window.traceLog.push('viewBox.' + boxKey); // [DEBUG/]
-          viewBox[boxKey] = aplStats[boxKey] = value;
-          styles[BBOX_PROP[boxKey]] = value +
-            (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
-        }
-      });
-    })(props.svg.viewBox.baseVal, props.svg.style);
+    ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+      var value;
+      if ((value = curStats[boxKey]) !== aplStats[boxKey]) {
+        window.traceLog.push('viewBox.' + boxKey); // [DEBUG/]
+        viewBox[boxKey] = aplStats[boxKey] = value;
+        styles[BBOX_PROP[boxKey]] = value +
+          (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
+        update = true;
+      }
+    });
+    return update;
   }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {void}
+   * @returns {boolean} - `true` if it was changed.
    */
   function updateMask(props) {
-    var curMask = props.curMask, aplMask = props.aplMask,
+    var update = false, curMask = props.curMask, aplMask = props.aplMask,
       curCapsMaskAnchor = props.curCapsMaskAnchor, aplCapsMaskAnchor = props.aplCapsMaskAnchor,
       curCapsMaskMarker = props.curCapsMaskMarker, aplCapsMaskMarker = props.aplCapsMaskMarker,
       curPlug = props.curPlug,
@@ -1827,6 +1858,7 @@
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('maskBGRect.' + boxKey); // [DEBUG/]
           props.maskBGRect[boxKey].baseVal.value = aplMask[statKey] = value;
+          update = true;
         }
       });
     }
@@ -1843,6 +1875,7 @@
           props.lineMaskBG.style.display = 'inline';
           props.lineMaskShape.style.display = 'none';
         }
+        update = true;
       }
 
       if (curMask.capsEnabled) {
@@ -1852,6 +1885,7 @@
           window.traceLog.push('capsEnabled=true'); // [DEBUG/]
           aplMask.capsEnabled = true;
           props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display = 'inline';
+          update = true;
         }
 
         // CapsMaskAnchor
@@ -1861,18 +1895,21 @@
               window.traceLog.push('CapsMaskAnchor.enabledSE[' + i + ']=true'); // [DEBUG/]
               aplCapsMaskAnchor.enabledSE[i] = true;
               props.capsMaskAnchorSE[i].style.display = 'inline';
+              update = true;
             }
             ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
               var statKey = boxKey + 'SE';
               if ((value = curCapsMaskAnchor[statKey][i]) !== aplCapsMaskAnchor[statKey][i]) {
                 window.traceLog.push('CapsMaskAnchor.' + boxKey + '[' + i + ']'); // [DEBUG/]
                 props.capsMaskAnchorSE[i][boxKey].baseVal.value = aplCapsMaskAnchor[statKey][i] = value;
+                update = true;
               }
             });
           } else if (aplCapsMaskAnchor.enabledSE[i]) {
             window.traceLog.push('CapsMaskAnchor.enabledSE[' + i + ']=false'); // [DEBUG/]
             aplCapsMaskAnchor.enabledSE[i] = false;
             props.capsMaskAnchorSE[i].style.display = 'none';
+            update = true;
           }
         });
 
@@ -1883,6 +1920,7 @@
             window.traceLog.push('capsMarkersEnabled=true'); // [DEBUG/]
             aplMask.capsMarkersEnabled = true;
             props.capsMaskLine.style.display = 'inline';
+            update = true;
           }
 
           // CapsMaskMarker
@@ -1903,10 +1941,11 @@
                 props.capsMaskLine.style[marker.prop] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
                 setMarkerOrient(props.capsMaskMarkerSE[i], marker.orient,
                   symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
+                update = true;
                 if (IS_GECKO) {
                   // [GECKO] plugsFace is not updated when plugSE is changed
-                  forceReflow(props.capsMaskLine);
-                  forceReflow(props.lineFace);
+                  forceReflowAdd(props.capsMaskLine);
+                  forceReflowAdd(props.lineFace);
                 }
               }
 
@@ -1915,6 +1954,7 @@
                 if ((value = curCapsMaskMarker[statKey][i]) !== aplCapsMaskMarker[statKey][i]) {
                   window.traceLog.push('CapsMaskMarker.' + statKey + '[' + i + ']'); // [DEBUG/]
                   props.capsMaskMarkerSE[i][markerKey].baseVal.value = aplCapsMaskMarker[statKey][i] = value;
+                  update = true;
                 }
               });
 
@@ -1923,6 +1963,7 @@
               aplCapsMaskMarker.enabledSE[i] = false;
               marker = getMarkerProps(i);
               props.capsMaskLine.style[marker.prop] = 'none';
+              update = true;
             }
           });
 
@@ -1931,6 +1972,7 @@
           window.traceLog.push('capsMarkersEnabled=false'); // [DEBUG/]
           aplMask.capsMarkersEnabled = false;
           props.capsMaskLine.style.display = 'none';
+          update = true;
         }
 
       } else if (aplMask.capsEnabled) {
@@ -1938,6 +1980,7 @@
         window.traceLog.push('capsEnabled=false'); // [DEBUG/]
         aplMask.capsEnabled = false;
         props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display = 'none';
+        update = true;
       }
 
       // lineMask
@@ -1945,12 +1988,14 @@
         window.traceLog.push('lineMaskEnabled=true'); // [DEBUG/]
         aplMask.lineMaskEnabled = true;
         props.lineFace.style.mask = 'url(#' + props.lineMaskId + ')';
+        update = true;
       }
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'lineMask' + boxKey.toUpperCase();
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('lineMask.' + boxKey); // [DEBUG/]
           props.lineMask[boxKey].baseVal.value = aplMask[statKey] = value;
+          update = true;
         }
       });
 
@@ -1959,6 +2004,7 @@
       window.traceLog.push('lineMaskEnabled=false'); // [DEBUG/]
       aplMask.lineMaskEnabled = false;
       props.lineFace.style.mask = 'none';
+      update = true;
     }
 
     // lineOutlineMask
@@ -1968,9 +2014,11 @@
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('lineOutlineMask.' + boxKey); // [DEBUG/]
           props.lineOutlineMask[boxKey].baseVal.value = aplMask[statKey] = value;
+          update = true;
         }
       });
     }
+    return update;
   }
 
   /**
@@ -2142,8 +2190,13 @@
       plugOutlineSizeSE       startPlugOutlineSize, endPlugOutlineSize
     */
     var props = insProps[this._id], options = props.options,
-      newWindow, needsWindow, needsLine, needsPlug,
-      needsLineOutline, needsPlugOutline, needsPosition, needsEffect;
+      newWindow, needsWindow,
+      needsLine, needsPlug, needsLineOutline, needsPlugOutline, needsPosition,
+      /* eslint-disable no-unused-vars */
+      updatedLine, updatedPlug, updatedLineOutline, updatedPlugOutline, updatedPosition,
+      updatedPath, updatedViewBBox, updatedMask,
+      /* eslint-enable no-unused-vars */
+      needsEffect;
 
     function getCurOption(name, optionName, index) {
       var curOption = {};
@@ -2266,36 +2319,30 @@
     // Line
     if (setValidType('color', null, 'lineColor')) {
       options.lineColor = trimString(options.lineColor);
-      needsLine = needsPlug = true;
+      needsLine = true;
     }
-    if (setValidType('size', null, 'lineSize', null, function(value) { return value > 0; })) {
-      needsLine = needsPlug = needsLineOutline = needsPlugOutline = needsPosition = true;
-    }
+    needsLine = setValidType('size', null, 'lineSize', null,
+      function(value) { return value > 0; }) || needsLine;
 
     // Plug
     ['startPlug', 'endPlug'].forEach(function(name, i) {
-      if (setValidId(name, PLUG_KEY_2_ID, 'plugSE', i)) {
-        needsPlug = needsPlugOutline = needsPosition = true;
-      }
+      needsPlug = setValidId(name, PLUG_KEY_2_ID, 'plugSE', i) || needsPlug;
       if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
         options.plugColorSE[i] = trimString(options.plugColorSE[i]);
         needsPlug = true;
       }
-      if (setValidType(name + 'Size', null, 'plugSizeSE', i, function(value) { return value > 0; })) {
-        needsPlug = needsPlugOutline = needsPosition = true;
-      }
+      needsPlug = setValidType(name + 'Size', null, 'plugSizeSE', i,
+        function(value) { return value > 0; }) || needsPlug;
     });
 
     // LineOutline
     needsLineOutline = setValidType('outline', null, 'lineOutlineEnabled') || needsLineOutline;
     if (setValidType('outlineColor', null, 'lineOutlineColor')) {
       options.lineOutlineColor = trimString(options.lineOutlineColor);
-      needsLineOutline = needsPlugOutline = true;
-    }
-    if (setValidType('outlineSize', null, 'lineOutlineSize', null,
-        function(value) { return value > 0 && value <= 0.48; })) {
       needsLineOutline = true;
     }
+    needsLineOutline = setValidType('outlineSize', null, 'lineOutlineSize', null,
+      function(value) { return value > 0 && value <= 0.48; }) || needsLineOutline;
 
     // PlugOutline
     ['startPlugOutline', 'endPlugOutline'].forEach(function(name, i) {
@@ -2336,14 +2383,33 @@
       }
     })();
 
-    if (needsLine) { updateLine(props); }
-    if (needsPlug) { updatePlug(props); }
-    if (needsLineOutline) { updateLineOutline(props); }
-    if (needsPlugOutline) { updatePlugOutline(props); }
-    if (needsPosition && updatePosition(props)) { updatePath(props); }
-    updateViewBBox(props);
-    updateMask(props);
-    if (needsEffect) { setEffect(props); }
+    if (needsLine) {
+      updatedLine = updateLine(props);
+    }
+    if (needsPlug || updatedLine) {
+      updatedPlug = updatePlug(props);
+    }
+    if (needsLineOutline || updatedLine) {
+      updatedLineOutline = updateLineOutline(props);
+    }
+    if (needsPlugOutline || updatedLine || updatedPlug || updatedLineOutline) {
+      updatedPlugOutline = updatePlugOutline(props);
+    }
+    if ((needsPosition || updatedLine || updatedPlug) && (updatedPosition = updatePosition(props))) {
+      updatedPath = updatePath(props);
+    }
+    updatedViewBBox = updateViewBBox(props);
+    updatedMask = updateMask(props);
+    if (needsEffect) {
+      setEffect(props);
+    }
+
+    if (IS_BLINK && updatedLine && !updatedPath) {
+      // [BLINK] lineSize is not updated when path is not changed
+      forceReflowAdd(props.lineShape);
+    }
+    forceReflowApply();
+
     return this;
   };
 

@@ -54,6 +54,18 @@ window.addEventListener('load', function() {
       },
       {
         fnc: function() {
+          ll.setOptions({
+            startPlug: 'square',
+            endPlug: 'square'
+          });
+          // [BLINK] lineSize is not updated when path is not changed
+          setTimeout(function() {
+            ll.size += 10;
+          }, 500);
+        }
+      },
+      {
+        fnc: function() {
           // [TRIDENT] lineColor is ignored
           // [TRIDENT] lineOutlineColor is ignored
           // [GECKO] plugsFace is ignored
