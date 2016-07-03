@@ -2143,7 +2143,7 @@
     */
     var props = insProps[this._id], options = props.options,
       newWindow, needsWindow, needsLine, needsPlug,
-      needsLineOutline, needsPlugOutline, needsPosition, needsEffect, value;
+      needsLineOutline, needsPlugOutline, needsPosition, needsEffect;
 
     function getCurOption(name, optionName, index) {
       var curOption = {};
@@ -2207,13 +2207,9 @@
       return typeof value === 'string' && value ? value.trim() : value;
     }
 
-    function matchArray(array1, array2) {
-      return array1.legth === array2.legth &&
-        array1.every(function(value1, i) { return value1 === array2[i]; });
-    }
-
     newOptions = newOptions || {};
 
+    // anchorSE
     [newOptions.start, newOptions.end].forEach(function(newOption, i) {
       if (newOption && newOption.nodeType != null && // eslint-disable-line eqeqeq
           newOption !== options.anchorSE[i]) {
@@ -2235,6 +2231,37 @@
     needsPosition = setValidId('path', PATH_KEY_2_ID) || needsPosition;
     needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needsPosition;
     needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needsPosition;
+
+    // socketGravitySE
+    [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {
+
+      function matchArray(array1, array2) {
+        return array1.legth === array2.legth &&
+          array1.every(function(value1, i) { return value1 === array2[i]; });
+      }
+
+      var value = false; // `false` means no-update input.
+      if (newOption != null) { // eslint-disable-line eqeqeq
+        if (Array.isArray(newOption)) {
+          if (typeof newOption[0] === 'number' && typeof newOption[1] === 'number') {
+            value = [newOption[0], newOption[1]];
+            if (Array.isArray(options.socketGravitySE[i]) &&
+              matchArray(value, options.socketGravitySE[i])) { value = false; }
+          }
+        } else {
+          if ((newOption + '').toLowerCase() === KEYWORD_AUTO) {
+            value = null;
+          } else if (typeof newOption === 'number' && newOption >= 0) {
+            value = newOption;
+          }
+          if (value === options.socketGravitySE[i]) { value = false; }
+        }
+        if (value !== false) {
+          options.socketGravitySE[i] = value;
+          needsPosition = true;
+        }
+      }
+    });
 
     // Line
     if (setValidType('color', null, 'lineColor')) {
@@ -2282,30 +2309,7 @@
         function(value) { return value >= 1; }) || needsPlugOutline;
     });
 
-    [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {
-      var value = false; // `false` means no-update input.
-      if (newOption != null) { // eslint-disable-line eqeqeq
-        if (Array.isArray(newOption)) {
-          if (typeof newOption[0] === 'number' && typeof newOption[1] === 'number') {
-            value = [newOption[0], newOption[1]];
-            if (Array.isArray(options.socketGravitySE[i]) &&
-              matchArray(value, options.socketGravitySE[i])) { value = false; }
-          }
-        } else {
-          if ((newOption + '').toLowerCase() === KEYWORD_AUTO) {
-            value = null;
-          } else if (typeof newOption === 'number' && newOption >= 0) {
-            value = newOption;
-          }
-          if (value === options.socketGravitySE[i]) { value = false; }
-        }
-        if (value !== false) {
-          options.socketGravitySE[i] = value;
-          needsPosition = true;
-        }
-      }
-    });
-
+    // effect
     (function() {
       var effectName, effectParams;
       if (newOptions.hasOwnProperty('effect')) {
