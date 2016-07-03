@@ -1758,7 +1758,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {void}
    */
   function updateViewBBox(props) {
     var curStats = props.curViewBBox, aplStats = props.aplViewBBox,
@@ -1772,7 +1772,6 @@
         x2: curStatsPathEdge.x2 + padding,
         y2: curStatsPathEdge.y2 + padding
       },
-      update = false,
       curMask = props.curMask;
 
     curStats.x = curMask.lineMaskX = curMask.lineOutlineMaskX = curMask.maskBGRectX = pointsVal.x1;
@@ -1789,12 +1788,9 @@
           viewBox[boxKey] = aplStats[boxKey] = value;
           styles[BBOX_PROP[boxKey]] = value +
             (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
-          update = true;
         }
       });
     })(props.svg.viewBox.baseVal, props.svg.style);
-
-    return update;
   }
 
   /**
@@ -2128,7 +2124,7 @@
   LeaderLine.prototype.setOptions = function(newOptions) {
     window.traceLog.push('<setOptions>'); // [DEBUG/]
     /*
-      Names of `options` : Keys of API
+      Names of `options`      Keys of API (properties of `newOptions`)
       ----------------------------------------
       anchorSE                start, end
       lineColor               color
@@ -2146,79 +2142,69 @@
       plugOutlineSizeSE       startPlugOutlineSize, endPlugOutlineSize
     */
     var props = insProps[this._id], options = props.options,
-      newWindow, currentValue,
-      needsWindow, needsLine, needsPlugSE = [null, null],
-      needsLineOutline, needsPlugOutlineSE = [null, null], needsEffect, needsPosition;
+      newWindow, needsWindow, needsLine, needsPlug,
+      needsLineOutline, needsPlugOutline, needsPosition, needsEffect, value;
 
-    function getInternal(name, optionName, index) {
-      var internal = {};
+    function getCurOption(name, optionName, index) {
+      var curOption = {};
       if (optionName) {
         if (index != null) { // eslint-disable-line eqeqeq
-          internal.currentOptions = options[optionName];
-          internal.optionKey = index;
-          internal.defaultOption = DEFAULT_OPTIONS[optionName] && DEFAULT_OPTIONS[optionName][index];
+          curOption.container = options[optionName];
+          curOption.key = index;
+          curOption.default = DEFAULT_OPTIONS[optionName] && DEFAULT_OPTIONS[optionName][index];
         } else {
-          internal.currentOptions = options;
-          internal.optionKey = optionName;
-          internal.defaultOption = DEFAULT_OPTIONS[optionName];
+          curOption.container = options;
+          curOption.key = optionName;
+          curOption.default = DEFAULT_OPTIONS[optionName];
         }
       } else {
-        internal.currentOptions = options;
-        internal.optionKey = name;
-        internal.defaultOption = DEFAULT_OPTIONS[name];
+        curOption.container = options;
+        curOption.key = name;
+        curOption.default = DEFAULT_OPTIONS[name];
       }
-      internal.acceptsAuto = internal.defaultOption == null; // eslint-disable-line eqeqeq
-      return internal;
+      curOption.acceptsAuto = curOption.default == null; // eslint-disable-line eqeqeq
+      return curOption;
     }
 
     function setValidId(name, key2Id, optionName, index) {
-      var internal = getInternal(name, optionName, index), update, key, id;
+      var curOption = getCurOption(name, optionName, index), update, key, id;
       if (newOptions[name] != null && // eslint-disable-line eqeqeq
           (key = (newOptions[name] + '').toLowerCase()) && (
-            internal.acceptsAuto && key === KEYWORD_AUTO ||
+            curOption.acceptsAuto && key === KEYWORD_AUTO ||
             (id = key2Id[key])
-          ) && id !== internal.currentOptions[internal.optionKey]) {
-        internal.currentOptions[internal.optionKey] = id; // `undefined` when `KEYWORD_AUTO`
+          ) && id !== curOption.container[curOption.key]) {
+        curOption.container[curOption.key] = id; // `undefined` when `KEYWORD_AUTO`
         update = true;
       }
-      // eslint-disable-next-line eqeqeq
-      if (internal.currentOptions[internal.optionKey] == null && !internal.acceptsAuto) {
-        internal.currentOptions[internal.optionKey] = internal.defaultOption;
+      if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
+        curOption.container[curOption.key] = curOption.default;
         update = true;
       }
       return update;
     }
 
     function setValidType(name, type, optionName, index, check) {
-      var internal = getInternal(name, optionName, index), update, value;
+      var curOption = getCurOption(name, optionName, index), update, value;
       if (!type) {
-        // eslint-disable-next-line eqeqeq
-        if (internal.defaultOption == null) { throw new Error('Invalid `type`: ' + name); }
-        type = typeof internal.defaultOption;
+        if (curOption.default == null) { throw new Error('Invalid `type`: ' + name); } // eslint-disable-line eqeqeq
+        type = typeof curOption.default;
       }
       if (newOptions[name] != null && ( // eslint-disable-line eqeqeq
-            internal.acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
-            typeof (value = newOptions[name]) === type &&
-              (!check || check(value))
-          ) && value !== internal.currentOptions[internal.optionKey]) {
-        internal.currentOptions[internal.optionKey] = value; // `undefined` when `KEYWORD_AUTO`
+            curOption.acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
+            typeof (value = newOptions[name]) === type && (!check || check(value))
+          ) && value !== curOption.container[curOption.key]) {
+        curOption.container[curOption.key] = value; // `undefined` when `KEYWORD_AUTO`
         update = true;
       }
-      // eslint-disable-next-line eqeqeq
-      if (internal.currentOptions[internal.optionKey] == null && !internal.acceptsAuto) {
-        internal.currentOptions[internal.optionKey] = internal.defaultOption;
+      if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
+        curOption.container[curOption.key] = curOption.default;
         update = true;
       }
       return update;
     }
 
-    function addPropList(prop, list) {
-      if (!list) {
-        list = [prop];
-      } else if (Array.isArray(list)) {
-        if (list.indexOf(prop) < 0) { list.push(prop); }
-      } // Otherwise `list` is `true`.
-      return list;
+    function trimString(value) {
+      return typeof value === 'string' && value ? value.trim() : value;
     }
 
     function matchArray(array1, array2) {
@@ -2243,121 +2229,58 @@
     if (needsWindow &&
         (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
-      needsLine = needsPlugSE[0] = needsPlugSE[1] =
-        needsLineOutline = needsPlugOutlineSE[0] = needsPlugOutlineSE[1] = needsEffect = true;
+      needsLine = needsPlug = needsLineOutline = needsPlugOutline = needsEffect = true;
     }
 
     needsPosition = setValidId('path', PATH_KEY_2_ID) || needsPosition;
     needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needsPosition;
     needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needsPosition;
 
-    // Since `plugOutline*`s might be affected by `plug*`s and `lineOutline*`s, check `plugOutline*`s before those.
-    ['startPlugOutline', 'endPlugOutline'].forEach(function(name, i) {
-      var currentValue = options.plugOutlineEnabledSE[i];
-      if (setValidType(name, null, 'plugOutlineEnabledSE', i)) {
-        needsPlugOutlineSE[i] = addPropList('plugOutlineEnabled', needsPlugOutlineSE[i]);
-        if (!currentValue) { // off -> on
-          needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
-          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
-        }
-      }
-      // Update at least `options` even if `plugOutlineEnabled` and visual is not changed.
-      if (setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i)) {
-        if (typeof options.plugOutlineColorSE[i] === 'string' && options.plugOutlineColorSE[i]) {
-          options.plugOutlineColorSE[i] = options.plugOutlineColorSE[i].trim();
-        }
-        needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
-      }
-      if (setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
-          function(value) { return value >= 1; })) { // `outlineMax` is checked in `setPlugOutline`.
-        needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
-      }
-    });
-
-    // Since `plug*`s might be affected by `lineColor` and `lineSize`, check `plug*`s before those.
-    ['startPlug', 'endPlug'].forEach(function(name, i) {
-      var currentValue = options.plugSE[i];
-      if (setValidId(name, PLUG_KEY_2_ID, 'plugSE', i)) {
-        needsPlugSE[i] = addPropList('plug', needsPlugSE[i]);
-        needsPosition = true;
-        if (currentValue === PLUG_BEHIND) { // off -> on
-          needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
-          needsPlugSE[i] = addPropList('plugSize', needsPlugSE[i]);
-        }
-        if (currentValue === PLUG_BEHIND || options.plugSE[i] === PLUG_BEHIND) { // off -> on / on -> off
-          needsPlugOutlineSE[i] = true; // Update all of `plugOutline*`.
-        } else if (options.plugOutlineEnabledSE[i]) { // on -> on
-          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]); // for new SymbolConf
-        }
-      }
-      // Update at least `options` even if `PLUG_BEHIND` and visual is not changed.
-      if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
-        if (typeof options.plugColorSE[i] === 'string' && options.plugColorSE[i]) {
-          options.plugColorSE[i] = options.plugColorSE[i].trim();
-        }
-        needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
-      }
-      if (setValidType(name + 'Size', null, 'plugSizeSE', i,
-          function(value) { return value > 0; })) {
-        needsPlugSE[i] = addPropList('plugSize', needsPlugSE[i]);
-        needsPosition = true;
-        if (options.plugOutlineEnabledSE[i]) {
-          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
-        }
-      }
-    });
-
-    // Since `lineOutlineSize` might be affected by `lineSize`, check `lineOutline*`s before those.
-    currentValue = options.lineOutlineEnabled;
-    if (setValidType('outline', null, 'lineOutlineEnabled')) {
-      needsLineOutline = addPropList('lineOutlineEnabled', needsLineOutline);
-      if (!currentValue) { // off -> on
-        needsLineOutline = addPropList('lineOutlineColor', needsLineOutline);
-        needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
-      }
+    // Line
+    if (setValidType('color', null, 'lineColor')) {
+      options.lineColor = trimString(options.lineColor);
+      needsLine = needsPlug = true;
     }
-    // Update at least `options` even if `lineOutlineEnabled` and visual is not changed.
-    if (setValidType('outlineColor', null, 'lineOutlineColor')) {
-      if (typeof options.lineOutlineColor === 'string' && options.lineOutlineColor) {
-        options.lineOutlineColor = options.lineOutlineColor.trim();
+    if (setValidType('size', null, 'lineSize', null, function(value) { return value > 0; })) {
+      needsLine = needsPlug = needsLineOutline = needsPlugOutline = needsPosition = true;
+    }
+
+    // Plug
+    ['startPlug', 'endPlug'].forEach(function(name, i) {
+      if (setValidId(name, PLUG_KEY_2_ID, 'plugSE', i)) {
+        needsPlug = needsPlugOutline = needsPosition = true;
       }
-      needsLineOutline = addPropList('lineOutlineColor', needsLineOutline);
-      options.plugSE.forEach(function(plug, i) {
-        if (plug !== PLUG_BEHIND && options.plugOutlineEnabledSE[i] && !options.plugOutlineColorSE[i]) {
-          needsPlugOutlineSE[i] = addPropList('plugOutlineColor', needsPlugOutlineSE[i]);
-        }
-      });
+      if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
+        options.plugColorSE[i] = trimString(options.plugColorSE[i]);
+        needsPlug = true;
+      }
+      if (setValidType(name + 'Size', null, 'plugSizeSE', i, function(value) { return value > 0; })) {
+        needsPlug = needsPlugOutline = needsPosition = true;
+      }
+    });
+
+    // LineOutline
+    needsLineOutline = setValidType('outline', null, 'lineOutlineEnabled') || needsLineOutline;
+    if (setValidType('outlineColor', null, 'lineOutlineColor')) {
+      options.lineOutlineColor = trimString(options.lineOutlineColor);
+      needsLineOutline = needsPlugOutline = true;
     }
     if (setValidType('outlineSize', null, 'lineOutlineSize', null,
         function(value) { return value > 0 && value <= 0.48; })) {
-      needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
+      needsLineOutline = true;
     }
 
-    if (setValidType('color', null, 'lineColor')) {
-      if (typeof options.lineColor === 'string' && options.lineColor) {
-        options.lineColor = options.lineColor.trim();
+    // PlugOutline
+    ['startPlugOutline', 'endPlugOutline'].forEach(function(name, i) {
+      needsPlugOutline = setValidType(name, null, 'plugOutlineEnabledSE', i) || needsPlugOutline;
+      if (setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i)) {
+        options.plugOutlineColorSE[i] = trimString(options.plugOutlineColorSE[i]);
+        needsPlugOutline = true;
       }
-      needsLine = addPropList('lineColor', needsLine);
-      options.plugSE.forEach(function(plug, i) {
-        if (plug !== PLUG_BEHIND && !options.plugColorSE[i]) {
-          needsPlugSE[i] = addPropList('plugColor', needsPlugSE[i]);
-        }
-      });
-    }
-    if (setValidType('size', null, 'lineSize', null, function(value) { return value > 0; })) {
-      needsLine = addPropList('lineSize', needsLine);
-      needsPosition = true;
-      // For `plugOverhead` and `plugBCircle`.
-      needsPlugSE.forEach(function(list, i) { needsPlugSE[i] = addPropList('', list); });
-      if (options.lineOutlineEnabled) {
-        needsLineOutline = addPropList('lineOutlineSize', needsLineOutline);
-      }
-      [0, 1].forEach(function(i) {
-        if (options.plugOutlineEnabledSE[i]) {
-          needsPlugOutlineSE[i] = addPropList('plugOutlineSize', needsPlugOutlineSE[i]);
-        }
-      });
-    }
+      // `outlineMax` is checked in `updatePlugOutline`.
+      needsPlugOutline = setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
+        function(value) { return value >= 1; }) || needsPlugOutline;
+    });
 
     [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {
       var value = false; // `false` means no-update input.
@@ -2409,47 +2332,22 @@
       }
     })();
 
-    if (needsLine) { // Update styles of `line`.
-      updateLine(props, Array.isArray(needsLine) ? needsLine : null);
-    }
-    if (needsPlugSE[0] || needsPlugSE[1]) { // Update plugs.
-      updatePlug(props, [
-        /* eslint-disable eqeqeq */
-        needsPlugSE[0] == null ? [] : Array.isArray(needsPlugSE[0]) ? needsPlugSE[0] : null,
-        needsPlugSE[1] == null ? [] : Array.isArray(needsPlugSE[1]) ? needsPlugSE[1] : null]);
-        /* eslint-enable eqeqeq */
-    }
-    if (needsLineOutline) { // Update `lineOutline`.
-      updateLineOutline(props, Array.isArray(needsLineOutline) ? needsLineOutline : null);
-    }
-    if (needsPlugOutlineSE[0] || needsPlugOutlineSE[1]) { // Update `plugOutline`.
-      updatePlugOutline(props, [
-        needsPlugOutlineSE[0] == null ? [] : // eslint-disable-line eqeqeq
-          Array.isArray(needsPlugOutlineSE[0]) ? needsPlugOutlineSE[0] : null,
-        needsPlugOutlineSE[1] == null ? [] : // eslint-disable-line eqeqeq
-          Array.isArray(needsPlugOutlineSE[1]) ? needsPlugOutlineSE[1] : null]);
-    }
-    if (needsPosition) { // Call `position()`.
-      this.position();
-    }
-    // Since current EFFECT_CONF might have event-handlers, call `setEffect` at the end.
-    if (needsEffect) { // Update `effect`.
-      setEffect(props);
-    }
-
+    if (needsLine) { updateLine(props); }
+    if (needsPlug) { updatePlug(props); }
+    if (needsLineOutline) { updateLineOutline(props); }
+    if (needsPlugOutline) { updatePlugOutline(props); }
+    if (needsPosition && updatePosition(props)) { updatePath(props); }
+    updateViewBBox(props);
+    updateMask(props);
+    if (needsEffect) { setEffect(props); }
     return this;
   };
 
   LeaderLine.prototype.position = function() {
     var props = insProps[this._id];
-
-    if (updatePosition(props)) {
-      updatePath(props);
-    }
-
+    if (updatePosition(props)) { updatePath(props); }
     updateViewBBox(props);
     updateMask(props);
-
     return this;
   };
 
