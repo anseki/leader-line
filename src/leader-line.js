@@ -946,14 +946,14 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateLine(props) {
-    var options = props.options, update = false,
+    var options = props.options, updated = false,
       aplStats = props.aplLine, value;
 
     // lineColor
     if ((value = options.lineColor) !== aplStats.lineColor) {
       window.traceLog.push('lineColor=' + value); // [DEBUG/]
       props.lineFace.style.stroke = aplStats.lineColor = value;
-      update = true;
+      updated = true;
 
       if (props.effect && props.effect.onLineColor) {
         props.effect.onLineColor(props, value);
@@ -964,7 +964,7 @@
     if ((value = options.lineSize) !== aplStats.lineSize) {
       window.traceLog.push('lineSize=' + value); // [DEBUG/]
       props.lineShape.style.strokeWidth = aplStats.lineSize = value;
-      update = true;
+      updated = true;
       if (IS_GECKO || IS_TRIDENT) {
         // [TRIDENT] plugsFace is not updated when lineSize is changed
         // [GECKO] plugsFace is ignored
@@ -981,7 +981,7 @@
         props.effect.onLineSize(props, value);
       }
     }
-    return update;
+    return updated;
   }
 
   /**
@@ -989,7 +989,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updatePlug(props) {
-    var options = props.options, update = false,
+    var options = props.options, updated = false,
       curStats = props.curPlug, aplStats = props.aplPlug,
       curPlugOutline = props.curPlugOutline, curPosition = props.curPosition,
       curViewBBox = props.curViewBBox, curCapsMaskAnchor = props.curCapsMaskAnchor,
@@ -1003,7 +1003,7 @@
         window.traceLog.push('plugsEnabled=true'); // [DEBUG/]
         aplStats.plugsEnabled = true;
         props.plugsFace.style.display = 'inline';
-        update = true;
+        updated = true;
 
         if (props.effect && props.effect.onPlugsEnabled) {
           props.effect.onPlugsEnabled(props, true);
@@ -1026,7 +1026,7 @@
             props.plugsFace.style[marker.prop] = 'url(#' + props.plugMarkerIdSE[i] + ')';
             setMarkerOrient(props.plugMarkerSE[i], marker.orient,
               symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
-            update = true;
+            updated = true;
             if (IS_GECKO) {
               // [GECKO] plugsFace is not updated when plugSE is changed
               forceReflowAdd(props.plugsFace);
@@ -1043,7 +1043,7 @@
             window.traceLog.push('plugColorSE[' + i + ']=' + value); // [DEBUG/]
             curStats.plugColorTraSE[i] = getAlpha(value) < 1;
             props.plugFaceSE[i].style.fill = aplStats.plugColorSE[i] = value;
-            update = true;
+            updated = true;
 
             if (props.effect && props.effect.onPlugColorSE) {
               props.effect.onPlugColorSE(props, value, i);
@@ -1064,7 +1064,7 @@
               if ((value = curStats[statKey][i]) !== aplStats[statKey][i]) {
                 window.traceLog.push('Plug.' + statKey + '[' + i + ']'); // [DEBUG/]
                 props.plugMarkerSE[i][markerKey].baseVal.value = aplStats[statKey][i] = value;
-                update = true;
+                updated = true;
 
                 if (props.effect && props.effect[eventKey]) {
                   props.effect[eventKey](props, value, i);
@@ -1086,7 +1086,7 @@
             aplStats.plugSE[i] = plugId;
             marker = getMarkerProps(i);
             props.plugsFace.style[marker.prop] = 'none';
-            update = true;
+            updated = true;
 
             if (props.effect && props.effect.onPlugSE) {
               props.effect.onPlugSE(props, plugId, i);
@@ -1108,7 +1108,7 @@
         window.traceLog.push('plugsEnabled=false'); // [DEBUG/]
         aplStats.plugsEnabled = false;
         props.plugsFace.style.display = 'none';
-        update = true;
+        updated = true;
 
         if (props.effect && props.effect.onPlugsEnabled) {
           props.effect.onPlugsEnabled(props, false);
@@ -1122,7 +1122,7 @@
         curCapsMaskAnchor.enabledSE[i] = true;
       });
     }
-    return update;
+    return updated;
   }
 
   /**
@@ -1130,7 +1130,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateLineOutline(props) {
-    var options = props.options, update = false,
+    var options = props.options, updated = false,
       curStats = props.curLineOutline, aplStats = props.aplLineOutline, value;
 
     if (options.lineOutlineEnabled) {
@@ -1140,7 +1140,7 @@
         window.traceLog.push('lineOutlineEnabled=true'); // [DEBUG/]
         aplStats.lineOutlineEnabled = true;
         props.lineOutlineFace.style.display = 'inline';
-        update = true;
+        updated = true;
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
           props.effect.onLineOutlineEnabled(props, true);
@@ -1152,7 +1152,7 @@
         window.traceLog.push('lineOutlineColor=' + value); // [DEBUG/]
         curStats.lineOutlineColorTra = getAlpha(value) < 1;
         props.lineOutlineFace.style.stroke = aplStats.lineOutlineColor = value;
-        update = true;
+        updated = true;
 
         if (props.effect && props.effect.onLineOutlineColor) {
           props.effect.onLineOutlineColor(props, value);
@@ -1166,7 +1166,7 @@
         window.traceLog.push('lineOutlineSize=' + value); // [DEBUG/]
         props.lineOutlineMaskShape.style.strokeWidth = aplStats.lineOutlineSize = value;
         props.lineMaskShape.style.strokeWidth = value + SHAPE_GAP * 2;
-        update = true;
+        updated = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
           forceReflowAdd(props.lineOutlineMaskCaps);
@@ -1186,7 +1186,7 @@
         window.traceLog.push('lineOutlineEnabled=false'); // [DEBUG/]
         aplStats.lineOutlineEnabled = false;
         props.lineOutlineFace.style.display = 'none';
-        update = true;
+        updated = true;
 
         if (props.effect && props.effect.onLineOutlineEnabled) {
           props.effect.onLineOutlineEnabled(props, false);
@@ -1194,7 +1194,7 @@
       }
     }
     props.curMask.lineOutlineEnabled = options.lineOutlineEnabled;
-    return update;
+    return updated;
   }
 
   /**
@@ -1202,7 +1202,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updatePlugOutline(props) {
-    var options = props.options, update = false,
+    var options = props.options, updated = false,
       curStats = props.curPlugOutline, aplStats = props.aplPlugOutline;
 
     if (props.curPlug.plugsEnabled) {
@@ -1220,7 +1220,7 @@
             aplStats.plugOutlineEnabledSE[i] = true;
             props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
             props.plugOutlineFaceSE[i].style.display = 'inline';
-            update = true;
+            updated = true;
 
             if (props.effect && props.effect.onPlugSE) {
               props.effect.onPlugSE(props, plugId, i);
@@ -1240,7 +1240,7 @@
               mask.width.baseVal.value = symbolConf.bBox.width;
               mask.height.baseVal.value = symbolConf.bBox.height;
             });
-            update = true;
+            updated = true;
 
             if (props.effect && props.effect.onPlugOutlineEnabledSE) {
               props.effect.onPlugOutlineEnabledSE(props, true, i);
@@ -1254,7 +1254,7 @@
             window.traceLog.push('plugOutlineColorSE[' + i + ']=' + value); // [DEBUG/]
             curStats.plugOutlineColorTraSE[i] = getAlpha(value) < 1;
             props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutlineColorSE[i] = value;
-            update = true;
+            updated = true;
 
             if (props.effect && props.effect.onPlugOutlineColorSE) {
               props.effect.onPlugOutlineColorSE(props, value, i);
@@ -1272,7 +1272,7 @@
             props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
             props.plugMaskShapeSE[i].style.strokeWidth =
               value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
-            update = true;
+            updated = true;
 
             if (props.effect && props.effect.onPlugOutlineSizeSE) {
               props.effect.onPlugOutlineSizeSE(props, value, i);
@@ -1287,7 +1287,7 @@
             aplStats.plugOutlineEnabledSE[i] = false;
             props.plugFaceSE[i].style.mask = 'none';
             props.plugOutlineFaceSE[i].style.display = 'none';
-            update = true;
+            updated = true;
 
             if (props.effect && props.effect.onPlugOutlineEnabledSE) {
               props.effect.onPlugOutlineEnabledSE(props, plugId, i);
@@ -1299,7 +1299,7 @@
     } else {
       curStats.plugOutlineEnabledSE[0] = curStats.plugOutlineEnabledSE[1] = false;
     }
-    return update;
+    return updated;
   }
 
   /**
@@ -1308,7 +1308,7 @@
    */
   function updatePosition(props) {
     window.traceLog.push('<position>'); // [DEBUG/]
-    var options = props.options, update = false,
+    var options = props.options, updated = false,
       curStats = props.curPosition,
       curStatsSocketXYSE = curStats.socketXYSE,
       curCapsMaskAnchor = props.curCapsMaskAnchor,
@@ -1729,13 +1729,13 @@
       })();
 
       applyStats(props, 'Position');
-      update = true;
+      updated = true;
 
       if (props.effect && props.effect.onPosition) {
         props.effect.onPosition(props, pathList);
       }
     }
-    return update;
+    return updated;
   }
 
   /**
@@ -1743,7 +1743,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updatePath(props) {
-    var update = false, curStatsPathData,
+    var updated = false, curStatsPathData,
       pathList = props.pathList.baseVal,
       pathEdge = props.curViewBBox.pathEdge;
 
@@ -1768,7 +1768,7 @@
       window.traceLog.push('setPathData'); // [DEBUG/]
       props.linePath.setPathData(curStatsPathData);
       props.aplPath.pathData = curStatsPathData;
-      update = true;
+      updated = true;
 
       if (IS_TRIDENT) {
         // [TRIDENT] markerOrient is not updated when path is changed
@@ -1784,7 +1784,7 @@
         props.effect.onSetPathData(props, pathList);
       }
     }
-    return update;
+    return updated;
   }
 
   /**
@@ -1792,7 +1792,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateViewBBox(props) {
-    var update = false, curStats = props.curViewBBox, aplStats = props.aplViewBBox,
+    var updated = false, curStats = props.curViewBBox, aplStats = props.aplViewBBox,
       curStatsPathEdge = curStats.pathEdge,
       padding = Math.max(props.options.lineSize / 2,
         curStats.plugBCircleSE[0] || 0, curStats.plugBCircleSE[1] || 0),
@@ -1818,10 +1818,10 @@
         viewBox[boxKey] = aplStats[boxKey] = value;
         styles[BBOX_PROP[boxKey]] = value +
           (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
-        update = true;
+        updated = true;
       }
     });
-    return update;
+    return updated;
   }
 
   /**
@@ -1829,7 +1829,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateMask(props) {
-    var update = false, curMask = props.curMask, aplMask = props.aplMask,
+    var updated = false, curMask = props.curMask, aplMask = props.aplMask,
       curCapsMaskAnchor = props.curCapsMaskAnchor, aplCapsMaskAnchor = props.aplCapsMaskAnchor,
       curCapsMaskMarker = props.curCapsMaskMarker, aplCapsMaskMarker = props.aplCapsMaskMarker,
       curPlug = props.curPlug,
@@ -1858,7 +1858,7 @@
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('maskBGRect.' + boxKey); // [DEBUG/]
           props.maskBGRect[boxKey].baseVal.value = aplMask[statKey] = value;
-          update = true;
+          updated = true;
         }
       });
     }
@@ -1875,7 +1875,7 @@
           props.lineMaskBG.style.display = 'inline';
           props.lineMaskShape.style.display = 'none';
         }
-        update = true;
+        updated = true;
       }
 
       if (curMask.capsEnabled) {
@@ -1885,7 +1885,7 @@
           window.traceLog.push('capsEnabled=true'); // [DEBUG/]
           aplMask.capsEnabled = true;
           props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display = 'inline';
-          update = true;
+          updated = true;
         }
 
         // CapsMaskAnchor
@@ -1895,21 +1895,21 @@
               window.traceLog.push('CapsMaskAnchor.enabledSE[' + i + ']=true'); // [DEBUG/]
               aplCapsMaskAnchor.enabledSE[i] = true;
               props.capsMaskAnchorSE[i].style.display = 'inline';
-              update = true;
+              updated = true;
             }
             ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
               var statKey = boxKey + 'SE';
               if ((value = curCapsMaskAnchor[statKey][i]) !== aplCapsMaskAnchor[statKey][i]) {
                 window.traceLog.push('CapsMaskAnchor.' + boxKey + '[' + i + ']'); // [DEBUG/]
                 props.capsMaskAnchorSE[i][boxKey].baseVal.value = aplCapsMaskAnchor[statKey][i] = value;
-                update = true;
+                updated = true;
               }
             });
           } else if (aplCapsMaskAnchor.enabledSE[i]) {
             window.traceLog.push('CapsMaskAnchor.enabledSE[' + i + ']=false'); // [DEBUG/]
             aplCapsMaskAnchor.enabledSE[i] = false;
             props.capsMaskAnchorSE[i].style.display = 'none';
-            update = true;
+            updated = true;
           }
         });
 
@@ -1920,7 +1920,7 @@
             window.traceLog.push('capsMarkersEnabled=true'); // [DEBUG/]
             aplMask.capsMarkersEnabled = true;
             props.capsMaskLine.style.display = 'inline';
-            update = true;
+            updated = true;
           }
 
           // CapsMaskMarker
@@ -1941,7 +1941,7 @@
                 props.capsMaskLine.style[marker.prop] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
                 setMarkerOrient(props.capsMaskMarkerSE[i], marker.orient,
                   symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
-                update = true;
+                updated = true;
                 if (IS_GECKO) {
                   // [GECKO] plugsFace is not updated when plugSE is changed
                   forceReflowAdd(props.capsMaskLine);
@@ -1954,7 +1954,7 @@
                 if ((value = curCapsMaskMarker[statKey][i]) !== aplCapsMaskMarker[statKey][i]) {
                   window.traceLog.push('CapsMaskMarker.' + statKey + '[' + i + ']'); // [DEBUG/]
                   props.capsMaskMarkerSE[i][markerKey].baseVal.value = aplCapsMaskMarker[statKey][i] = value;
-                  update = true;
+                  updated = true;
                 }
               });
 
@@ -1963,7 +1963,7 @@
               aplCapsMaskMarker.enabledSE[i] = false;
               marker = getMarkerProps(i);
               props.capsMaskLine.style[marker.prop] = 'none';
-              update = true;
+              updated = true;
             }
           });
 
@@ -1972,7 +1972,7 @@
           window.traceLog.push('capsMarkersEnabled=false'); // [DEBUG/]
           aplMask.capsMarkersEnabled = false;
           props.capsMaskLine.style.display = 'none';
-          update = true;
+          updated = true;
         }
 
       } else if (aplMask.capsEnabled) {
@@ -1980,7 +1980,7 @@
         window.traceLog.push('capsEnabled=false'); // [DEBUG/]
         aplMask.capsEnabled = false;
         props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display = 'none';
-        update = true;
+        updated = true;
       }
 
       // lineMask
@@ -1988,14 +1988,14 @@
         window.traceLog.push('lineMaskEnabled=true'); // [DEBUG/]
         aplMask.lineMaskEnabled = true;
         props.lineFace.style.mask = 'url(#' + props.lineMaskId + ')';
-        update = true;
+        updated = true;
       }
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'lineMask' + boxKey.toUpperCase();
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('lineMask.' + boxKey); // [DEBUG/]
           props.lineMask[boxKey].baseVal.value = aplMask[statKey] = value;
-          update = true;
+          updated = true;
         }
       });
 
@@ -2004,7 +2004,7 @@
       window.traceLog.push('lineMaskEnabled=false'); // [DEBUG/]
       aplMask.lineMaskEnabled = false;
       props.lineFace.style.mask = 'none';
-      update = true;
+      updated = true;
     }
 
     // lineOutlineMask
@@ -2014,11 +2014,11 @@
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
           window.traceLog.push('lineOutlineMask.' + boxKey); // [DEBUG/]
           props.lineOutlineMask[boxKey].baseVal.value = aplMask[statKey] = value;
-          update = true;
+          updated = true;
         }
       });
     }
-    return update;
+    return updated;
   }
 
   /**
@@ -2043,6 +2043,42 @@
       props.effect = null;
       props.effectParams = {};
     }
+  }
+
+  /**
+   * Apply current `options`.
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {Object} needs - `group` of stats.
+   * @returns {void}
+   */
+  function update(props, needs) {
+    var updated = {};
+    if (needs.Line) {
+      updated.Line = updateLine(props);
+    }
+    if (needs.Plug || updated.Line) {
+      updated.Plug = updatePlug(props);
+    }
+    if (needs.LineOutline || updated.Line) {
+      updated.LineOutline = updateLineOutline(props);
+    }
+    if (needs.PlugOutline || updated.Line || updated.Plug || updated.LineOutline) {
+      updated.PlugOutline = updatePlugOutline(props);
+    }
+    if ((needs.Position || updated.Line || updated.Plug) && (updated.Position = updatePosition(props))) {
+      updated.Path = updatePath(props);
+    }
+    updated.ViewBBox = updateViewBBox(props);
+    updated.Mask = updateMask(props);
+    if (needs.Effect) {
+      setEffect(props);
+    }
+
+    if (IS_BLINK && updated.Line && !updated.Path) {
+      // [BLINK] lineSize is not updated when path is not changed
+      forceReflowAdd(props.lineShape);
+    }
+    forceReflowApply();
   }
 
   /**
@@ -2190,13 +2226,7 @@
       plugOutlineSizeSE       startPlugOutlineSize, endPlugOutlineSize
     */
     var props = insProps[this._id], options = props.options,
-      newWindow, needsWindow,
-      needsLine, needsPlug, needsLineOutline, needsPlugOutline, needsPosition,
-      /* eslint-disable no-unused-vars */
-      updatedLine, updatedPlug, updatedLineOutline, updatedPlugOutline, updatedPosition,
-      updatedPath, updatedViewBBox, updatedMask,
-      /* eslint-enable no-unused-vars */
-      needsEffect;
+      newWindow, needsWindow, needs = {};
 
     function getCurOption(name, optionName, index) {
       var curOption = {};
@@ -2220,24 +2250,24 @@
     }
 
     function setValidId(name, key2Id, optionName, index) {
-      var curOption = getCurOption(name, optionName, index), update, key, id;
+      var curOption = getCurOption(name, optionName, index), updated, key, id;
       if (newOptions[name] != null && // eslint-disable-line eqeqeq
           (key = (newOptions[name] + '').toLowerCase()) && (
             curOption.acceptsAuto && key === KEYWORD_AUTO ||
             (id = key2Id[key])
           ) && id !== curOption.container[curOption.key]) {
         curOption.container[curOption.key] = id; // `undefined` when `KEYWORD_AUTO`
-        update = true;
+        updated = true;
       }
       if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
         curOption.container[curOption.key] = curOption.default;
-        update = true;
+        updated = true;
       }
-      return update;
+      return updated;
     }
 
-    function setValidType(name, type, optionName, index, check) {
-      var curOption = getCurOption(name, optionName, index), update, value;
+    function setValidType(name, type, optionName, index, check, trim) {
+      var curOption = getCurOption(name, optionName, index), updated, value;
       if (!type) {
         if (curOption.default == null) { throw new Error('Invalid `type`: ' + name); } // eslint-disable-line eqeqeq
         type = typeof curOption.default;
@@ -2246,18 +2276,16 @@
             curOption.acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
             typeof (value = newOptions[name]) === type && (!check || check(value))
           ) && value !== curOption.container[curOption.key]) {
-        curOption.container[curOption.key] = value; // `undefined` when `KEYWORD_AUTO`
-        update = true;
+        curOption.container[curOption.key] =
+          trim && typeof value === 'string' && value ? value.trim() :
+          value; // `undefined` when `KEYWORD_AUTO`
+        updated = true;
       }
       if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
         curOption.container[curOption.key] = curOption.default;
-        update = true;
+        updated = true;
       }
-      return update;
-    }
-
-    function trimString(value) {
-      return typeof value === 'string' && value ? value.trim() : value;
+      return updated;
     }
 
     newOptions = newOptions || {};
@@ -2267,7 +2295,7 @@
       if (newOption && newOption.nodeType != null && // eslint-disable-line eqeqeq
           newOption !== options.anchorSE[i]) {
         options.anchorSE[i] = newOption;
-        needsWindow = needsPosition = true;
+        needsWindow = needs.Position = true;
       }
     });
     if (!options.anchorSE[0] || !options.anchorSE[1] || options.anchorSE[0] === options.anchorSE[1]) {
@@ -2278,12 +2306,12 @@
     if (needsWindow &&
         (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
-      needsLine = needsPlug = needsLineOutline = needsPlugOutline = needsEffect = true;
+      needs.Line = needs.Plug = needs.LineOutline = needs.PlugOutline = needs.Effect = true;
     }
 
-    needsPosition = setValidId('path', PATH_KEY_2_ID) || needsPosition;
-    needsPosition = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needsPosition;
-    needsPosition = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needsPosition;
+    needs.Position = setValidId('path', PATH_KEY_2_ID) || needs.Position;
+    needs.Position = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needs.Position;
+    needs.Position = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needs.Position;
 
     // socketGravitySE
     [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {
@@ -2311,49 +2339,37 @@
         }
         if (value !== false) {
           options.socketGravitySE[i] = value;
-          needsPosition = true;
+          needs.Position = true;
         }
       }
     });
 
     // Line
-    if (setValidType('color', null, 'lineColor')) {
-      options.lineColor = trimString(options.lineColor);
-      needsLine = true;
-    }
-    needsLine = setValidType('size', null, 'lineSize', null,
-      function(value) { return value > 0; }) || needsLine;
+    needs.Line = setValidType('color', null, 'lineColor', null, null, true) || needs.Line;
+    needs.Line = setValidType('size', null, 'lineSize', null,
+      function(value) { return value > 0; }) || needs.Line;
 
     // Plug
     ['startPlug', 'endPlug'].forEach(function(name, i) {
-      needsPlug = setValidId(name, PLUG_KEY_2_ID, 'plugSE', i) || needsPlug;
-      if (setValidType(name + 'Color', 'string', 'plugColorSE', i)) {
-        options.plugColorSE[i] = trimString(options.plugColorSE[i]);
-        needsPlug = true;
-      }
-      needsPlug = setValidType(name + 'Size', null, 'plugSizeSE', i,
-        function(value) { return value > 0; }) || needsPlug;
+      needs.Plug = setValidId(name, PLUG_KEY_2_ID, 'plugSE', i) || needs.Plug;
+      needs.Plug = setValidType(name + 'Color', 'string', 'plugColorSE', i, null, true) || needs.Plug;
+      needs.Plug = setValidType(name + 'Size', null, 'plugSizeSE', i,
+        function(value) { return value > 0; }) || needs.Plug;
     });
 
     // LineOutline
-    needsLineOutline = setValidType('outline', null, 'lineOutlineEnabled') || needsLineOutline;
-    if (setValidType('outlineColor', null, 'lineOutlineColor')) {
-      options.lineOutlineColor = trimString(options.lineOutlineColor);
-      needsLineOutline = true;
-    }
-    needsLineOutline = setValidType('outlineSize', null, 'lineOutlineSize', null,
-      function(value) { return value > 0 && value <= 0.48; }) || needsLineOutline;
+    needs.LineOutline = setValidType('outline', null, 'lineOutlineEnabled') || needs.LineOutline;
+    needs.LineOutline = setValidType('outlineColor', null, 'lineOutlineColor') || needs.LineOutline;
+    needs.LineOutline = setValidType('outlineSize', null, 'lineOutlineSize', null,
+      function(value) { return value > 0 && value <= 0.48; }) || needs.LineOutline;
 
     // PlugOutline
     ['startPlugOutline', 'endPlugOutline'].forEach(function(name, i) {
-      needsPlugOutline = setValidType(name, null, 'plugOutlineEnabledSE', i) || needsPlugOutline;
-      if (setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i)) {
-        options.plugOutlineColorSE[i] = trimString(options.plugOutlineColorSE[i]);
-        needsPlugOutline = true;
-      }
+      needs.PlugOutline = setValidType(name, null, 'plugOutlineEnabledSE', i) || needs.PlugOutline;
+      needs.PlugOutline = setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i) || needs.PlugOutline;
       // `outlineMax` is checked in `updatePlugOutline`.
-      needsPlugOutline = setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
-        function(value) { return value >= 1; }) || needsPlugOutline;
+      needs.PlugOutline = setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
+        function(value) { return value >= 1; }) || needs.PlugOutline;
     });
 
     // effect
@@ -2373,51 +2389,22 @@
             if (!options.effect || effectName !== options.effect[0] ||
                 hasChanged(options.effect[1], effectParams)) {
               options.effect = [effectName, effectParams];
-              needsEffect = true;
+              needs.Effect = true;
             }
           }
         } else if (options.effect) { // on -> off
           options.effect = null;
-          needsEffect = true;
+          needs.Effect = true;
         }
       }
     })();
 
-    if (needsLine) {
-      updatedLine = updateLine(props);
-    }
-    if (needsPlug || updatedLine) {
-      updatedPlug = updatePlug(props);
-    }
-    if (needsLineOutline || updatedLine) {
-      updatedLineOutline = updateLineOutline(props);
-    }
-    if (needsPlugOutline || updatedLine || updatedPlug || updatedLineOutline) {
-      updatedPlugOutline = updatePlugOutline(props);
-    }
-    if ((needsPosition || updatedLine || updatedPlug) && (updatedPosition = updatePosition(props))) {
-      updatedPath = updatePath(props);
-    }
-    updatedViewBBox = updateViewBBox(props);
-    updatedMask = updateMask(props);
-    if (needsEffect) {
-      setEffect(props);
-    }
-
-    if (IS_BLINK && updatedLine && !updatedPath) {
-      // [BLINK] lineSize is not updated when path is not changed
-      forceReflowAdd(props.lineShape);
-    }
-    forceReflowApply();
-
+    update(props, needs);
     return this;
   };
 
   LeaderLine.prototype.position = function() {
-    var props = insProps[this._id];
-    if (updatePosition(props)) { updatePath(props); }
-    updateViewBBox(props);
-    updateMask(props);
+    update(insProps[this._id], {Position: true});
     return this;
   };
 
