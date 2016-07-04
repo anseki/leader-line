@@ -155,7 +155,8 @@
         plugOutlineEnabledSE: {hasSE: true},
         plugOutlineColorSE: {hasSE: true},
         plugOutlineColorTraSE: {hasSE: true},
-        plugOutlineSizeSE: {hasSE: true}
+        plugOutlineSizeSE: {hasSE: true},
+        plugOutlineSizeISE: {hasSE: true}
       },
       Position: {
         socketXYSE: {hasSE: true, hasProps: true,
@@ -1018,12 +1019,14 @@
 
           // plugSE
           if (plugId !== aplStats.plugSE[i]) {
+            marker = getMarkerProps(i, symbolConf);
+            if (aplStats.plugSE[i] === PLUG_BEHIND) {
+              window.traceLog.push('plugSE[' + i + ']=!PLUG_BEHIND'); // [DEBUG/]
+              props.plugsFace.style[marker.prop] = 'url(#' + props.plugMarkerIdSE[i] + ')';
+            }
             window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
             aplStats.plugSE[i] = plugId;
-            marker = getMarkerProps(i, symbolConf);
             props.plugFaceSE[i].href.baseVal = '#' + symbolConf.elmId;
-            // Since TRIDENT doesn't show markers, set those before `setMarkerOrient` (it calls `forceReflow`).
-            props.plugsFace.style[marker.prop] = 'url(#' + props.plugMarkerIdSE[i] + ')';
             setMarkerOrient(props.plugMarkerSE[i], marker.orient,
               symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
             updated = true;
@@ -1081,15 +1084,14 @@
         } else {
 
           // plugSE
-          if (plugId !== aplStats.plugSE[i]) {
-            window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
-            aplStats.plugSE[i] = plugId;
-            marker = getMarkerProps(i);
-            props.plugsFace.style[marker.prop] = 'none';
+          if (aplStats.plugSE[i] !== PLUG_BEHIND) {
+            window.traceLog.push('plugSE[' + i + ']=PLUG_BEHIND'); // [DEBUG/]
+            aplStats.plugSE[i] = PLUG_BEHIND;
+            props.plugsFace.style[getMarkerProps(i).prop] = 'none';
             updated = true;
 
             if (props.effect && props.effect.onPlugSE) {
-              props.effect.onPlugSE(props, plugId, i);
+              props.effect.onPlugSE(props, PLUG_BEHIND, i);
             }
           }
 
@@ -1270,12 +1272,23 @@
           if ((value = curStats.plugOutlineSizeSE[i]) !== aplStats.plugOutlineSizeSE[i]) {
             window.traceLog.push('plugOutlineSizeSE[' + i + ']=' + value); // [DEBUG/]
             props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeSE[i] = value;
-            props.plugMaskShapeSE[i].style.strokeWidth =
-              value - SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
             updated = true;
 
             if (props.effect && props.effect.onPlugOutlineSizeSE) {
               props.effect.onPlugOutlineSizeSE(props, value, i);
+            }
+          }
+
+          // plugOutlineSizeISE
+          curStats.plugOutlineSizeISE[i] = curStats.plugOutlineSizeSE[i] -
+            SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
+          if ((value = curStats.plugOutlineSizeISE[i]) !== aplStats.plugOutlineSizeISE[i]) {
+            window.traceLog.push('plugOutlineSizeISE[' + i + ']=' + value); // [DEBUG/]
+            props.plugMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeISE[i] = value;
+            updated = true;
+
+            if (props.effect && props.effect.onPlugOutlineSizeISE) {
+              props.effect.onPlugOutlineSizeISE(props, value, i);
             }
           }
 
@@ -2065,7 +2078,8 @@
     if (needs.PlugOutline || updated.Line || updated.Plug || updated.LineOutline) {
       updated.PlugOutline = updatePlugOutline(props);
     }
-    if ((needs.Position || updated.Line || updated.Plug) && (updated.Position = updatePosition(props))) {
+    if ((needs.Position || updated.Line || updated.Plug) &&
+        (updated.Position = updatePosition(props))) {
       updated.Path = updatePath(props);
     }
     updated.ViewBBox = updateViewBBox(props);
