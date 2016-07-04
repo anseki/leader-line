@@ -957,6 +957,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateLine(props) {
+    window.traceLog.push('<updateLine>'); // [DEBUG/]
     var options = props.options, updated = false,
       aplStats = props.aplLine, value;
 
@@ -1000,6 +1001,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updatePlug(props) {
+    window.traceLog.push('<updatePlug>'); // [DEBUG/]
     var options = props.options, updated = false,
       curStats = props.curPlug, aplStats = props.aplPlug,
       curPlugOutline = props.curPlugOutline, curPosition = props.curPosition,
@@ -1075,7 +1077,7 @@
             .forEach(function(whKeys) {
               var markerKey = whKeys[0], statKey = whKeys[1], eventKey = whKeys[2];
               if ((value = curStats[statKey][i]) !== aplStats[statKey][i]) {
-                window.traceLog.push('Plug.' + statKey + '[' + i + ']'); // [DEBUG/]
+                window.traceLog.push(statKey + '[' + i + ']'); // [DEBUG/]
                 props.plugMarkerSE[i][markerKey].baseVal.value = aplStats[statKey][i] = value;
                 updated = true;
 
@@ -1142,6 +1144,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateLineOutline(props) {
+    window.traceLog.push('<updateLineOutline>'); // [DEBUG/]
     var options = props.options, updated = false,
       curStats = props.curLineOutline, aplStats = props.aplLineOutline, value;
 
@@ -1214,6 +1217,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updatePlugOutline(props) {
+    window.traceLog.push('<updatePlugOutline>'); // [DEBUG/]
     var options = props.options, updated = false,
       curStats = props.curPlugOutline, aplStats = props.aplPlugOutline;
 
@@ -1330,7 +1334,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updatePosition(props) {
-    window.traceLog.push('<position>'); // [DEBUG/]
+    window.traceLog.push('<updatePosition>'); // [DEBUG/]
     var options = props.options, updated = false,
       curStats = props.curPosition,
       curStatsSocketXYSE = curStats.socketXYSE,
@@ -1766,6 +1770,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updatePath(props) {
+    window.traceLog.push('<updatePath>'); // [DEBUG/]
     var updated = false, curStatsPathData,
       pathList = props.pathList.baseVal,
       pathEdge = props.curViewBBox.pathEdge;
@@ -1815,6 +1820,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateViewBBox(props) {
+    window.traceLog.push('<updateViewBBox>'); // [DEBUG/]
     var updated = false, curStats = props.curViewBBox, aplStats = props.aplViewBBox,
       curStatsPathEdge = curStats.pathEdge,
       padding = Math.max(props.options.lineSize / 2,
@@ -1837,7 +1843,7 @@
     ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
       var value;
       if ((value = curStats[boxKey]) !== aplStats[boxKey]) {
-        window.traceLog.push('viewBox.' + boxKey); // [DEBUG/]
+        window.traceLog.push(boxKey); // [DEBUG/]
         viewBox[boxKey] = aplStats[boxKey] = value;
         styles[BBOX_PROP[boxKey]] = value +
           (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
@@ -1852,6 +1858,7 @@
    * @returns {boolean} - `true` if it was changed.
    */
   function updateMask(props) {
+    window.traceLog.push('<updateMask>'); // [DEBUG/]
     var updated = false, curMask = props.curMask, aplMask = props.aplMask,
       curCapsMaskAnchor = props.curCapsMaskAnchor, aplCapsMaskAnchor = props.aplCapsMaskAnchor,
       curCapsMaskMarker = props.curCapsMaskMarker, aplCapsMaskMarker = props.aplCapsMaskMarker,
@@ -1879,7 +1886,7 @@
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'maskBGRect' + boxKey.toUpperCase();
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
-          window.traceLog.push('maskBGRect.' + boxKey); // [DEBUG/]
+          window.traceLog.push(statKey); // [DEBUG/]
           props.maskBGRect[boxKey].baseVal.value = aplMask[statKey] = value;
           updated = true;
         }
@@ -1923,7 +1930,7 @@
             ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
               var statKey = boxKey + 'SE';
               if ((value = curCapsMaskAnchor[statKey][i]) !== aplCapsMaskAnchor[statKey][i]) {
-                window.traceLog.push('CapsMaskAnchor.' + boxKey + '[' + i + ']'); // [DEBUG/]
+                window.traceLog.push('CapsMaskAnchor.' + statKey + '[' + i + ']'); // [DEBUG/]
                 props.capsMaskAnchorSE[i][boxKey].baseVal.value = aplCapsMaskAnchor[statKey][i] = value;
                 updated = true;
               }
@@ -1955,15 +1962,19 @@
               symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
               marker = getMarkerProps(i, symbolConf);
 
-              if (!aplCapsMaskMarker.enabledSE[i] || plugId !== aplCapsMaskMarker.plugSE[i]) {
+              if (!aplCapsMaskMarker.enabledSE[i]) {
                 window.traceLog.push('CapsMaskMarker.enabledSE[' + i + ']=true'); // [DEBUG/]
-                window.traceLog.push('plugSE[' + i + ']=' + plugId); // [DEBUG/]
                 aplCapsMaskMarker.enabledSE[i] = true;
-                aplCapsMaskMarker.plugSE[i] = plugId;
-                props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
                 props.capsMaskLine.style[marker.prop] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
                 setMarkerOrient(props.capsMaskMarkerSE[i], marker.orient,
                   symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
+                updated = true;
+              }
+
+              if (plugId !== aplCapsMaskMarker.plugSE[i]) {
+                window.traceLog.push('CapsMaskMarker.plugSE[' + i + ']=' + plugId); // [DEBUG/]
+                aplCapsMaskMarker.plugSE[i] = plugId;
+                props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
                 updated = true;
                 if (IS_GECKO) {
                   // [GECKO] plugsFace is not updated when plugSE is changed
@@ -1984,8 +1995,7 @@
             } else if (aplCapsMaskMarker.enabledSE[i]) {
               window.traceLog.push('CapsMaskMarker.enabledSE[' + i + ']=false'); // [DEBUG/]
               aplCapsMaskMarker.enabledSE[i] = false;
-              marker = getMarkerProps(i);
-              props.capsMaskLine.style[marker.prop] = 'none';
+              props.capsMaskLine.style[getMarkerProps(i).prop] = 'none';
               updated = true;
             }
           });
@@ -2016,7 +2026,7 @@
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'lineMask' + boxKey.toUpperCase();
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
-          window.traceLog.push('lineMask.' + boxKey); // [DEBUG/]
+          window.traceLog.push(statKey); // [DEBUG/]
           props.lineMask[boxKey].baseVal.value = aplMask[statKey] = value;
           updated = true;
         }
@@ -2035,7 +2045,7 @@
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'lineOutlineMask' + boxKey.toUpperCase();
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
-          window.traceLog.push('lineOutlineMask.' + boxKey); // [DEBUG/]
+          window.traceLog.push(statKey); // [DEBUG/]
           props.lineOutlineMask[boxKey].baseVal.value = aplMask[statKey] = value;
           updated = true;
         }
@@ -2230,7 +2240,6 @@
    * @returns {void}
    */
   LeaderLine.prototype.setOptions = function(newOptions) {
-    window.traceLog.push('<setOptions>'); // [DEBUG/]
     /*
       Names of `options`      Keys of API (properties of `newOptions`)
       ----------------------------------------
@@ -2433,7 +2442,6 @@
   };
 
   LeaderLine.prototype.remove = function() {
-    window.traceLog.push('<remove>'); // [DEBUG/]
     var props = insProps[this._id];
     if (props.baseWindow && props.svg) {
       props.baseWindow.document.body.removeChild(props.svg);
