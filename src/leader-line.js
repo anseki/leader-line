@@ -1966,8 +1966,6 @@
                 window.traceLog.push('CapsMaskMarker.enabledSE[' + i + ']=true'); // [DEBUG/]
                 aplCapsMaskMarker.enabledSE[i] = true;
                 props.capsMaskLine.style[marker.prop] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
-                setMarkerOrient(props.capsMaskMarkerSE[i], marker.orient,
-                  symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
                 updated = true;
               }
 
@@ -1975,6 +1973,8 @@
                 window.traceLog.push('CapsMaskMarker.plugSE[' + i + ']=' + plugId); // [DEBUG/]
                 aplCapsMaskMarker.plugSE[i] = plugId;
                 props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
+                setMarkerOrient(props.capsMaskMarkerSE[i], marker.orient,
+                  symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
                 updated = true;
                 if (IS_GECKO) {
                   // [GECKO] plugsFace is not updated when plugSE is changed
