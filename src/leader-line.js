@@ -665,6 +665,61 @@
   }
 
   /**
+   * Apply `orient` (and `viewBox`) to `marker`.
+   * @param {SVGMarkerElement} marker - Target `<marker>` element.
+   * @param {string} orient - `'auto'`, `'auto-start-reverse'` or angle.
+   * @param {BBox} bBox - `BBox` as `viewBox` of the marker.
+   * @param {SVGSVGElement} svg - Parent `<svg>` element.
+   * @param {SVGElement} shape - An element that is shown as marker.
+   * @param {SVGElement} marked - Target element that has `marker-start/end` such as `<path>`.
+   * @returns {void}
+   */
+  function setMarkerOrient(marker, orient, bBox, svg, shape, marked) {
+    var transform, viewBox, reverseView;
+    // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of
+    // `SVGMarkerElement` don't work in browsers other than Chrome.
+    if (orient === 'auto-start-reverse') {
+      if (typeof svg2Supported !== 'boolean') {
+        marker.setAttribute('orient', 'auto-start-reverse');
+        svg2Supported = marker.orientType.baseVal === SVGMarkerElement.SVG_MARKER_ORIENT_UNKNOWN;
+      }
+      if (svg2Supported) {
+        marker.setAttribute('orient', orient);
+      } else {
+        transform = svg.createSVGTransform();
+        transform.setRotate(180, 0, 0);
+        shape.transform.baseVal.appendItem(transform);
+        marker.setAttribute('orient', 'auto');
+        reverseView = true;
+      }
+    } else {
+      marker.setAttribute('orient', orient);
+      if (svg2Supported === false) { shape.transform.baseVal.clear(); }
+    }
+
+    viewBox = marker.viewBox.baseVal;
+    if (reverseView) {
+      viewBox.x = -bBox.right;
+      viewBox.y = -bBox.bottom;
+    } else {
+      viewBox.x = bBox.left;
+      viewBox.y = bBox.top;
+    }
+    viewBox.width = bBox.width;
+    viewBox.height = bBox.height;
+
+    // [TRIDENT] markerOrient is not updated when plugSE is changed
+    if (IS_TRIDENT) { forceReflowAdd(marked); }
+  }
+
+  function getMarkerProps(i, symbolConf) {
+    return {
+      prop: i ? 'markerEnd' : 'markerStart',
+      orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
+    };
+  }
+
+  /**
    * Setup `baseWindow`, `bodyOffset`, `pathList`,
    *    stats (`cur*` and `apl*`), `effect`, `effectParams`, SVG elements.
    * @param {props} props - `props` of `LeaderLine` instance.
@@ -884,63 +939,18 @@
     props.effect = null;
     if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
     props.effectParams = {};
+
+    // Init stats
+    // Plug.plugSE
+    props.aplPlug.plugSE[0] = props.aplPlug.plugSE[1] = PLUG_BEHIND;
+    // Plug.plugsEnabled
+    props.plugsFace.style.display = 'none';
+    // LineOutline.lineOutlineEnabled
+    props.lineOutlineFace.style.display = 'none';
+    // PlugOutline.plugOutlineEnabledSE
+    props.plugOutlineFaceSE[0].style.display = props.plugOutlineFaceSE[1].style.display = 'none';
   }
   window.bindWindow = bindWindow; // [DEBUG/]
-
-  /**
-   * Apply `orient` (and `viewBox`) to `marker`.
-   * @param {SVGMarkerElement} marker - Target `<marker>` element.
-   * @param {string} orient - `'auto'`, `'auto-start-reverse'` or angle.
-   * @param {BBox} bBox - `BBox` as `viewBox` of the marker.
-   * @param {SVGSVGElement} svg - Parent `<svg>` element.
-   * @param {SVGElement} shape - An element that is shown as marker.
-   * @param {SVGElement} marked - Target element that has `marker-start/end` such as `<path>`.
-   * @returns {void}
-   */
-  function setMarkerOrient(marker, orient, bBox, svg, shape, marked) {
-    var transform, viewBox, reverseView;
-    // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of
-    // `SVGMarkerElement` don't work in browsers other than Chrome.
-    if (orient === 'auto-start-reverse') {
-      if (typeof svg2Supported !== 'boolean') {
-        marker.setAttribute('orient', 'auto-start-reverse');
-        svg2Supported = marker.orientType.baseVal === SVGMarkerElement.SVG_MARKER_ORIENT_UNKNOWN;
-      }
-      if (svg2Supported) {
-        marker.setAttribute('orient', orient);
-      } else {
-        transform = svg.createSVGTransform();
-        transform.setRotate(180, 0, 0);
-        shape.transform.baseVal.appendItem(transform);
-        marker.setAttribute('orient', 'auto');
-        reverseView = true;
-      }
-    } else {
-      marker.setAttribute('orient', orient);
-      if (svg2Supported === false) { shape.transform.baseVal.clear(); }
-    }
-
-    viewBox = marker.viewBox.baseVal;
-    if (reverseView) {
-      viewBox.x = -bBox.right;
-      viewBox.y = -bBox.bottom;
-    } else {
-      viewBox.x = bBox.left;
-      viewBox.y = bBox.top;
-    }
-    viewBox.width = bBox.width;
-    viewBox.height = bBox.height;
-
-    // [TRIDENT] markerOrient is not updated when plugSE is changed
-    if (IS_TRIDENT) { forceReflowAdd(marked); }
-  }
-
-  function getMarkerProps(i, symbolConf) {
-    return {
-      prop: i ? 'markerEnd' : 'markerStart',
-      orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
-    };
-  }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
