@@ -148,7 +148,8 @@
         lineOutlineEnabled: {isOption: true},
         lineOutlineColor: {isOption: true},
         lineOutlineColorTra: {},
-        lineOutlineSize: {}
+        lineOutlineSize: {},
+        lineOutlineSizeI: {}
       },
       PlugOutline: {
         plugSE: {hasSE: true},
@@ -1180,12 +1181,11 @@
       }
 
       // lineOutlineSize
-      curStats.lineOutlineSize = value =
+      curStats.lineOutlineSize =
         options.lineSize - options.lineSize * options.lineOutlineSize * 2;
-      if (value !== aplStats.lineOutlineSize) {
+      if ((value = curStats.lineOutlineSize) !== aplStats.lineOutlineSize) {
         window.traceLog.push('lineOutlineSize=' + value); // [DEBUG/]
         props.lineOutlineMaskShape.style.strokeWidth = aplStats.lineOutlineSize = value;
-        props.lineMaskShape.style.strokeWidth = value + SHAPE_GAP * 2;
         updated = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
@@ -1196,6 +1196,26 @@
 
         if (props.effect && props.effect.onLineOutlineSize) {
           props.effect.onLineOutlineSize(props, value);
+        }
+      }
+
+      // lineOutlineSizeI
+      curStats.lineOutlineSizeI =
+        curStats.lineOutlineColorTra ? curStats.lineOutlineSize + SHAPE_GAP * 2 :
+        options.lineSize - options.lineSize * options.lineOutlineSize;
+      if ((value = curStats.lineOutlineSizeI) !== aplStats.lineOutlineSizeI) {
+        window.traceLog.push('lineOutlineSizeI=' + value); // [DEBUG/]
+        props.lineMaskShape.style.strokeWidth = aplStats.lineOutlineSizeI = value;
+        updated = true;
+        if (IS_TRIDENT) {
+          // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
+          forceReflowAdd(props.lineOutlineMaskCaps);
+          // [TRIDENT] lineOutlineColor is ignored
+          forceReflowAdd(props.lineOutlineFace);
+        }
+
+        if (props.effect && props.effect.onLineOutlineSizeI) {
+          props.effect.onLineOutlineSizeI(props, value);
         }
       }
 
@@ -1299,8 +1319,10 @@
           }
 
           // plugOutlineSizeISE
-          curStats.plugOutlineSizeISE[i] = curStats.plugOutlineSizeSE[i] -
-            SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2;
+          curStats.plugOutlineSizeISE[i] =
+            curStats.plugOutlineColorTraSE[i] ? curStats.plugOutlineSizeSE[i] -
+              SHAPE_GAP / (options.lineSize / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2 :
+            curStats.plugOutlineSizeSE[i] / 2;
           if ((value = curStats.plugOutlineSizeISE[i]) !== aplStats.plugOutlineSizeISE[i]) {
             window.traceLog.push('plugOutlineSizeISE[' + i + ']=' + value); // [DEBUG/]
             props.plugMaskShapeSE[i].style.strokeWidth = aplStats.plugOutlineSizeISE[i] = value;
