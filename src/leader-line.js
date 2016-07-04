@@ -135,7 +135,7 @@
 
     STATS = {
       Line: {
-        lineColor: {isOption: true}, lineSize: {isOption: true}
+        lineColor: {isOption: true}, lineColorTra: {}, lineSize: {isOption: true}
       },
       Plug: {
         plugSE: {hasSE: true, isOption: true},
@@ -959,11 +959,12 @@
   function updateLine(props) {
     window.traceLog.push('<updateLine>'); // [DEBUG/]
     var options = props.options, updated = false,
-      aplStats = props.aplLine, value;
+      curStats = props.curLine, aplStats = props.aplLine, value;
 
     // lineColor
     if ((value = options.lineColor) !== aplStats.lineColor) {
       window.traceLog.push('lineColor=' + value); // [DEBUG/]
+      curStats.lineColorTra = getAlpha(value) < 1;
       props.lineFace.style.stroke = aplStats.lineColor = value;
       updated = true;
 
@@ -1059,6 +1060,10 @@
             curStats.plugColorTraSE[i] = getAlpha(value) < 1;
             props.plugFaceSE[i].style.fill = aplStats.plugColorSE[i] = value;
             updated = true;
+            if (IS_BLINK && !props.curLine.lineColorTra) {
+              // [BLINK] capsMaskLine is not updated when line has no alpha
+              forceReflowAdd(props.capsMaskLine);
+            }
 
             if (props.effect && props.effect.onPlugColorSE) {
               props.effect.onPlugColorSE(props, value, i);
@@ -2111,6 +2116,10 @@
     if (IS_BLINK && updated.Line && !updated.Path) {
       // [BLINK] lineSize is not updated when path is not changed
       forceReflowAdd(props.lineShape);
+    }
+    if (IS_BLINK && updated.Plug && !updated.Line) {
+      // [BLINK] plugColorSE is not updated when Line is not changed
+      forceReflowAdd(props.plugsFace);
     }
     forceReflowApply();
   }

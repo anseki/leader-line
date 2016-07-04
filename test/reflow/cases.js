@@ -183,6 +183,32 @@ window.addEventListener('load', function() {
             });
           }, 500);
         }
+      },
+      {
+        fnc: function() {
+          // [BLINK] plugColorSE is not updated when Line is not changed
+          ll.setOptions({
+            endPlugColor: 'rgb(255, 0, 0)'
+          });
+          setTimeout(function() {
+            ll.setOptions({
+              endPlugColor: 'rgb(0, 255, 0)'
+            });
+          }, 500);
+        }
+      },
+      {
+        fnc: function() {
+          // [BLINK] capsMaskMarkerShapeSE is not updated when line has no alpha
+          ll.setOptions({
+            color: 'rgb(255, 0, 0)'
+          });
+          setTimeout(function() {
+            ll.setOptions({
+              endPlugColor: 'rgba(0, 255, 0, 0.5)'
+            });
+          }, 500);
+        }
       }
     ];
 

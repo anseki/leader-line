@@ -58,6 +58,8 @@ window.addEventListener('load', function() {
       }
     ];
 
+  window.ll = {};
+
   testCases.forEach(function(testCase) {
     var view, llView, maskView, llSvg, maskSvg, head,
       anchorSE = [], ll, props, rect1, rect2, select, elmGs = {}, shownG;
@@ -141,6 +143,8 @@ window.addEventListener('load', function() {
       border.width.baseVal.value = viewBox.width + 1;
       border.height.baseVal.value = viewBox.height + 1;
     });
+
+    window.ll[testCase.title] = ll;
 
     // code +=
     //   INDENT + '// ' + testCase.title + '\n' +
