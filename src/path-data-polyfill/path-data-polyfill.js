@@ -1,6 +1,6 @@
 /*
   Customized path-data-polyfill.js
-    https://github.com/jarek-foksa/path-data-polyfill.js 2016.06.14
+    https://github.com/jarek-foksa/path-data-polyfill.js 2016.06.22
 
   - Wrap code with function
   - With specified window
@@ -1024,6 +1024,14 @@ if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.proto
       var rx = this.hasAttribute("rx") ? this.rx.baseVal.value : this.ry.baseVal.value;
       var ry = this.hasAttribute("ry") ? this.ry.baseVal.value : this.rx.baseVal.value;
 
+      if (rx > width / 2) {
+        rx = width / 2;
+      }
+
+      if (ry > height / 2) {
+        ry = height / 2;
+      }
+
       var pathData = [
         {type: "M", values: [x+rx, y]},
         {type: "H", values: [x+width-rx]},
@@ -1037,9 +1045,9 @@ if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.proto
         {type: "Z", values: []}
       ];
 
-      // Get rid of redundant "A" segs when both rx and ry are 0
+      // Get rid of redundant "A" segs when either rx or ry is 0
       pathData = pathData.filter(function(s) {
-        return s.type === "A" && s.values[0] === 0 && s.values[1] === 0 ? false : true;
+        return s.type === "A" && (s.values[0] === 0 || s.values[1] === 0) ? false : true;
       });
 
       return pathData;

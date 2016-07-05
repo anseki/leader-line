@@ -67,8 +67,8 @@ var guideView = (function() {
       // ======== BBox
       (function() {
         var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
-          padding = Math.max(
-            options.lineSize / 2, props.viewBBoxVals.plugBCircleSE[0], props.viewBBoxVals.plugBCircleSE[1]),
+          padding = Math.max(options.lineSize / 2,
+            props.curViewBBox.plugBCircleSE[0] || 0, props.curViewBBox.plugBCircleSE[1] || 0),
           pathSegs = [], corners = {};
         props.linePath.getPathData().forEach(function(pathSeg) {
           var values = pathSeg.values, point, i, iLen = values.length;
