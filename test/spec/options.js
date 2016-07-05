@@ -313,12 +313,6 @@ describe('setOptions', function() {
     pageDone();
   });
 
-
-
-
-
-
-
   it(registerTitle('needs.Plug'), function() {
 
     // Change to element in iframe, `baseWindow` is not changed
@@ -337,10 +331,37 @@ describe('setOptions', function() {
     expect(window.traceLog).toContain('<bindWindow>');
     expect(window.traceLog).toContain('<updatePlug>');
 
-    // anchorSE
+    // plugSE
     window.traceLog = [];
-    ll.start = document.getElementById('elm3');
+    ll.startPlug = 'arrow2';
     expect(window.traceLog).toContain('<updatePlug>');
+    window.traceLog = [];
+    ll.endPlug = 'square';
+    expect(window.traceLog).toContain('<updatePlug>');
+
+    // plugColorSE
+    window.traceLog = [];
+    ll.startPlugColor = 'red';
+    expect(window.traceLog).toContain('<updatePlug>');
+    window.traceLog = [];
+    ll.endPlugColor = 'blue';
+    expect(window.traceLog).toContain('<updatePlug>');
+
+    // plugSizeSE
+    window.traceLog = [];
+    ll.startPlugSize = 1.5;
+    expect(window.traceLog).toContain('<updatePlug>');
+    window.traceLog = [];
+    ll.endPlugSize = 2;
+    expect(window.traceLog).toContain('<updatePlug>');
+
+    // plugSizeSE invalid
+    window.traceLog = [];
+    ll.startPlugSize = 0;
+    expect(window.traceLog).not.toContain('<updatePlug>');
+    window.traceLog = [];
+    ll.endPlugSize = 0;
+    expect(window.traceLog).not.toContain('<updatePlug>');
 
     pageDone();
   });
@@ -363,10 +384,25 @@ describe('setOptions', function() {
     expect(window.traceLog).toContain('<bindWindow>');
     expect(window.traceLog).toContain('<updateLineOutline>');
 
-    // anchorSE
+    // lineOutlineEnabled
     window.traceLog = [];
-    ll.start = document.getElementById('elm3');
+    ll.outline = true;
     expect(window.traceLog).toContain('<updateLineOutline>');
+
+    // lineOutlineColor
+    window.traceLog = [];
+    ll.outlineColor = 'red';
+    expect(window.traceLog).toContain('<updateLineOutline>');
+
+    // lineOutlineSize
+    window.traceLog = [];
+    ll.outlineSize = 0.1;
+    expect(window.traceLog).toContain('<updateLineOutline>');
+
+    // lineOutlineSize invalid
+    window.traceLog = [];
+    ll.outlineSize = 0.5;
+    expect(window.traceLog).not.toContain('<updateLineOutline>');
 
     pageDone();
   });
@@ -389,10 +425,31 @@ describe('setOptions', function() {
     expect(window.traceLog).toContain('<bindWindow>');
     expect(window.traceLog).toContain('<updatePlugOutline>');
 
-    // anchorSE
+    // plugOutlineEnabledSE
     window.traceLog = [];
-    ll.start = document.getElementById('elm3');
+    ll.startPlugOutline = true;
     expect(window.traceLog).toContain('<updatePlugOutline>');
+    window.traceLog = [];
+    ll.endPlugOutline = true;
+    expect(window.traceLog).toContain('<updatePlugOutline>');
+
+    // plugOutlineColorSE
+    window.traceLog = [];
+    ll.startPlugOutlineColor = 'red';
+    expect(window.traceLog).toContain('<updatePlugOutline>');
+    window.traceLog = [];
+    ll.endPlugOutlineColor = 'blue';
+    expect(window.traceLog).toContain('<updatePlugOutline>');
+
+    // plugOutlineSizeSE
+    window.traceLog = [];
+    ll.startPlugOutlineSize = 1.2;
+    expect(window.traceLog).toContain('<updatePlugOutline>');
+
+    // plugOutlineSizeSE invalid
+    window.traceLog = [];
+    ll.endPlugOutlineSize = 0.9;
+    expect(window.traceLog).not.toContain('<updatePlugOutline>');
 
     pageDone();
   });
@@ -418,16 +475,6 @@ describe('setOptions', function() {
     expect(window.traceLog).toContain('<updatePosition>');
 
     // socketGravitySE was already tested
-
-    pageDone();
-  });
-
-  it(registerTitle('needs.Path'), function() {
-
-    // anchorSE
-    window.traceLog = [];
-    ll.start = document.getElementById('elm3');
-    expect(window.traceLog).toContain('<updatePath>');
 
     pageDone();
   });
