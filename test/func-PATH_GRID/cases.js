@@ -5,8 +5,9 @@ window.addEventListener('load', function() {
   function getGrid(socketXYSE, socketGravitySE) {
 
     var MIN_GRID_LEN = 30,
-      props = {socketXYSE: socketXYSE}, options = {socketGravitySE: socketGravitySE},
-      pathSegs = [], newPathData,
+      options = {socketGravitySE: socketGravitySE},
+      curStatsSocketXYSE = socketXYSE,
+      pathList = [], newPathData,
       grid;
 
     function socketXY2Point(socketXY) { return {x: socketXY.x, y: socketXY.y}; }
@@ -38,7 +39,7 @@ function() {
             function getNextDirPoint(dirPoint, len, dirId) {
               var newDirPoint = {x: dirPoint.x, y: dirPoint.y};
               if (dirId) {
-                if (dirId === reverseDir(dirPoint.dirId)) { throw new Error('Invalid dirId'); }
+                if (dirId === reverseDir(dirPoint.dirId)) { throw new Error('Invalid dirId: ' + dirId); }
                 newDirPoint.dirId = dirId;
               } else {
                 newDirPoint.dirId = dirPoint.dirId;
@@ -180,7 +181,7 @@ function() {
               return true;
             }
 
-            props.socketXYSE.forEach(function(socketXY, i) {
+            curStatsSocketXYSE.forEach(function(socketXY, i) {
               var dirPoint = socketXY2Point(socketXY),
                 len = options.socketGravitySE[i];
               (function(dirLen) {
@@ -204,7 +205,7 @@ function() {
             dpList[1].reverse();
             dpList[0].concat(dpList[1]).forEach(function(dirPoint, i) {
               var point = {x: dirPoint.x, y: dirPoint.y};
-              if (i > 0) { pathSegs.push([curPoint, point]); }
+              if (i > 0) { pathList.push([curPoint, point]); }
               curPoint = point;
             });
           }
@@ -213,14 +214,14 @@ function() {
     ;
 
     grid();
-    newPathData = [{type: 'M', values: [pathSegs[0][0].x, pathSegs[0][0].y]}];
-    pathSegs.forEach(function(pathSeg) {
+    newPathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
+    pathList.forEach(function(pathSeg) {
       newPathData.push(pathSeg.length === 2 ?
         {type: 'L', values: [pathSeg[1].x, pathSeg[1].y]} :
         {type: 'C', values: [pathSeg[1].x, pathSeg[1].y,
           pathSeg[2].x, pathSeg[2].y, pathSeg[3].x, pathSeg[3].y]});
     });
-    return {pathData: newPathData, pathSegs: pathSegs};
+    return {pathData: newPathData, pathList: pathList};
   }
 
   // ================ context
@@ -430,7 +431,6 @@ function() {
       }
     ];
 
-  code += INDENT + 'options = {socketGravitySE: []};\n\n';
   testCases.forEach(function(testCase) {
     var data = getGrid([testCase.socketXY0, testCase.socketXY1],
         [testCase.socketGravity0, testCase.socketGravity1]),
@@ -463,35 +463,37 @@ function() {
 
     code +=
       INDENT + '// ' + testCase.title + '\n' +
-      INDENT + 'props = {socketXYSE: [\n' +
-      INDENT + '  {x: ' + testCase.socketXY0.x +
-        ', y: ' + testCase.socketXY0.y + ', socketId: ' +
-        ID2VAR[testCase.socketXY0.socketId] + '},\n' +
-      INDENT + '  {x: ' + testCase.socketXY1.x +
-        ', y: ' + testCase.socketXY1.y + ', socketId: ' +
-        ID2VAR[testCase.socketXY1.socketId] + '}\n' +
-      INDENT + ']};\n' +
-      (testCase.socketGravity0 != null || testCase.socketGravity1 != null ? // eslint-disable-line eqeqeq
-        INDENT + 'options = {socketGravitySE: [' +
-          ['socketGravity0', 'socketGravity1']
-            .map(function(prop) {
-              return testCase[prop] == null ? 'null' : // eslint-disable-line eqeqeq
-                Array.isArray(testCase[prop]) ? '[' + testCase[prop].join(', ') + ']' : testCase[prop];
-            }).join(', ') +
-          ']};\n'
-        : '') +
-      INDENT + 'pathSegs = [];\n' +
+      INDENT + 'initContext(\n' +
+        // props
+        INDENT + '  {curPosition: {socketXYSE: [\n' +
+        INDENT + '    {x: ' + testCase.socketXY0.x +
+          ', y: ' + testCase.socketXY0.y + ', socketId: ' +
+          ID2VAR[testCase.socketXY0.socketId] + '},\n' +
+        INDENT + '    {x: ' + testCase.socketXY1.x +
+          ', y: ' + testCase.socketXY1.y + ', socketId: ' +
+          ID2VAR[testCase.socketXY1.socketId] + '}\n' +
+        INDENT + '  ]}},\n' +
+        // options
+        (testCase.socketGravity0 != null || testCase.socketGravity1 != null ? // eslint-disable-line eqeqeq
+          INDENT + '  {socketGravitySE: [' +
+            ['socketGravity0', 'socketGravity1']
+              .map(function(prop) {
+                return testCase[prop] == null ? 'null' : // eslint-disable-line eqeqeq
+                  Array.isArray(testCase[prop]) ? '[' + testCase[prop].join(', ') + ']' : testCase[prop];
+              }).join(', ') +
+            ']}\n' :
+          INDENT + '  {socketGravitySE: []}\n') +
+      INDENT + ');\n' +
+
+      INDENT + 'pathList = [];\n' +
       INDENT + 'func();\n' +
-      INDENT + 'expect(pathSegs).toEqual([\n' +
-        data.pathSegs.map(function(pathSeg) {
+      INDENT + 'expect(pathList).toEqual([\n' +
+        data.pathList.map(function(pathSeg) {
           return INDENT + '  [' + pathSeg.map(function(point) {
             return '{x: ' + point.x + ', y: ' + point.y + '}';
           }).join(', ') + ']';
         }).join(',\n') +
-        '\n' + INDENT + ']);\n' +
-      (testCase.socketGravity0 != null || testCase.socketGravity1 != null ? // eslint-disable-line eqeqeq
-        INDENT + 'options = {socketGravitySE: []};\n' : '') +
-      '\n';
+        '\n' + INDENT + ']);\n\n';
   });
 
   document.getElementById('code').value = code;
