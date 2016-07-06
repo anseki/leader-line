@@ -2,10 +2,10 @@
 /* global loadPage:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
-describe('setOptions', function() {
+(function() {
   'use strict';
 
-  var window, document, pageDone, ll, titles = [];
+  var window, document, pageDone, ll;
 
   // ================ context
   /* eslint-disable no-unused-vars, indent */
@@ -15,468 +15,557 @@ describe('setOptions', function() {
   /* eslint-enable no-unused-vars, indent */
   // ================ /context
 
-  function registerTitle(title) {
-    titles.push(title);
-    return title;
-  }
-
-  beforeEach(function(beforeDone) {
+  function loadBefore(beforeDone) {
     loadPage('spec/common/page.html', function(frmWindow, frmDocument, body, done) {
       window = frmWindow;
       document = frmDocument;
       pageDone = done;
       ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm2'));
       beforeDone();
-    }, titles.shift());
-  });
-
-  it(registerTitle('setValidId'), function() {
-    var props = window.insProps[ll._id];
-
-    // valid ID
-    window.traceLog = [];
-    ll.path = 'straight';
-    expect(window.traceLog).toContain('<updatePath>');
-    expect(props.options.path).toBe(PATH_STRAIGHT);
-    expect(ll.path).toBe('straight');
-
-    // invalid ID
-    window.traceLog = [];
-    ll.path = 'straightx';
-    expect(window.traceLog).not.toContain('<updatePath>');
-    expect(props.options.path).toBe(PATH_STRAIGHT);
-    expect(ll.path).toBe('straight');
-
-    // same ID
-    window.traceLog = [];
-    ll.path = 'straight';
-    expect(window.traceLog).not.toContain('<updatePath>');
-    expect(props.options.path).toBe(PATH_STRAIGHT);
-    expect(ll.path).toBe('straight');
-
-    // 'auto', getCurOption
-    ll.endSocket = 'bottom';
-    expect(props.options.socketSE[1]).toBe(SOCKET_BOTTOM);
-    expect(ll.endSocket).toBe('bottom');
-    window.traceLog = [];
-    ll.endSocket = 'auto';
-    expect(window.traceLog).toContain('<updatePosition>');
-    expect(window.traceLog).toContain('statsHasChanged:socketXYSE[1]');
-    expect(props.options.socketSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
-    expect(ll.endSocket).toBe('auto');
-
-    // invalid 'auto'
-    window.traceLog = [];
-    ll.path = 'auto';
-    expect(window.traceLog).not.toContain('<updatePath>');
-    expect(props.options.path).toBe(PATH_STRAIGHT);
-    expect(ll.path).toBe('straight');
-
-    // invalid 'auto', getCurOption
-    expect(props.options.plugSE[0]).toBe('behind');
-    expect(ll.startPlug).toBe('behind');
-    window.traceLog = [];
-    ll.startPlug = 'auto';
-    expect(window.traceLog).not.toContain('<updatePlug>');
-    expect(props.options.plugSE[0]).toBe('behind');
-    expect(ll.startPlug).toBe('behind');
-
-    pageDone();
-  });
-
-  it(registerTitle('setValidType'), function() {
-    var props = window.insProps[ll._id];
-
-    // valid value
-    window.traceLog = [];
-    ll.startPlugColor = 'red';
-    expect(window.traceLog).toContain('<updatePlug>');
-    expect(props.options.plugColorSE[0]).toBe('red');
-    expect(ll.startPlugColor).toBe('red');
-
-    // invalid value
-    window.traceLog = [];
-    ll.startPlugColor = 0;
-    expect(window.traceLog).not.toContain('<updatePlug>');
-    expect(props.options.plugColorSE[0]).toBe('red');
-    expect(ll.startPlugColor).toBe('red');
-
-    // valid value (additional check)
-    window.traceLog = [];
-    ll.startPlugOutlineSize = 2;
-    expect(window.traceLog).toContain('<updatePlugOutline>');
-    expect(props.options.plugOutlineSizeSE[0]).toBe(2);
-    expect(ll.startPlugOutlineSize).toBe(2);
-
-    // invalid value (additional check)
-    window.traceLog = [];
-    ll.startPlugOutlineSize = 0.5;
-    expect(window.traceLog).not.toContain('<updatePlugOutline>');
-    expect(props.options.plugOutlineSizeSE[0]).toBe(2);
-    expect(ll.startPlugOutlineSize).toBe(2);
-
-    // same value
-    window.traceLog = [];
-    ll.startPlugColor = 'red';
-    expect(window.traceLog).not.toContain('<updatePlug>');
-    expect(props.options.plugColorSE[0]).toBe('red');
-    expect(ll.startPlugColor).toBe('red');
-
-    // 'auto'
-    window.traceLog = [];
-    ll.startPlugColor = 'auto';
-    expect(window.traceLog).toContain('<updatePlug>');
-    expect(props.options.plugColorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
-    expect(ll.startPlugColor).toBe('auto');
-
-    // invalid 'auto'
-    ll.size = 12;
-    expect(props.options.lineSize).toBe(12);
-    expect(ll.size).toBe(12);
-    window.traceLog = [];
-    ll.size = 'auto';
-    expect(window.traceLog).not.toContain('<updateLine>');
-    expect(props.options.lineSize).toBe(12);
-    expect(ll.size).toBe(12);
-
-    // valid value (specified type)
-    window.traceLog = [];
-    ll.startPlugSize = 2;
-    expect(window.traceLog).toContain('<updatePlug>');
-    expect(props.options.plugSizeSE[0]).toBe(2);
-    expect(ll.startPlugSize).toBe(2);
-
-    // invalid value (specified type)
-    window.traceLog = [];
-    ll.startPlugSize = '3';
-    expect(window.traceLog).not.toContain('<updatePlug>');
-    expect(props.options.plugSizeSE[0]).toBe(2);
-    expect(ll.startPlugSize).toBe(2);
-
-    pageDone();
-  });
-
-  it(registerTitle('anchorSE'), function() {
-    var props = window.insProps[ll._id], value;
-
-    // no update
-    value = props.options.anchorSE[0];
-    window.traceLog = [];
-    ll.start = value;
-    expect(window.traceLog).not.toContain('<updatePosition>');
-    expect(props.options.anchorSE[0]).toBe(value);
-    expect(ll.start).toBe(value);
-
-    // Change to element in iframe, `baseWindow` is not changed
-    ll.setOptions({
-      start: document.getElementById('elm2'),
-      end: document.getElementById('elm3')
     });
-    expect(props.baseWindow).toBe(window);
-    window.traceLog = [];
-    ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
-    expect(window.traceLog).not.toContain('<bindWindow>');
-    expect(window.traceLog).toContain('<updatePosition>');
-    expect(props.baseWindow).toBe(window);
+  }
 
-    // Change to element in iframe, `baseWindow` is changed
-    value = props.baseWindow;
-    window.traceLog = [];
-    ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
-    expect(window.traceLog).toContain('<bindWindow>');
-    expect(window.traceLog).toContain('<updatePosition>');
-    expect(props.baseWindow).toBe(document.getElementById('iframe1').contentWindow);
+  describe('setOptions()', function() {
 
-    // invalid element
-    expect(function() {
-      ll.start = ll.end;
-    }).toThrow();
-    expect(function() {
-      ll = new window.LeaderLine(document.getElementById('elm1'));
-    }).toThrow();
-    expect(function() {
-      ll = new window.LeaderLine(5, document.getElementById('elm2'));
-    }).toThrow();
+    beforeEach(loadBefore);
 
-    pageDone();
-  });
+    it('setValidId', function() {
+      var props = window.insProps[ll._id];
 
-  it(registerTitle('socketGravitySE'), function() {
-    var props = window.insProps[ll._id];
+      // valid ID
+      window.traceLog = [];
+      ll.path = 'straight';
+      expect(window.traceLog).toContain('<updatePath>');
+      expect(props.options.path).toBe(PATH_STRAIGHT);
+      expect(ll.path).toBe('straight');
 
-    // array
-    window.traceLog = [];
-    ll.startSocketGravity = [1, 2];
-    expect(window.traceLog).toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
-    expect(ll.startSocketGravity).toEqual([1, 2]);
+      // invalid ID
+      window.traceLog = [];
+      ll.path = 'straightx';
+      expect(window.traceLog).not.toContain('<updatePath>');
+      expect(props.options.path).toBe(PATH_STRAIGHT);
+      expect(ll.path).toBe('straight');
 
-    // same array
-    window.traceLog = [];
-    ll.startSocketGravity = [1, 2];
-    expect(window.traceLog).not.toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
-    expect(ll.startSocketGravity).toEqual([1, 2]);
+      // same ID
+      window.traceLog = [];
+      ll.path = 'straight';
+      expect(window.traceLog).not.toContain('<updatePath>');
+      expect(props.options.path).toBe(PATH_STRAIGHT);
+      expect(ll.path).toBe('straight');
 
-    // invalid array
-    window.traceLog = [];
-    ll.startSocketGravity = [1, 'a'];
-    expect(window.traceLog).not.toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
-    expect(ll.startSocketGravity).toEqual([1, 2]);
+      // 'auto', getCurOption
+      ll.endSocket = 'bottom';
+      expect(props.options.socketSE[1]).toBe(SOCKET_BOTTOM);
+      expect(ll.endSocket).toBe('bottom');
+      window.traceLog = [];
+      ll.endSocket = 'auto';
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(window.traceLog).toContain('statsHasChanged:socketXYSE[1]');
+      expect(props.options.socketSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.endSocket).toBe('auto');
 
-    // array length 1
-    window.traceLog = [];
-    ll.startSocketGravity = [1, 2, 3]; // `3` is ignored and same array
-    expect(window.traceLog).not.toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
-    expect(ll.startSocketGravity).toEqual([1, 2]);
+      // invalid 'auto'
+      window.traceLog = [];
+      ll.path = 'auto';
+      expect(window.traceLog).not.toContain('<updatePath>');
+      expect(props.options.path).toBe(PATH_STRAIGHT);
+      expect(ll.path).toBe('straight');
 
-    // array length 2
-    window.traceLog = [];
-    ll.startSocketGravity = [4, 2, 3]; // `3` is ignored
-    expect(window.traceLog).toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0]).toEqual([4, 2]);
-    expect(ll.startSocketGravity).toEqual([4, 2]);
+      // invalid 'auto', getCurOption
+      expect(props.options.plugSE[0]).toBe('behind');
+      expect(ll.startPlug).toBe('behind');
+      window.traceLog = [];
+      ll.startPlug = 'auto';
+      expect(window.traceLog).not.toContain('<updatePlug>');
+      expect(props.options.plugSE[0]).toBe('behind');
+      expect(ll.startPlug).toBe('behind');
 
-    // 'auto'
-    window.traceLog = [];
-    ll.startSocketGravity = 'auto';
-    expect(window.traceLog).toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
-    expect(ll.startSocketGravity).toBe('auto');
-
-    // same 'auto'
-    window.traceLog = [];
-    ll.startSocketGravity = 'auto';
-    expect(window.traceLog).not.toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
-    expect(ll.startSocketGravity).toBe('auto');
-
-    // invalid value
-    window.traceLog = [];
-    ll.startSocketGravity = -1;
-    expect(window.traceLog).not.toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
-    expect(ll.startSocketGravity).toBe('auto');
-
-    // valid value
-    window.traceLog = [];
-    ll.startSocketGravity = 0;
-    expect(window.traceLog).toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0]).toBe(0);
-    expect(ll.startSocketGravity).toBe(0);
-
-    // same value
-    window.traceLog = [];
-    ll.startSocketGravity = 0;
-    expect(window.traceLog).not.toContain('<updatePosition>');
-    expect(props.options.socketGravitySE[0]).toBe(0);
-    expect(ll.startSocketGravity).toBe(0);
-
-    pageDone();
-  });
-
-  it(registerTitle('needs.Line'), function() {
-
-    // Change to element in iframe, `baseWindow` is not changed
-    ll.setOptions({
-      start: document.getElementById('elm2'),
-      end: document.getElementById('elm3')
+      pageDone();
     });
-    window.traceLog = [];
-    ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
-    expect(window.traceLog).not.toContain('<bindWindow>');
-    expect(window.traceLog).not.toContain('<updateLine>');
 
-    // Change to element in iframe, `baseWindow` is changed
-    window.traceLog = [];
-    ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
-    expect(window.traceLog).toContain('<bindWindow>');
-    expect(window.traceLog).toContain('<updateLine>');
+    it('setValidType', function() {
+      var props = window.insProps[ll._id];
 
-    // lineColor
-    window.traceLog = [];
-    ll.color = 'red';
-    expect(window.traceLog).toContain('<updateLine>');
+      // valid value
+      window.traceLog = [];
+      ll.startPlugColor = 'red';
+      expect(window.traceLog).toContain('<updatePlug>');
+      expect(props.options.plugColorSE[0]).toBe('red');
+      expect(ll.startPlugColor).toBe('red');
 
-    // lineSize
-    window.traceLog = [];
-    ll.size = 2;
-    expect(window.traceLog).toContain('<updateLine>');
+      // invalid value
+      window.traceLog = [];
+      ll.startPlugColor = 0;
+      expect(window.traceLog).not.toContain('<updatePlug>');
+      expect(props.options.plugColorSE[0]).toBe('red');
+      expect(ll.startPlugColor).toBe('red');
 
-    // lineSize invalid
-    window.traceLog = [];
-    ll.size = 0;
-    expect(window.traceLog).not.toContain('<updateLine>');
+      // valid value (additional check)
+      window.traceLog = [];
+      ll.startPlugOutlineSize = 2;
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+      expect(props.options.plugOutlineSizeSE[0]).toBe(2);
+      expect(ll.startPlugOutlineSize).toBe(2);
 
-    pageDone();
-  });
+      // invalid value (additional check)
+      window.traceLog = [];
+      ll.startPlugOutlineSize = 0.5;
+      expect(window.traceLog).not.toContain('<updatePlugOutline>');
+      expect(props.options.plugOutlineSizeSE[0]).toBe(2);
+      expect(ll.startPlugOutlineSize).toBe(2);
 
-  it(registerTitle('needs.Plug'), function() {
+      // same value
+      window.traceLog = [];
+      ll.startPlugColor = 'red';
+      expect(window.traceLog).not.toContain('<updatePlug>');
+      expect(props.options.plugColorSE[0]).toBe('red');
+      expect(ll.startPlugColor).toBe('red');
 
-    // Change to element in iframe, `baseWindow` is not changed
-    ll.setOptions({
-      start: document.getElementById('elm2'),
-      end: document.getElementById('elm3')
+      // trim -> same value
+      window.traceLog = [];
+      ll.startPlugColor = '  red    ';
+      expect(window.traceLog).not.toContain('<updatePlug>');
+      expect(props.options.plugColorSE[0]).toBe('red');
+      expect(ll.startPlugColor).toBe('red');
+
+      // 'auto'
+      window.traceLog = [];
+      ll.startPlugColor = 'auto';
+      expect(window.traceLog).toContain('<updatePlug>');
+      expect(props.options.plugColorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.startPlugColor).toBe('auto');
+
+      // invalid 'auto'
+      ll.size = 12;
+      expect(props.options.lineSize).toBe(12);
+      expect(ll.size).toBe(12);
+      window.traceLog = [];
+      ll.size = 'auto';
+      expect(window.traceLog).not.toContain('<updateLine>');
+      expect(props.options.lineSize).toBe(12);
+      expect(ll.size).toBe(12);
+
+      // valid value (specified type)
+      window.traceLog = [];
+      ll.startPlugSize = 2;
+      expect(window.traceLog).toContain('<updatePlug>');
+      expect(props.options.plugSizeSE[0]).toBe(2);
+      expect(ll.startPlugSize).toBe(2);
+
+      // invalid value (specified type)
+      window.traceLog = [];
+      ll.startPlugSize = '3';
+      expect(window.traceLog).not.toContain('<updatePlug>');
+      expect(props.options.plugSizeSE[0]).toBe(2);
+      expect(ll.startPlugSize).toBe(2);
+
+      pageDone();
     });
-    window.traceLog = [];
-    ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
-    expect(window.traceLog).not.toContain('<bindWindow>');
-    expect(window.traceLog).not.toContain('<updatePlug>');
 
-    // Change to element in iframe, `baseWindow` is changed
-    window.traceLog = [];
-    ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
-    expect(window.traceLog).toContain('<bindWindow>');
-    expect(window.traceLog).toContain('<updatePlug>');
+    it('anchorSE', function() {
+      var props = window.insProps[ll._id], value;
 
-    // plugSE
-    window.traceLog = [];
-    ll.startPlug = 'arrow2';
-    expect(window.traceLog).toContain('<updatePlug>');
-    window.traceLog = [];
-    ll.endPlug = 'square';
-    expect(window.traceLog).toContain('<updatePlug>');
+      // no update
+      value = props.options.anchorSE[0];
+      window.traceLog = [];
+      ll.start = value;
+      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(props.options.anchorSE[0]).toBe(value);
+      expect(ll.start).toBe(value);
 
-    // plugColorSE
-    window.traceLog = [];
-    ll.startPlugColor = 'red';
-    expect(window.traceLog).toContain('<updatePlug>');
-    window.traceLog = [];
-    ll.endPlugColor = 'blue';
-    expect(window.traceLog).toContain('<updatePlug>');
+      // Change to element in iframe, `baseWindow` is not changed
+      ll.setOptions({
+        start: document.getElementById('elm2'),
+        end: document.getElementById('elm3')
+      });
+      expect(props.baseWindow).toBe(window);
+      window.traceLog = [];
+      ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
+      expect(window.traceLog).not.toContain('<bindWindow>');
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(props.baseWindow).toBe(window);
 
-    // plugSizeSE
-    window.traceLog = [];
-    ll.startPlugSize = 1.5;
-    expect(window.traceLog).toContain('<updatePlug>');
-    window.traceLog = [];
-    ll.endPlugSize = 2;
-    expect(window.traceLog).toContain('<updatePlug>');
+      // Change to element in iframe, `baseWindow` is changed
+      value = props.baseWindow;
+      window.traceLog = [];
+      ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
+      expect(window.traceLog).toContain('<bindWindow>');
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(props.baseWindow).toBe(document.getElementById('iframe1').contentWindow);
 
-    // plugSizeSE invalid
-    window.traceLog = [];
-    ll.startPlugSize = 0;
-    expect(window.traceLog).not.toContain('<updatePlug>');
-    window.traceLog = [];
-    ll.endPlugSize = 0;
-    expect(window.traceLog).not.toContain('<updatePlug>');
+      // invalid element
+      expect(function() {
+        ll.start = ll.end;
+      }).toThrow();
+      expect(function() {
+        ll = new window.LeaderLine(document.getElementById('elm1'));
+      }).toThrow();
+      expect(function() {
+        ll = new window.LeaderLine(5, document.getElementById('elm2'));
+      }).toThrow();
 
-    pageDone();
-  });
-
-  it(registerTitle('needs.LineOutline'), function() {
-
-    // Change to element in iframe, `baseWindow` is not changed
-    ll.setOptions({
-      start: document.getElementById('elm2'),
-      end: document.getElementById('elm3')
+      pageDone();
     });
-    window.traceLog = [];
-    ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
-    expect(window.traceLog).not.toContain('<bindWindow>');
-    expect(window.traceLog).not.toContain('<updateLineOutline>');
 
-    // Change to element in iframe, `baseWindow` is changed
-    window.traceLog = [];
-    ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
-    expect(window.traceLog).toContain('<bindWindow>');
-    expect(window.traceLog).toContain('<updateLineOutline>');
+    it('socketGravitySE', function() {
+      var props = window.insProps[ll._id];
 
-    // lineOutlineEnabled
-    window.traceLog = [];
-    ll.outline = true;
-    expect(window.traceLog).toContain('<updateLineOutline>');
+      // array
+      window.traceLog = [];
+      ll.startSocketGravity = [1, 2];
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
+      expect(ll.startSocketGravity).toEqual([1, 2]);
 
-    // lineOutlineColor
-    window.traceLog = [];
-    ll.outlineColor = 'red';
-    expect(window.traceLog).toContain('<updateLineOutline>');
+      // same array
+      window.traceLog = [];
+      ll.startSocketGravity = [1, 2];
+      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
+      expect(ll.startSocketGravity).toEqual([1, 2]);
 
-    // lineOutlineSize
-    window.traceLog = [];
-    ll.outlineSize = 0.1;
-    expect(window.traceLog).toContain('<updateLineOutline>');
+      // invalid array
+      window.traceLog = [];
+      ll.startSocketGravity = [1, 'a'];
+      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
+      expect(ll.startSocketGravity).toEqual([1, 2]);
 
-    // lineOutlineSize invalid
-    window.traceLog = [];
-    ll.outlineSize = 0.5;
-    expect(window.traceLog).not.toContain('<updateLineOutline>');
+      // array length 1
+      window.traceLog = [];
+      ll.startSocketGravity = [1, 2, 3]; // `3` is ignored and same array
+      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
+      expect(ll.startSocketGravity).toEqual([1, 2]);
 
-    pageDone();
-  });
+      // array length 2
+      window.traceLog = [];
+      ll.startSocketGravity = [4, 2, 3]; // `3` is ignored
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0]).toEqual([4, 2]);
+      expect(ll.startSocketGravity).toEqual([4, 2]);
 
-  it(registerTitle('needs.PlugOutline'), function() {
+      // 'auto'
+      window.traceLog = [];
+      ll.startSocketGravity = 'auto';
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.startSocketGravity).toBe('auto');
 
-    // Change to element in iframe, `baseWindow` is not changed
-    ll.setOptions({
-      start: document.getElementById('elm2'),
-      end: document.getElementById('elm3')
+      // same 'auto'
+      window.traceLog = [];
+      ll.startSocketGravity = 'auto';
+      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.startSocketGravity).toBe('auto');
+
+      // invalid value
+      window.traceLog = [];
+      ll.startSocketGravity = -1;
+      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.startSocketGravity).toBe('auto');
+
+      // valid value
+      window.traceLog = [];
+      ll.startSocketGravity = 0;
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0]).toBe(0);
+      expect(ll.startSocketGravity).toBe(0);
+
+      // same value
+      window.traceLog = [];
+      ll.startSocketGravity = 0;
+      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(props.options.socketGravitySE[0]).toBe(0);
+      expect(ll.startSocketGravity).toBe(0);
+
+      pageDone();
     });
-    window.traceLog = [];
-    ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
-    expect(window.traceLog).not.toContain('<bindWindow>');
-    expect(window.traceLog).not.toContain('<updatePlugOutline>');
 
-    // Change to element in iframe, `baseWindow` is changed
-    window.traceLog = [];
-    ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
-    expect(window.traceLog).toContain('<bindWindow>');
-    expect(window.traceLog).toContain('<updatePlugOutline>');
+    it('needs.Line', function() {
 
-    // plugOutlineEnabledSE
-    window.traceLog = [];
-    ll.startPlugOutline = true;
-    expect(window.traceLog).toContain('<updatePlugOutline>');
-    window.traceLog = [];
-    ll.endPlugOutline = true;
-    expect(window.traceLog).toContain('<updatePlugOutline>');
+      // Change to element in iframe, `baseWindow` is not changed
+      ll.setOptions({
+        start: document.getElementById('elm2'),
+        end: document.getElementById('elm3')
+      });
+      window.traceLog = [];
+      ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
+      expect(window.traceLog).not.toContain('<bindWindow>');
+      expect(window.traceLog).not.toContain('<updateLine>');
 
-    // plugOutlineColorSE
-    window.traceLog = [];
-    ll.startPlugOutlineColor = 'red';
-    expect(window.traceLog).toContain('<updatePlugOutline>');
-    window.traceLog = [];
-    ll.endPlugOutlineColor = 'blue';
-    expect(window.traceLog).toContain('<updatePlugOutline>');
+      // Change to element in iframe, `baseWindow` is changed
+      window.traceLog = [];
+      ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
+      expect(window.traceLog).toContain('<bindWindow>');
+      expect(window.traceLog).toContain('<updateLine>');
 
-    // plugOutlineSizeSE
-    window.traceLog = [];
-    ll.startPlugOutlineSize = 1.2;
-    expect(window.traceLog).toContain('<updatePlugOutline>');
+      // lineColor
+      window.traceLog = [];
+      ll.color = 'red';
+      expect(window.traceLog).toContain('<updateLine>');
 
-    // plugOutlineSizeSE invalid
-    window.traceLog = [];
-    ll.endPlugOutlineSize = 0.9;
-    expect(window.traceLog).not.toContain('<updatePlugOutline>');
+      // lineSize
+      window.traceLog = [];
+      ll.size = 2;
+      expect(window.traceLog).toContain('<updateLine>');
 
-    pageDone();
+      // lineSize invalid
+      window.traceLog = [];
+      ll.size = 0;
+      expect(window.traceLog).not.toContain('<updateLine>');
+
+      pageDone();
+    });
+
+    it('needs.Plug', function() {
+
+      // Change to element in iframe, `baseWindow` is not changed
+      ll.setOptions({
+        start: document.getElementById('elm2'),
+        end: document.getElementById('elm3')
+      });
+      window.traceLog = [];
+      ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
+      expect(window.traceLog).not.toContain('<bindWindow>');
+      expect(window.traceLog).not.toContain('<updatePlug>');
+
+      // Change to element in iframe, `baseWindow` is changed
+      window.traceLog = [];
+      ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
+      expect(window.traceLog).toContain('<bindWindow>');
+      expect(window.traceLog).toContain('<updatePlug>');
+
+      // plugSE
+      window.traceLog = [];
+      ll.startPlug = 'arrow2';
+      expect(window.traceLog).toContain('<updatePlug>');
+      window.traceLog = [];
+      ll.endPlug = 'square';
+      expect(window.traceLog).toContain('<updatePlug>');
+
+      // plugColorSE
+      window.traceLog = [];
+      ll.startPlugColor = 'red';
+      expect(window.traceLog).toContain('<updatePlug>');
+      window.traceLog = [];
+      ll.endPlugColor = 'blue';
+      expect(window.traceLog).toContain('<updatePlug>');
+
+      // plugSizeSE
+      window.traceLog = [];
+      ll.startPlugSize = 1.5;
+      expect(window.traceLog).toContain('<updatePlug>');
+      window.traceLog = [];
+      ll.endPlugSize = 2;
+      expect(window.traceLog).toContain('<updatePlug>');
+
+      // plugSizeSE invalid
+      window.traceLog = [];
+      ll.startPlugSize = 0;
+      expect(window.traceLog).not.toContain('<updatePlug>');
+      window.traceLog = [];
+      ll.endPlugSize = 0;
+      expect(window.traceLog).not.toContain('<updatePlug>');
+
+      pageDone();
+    });
+
+    it('needs.LineOutline', function() {
+
+      // Change to element in iframe, `baseWindow` is not changed
+      ll.setOptions({
+        start: document.getElementById('elm2'),
+        end: document.getElementById('elm3')
+      });
+      window.traceLog = [];
+      ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
+      expect(window.traceLog).not.toContain('<bindWindow>');
+      expect(window.traceLog).not.toContain('<updateLineOutline>');
+
+      // Change to element in iframe, `baseWindow` is changed
+      window.traceLog = [];
+      ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
+      expect(window.traceLog).toContain('<bindWindow>');
+      expect(window.traceLog).toContain('<updateLineOutline>');
+
+      // lineOutlineEnabled
+      window.traceLog = [];
+      ll.outline = true;
+      expect(window.traceLog).toContain('<updateLineOutline>');
+
+      // lineOutlineColor
+      window.traceLog = [];
+      ll.outlineColor = 'red';
+      expect(window.traceLog).toContain('<updateLineOutline>');
+
+      // lineOutlineSize
+      window.traceLog = [];
+      ll.outlineSize = 0.1;
+      expect(window.traceLog).toContain('<updateLineOutline>');
+
+      // lineOutlineSize invalid
+      window.traceLog = [];
+      ll.outlineSize = 0.5;
+      expect(window.traceLog).not.toContain('<updateLineOutline>');
+
+      pageDone();
+    });
+
+    it('needs.PlugOutline', function() {
+
+      // Change to element in iframe, `baseWindow` is not changed
+      ll.setOptions({
+        start: document.getElementById('elm2'),
+        end: document.getElementById('elm3')
+      });
+      window.traceLog = [];
+      ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
+      expect(window.traceLog).not.toContain('<bindWindow>');
+      expect(window.traceLog).not.toContain('<updatePlugOutline>');
+
+      // Change to element in iframe, `baseWindow` is changed
+      window.traceLog = [];
+      ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
+      expect(window.traceLog).toContain('<bindWindow>');
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+
+      // plugOutlineEnabledSE
+      window.traceLog = [];
+      ll.startPlugOutline = true;
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+      window.traceLog = [];
+      ll.endPlugOutline = true;
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+
+      // plugOutlineColorSE
+      window.traceLog = [];
+      ll.startPlugOutlineColor = 'red';
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+      window.traceLog = [];
+      ll.endPlugOutlineColor = 'blue';
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+
+      // plugOutlineSizeSE
+      window.traceLog = [];
+      ll.startPlugOutlineSize = 1.2;
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+
+      // plugOutlineSizeSE invalid
+      window.traceLog = [];
+      ll.endPlugOutlineSize = 0.9;
+      expect(window.traceLog).not.toContain('<updatePlugOutline>');
+
+      pageDone();
+    });
+
+    it('needs.Position', function() {
+
+      // anchorSE
+      window.traceLog = [];
+      ll.start = document.getElementById('elm3');
+      expect(window.traceLog).toContain('<updatePosition>');
+
+      // path
+      window.traceLog = [];
+      ll.path = 'straight';
+      expect(window.traceLog).toContain('<updatePosition>');
+
+      // socketSE
+      window.traceLog = [];
+      ll.startSocket = 'bottom';
+      expect(window.traceLog).toContain('<updatePosition>');
+      window.traceLog = [];
+      ll.endSocket = 'bottom';
+      expect(window.traceLog).toContain('<updatePosition>');
+
+      // socketGravitySE was already tested
+
+      pageDone();
+    });
+
   });
 
-  it(registerTitle('needs.Position'), function() {
+  describe('update()', function() {
 
-    // anchorSE
-    window.traceLog = [];
-    ll.start = document.getElementById('elm3');
-    expect(window.traceLog).toContain('<updatePosition>');
+    beforeEach(loadBefore);
 
-    // path
-    window.traceLog = [];
-    ll.path = 'straight';
-    expect(window.traceLog).toContain('<updatePosition>');
+    it('needs.Line', function() {
 
-    // socketSE
-    window.traceLog = [];
-    ll.startSocket = 'bottom';
-    expect(window.traceLog).toContain('<updatePosition>');
-    window.traceLog = [];
-    ll.endSocket = 'bottom';
-    expect(window.traceLog).toContain('<updatePosition>');
+      window.traceLog = [];
+      ll.color = 'red';
+      expect(window.traceLog).toContain('<updateLine>');
+      expect(window.traceLog).toContain('<updatePlug>');
+      expect(window.traceLog).toContain('<updateLineOutline>');
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+      expect(window.traceLog).toContain('<updatePosition>');
 
-    // socketGravitySE was already tested
+      window.traceLog = [];
+      ll.color = 'red'; // same value
+      expect(window.traceLog).not.toContain('<updateLine>');
+      expect(window.traceLog).not.toContain('<updatePlug>');
+      expect(window.traceLog).not.toContain('<updateLineOutline>');
+      expect(window.traceLog).not.toContain('<updatePlugOutline>');
+      expect(window.traceLog).not.toContain('<updatePosition>');
 
-    pageDone();
+      pageDone();
+    });
+
+    it('needs.Plug', function() {
+
+      window.traceLog = [];
+      ll.endPlugColor = 'red';
+      expect(window.traceLog).toContain('<updatePlug>');
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+      expect(window.traceLog).toContain('<updatePosition>');
+
+      window.traceLog = [];
+      ll.startPlugColor = 'red'; // option of disabled plug
+      expect(window.traceLog).toContain('<updatePlug>');
+      expect(window.traceLog).not.toContain('<updatePlugOutline>');
+      expect(window.traceLog).not.toContain('<updatePosition>');
+
+      ll.color = 'red';
+      window.traceLog = [];
+      ll.endPlugColor = 'auto'; // update option, but same value
+      expect(window.traceLog).toContain('<updatePlug>');
+      expect(window.traceLog).not.toContain('<updatePlugOutline>');
+      expect(window.traceLog).not.toContain('<updatePosition>');
+
+      pageDone();
+    });
+
+    it('needs.LineOutline', function() {
+
+      window.traceLog = [];
+      ll.outlineColor = 'red'; // disabled now
+      expect(window.traceLog).toContain('<updateLineOutline>');
+      expect(window.traceLog).not.toContain('<updatePlugOutline>');
+
+      window.traceLog = [];
+      ll.outline = true;
+      expect(window.traceLog).toContain('<updateLineOutline>');
+      expect(window.traceLog).toContain('<updatePlugOutline>');
+
+      pageDone();
+    });
+
+    it('needs.Position', function() {
+
+      window.traceLog = [];
+      ll.path = 'arc';
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(window.traceLog).toContain('<updatePath>');
+
+      window.traceLog = [];
+      ll.startSocket = 'right'; // update option, but same value
+      expect(window.traceLog).toContain('<updatePosition>');
+      expect(window.traceLog).not.toContain('<updatePath>');
+
+      pageDone();
+    });
+
   });
 
-});
+})();

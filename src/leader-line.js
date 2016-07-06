@@ -2338,11 +2338,11 @@
       }
       if (newOptions[name] != null && ( // eslint-disable-line eqeqeq
             curOption.acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
-            typeof (value = newOptions[name]) === type && (!check || check(value))
+            typeof (value = newOptions[name]) === type &&
+            ((value = trim && type === 'string' && value ? value.trim() : value) || true) &&
+            (!check || check(value))
           ) && value !== curOption.container[curOption.key]) {
-        curOption.container[curOption.key] =
-          trim && typeof value === 'string' && value ? value.trim() :
-          value; // `undefined` when `KEYWORD_AUTO`
+        curOption.container[curOption.key] = value; // `undefined` when `KEYWORD_AUTO`
         updated = true;
       }
       if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
