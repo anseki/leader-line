@@ -23,14 +23,15 @@ describe('update-props', function() {
   /**
    * @param {Array} log - `traceLog`.
    * @param {(string|string[])[]} keys - `['<setOptions>', '<position>']` or
-   *    `[['<updateLine>', 'lineColor']]` to check the ordering.
+   *    `[['<updateLine>', 'lineColor']]` to check the sequence.
    * @returns {boolean} - `true` if all `keys` are contained.
    */
   function toContainAll(log, keys) {
     return keys.every(function(key) {
       var lastI = -1;
       return Array.isArray(key) ? key.every(function(keySeg) {
-        var i = log.indexOf(keySeg), res = i > lastI;
+        var i = log.indexOf(keySeg),
+          res = i === lastI + 1 || lastI === -1 && i > -1;
         lastI = i;
         return res;
       }) :

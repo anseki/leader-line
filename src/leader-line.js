@@ -995,6 +995,8 @@
         props.effect.onLineSize(props, value);
       }
     }
+
+    if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
   }
 
@@ -1142,6 +1144,8 @@
         curCapsMaskAnchor.enabledSE[i] = true;
       });
     }
+
+    if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
   }
 
@@ -1234,6 +1238,8 @@
       }
     }
     props.curMask.lineOutlineEnabled = options.lineOutlineEnabled;
+
+    if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
   }
 
@@ -1353,6 +1359,8 @@
     } else {
       curStats.plugOutlineEnabledSE[0] = curStats.plugOutlineEnabledSE[1] = false;
     }
+
+    if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
   }
 
@@ -1789,6 +1797,8 @@
         props.effect.onPosition(props, pathList);
       }
     }
+
+    if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
   }
 
@@ -1839,6 +1849,8 @@
         props.effect.onSetPathData(props, pathList);
       }
     }
+
+    if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
   }
 
@@ -1877,6 +1889,8 @@
         updated = true;
       }
     });
+
+    if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
   }
 
@@ -2078,6 +2092,8 @@
         }
       });
     }
+
+    if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
   }
 

@@ -1,5 +1,5 @@
 /* eslint-env jasmine */
-/* global loadPage:false */
+/* global loadPage:false, toContainAll:false, toNotContainAll:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
 (function() {
@@ -29,7 +29,7 @@
 
     beforeEach(loadBefore);
 
-    it('setValidId', function() {
+    it('setValidId()', function() {
       var props = window.insProps[ll._id];
 
       // valid ID
@@ -83,7 +83,7 @@
       pageDone();
     });
 
-    it('setValidType', function() {
+    it('setValidType()', function() {
       var props = window.insProps[ll._id];
 
       // valid value
@@ -162,7 +162,7 @@
       pageDone();
     });
 
-    it('anchorSE', function() {
+    it('anchorSE are checked', function() {
       var props = window.insProps[ll._id], value;
 
       // no update
@@ -207,7 +207,7 @@
       pageDone();
     });
 
-    it('socketGravitySE', function() {
+    it('socketGravitySE are checked', function() {
       var props = window.insProps[ll._id];
 
       // array
@@ -283,7 +283,7 @@
       pageDone();
     });
 
-    it('needs.Line', function() {
+    it('needs.Line is affected by options', function() {
 
       // Change to element in iframe, `baseWindow` is not changed
       ll.setOptions({
@@ -319,7 +319,7 @@
       pageDone();
     });
 
-    it('needs.Plug', function() {
+    it('needs.Plug is affected by options', function() {
 
       // Change to element in iframe, `baseWindow` is not changed
       ll.setOptions({
@@ -372,7 +372,7 @@
       pageDone();
     });
 
-    it('needs.LineOutline', function() {
+    it('needs.LineOutline is affected by options', function() {
 
       // Change to element in iframe, `baseWindow` is not changed
       ll.setOptions({
@@ -413,7 +413,7 @@
       pageDone();
     });
 
-    it('needs.PlugOutline', function() {
+    it('needs.PlugOutline is affected by options', function() {
 
       // Change to element in iframe, `baseWindow` is not changed
       ll.setOptions({
@@ -460,7 +460,7 @@
       pageDone();
     });
 
-    it('needs.Position', function() {
+    it('needs.Position is affected by options', function() {
 
       // anchorSE
       window.traceLog = [];
@@ -491,52 +491,50 @@
 
     beforeEach(loadBefore);
 
-    it('needs.Line', function() {
+    it('needs.Line affects calling update*', function() {
 
       window.traceLog = [];
       ll.color = 'red';
-      expect(window.traceLog).toContain('<updateLine>');
-      expect(window.traceLog).toContain('<updatePlug>');
-      expect(window.traceLog).toContain('<updateLineOutline>');
-      expect(window.traceLog).toContain('<updatePlugOutline>');
-      expect(window.traceLog).toContain('<updatePosition>');
+      expect(toContainAll(window.traceLog,
+        '<updateLine>', '<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>', '<updatePosition>'
+      )).toBe(true);
 
       window.traceLog = [];
       ll.color = 'red'; // same value
-      expect(window.traceLog).not.toContain('<updateLine>');
-      expect(window.traceLog).not.toContain('<updatePlug>');
-      expect(window.traceLog).not.toContain('<updateLineOutline>');
-      expect(window.traceLog).not.toContain('<updatePlugOutline>');
-      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(toNotContainAll(window.traceLog,
+        '<updateLine>', '<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>', '<updatePosition>'
+      )).toBe(true);
 
       pageDone();
     });
 
-    it('needs.Plug', function() {
+    it('needs.Plug affects calling update*', function() {
 
       window.traceLog = [];
       ll.endPlugColor = 'red';
-      expect(window.traceLog).toContain('<updatePlug>');
-      expect(window.traceLog).toContain('<updatePlugOutline>');
-      expect(window.traceLog).toContain('<updatePosition>');
+      expect(toContainAll(window.traceLog,
+        '<updatePlug>', '<updatePlugOutline>', '<updatePosition>'
+      )).toBe(true);
 
       window.traceLog = [];
       ll.startPlugColor = 'red'; // option of disabled plug
       expect(window.traceLog).toContain('<updatePlug>');
-      expect(window.traceLog).not.toContain('<updatePlugOutline>');
-      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(toNotContainAll(window.traceLog,
+        '<updatePlugOutline>', '<updatePosition>'
+      )).toBe(true);
 
       ll.color = 'red';
       window.traceLog = [];
       ll.endPlugColor = 'auto'; // update option, but same value
       expect(window.traceLog).toContain('<updatePlug>');
-      expect(window.traceLog).not.toContain('<updatePlugOutline>');
-      expect(window.traceLog).not.toContain('<updatePosition>');
+      expect(toNotContainAll(window.traceLog,
+        '<updatePlugOutline>', '<updatePosition>'
+      )).toBe(true);
 
       pageDone();
     });
 
-    it('needs.LineOutline', function() {
+    it('needs.LineOutline affects calling update*', function() {
 
       window.traceLog = [];
       ll.outlineColor = 'red'; // disabled now
@@ -545,18 +543,20 @@
 
       window.traceLog = [];
       ll.outline = true;
-      expect(window.traceLog).toContain('<updateLineOutline>');
-      expect(window.traceLog).toContain('<updatePlugOutline>');
+      expect(toContainAll(window.traceLog,
+        '<updateLineOutline>', '<updatePlugOutline>'
+      )).toBe(true);
 
       pageDone();
     });
 
-    it('needs.Position', function() {
+    it('needs.Position affects calling update*', function() {
 
       window.traceLog = [];
       ll.path = 'arc';
-      expect(window.traceLog).toContain('<updatePosition>');
-      expect(window.traceLog).toContain('<updatePath>');
+      expect(toContainAll(window.traceLog,
+        '<updatePosition>', '<updatePath>'
+      )).toBe(true);
 
       window.traceLog = [];
       ll.startSocket = 'right'; // update option, but same value
