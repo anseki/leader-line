@@ -1,5 +1,5 @@
 /* eslint-env jasmine */
-/* global loadPage:false, toContainAll:false, toNotContainAll:false */
+/* global loadPage:false, customMatchers:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
 (function() {
@@ -489,21 +489,24 @@
 
   describe('update()', function() {
 
-    beforeEach(loadBefore);
+    beforeEach(function(beforeDone) {
+      jasmine.addMatchers(customMatchers);
+      loadBefore(beforeDone);
+    });
 
     it('needs.Line affects calling update*', function() {
 
       window.traceLog = [];
       ll.color = 'red';
-      expect(toContainAll(window.traceLog,
+      expect(window.traceLog).toContainAll([
         '<updateLine>', '<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>', '<updatePosition>'
-      )).toBe(true);
+      ]);
 
       window.traceLog = [];
       ll.color = 'red'; // same value
-      expect(toNotContainAll(window.traceLog,
+      expect(window.traceLog).toNotContainAny([
         '<updateLine>', '<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>', '<updatePosition>'
-      )).toBe(true);
+      ]);
 
       pageDone();
     });
@@ -512,24 +515,24 @@
 
       window.traceLog = [];
       ll.endPlugColor = 'red';
-      expect(toContainAll(window.traceLog,
+      expect(window.traceLog).toContainAll([
         '<updatePlug>', '<updatePlugOutline>', '<updatePosition>'
-      )).toBe(true);
+      ]);
 
       window.traceLog = [];
       ll.startPlugColor = 'red'; // option of disabled plug
       expect(window.traceLog).toContain('<updatePlug>');
-      expect(toNotContainAll(window.traceLog,
+      expect(window.traceLog).toNotContainAny([
         '<updatePlugOutline>', '<updatePosition>'
-      )).toBe(true);
+      ]);
 
       ll.color = 'red';
       window.traceLog = [];
       ll.endPlugColor = 'auto'; // update option, but same value
       expect(window.traceLog).toContain('<updatePlug>');
-      expect(toNotContainAll(window.traceLog,
+      expect(window.traceLog).toNotContainAny([
         '<updatePlugOutline>', '<updatePosition>'
-      )).toBe(true);
+      ]);
 
       pageDone();
     });
@@ -543,9 +546,9 @@
 
       window.traceLog = [];
       ll.outline = true;
-      expect(toContainAll(window.traceLog,
+      expect(window.traceLog).toContainAll([
         '<updateLineOutline>', '<updatePlugOutline>'
-      )).toBe(true);
+      ]);
 
       pageDone();
     });
@@ -554,9 +557,9 @@
 
       window.traceLog = [];
       ll.path = 'arc';
-      expect(toContainAll(window.traceLog,
+      expect(window.traceLog).toContainAll([
         '<updatePosition>', '<updatePath>'
-      )).toBe(true);
+      ]);
 
       window.traceLog = [];
       ll.startSocket = 'right'; // update option, but same value

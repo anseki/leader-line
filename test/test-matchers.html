@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jasmine Spec Runner v2.4.1</title>
+
+  <link rel="shortcut icon" type="image/png" href="jasmine-2.4.1/jasmine_favicon.png">
+  <link rel="stylesheet" href="jasmine-2.4.1/jasmine.css">
+
+  <script src="jasmine-2.4.1/jasmine.js"></script>
+  <script src="jasmine-2.4.1/jasmine-html.js"></script>
+  <script src="jasmine-2.4.1/boot.js"></script>
+  <script src="util.js"></script>
+
+  <script>
+
+(function() {
+  'use strict';
+
+  var log1 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'],
+    log2 = ['val-a', 'val-1', 'val-2', 'val-3',
+    'val-b', 'val-1', 'val-2', 'val-3',
+    'val-c', 'val-1', 'val-2', 'val-3', 
+    'val-d', 'val-1', 'val-2', 'val-3',
+    'val-e', 'val-1', 'val-2', 'val-3'];
+
+  describe('function', function() {
+
+    it('toContainAll', function() {
+      expect(toContainAll(log1, ['c', 'f'])).toBe(true);
+      expect(toContainAll(log1, ['c', 'x'])).toBe(false);
+      expect(toContainAll(log1, ['c'])).toBe(true);
+      expect(toContainAll(log1, ['x'])).toBe(false);
+      expect(toContainAll(log1, ['f', 'c', 'a'])).toBe(true);
+
+      expect(toContainAll(log1, ['c', 'f', ['j', 'k', 'l']])).toBe(true);
+      expect(toContainAll(log1, ['c', 'f', ['j', 'k', 'x']])).toBe(false);
+      expect(toContainAll(log1, ['c', 'f', ['k', 'j', 'l']])).toBe(false);
+      expect(toContainAll(log1, ['c', 'f', ['j', 'k', 'n']])).toBe(false);
+      expect(toContainAll(log1, ['c', 'f', ['l', 'm', 'n']])).toBe(true);
+      expect(toContainAll(log1, ['c', 'f', ['j', 'k', 'l'], ['a', 'b', 'c']])).toBe(true);
+      expect(toContainAll(log1, ['c', 'f', ['j', 'k', 'l'], ['a', 'c', 'b']])).toBe(false);
+      expect(toContainAll(log1, ['c', 'f', ['j', 'k', 'l'], ['a', 'b', 'd']])).toBe(false);
+
+      expect(toContainAll(log2, ['val-c', 'val-b', 'val-a'])).toBe(true);
+      expect(toContainAll(log2, [
+        ['val-d', 'val-1', 'val-2', 'val-3'],
+        ['val-a', 'val-1', 'val-2', 'val-3']
+      ])).toBe(true);
+      expect(toContainAll(log2, [
+        ['val-d', 'val-1', 'val-2', 'val-3'],
+        ['val-a', 'val-2', 'val-1', 'val-3']
+      ])).toBe(false);
+    });
+
+    it('toNotContainAny', function() {
+      expect(toNotContainAny(log1, ['1', '2'])).toBe(true);
+      expect(toNotContainAny(log1, ['c'])).toBe(false);
+      expect(toNotContainAny(log1, ['x'])).toBe(true);
+      expect(toNotContainAny(log1, ['c', 'f'])).toBe(false);
+      expect(toNotContainAny(log1, ['1', 'f'])).toBe(false);
+      expect(toNotContainAny(log1, ['1', '2', '3', '4', '5'])).toBe(true);
+      expect(toNotContainAny(log1, ['1', '2', 'n', '4', '5'])).toBe(false);
+    });
+
+  });
+
+  describe('built-in matcher', function() {
+    it('toContain', function() {
+      expect(log1).toContain('a');
+      expect(log1).toContain('x');
+      expect(log1).not.toContain('a');
+      expect(log1).not.toContain('x');
+    });
+  });
+
+  describe('matcher', function() {
+
+    beforeEach(function() {
+      jasmine.addMatchers(customMatchers);
+    });
+
+    it('toContainAll', function() {
+      expect(log1).toContainAll(['c', 'f']); // .toBe(true);
+      expect(log1).toContainAll(['c', 'x']); // .toBe(false);
+      expect(log1).toContainAll(['c']); // .toBe(true);
+      expect(log1).toContainAll(['x']); // .toBe(false);
+      expect(log1).toContainAll(['f', 'c', 'a']); // .toBe(true);
+
+      expect(log1).toContainAll(['c', 'f', ['j', 'k', 'l']]); // .toBe(true);
+      expect(log1).toContainAll(['c', 'f', ['j', 'k', 'x']]); // .toBe(false);
+      expect(log1).toContainAll(['c', 'f', ['k', 'j', 'l']]); // .toBe(false);
+      expect(log1).toContainAll(['c', 'f', ['j', 'k', 'n']]); // .toBe(false);
+      expect(log1).toContainAll(['c', 'f', ['l', 'm', 'n']]); // .toBe(true);
+      expect(log1).toContainAll(['c', 'f', ['j', 'k', 'l'], ['a', 'b', 'c']]); // .toBe(true);
+      expect(log1).toContainAll(['c', 'f', ['j', 'k', 'l'], ['a', 'c', 'b']]); // .toBe(false);
+      expect(log1).toContainAll(['c', 'f', ['j', 'k', 'l'], ['a', 'b', 'd']]); // .toBe(false);
+
+      expect(log2).toContainAll(['val-c', 'val-b', 'val-a']); // .toBe(true);
+      expect(log2).toContainAll([
+        ['val-d', 'val-1', 'val-2', 'val-3'],
+        ['val-a', 'val-1', 'val-2', 'val-3'],
+      ]); // .toBe(true);
+      expect(log2).toContainAll([
+        ['val-d', 'val-1', 'val-2', 'val-3'],
+        ['val-a', 'val-2', 'val-1', 'val-3']
+      ]); // .toBe(false);
+    });
+
+    it('toNotContainAny', function() {
+      expect(log1).toNotContainAny(['1', '2']); // .toBe(true);
+      expect(log1).toNotContainAny(['c']); // .toBe(false);
+      expect(log1).toNotContainAny(['x']); // .toBe(true);
+      expect(log1).toNotContainAny(['c', 'f']); // .toBe(false);
+      expect(log1).toNotContainAny(['1', 'f']); // .toBe(false);
+      expect(log1).toNotContainAny(['1', '2', '3', '4', '5']); // .toBe(true);
+      expect(log1).toNotContainAny(['1', '2', 'n', '4', '5']); // .toBe(false);
+    });
+
+  });
+
+})();
+
+  </script>
+
+</head>
+
+<body>
+</body>
+</html>
