@@ -135,7 +135,8 @@
 
     STATS = {
       Line: {
-        lineColor: {isOption: true}, lineColorTra: {}, lineSize: {isOption: true}
+        lineColor: {isOption: true}, lineColorTra: {}, lineSize: {isOption: true},
+        lineAltColor: {}
       },
       Plug: {
         plugSE: {hasSE: true, isOption: true},
@@ -194,7 +195,7 @@
       },
       Mask: {
         lineMaskEnabled: {},
-        lineOutlineEnabled: {},
+        lineMaskOutlined: {},
         lineMaskX: {}, lineMaskY: {},
         lineOutlineMaskX: {}, lineOutlineMaskY: {},
         capsEnabled: {}, capsMarkersEnabled: {},
@@ -863,6 +864,31 @@
     props.lineOutlineMaskCaps = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineOutlineMaskCaps.href.baseVal = '#' + props.capsId;
 
+    /* reserve for future version
+    props.lineFG = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
+    props.lineFG.id = props.lineFGId;
+    props.lineFGRect = setWH100(props.lineFG.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
+    */
+
+    // lineGradient
+    props.lineGradient = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
+    props.lineGradient.id = props.lineGradientId;
+    props.lineGradient.gradientUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
+    props.lineGradientStopSE = [0, 1].map(function(i) {
+      var element = props.lineGradient.appendChild(baseDocument.createElementNS(SVG_NS, 'stop'));
+      try {
+        element.offset.baseVal = i; // offset === index
+      } catch (error) {
+        if (error.code === DOMException.NO_MODIFICATION_ALLOWED_ERR) {
+          // [TRIDENT] bug
+          element.setAttribute('offset', i);
+        } else {
+          throw error;
+        }
+      }
+      return element;
+    });
+
     props.face = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
 
     props.lineFace = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
@@ -962,15 +988,17 @@
     var options = props.options, updated = false,
       curStats = props.curLine, aplStats = props.aplLine, value;
 
-    // lineColor
-    if ((value = options.lineColor) !== aplStats.lineColor) {
-      window.traceLog.push('lineColor=' + value); // [DEBUG/]
-      curStats.lineColorTra = getAlpha(value) < 1;
-      props.lineFace.style.stroke = aplStats.lineColor = value;
-      updated = true;
+    if (!curStats.lineAltColor) {
+      // lineColor
+      if ((value = options.lineColor) !== aplStats.lineColor) {
+        window.traceLog.push('lineColor=' + value); // [DEBUG/]
+        curStats.lineColorTra = getAlpha(value) < 1;
+        props.lineFace.style.stroke = aplStats.lineColor = value;
+        updated = true;
 
-      if (props.effect && props.effect.onLineColor) {
-        props.effect.onLineColor(props, value);
+        if (props.effect && props.effect.onLineColor) {
+          props.effect.onLineColor(props, value);
+        }
       }
     }
 
@@ -1237,7 +1265,6 @@
         }
       }
     }
-    props.curMask.lineOutlineEnabled = options.lineOutlineEnabled;
 
     if (!updated) { window.traceLog.push('not-updated'); } // [DEBUG/]
     return updated;
@@ -1900,7 +1927,8 @@
    */
   function updateMask(props) {
     window.traceLog.push('<updateMask>'); // [DEBUG/]
-    var updated = false, curMask = props.curMask, aplMask = props.aplMask,
+    var options = props.options, updated = false,
+      curMask = props.curMask, aplMask = props.aplMask,
       curCapsMaskAnchor = props.curCapsMaskAnchor, aplCapsMaskAnchor = props.aplCapsMaskAnchor,
       curCapsMaskMarker = props.curCapsMaskMarker, aplCapsMaskMarker = props.aplCapsMaskMarker,
       curPlug = props.curPlug,
@@ -1916,14 +1944,17 @@
     } else {
       curCapsMaskMarker.enabledSE[0] = curCapsMaskMarker.enabledSE[1] = false;
     }
+    // reserve for future version
+    // curMask.lineMaskOutlined = options.lineOutlineEnabled || lineFGEnabled;
+    curMask.lineMaskOutlined = options.lineOutlineEnabled;
     curMask.capsMarkersEnabled = curCapsMaskMarker.enabledSE[0] || curCapsMaskMarker.enabledSE[1];
     curMask.capsEnabled = curMask.capsMarkersEnabled ||
       curCapsMaskAnchor.enabledSE[0] || curCapsMaskAnchor.enabledSE[1];
-    curMask.lineMaskEnabled = curMask.capsEnabled || curMask.lineOutlineEnabled;
-    lineMaskBGEnabled = curMask.lineMaskEnabled && !curMask.lineOutlineEnabled;
+    curMask.lineMaskEnabled = curMask.capsEnabled || curMask.lineMaskOutlined;
+    lineMaskBGEnabled = curMask.lineMaskEnabled && !curMask.lineMaskOutlined;
 
     // maskBGRect
-    if (lineMaskBGEnabled || curMask.lineOutlineEnabled) {
+    if (lineMaskBGEnabled || curMask.lineMaskOutlined) {
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'maskBGRect' + boxKey.toUpperCase();
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
@@ -1934,12 +1965,12 @@
       });
     }
 
-    if (curMask.lineMaskEnabled) { // Includes `lineOutlineEnabled`
+    if (curMask.lineMaskEnabled) { // Includes `lineMaskOutlined`
 
       // Switch lineMask when it is shown.
-      if ((value = curMask.lineOutlineEnabled) !== aplMask.lineOutlineEnabled) {
-        window.traceLog.push('lineOutlineEnabled=' + value); // [DEBUG/]
-        if ((aplMask.lineOutlineEnabled = value)) {
+      if ((value = curMask.lineMaskOutlined) !== aplMask.lineMaskOutlined) {
+        window.traceLog.push('lineMaskOutlined=' + value); // [DEBUG/]
+        if ((aplMask.lineMaskOutlined = value)) {
           props.lineMaskBG.style.display = 'none';
           props.lineMaskShape.style.display = 'inline';
         } else {
@@ -2082,7 +2113,7 @@
     }
 
     // lineOutlineMask
-    if (curMask.lineOutlineEnabled) {
+    if (options.lineOutlineEnabled) {
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'lineOutlineMask' + boxKey.toUpperCase();
         if ((value = curMask[statKey]) !== aplMask[statKey]) {
@@ -2208,6 +2239,9 @@
     props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
     props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
     props.plugOutlineMaskIdSE = [prefix + '-plug-outline-mask-0', prefix + '-plug-outline-mask-1'];
+    // reserve for future version
+    // props.lineFGId = prefix + '-line-fg';
+    props.lineGradientId = prefix + '-line-gradient';
 
     if (arguments.length === 1) {
       options = start;
