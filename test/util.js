@@ -3,7 +3,7 @@
   'use strict';
 
   /**
-   * @param {Array} log - `traceLog`.
+   * @param {Array} log - `traceLog.log`.
    * @param {(string|string[])[]} keys - Each key is `'<setOptions>', '<position>'` or
    *    `['<updateLine>', 'lineColor']` to check the sequence.
    * @returns {boolean} - `true` if all `keys` are contained.
@@ -29,7 +29,7 @@
   window.toContainAll = toContainAll;
 
   /**
-   * @param {Array} log - `traceLog`.
+   * @param {Array} log - `traceLog.log`.
    * @param {string[]} keys - Each key is `'<setOptions>', '<position>'`.
    * @returns {boolean} - `true` if all `keys` are not contained.
    */

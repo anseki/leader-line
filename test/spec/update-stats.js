@@ -1,5 +1,5 @@
 /* eslint-env jasmine */
-/* global loadPage:false, customMatchers:false */
+/* global loadPage:false, traceLog:false, customMatchers:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
 describe('update-stats', function() {
@@ -20,6 +20,8 @@ describe('update-stats', function() {
     return title;
   }
 
+  traceLog.enabled = true;
+
   beforeEach(function(beforeDone) {
     jasmine.addMatchers(customMatchers);
     loadPage('spec/common/page.html', function(frmWindow, frmDocument, body, done) {
@@ -35,17 +37,17 @@ describe('update-stats', function() {
 
     // Change `path`
     ll.endPlug = 'behind'; // to avoid changing padding by symbol
-    window.traceLog = [];
+    traceLog.clear();
     ll.path = 'straight';
-    expect(window.traceLog).toContainAll([
+    expect(traceLog.log).toContainAll([
       ['<updatePosition>', 'statsHasChanged:path', 'new-position'],
       ['<updatePath>', 'statsHasChanged:pathData', 'setPathData']
     ]);
 
     // Change `socketGravitySE`, it doesn't affect pathData because `path` is 'straight'.
-    window.traceLog = [];
+    traceLog.clear();
     ll.startSocketGravity = 10;
-    expect(window.traceLog).toContainAll([
+    expect(traceLog.log).toContainAll([
       ['<updatePosition>', 'statsHasChanged:socketGravitySE[0]', 'new-position']
     ]
     // no change
@@ -63,7 +65,7 @@ describe('update-stats', function() {
     ll.startPlug = 'arrow1';
     expect(props.curViewBBox.plugBCircleSE[0]).toBe(8);
     expect(props.curViewBBox.plugBCircleSE[1]).toBe(8);
-    window.traceLog = [];
+    traceLog.clear();
     ll.setOptions({
       size: 2, // /= 2
       startPlugSize: 2, // *= 2
@@ -71,7 +73,7 @@ describe('update-stats', function() {
     });
     expect(props.curViewBBox.plugBCircleSE[0]).toBe(8);
     expect(props.curViewBBox.plugBCircleSE[1]).toBe(8);
-    expect(window.traceLog).toContainAll([
+    expect(traceLog.log).toContainAll([
       ['<updateLine>', 'lineSize=2'],
       ['<updatePlug>', 'widthSE[0]', 'heightSE[0]', 'widthSE[1]', 'heightSE[1]'],
       ['<updatePosition>', 'statsHasChanged:lineSize', 'new-position']
@@ -82,7 +84,7 @@ describe('update-stats', function() {
       .map(function(key) { return [key, 'not-updated']; })));
 
     // up `lineSize`
-    window.traceLog = [];
+    traceLog.clear();
     ll.setOptions({
       size: 20, // *= 5
       startPlugSize: 0.2, // /= 5
@@ -90,7 +92,7 @@ describe('update-stats', function() {
     });
     expect(props.curViewBBox.plugBCircleSE[0]).toBe(8);
     expect(props.curViewBBox.plugBCircleSE[1]).toBe(8);
-    expect(window.traceLog).toContainAll([
+    expect(traceLog.log).toContainAll([
       ['<updateLine>', 'lineSize=20'],
       ['<updatePlug>', 'widthSE[0]', 'heightSE[0]', 'widthSE[1]', 'heightSE[1]'],
       ['<updatePosition>', 'statsHasChanged:lineSize', 'new-position'],
@@ -106,9 +108,9 @@ describe('update-stats', function() {
   it(registerTitle('updateMask'), function() {
 
     // `mask` is updated when `viewBox` was changed and `<mask>`s are used
-    window.traceLog = [];
+    traceLog.clear();
     ll.size = 8;
-    expect(window.traceLog).toContainAll([
+    expect(traceLog.log).toContainAll([
       ['<updateLine>', 'lineSize=8'],
       ['<updatePosition>', 'statsHasChanged:plugOverheadSE[0]', 'new-position'],
       ['<updatePath>', 'statsHasChanged:pathData', 'setPathData'],
