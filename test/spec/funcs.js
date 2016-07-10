@@ -68,10 +68,6 @@ describe('funcs', function() {
 
       beforeAll(function(beforeDone) {
         loadPage('spec/funcs/funcs.html', function(window, document, body, done) {
-          try { // To export `copyTree`
-            new window.LeaderLine(); // eslint-disable-line no-new
-          } catch (error) { /* ignore */ }
-
           copyTree = window.copyTree;
           obj2 = copyTree(obj1);
 
