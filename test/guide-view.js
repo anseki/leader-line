@@ -22,7 +22,7 @@ var guideView = (function() {
     guideElements = [];
 
     Object.keys(window.insProps).forEach(function(id) {
-      var props = window.insProps[id], options = props.options,
+      var props = window.insProps[id], curStats = props.curStats,
         llSvg = props.svg,
         baseDocument = props.baseWindow.document,
         guideSvg = baseDocument.body.appendChild(document.createElementNS(SVG_NS, 'svg'));
@@ -67,8 +67,8 @@ var guideView = (function() {
       // ======== BBox
       (function() {
         var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
-          padding = Math.max(options.lineSize / 2,
-            props.curViewBBox.plugBCircleSE[0] || 0, props.curViewBBox.plugBCircleSE[1] || 0),
+          padding = Math.max(curStats.line_strokeWidth / 2,
+            curStats.viewBox_plugBCircleSE[0] || 0, curStats.viewBox_plugBCircleSE[1] || 0),
           pathSegs = [], corners = {};
         props.linePath.getPathData().forEach(function(pathSeg) {
           var values = pathSeg.values, point, i, iLen = values.length;
@@ -101,13 +101,12 @@ var guideView = (function() {
       (function() {
         var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
           pathSegs = [];
-        options.anchorSE.forEach(function(anchor) {
-          var bBox = window.getBBoxNest(anchor, props.baseWindow);
+        curStats.capsMaskAnchor_bBoxSE.forEach(function(bBox) {
           [
-            {x: bBox.left + bBox.width / 2, y: bBox.top},
-            {x: bBox.right, y: bBox.top + bBox.height / 2},
-            {x: bBox.left + bBox.width / 2, y: bBox.bottom},
-            {x: bBox.left, y: bBox.top + bBox.height / 2}
+            {x: bBox.x + bBox.width / 2, y: bBox.y},
+            {x: bBox.x + bBox.width, y: bBox.y + bBox.height / 2},
+            {x: bBox.x + bBox.width / 2, y: bBox.y + bBox.height},
+            {x: bBox.x, y: bBox.y + bBox.height / 2}
           ].forEach(function(point) { addXMarker(point, pathSegs); });
         });
         path.className.baseVal = 'guide-socket';
