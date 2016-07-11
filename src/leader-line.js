@@ -640,7 +640,7 @@
     var SVG_NS = 'http://www.w3.org/2000/svg',
       baseDocument = newWindow.document,
       defs, stylesHtml, stylesBody, bodyOffset = {x: 0, y: 0},
-      svg, elmDefs, maskCaps, element;
+      svg, elmDefs, maskCaps, element, aplStats = props.aplStats;
 
     function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
 
@@ -859,10 +859,20 @@
     // Init stats
     Object.keys(STATS).forEach(function(name) {
       var statConf = STATS[name];
-      props.aplStats[name] =
-        statConf.hasSE ? (statConf.hasProps ? [{}, {}] : []) : statConf.hasProps ? {} : null;
+      aplStats[name] = statConf.hasSE ? (statConf.hasProps ? [{}, {}] : []) : statConf.hasProps ? {} : null;
     });
-    props.aplStats.plug_plugSE[0] = props.aplStats.plug_plugSE[1] = PLUG_BEHIND;
+    aplStats.plug_enabled =
+      aplStats.plug_enabledSE[0] = aplStats.plug_enabledSE[1] =
+      aplStats.lineOutline_enabled =
+      aplStats.plugOutline_enabledSE[0] = aplStats.plugOutline_enabledSE[1] =
+      aplStats.lineMask_enabled = aplStats.lineMask_outlineMode =
+      aplStats.capsMaskAnchor_enabledSE[0] = aplStats.capsMaskAnchor_enabledSE[1] =
+      aplStats.capsMaskMarker_enabled =
+      aplStats.capsMaskMarker_enabledSE[0] = aplStats.capsMaskMarker_enabledSE[1] =
+      aplStats.caps_enabled = false;
+    aplStats.plug_plugSE[0] = aplStats.plug_plugSE[1] =
+      aplStats.plugOutline_plugSE[0] = aplStats.plugOutline_plugSE[1] =
+      aplStats.capsMaskMarker_plugSE[0] = aplStats.capsMaskMarker_plugSE[1] = PLUG_BEHIND;
   }
   window.bindWindow = bindWindow; // [DEBUG/]
 
@@ -953,14 +963,11 @@
           events.cur_plug_markerHeightSE
           /* [DEBUG] */, 'plug_markerHeightSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-        // capsMaskMarker
         curStats.capsMaskMarker_markerWidthSE[i] = width;
         curStats.capsMaskMarker_markerHeightSE[i] = height;
       }
 
-      // plugOutline, capsMaskMarker
       curStats.plugOutline_plugSE[i] = curStats.capsMaskMarker_plugSE[i] = plugId;
-      // position, viewBox
       if (curStats.plug_enabledSE[i]) {
         value = curStats.line_strokeWidth / DEFAULT_OPTIONS.lineSize;
         curStats.position_plugOverheadSE[i] = value * symbolConf.overhead * options.plugSizeSE[i];
@@ -969,7 +976,6 @@
         curStats.position_plugOverheadSE[i] = -(curStats.line_strokeWidth / 2);
         curStats.viewBox_plugBCircleSE[i] = 0;
       }
-      // capsMaskAnchor
       curStats.capsMaskAnchor_enabledSE[i] = !curStats.plug_enabledSE[i];
     });
 
@@ -1050,7 +1056,6 @@
       if (plugId !== PLUG_BEHIND) { // Not depend on `curStats.plugOutline_enabledSE`
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
 
-        // strokeWidthSE
         value = options.plugOutlineSizeSE[i];
         if (value > symbolConf.outlineMax) { value = symbolConf.outlineMax; }
         value *= symbolConf.outlineBase * 2;
@@ -1080,20 +1085,17 @@
   function updateFaces(props) {
     traceLog.add('<updateFaces>'); // [DEBUG/]
     var curStats = props.curStats, aplStats = props.aplStats,
-      value,
-      updated = false;
+      value, updated = false;
 
-    // line_color
-    if (!curStats.line_altColor && (value = curStats.line_color) !== aplStats.line_color) {
-      traceLog.add('line_color=' + value); // [DEBUG/]
-      props.lineFace.style.stroke = aplStats.line_color = value;
+    if (!curStats.line_altColor && setStat(props, aplStats, 'line_color',
+        (value = curStats.line_color))) {
+      props.lineFace.style.stroke = value;
       updated = true;
     }
 
-    // line_strokeWidth
-    if ((value = curStats.line_strokeWidth) !== aplStats.line_strokeWidth) {
-      traceLog.add('line_strokeWidth=' + value); // [DEBUG/]
-      props.lineShape.style.strokeWidth = aplStats.line_strokeWidth = value;
+    if (setStat(props, aplStats, 'line_strokeWidth',
+        (value = curStats.line_strokeWidth))) {
+      props.lineShape.style.strokeWidth = value;
       updated = true;
       if (IS_GECKO || IS_TRIDENT) {
         // [TRIDENT] plugsFace is not updated when lineSize is changed
@@ -1108,27 +1110,23 @@
       }
     }
 
+    if (setStat(props, aplStats, 'lineOutline_enabled',
+        (value = curStats.lineOutline_enabled))) {
+      props.lineOutlineFace.style.display = value ? 'inline' : 'none';
+      updated = true;
+    }
+
     if (curStats.lineOutline_enabled) {
 
-      // lineOutline_enabled
-      if (!aplStats.lineOutline_enabled) {
-        traceLog.add('lineOutline_enabled=true'); // [DEBUG/]
-        aplStats.lineOutline_enabled = true;
-        props.lineOutlineFace.style.display = 'inline';
+      if (setStat(props, aplStats, 'lineOutline_color',
+          (value = curStats.lineOutline_color))) {
+        props.lineOutlineFace.style.stroke = value;
         updated = true;
       }
 
-      // lineOutline_color
-      if ((value = curStats.lineOutline_color) !== aplStats.lineOutline_color) {
-        traceLog.add('lineOutline_color=' + value); // [DEBUG/]
-        props.lineOutlineFace.style.stroke = aplStats.lineOutline_color = value;
-        updated = true;
-      }
-
-      // lineOutline_strokeWidth
-      if ((value = curStats.lineOutline_strokeWidth) !== aplStats.lineOutline_strokeWidth) {
-        traceLog.add('lineOutline_strokeWidth=' + value); // [DEBUG/]
-        props.lineOutlineMaskShape.style.strokeWidth = aplStats.lineOutline_strokeWidth = value;
+      if (setStat(props, aplStats, 'lineOutline_strokeWidth',
+          (value = curStats.lineOutline_strokeWidth))) {
+        props.lineOutlineMaskShape.style.strokeWidth = value;
         updated = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
@@ -1138,10 +1136,9 @@
         }
       }
 
-      // lineOutline_inStrokeWidth
-      if ((value = curStats.lineOutline_inStrokeWidth) !== aplStats.lineOutline_inStrokeWidth) {
-        traceLog.add('lineOutline_inStrokeWidth=' + value); // [DEBUG/]
-        props.lineMaskShape.style.strokeWidth = aplStats.lineOutline_inStrokeWidth = value;
+      if (setStat(props, aplStats, 'lineOutline_inStrokeWidth',
+          (value = curStats.lineOutline_inStrokeWidth))) {
+        props.lineMaskShape.style.strokeWidth = value;
         updated = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
@@ -1150,44 +1147,34 @@
           forceReflowAdd(props.lineOutlineFace);
         }
       }
+    }
 
-    } else if (aplStats.lineOutline_enabled) { // lineOutline_enabled
-      traceLog.add('lineOutline_enabled=false'); // [DEBUG/]
-      aplStats.lineOutline_enabled = false;
-      props.lineOutlineFace.style.display = 'none';
+    if (setStat(props, aplStats, 'plug_enabled',
+        (value = curStats.plug_enabled))) {
+      props.lineFace.style.stroke = value;
+      props.plugsFace.style.display = value ? 'inline' : 'none';
       updated = true;
     }
 
     if (curStats.plug_enabled) {
 
-      // plug_enabled
-      if (!aplStats.plug_enabled) {
-        traceLog.add('plug_enabled=true'); // [DEBUG/]
-        aplStats.plug_enabled = true;
-        props.plugsFace.style.display = 'inline';
-        updated = true;
-      }
-
       [0, 1].forEach(function(i) {
-        var plugId, symbolConf, marker;
-
-        if (curStats.plug_enabledSE[i]) {
-          plugId = curStats.plug_plugSE[i];
-          symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+        var plugId = curStats.plug_plugSE[i],
+          symbolConf = plugId !== PLUG_BEHIND ? SYMBOLS[PLUG_2_SYMBOL[plugId]] : null,
           marker = getMarkerProps(i, symbolConf);
 
-          // plug_enabledSE
-          if (!aplStats.plug_enabledSE[i]) {
-            traceLog.add('plug_enabledSE[' + i + ']=true'); // [DEBUG/]
-            aplStats.plug_enabledSE[i] = true;
-            props.plugsFace.style[marker.prop] = 'url(#' + props.plugMarkerIdSE[i] + ')';
-            updated = true;
-          }
+        if (setStat(props, aplStats.plug_enabledSE, i,
+            (value = curStats.plug_enabledSE[i])
+            /* [DEBUG] */, null, 'plug_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
+          props.plugsFace.style[marker.prop] = value ? 'url(#' + props.plugMarkerIdSE[i] + ')' : 'none';
+          updated = true;
+        }
 
-          // plug_plugSE
-          if (plugId !== aplStats.plug_plugSE[i]) {
-            traceLog.add('plug_plugSE[' + i + ']=' + plugId); // [DEBUG/]
-            aplStats.plug_plugSE[i] = plugId;
+        if (curStats.plug_enabledSE[i]) {
+
+          if (setStat(props, aplStats.plug_plugSE, i,
+              plugId
+              /* [DEBUG] */, null, 'plug_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
             props.plugFaceSE[i].href.baseVal = '#' + symbolConf.elmId;
             setMarkerOrient(props.plugMarkerSE[i], marker.orient,
               symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
@@ -1198,10 +1185,10 @@
             }
           }
 
-          // plug_colorSE
-          if ((value = curStats.plug_colorSE[i]) !== aplStats.plug_colorSE[i]) {
-            traceLog.add('plug_colorSE[' + i + ']=' + value); // [DEBUG/]
-            props.plugFaceSE[i].style.fill = aplStats.plug_colorSE[i] = value;
+          if (setStat(props, aplStats.plug_colorSE, i,
+              (value = curStats.plug_colorSE[i])
+              /* [DEBUG] */, null, 'plug_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
+            props.plugFaceSE[i].style.fill = value;
             updated = true;
             if (IS_BLINK && !curStats.line_colorTra) {
               // [BLINK] capsMaskLine is not updated when line has no alpha
@@ -1212,28 +1199,32 @@
           // plug_markerWidthSE, plug_markerHeightSE
           ['markerWidth', 'markerHeight'].forEach(function(markerKey) {
             var statKey = 'plug_' + markerKey + 'SE';
-            if ((value = curStats[statKey][i]) !== aplStats[statKey][i]) {
-              traceLog.add(statKey + '[' + i + ']'); // [DEBUG/]
-              props.plugMarkerSE[i][markerKey].baseVal.value = aplStats[statKey][i] = value;
+            if (setStat(props, aplStats[statKey], i,
+                (value = curStats[statKey][i])
+                /* [DEBUG] */, null, statKey + '[' + i + ']=%s'/* [/DEBUG] */)) {
+              props.plugMarkerSE[i][markerKey].baseVal.value = value;
               updated = true;
             }
           });
 
-          if (curStats.plugOutline_enabledSE[i]) {
-
-            // plugOutline_enabledSE
-            if (!aplStats.plugOutline_enabledSE[i]) {
-              traceLog.add('plugOutline_enabledSE[' + i + ']=true'); // [DEBUG/]
-              aplStats.plugOutline_enabledSE[i] = true;
+          if (setStat(props, aplStats.plugOutline_enabledSE, i,
+              (value = curStats.plugOutline_enabledSE[i])
+              /* [DEBUG] */, null, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
+            if (value) {
               props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
               props.plugOutlineFaceSE[i].style.display = 'inline';
-              updated = true;
+            } else {
+              props.plugFaceSE[i].style.mask = 'none';
+              props.plugOutlineFaceSE[i].style.display = 'none';
             }
+            updated = true;
+          }
 
-            // plugOutline_plugSE
-            if (plugId !== aplStats.plugOutline_plugSE[i]) {
-              traceLog.add('plugOutline_plugSE[' + i + ']=' + plugId); // [DEBUG/]
-              aplStats.plugOutline_plugSE[i] = plugId;
+          if (curStats.plugOutline_enabledSE[i]) {
+
+            if (setStat(props, aplStats.plugOutline_plugSE, i,
+                plugId
+                /* [DEBUG] */, null, 'plugOutline_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
               props.plugOutlineFaceSE[i].href.baseVal =
                 props.plugMaskShapeSE[i].href.baseVal =
                 props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
@@ -1246,49 +1237,29 @@
               updated = true;
             }
 
-            // plugOutline_colorSE
-            if ((value = curStats.plugOutline_colorSE[i]) !== aplStats.plugOutline_colorSE[i]) {
-              traceLog.add('plugOutline_colorSE[' + i + ']=' + value); // [DEBUG/]
-              props.plugOutlineFaceSE[i].style.fill = aplStats.plugOutline_colorSE[i] = value;
+            if (setStat(props, aplStats.plugOutline_colorSE, i,
+                (value = curStats.plugOutline_colorSE[i])
+                /* [DEBUG] */, null, 'plugOutline_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
+              props.plugOutlineFaceSE[i].style.fill = value;
               updated = true;
             }
 
-            // plugOutline_strokeWidthSE
-            if ((value = curStats.plugOutline_strokeWidthSE[i]) !== aplStats.plugOutline_strokeWidthSE[i]) {
-              traceLog.add('plugOutline_strokeWidthSE[' + i + ']=' + value); // [DEBUG/]
-              props.plugOutlineMaskShapeSE[i].style.strokeWidth = aplStats.plugOutline_strokeWidthSE[i] = value;
+            if (setStat(props, aplStats.plugOutline_strokeWidthSE, i,
+                (value = curStats.plugOutline_strokeWidthSE[i])
+                /* [DEBUG] */, null, 'plugOutline_strokeWidthSE[' + i + ']=%s'/* [/DEBUG] */)) {
+              props.plugOutlineMaskShapeSE[i].style.strokeWidth = value;
               updated = true;
             }
 
-            // plugOutline_inStrokeWidthSE
-            if ((value = curStats.plugOutline_inStrokeWidthSE[i]) !== aplStats.plugOutline_inStrokeWidthSE[i]) {
-              traceLog.add('plugOutline_inStrokeWidthSE[' + i + ']=' + value); // [DEBUG/]
-              props.plugMaskShapeSE[i].style.strokeWidth = aplStats.plugOutline_inStrokeWidthSE[i] = value;
+            if (setStat(props, aplStats.plugOutline_inStrokeWidthSE, i,
+                (value = curStats.plugOutline_inStrokeWidthSE[i])
+                /* [DEBUG] */, null, 'plugOutline_inStrokeWidthSE[' + i + ']=%s'/* [/DEBUG] */)) {
+              props.plugMaskShapeSE[i].style.strokeWidth = value;
               updated = true;
             }
-
-          } else if (aplStats.plugOutline_enabledSE[i]) { // plugOutline_enabledSE
-            traceLog.add('plugOutline_enabledSE[' + i + ']=false'); // [DEBUG/]
-            aplStats.plugOutline_enabledSE[i] = false;
-            props.plugFaceSE[i].style.mask = 'none';
-            props.plugOutlineFaceSE[i].style.display = 'none';
-            updated = true;
           }
-
-        } else if (aplStats.plug_enabledSE[i]) { // plug_enabledSE
-          traceLog.add('plug_enabledSE[' + i + ']=false'); // [DEBUG/]
-          aplStats.plug_enabledSE[i] = false;
-          props.plugsFace.style[getMarkerProps(i).prop] = 'none';
-          updated = true;
         }
-
       });
-
-    } else if (aplStats.plug_enabled) { // plug_enabled
-      traceLog.add('plug_enabled=false'); // [DEBUG/]
-      aplStats.plug_enabled = false;
-      props.plugsFace.style.display = 'none';
-      updated = true;
     }
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
@@ -1851,7 +1822,7 @@
     ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
       var value;
       if ((value = curBBox[boxKey]) !== aplBBox[boxKey]) {
-        traceLog.add(boxKey); // [DEBUG/]
+        traceLog.add('viewBox_bBox.' + boxKey); // [DEBUG/]
         viewBox[boxKey] = aplBBox[boxKey] = value;
         styles[BBOX_PROP[boxKey]] = value +
           (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
@@ -1882,7 +1853,8 @@
     } else {
       curStats.capsMaskMarker_enabledSE[0] = curStats.capsMaskMarker_enabledSE[1] = false;
     }
-    curStats.capsMaskMarker_enabled = curStats.capsMaskMarker_enabledSE[0] || curStats.capsMaskMarker_enabledSE[1];
+    curStats.capsMaskMarker_enabled =
+      curStats.capsMaskMarker_enabledSE[0] || curStats.capsMaskMarker_enabledSE[1];
 
     // reserve for future version
     // curStats.lineMask_outlineMode = curStats.lineOutline_enabled || lineFGEnabled;
@@ -1892,24 +1864,31 @@
     curStats.lineMask_enabled = curStats.caps_enabled || curStats.lineMask_outlineMode;
     lineMaskBGEnabled = curStats.lineMask_enabled && !curStats.lineMask_outlineMode;
 
-    // maskBGRect
     if (lineMaskBGEnabled || curStats.lineOutline_enabled) {
+      // maskBGRect_x, maskBGRect_y
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'maskBGRect_' + boxKey;
-        if ((value = curStats[statKey]) !== aplStats[statKey]) {
-          traceLog.add(statKey); // [DEBUG/]
-          props.maskBGRect[boxKey].baseVal.value = aplStats[statKey] = value;
+        if (setStat(props, aplStats, statKey,
+            (value = curStats[statKey])
+            /* [DEBUG] */, null, statKey + '%_'/* [/DEBUG] */)) {
+          props.maskBGRect[boxKey].baseVal.value = value;
           updated = true;
         }
       });
     }
 
+    if (setStat(props, aplStats, 'lineMask_enabled',
+        (value = curStats.lineMask_enabled))) {
+      props.lineFace.style.mask = value ? 'url(#' + props.lineMaskId + ')' : 'none';
+      updated = true;
+    }
+
     if (curStats.lineMask_enabled) { // Includes `outlineMode`
 
-      // Switch lineMask_outlineMode when lineMask is shown.
-      if ((value = curStats.lineMask_outlineMode) !== aplStats.lineMask_outlineMode) {
-        traceLog.add('lineMask_outlineMode=' + value); // [DEBUG/]
-        if ((aplStats.lineMask_outlineMode = value)) {
+      // when lineMask is shown
+      if (setStat(props, aplStats, 'lineMask_outlineMode',
+          (value = curStats.lineMask_outlineMode))) {
+        if (value) {
           props.lineMaskBG.style.display = 'none';
           props.lineMaskShape.style.display = 'inline';
         } else {
@@ -1919,79 +1898,79 @@
         updated = true;
       }
 
-      if (curStats.caps_enabled) {
-
-        // caps_enabled
-        if (!aplStats.caps_enabled) {
-          traceLog.add('caps_enabled=true'); // [DEBUG/]
-          aplStats.caps_enabled = true;
-          props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display = 'inline';
+      // lineMask_x, lineMask_y
+      ['x', 'y'].forEach(function(boxKey) {
+        var statKey = 'lineMask_' + boxKey;
+        if (setStat(props, aplStats, statKey,
+            (value = curStats[statKey])
+            /* [DEBUG] */, null, statKey + '%_'/* [/DEBUG] */)) {
+          props.lineMask[boxKey].baseVal.value = value;
           updated = true;
         }
+      });
 
-        // CapsMaskAnchor
+      if (setStat(props, aplStats, 'caps_enabled',
+          (value = curStats.caps_enabled))) {
+        props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display =
+          value ? 'inline' : 'none';
+        updated = true;
+      }
+
+      if (curStats.caps_enabled) {
+
+        // capsMaskAnchor
         [0, 1].forEach(function(i) {
           var curBBox, aplBBox;
+
+          if (setStat(props, aplStats.capsMaskAnchor_enabledSE, i,
+              (value = curStats.capsMaskAnchor_enabledSE[i])
+              /* [DEBUG] */, null, 'capsMaskAnchor_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
+            props.capsMaskAnchorSE[i].style.display = value ? 'inline' : 'none';
+            updated = true;
+          }
+
           if (curStats.capsMaskAnchor_enabledSE[i]) {
-
-            // capsMaskAnchor_enabledSE
-            if (!aplStats.capsMaskAnchor_enabledSE[i]) {
-              traceLog.add('capsMaskAnchor_enabledSE[' + i + ']=true'); // [DEBUG/]
-              aplStats.capsMaskAnchor_enabledSE[i] = true;
-              props.capsMaskAnchorSE[i].style.display = 'inline';
-              updated = true;
-            }
-
             // capsMaskAnchor_bBoxSE
             curBBox = curStats.capsMaskAnchor_bBoxSE[i];
             aplBBox = aplStats.capsMaskAnchor_bBoxSE[i];
             ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-              if ((value = curBBox[boxKey]) !== aplBBox[boxKey]) {
-                traceLog.add('capsMaskAnchor_bBoxSE[' + i + '].' + boxKey); // [DEBUG/]
-                props.capsMaskAnchorSE[i][boxKey].baseVal.value = aplBBox[boxKey] = value;
+              if (setStat(props, aplBBox, boxKey,
+                  (value = curBBox[boxKey])
+                  /* [DEBUG] */, null, 'capsMaskAnchor_bBoxSE[' + i + '].' + boxKey + '%_'/* [/DEBUG] */)) {
+                props.capsMaskAnchorSE[i][boxKey].baseVal.value = value;
                 updated = true;
               }
             });
-
-          } else if (aplStats.capsMaskAnchor_enabledSE[i]) { // capsMaskAnchor_enabledSE
-            traceLog.add('capsMaskAnchor_enabledSE[' + i + ']=false'); // [DEBUG/]
-            aplStats.capsMaskAnchor_enabledSE[i] = false;
-            props.capsMaskAnchorSE[i].style.display = 'none';
-            updated = true;
           }
         });
 
+        if (setStat(props, aplStats, 'capsMaskMarker_enabled',
+            (value = curStats.capsMaskMarker_enabled))) {
+          props.capsMaskLine.style.display = value ? 'inline' : 'none';
+          updated = true;
+        }
+
         if (curStats.capsMaskMarker_enabled) {
 
-          // capsMaskMarker_enabled
-          if (!aplStats.capsMaskMarker_enabled) {
-            traceLog.add('capsMaskMarker_enabled=true'); // [DEBUG/]
-            aplStats.capsMaskMarker_enabled = true;
-            props.capsMaskLine.style.display = 'inline';
-            updated = true;
-          }
-
-          // CapsMaskMarker
+          // capsMaskMarker
           [0, 1].forEach(function(i) {
-            var plugId, symbolConf, marker;
-
-            if (curStats.capsMaskMarker_enabledSE[i]) {
-              plugId = curStats.capsMaskMarker_plugSE[i];
-              symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+            var plugId = curStats.capsMaskMarker_plugSE[i],
+              symbolConf = plugId !== PLUG_BEHIND ? SYMBOLS[PLUG_2_SYMBOL[plugId]] : null,
               marker = getMarkerProps(i, symbolConf);
 
-              // capsMaskMarker_enabledSE
-              if (!aplStats.capsMaskMarker_enabledSE[i]) {
-                traceLog.add('capsMaskMarker_enabledSE[' + i + ']=true'); // [DEBUG/]
-                aplStats.capsMaskMarker_enabledSE[i] = true;
-                props.capsMaskLine.style[marker.prop] = 'url(#' + props.lineMaskMarkerIdSE[i] + ')';
-                updated = true;
-              }
+            if (setStat(props, aplStats.capsMaskMarker_enabledSE, i,
+                (value = curStats.capsMaskMarker_enabledSE[i])
+                /* [DEBUG] */, null, 'capsMaskMarker_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
+              props.capsMaskLine.style[marker.prop] =
+                value ? 'url(#' + props.lineMaskMarkerIdSE[i] + ')' : 'none';
+              updated = true;
+            }
 
-              // capsMaskMarker_plugSE
-              if (plugId !== aplStats.capsMaskMarker_plugSE[i]) {
-                traceLog.add('capsMaskMarker_plugSE[' + i + ']=' + plugId); // [DEBUG/]
-                aplStats.capsMaskMarker_plugSE[i] = plugId;
+            if (curStats.capsMaskMarker_enabledSE[i]) {
+
+              if (setStat(props, aplStats.capsMaskMarker_plugSE, i,
+                  plugId
+                  /* [DEBUG] */, null, 'capsMaskMarker_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
                 props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
                 setMarkerOrient(props.capsMaskMarkerSE[i], marker.orient,
                   symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
@@ -2006,67 +1985,27 @@
               // capsMaskMarker_markerWidthSE, capsMaskMarker_markerHeightSE
               ['markerWidth', 'markerHeight'].forEach(function(markerKey) {
                 var statKey = 'capsMaskMarker_' + markerKey + 'SE';
-                if ((value = curStats[statKey][i]) !== aplStats[statKey][i]) {
-                  traceLog.add(statKey + '[' + i + ']'); // [DEBUG/]
-                  props.capsMaskMarkerSE[i][markerKey].baseVal.value = aplStats[statKey][i] = value;
+                if (setStat(props, aplStats[statKey], i,
+                    (value = curStats[statKey][i])
+                    /* [DEBUG] */, null, statKey + '[' + i + ']=%s'/* [/DEBUG] */)) {
+                  props.capsMaskMarkerSE[i][markerKey].baseVal.value = value;
                   updated = true;
                 }
               });
-
-            } else if (aplStats.capsMaskMarker_enabledSE[i]) { // capsMaskMarker_enabledSE
-              traceLog.add('capsMaskMarker_enabledSE[' + i + ']=false'); // [DEBUG/]
-              aplStats.capsMaskMarker_enabledSE[i] = false;
-              props.capsMaskLine.style[getMarkerProps(i).prop] = 'none';
-              updated = true;
             }
           });
-
-        } else if (aplStats.capsMaskMarker_enabled) { // capsMaskMarker_enabled
-          traceLog.add('capsMaskMarker_enabled=false'); // [DEBUG/]
-          aplStats.capsMaskMarker_enabled = false;
-          props.capsMaskLine.style.display = 'none';
-          updated = true;
         }
-
-      } else if (aplStats.caps_enabled) { // caps_enabled
-        traceLog.add('caps_enabled=false'); // [DEBUG/]
-        aplStats.caps_enabled = false;
-        props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display = 'none';
-        updated = true;
       }
-
-      // lineMask_enabled
-      if (!aplStats.lineMask_enabled) {
-        traceLog.add('lineMask_enabled=true'); // [DEBUG/]
-        aplStats.lineMask_enabled = true;
-        props.lineFace.style.mask = 'url(#' + props.lineMaskId + ')';
-        updated = true;
-      }
-
-      // lineMask_x, lineMask_y
-      ['x', 'y'].forEach(function(boxKey) {
-        var statKey = 'lineMask_' + boxKey;
-        if ((value = curStats[statKey]) !== aplStats[statKey]) {
-          traceLog.add(statKey); // [DEBUG/]
-          props.lineMask[boxKey].baseVal.value = aplStats[statKey] = value;
-          updated = true;
-        }
-      });
-
-    } else if (aplStats.lineMask_enabled) { // lineMask_enabled
-      traceLog.add('lineMask_enabled=false'); // [DEBUG/]
-      aplStats.lineMask_enabled = false;
-      props.lineFace.style.mask = 'none';
-      updated = true;
     }
 
     if (curStats.lineOutline_enabled) {
       // lineOutlineMask_x, lineOutlineMask_y
       ['x', 'y'].forEach(function(boxKey) {
         var statKey = 'lineOutlineMask_' + boxKey;
-        if ((value = curStats[statKey]) !== aplStats[statKey]) {
-          traceLog.add(statKey); // [DEBUG/]
-          props.lineOutlineMask[boxKey].baseVal.value = aplStats[statKey] = value;
+        if (setStat(props, aplStats, statKey,
+            (value = curStats[statKey])
+            /* [DEBUG] */, null, statKey + '%_'/* [/DEBUG] */)) {
+          props.lineOutlineMask[boxKey].baseVal.value = value;
           updated = true;
         }
       });
@@ -2484,7 +2423,7 @@
   };
 
   LeaderLine.prototype.position = function() {
-    update(insProps[this._id], {Position: true});
+    update(insProps[this._id], {position: true});
     return this;
   };
 
