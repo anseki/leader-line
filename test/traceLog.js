@@ -7,7 +7,7 @@ var traceLog = (function() {
     var args = Array.prototype.slice.call(arguments),
       message = args.shift() + '';
     if (!args.length) { return message; }
-    message = message.replace(/%([odifs])/g, function(s, param) {
+    message = message.replace(/%([odifs_])/g, function(s, param) {
       var arg;
       if (!args.length) { return ''; }
       arg = args.shift();
@@ -19,6 +19,8 @@ var traceLog = (function() {
       } else if (param === 'f') {
         arg = typeof arg === 'boolean' ? (arg ? 1 : 0) : parseFloat(arg);
         return isNaN(arg) ? '0.000000' : arg.toFixed(6) + '';
+      } else if (param === '_') { // drop arg
+        return '';
       }
       return arg + '';
     });
