@@ -956,12 +956,12 @@
         updated = setStat(props, curStats.plug_markerWidthSE, i,
           plugMarkerWidth,
           events.cur_plug_markerWidthSE
-          /* [DEBUG] */, 'plug_markerWidthSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
+          /* [DEBUG] */, 'plug_markerWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
 
         updated = setStat(props, curStats.plug_markerHeightSE, i,
           plugMarkerHeight,
           events.cur_plug_markerHeightSE
-          /* [DEBUG] */, 'plug_markerHeightSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
+          /* [DEBUG] */, 'plug_markerHeightSE[' + i + ']%_'/* [/DEBUG] */) || updated;
 
         curStats.capsMaskMarker_markerWidthSE[i] = width;
         curStats.capsMaskMarker_markerHeightSE[i] = height;
@@ -1201,7 +1201,7 @@
             var statKey = 'plug_' + markerKey + 'SE';
             if (setStat(props, aplStats[statKey], i,
                 (value = curStats[statKey][i])
-                /* [DEBUG] */, null, statKey + '[' + i + ']=%s'/* [/DEBUG] */)) {
+                /* [DEBUG] */, null, statKey + '[' + i + ']%_'/* [/DEBUG] */)) {
               props.plugMarkerSE[i][markerKey].baseVal.value = value;
               updated = true;
             }
@@ -1987,7 +1987,7 @@
                 var statKey = 'capsMaskMarker_' + markerKey + 'SE';
                 if (setStat(props, aplStats[statKey], i,
                     (value = curStats[statKey][i])
-                    /* [DEBUG] */, null, statKey + '[' + i + ']=%s'/* [/DEBUG] */)) {
+                    /* [DEBUG] */, null, statKey + '[' + i + ']%_'/* [/DEBUG] */)) {
                   props.capsMaskMarkerSE[i][markerKey].baseVal.value = value;
                   updated = true;
                 }
