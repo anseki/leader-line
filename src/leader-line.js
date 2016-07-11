@@ -866,9 +866,7 @@
   }
   window.bindWindow = bindWindow; // [DEBUG/]
 
-  function setStat(props, container, key, value, eventHandlers
-      , log // [DEBUG/]
-      ) {
+  function setStat(props, container, key, value, eventHandlers/* [DEBUG] */, log/* [/DEBUG] */) {
     if (value !== container[key]) {
       traceLog.add(log || key + '=%s', value); // [DEBUG/]
       container[key] = value;
@@ -889,16 +887,16 @@
     var options = props.options, curStats = props.curStats, events = props.events,
       updated = false;
 
-    updated = setStat(props, curStats,
-      'line_color', options.lineColor,
+    updated = setStat(props, curStats, 'line_color',
+      options.lineColor,
       events.cur_line_color) || updated;
 
-    updated = setStat(props, curStats,
-      'line_colorTra', getAlpha(curStats.line_color) < 1,
+    updated = setStat(props, curStats, 'line_colorTra',
+      getAlpha(curStats.line_color) < 1,
       events.cur_line_colorTra) || updated;
 
-    updated = setStat(props, curStats,
-      'line_strokeWidth', options.lineSize,
+    updated = setStat(props, curStats, 'line_strokeWidth',
+      options.lineSize,
       events.cur_line_strokeWidth) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
@@ -918,29 +916,21 @@
       var plugId = options.plugSE[i], symbolConf,
         width, height, plugMarkerWidth, plugMarkerHeight, value;
 
-      updated = setStat(props, curStats.plug_enabledSE,
-        i, plugId !== PLUG_BEHIND,
-        events.cur_plug_enabledSE
-        , 'plug_enabledSE[' + i + ']=%s' // [DEBUG/]
-        ) || updated;
+      updated = setStat(props, curStats.plug_enabledSE, i,
+        plugId !== PLUG_BEHIND,
+        events.cur_plug_enabledSE/* [DEBUG] */, 'plug_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-      updated = setStat(props, curStats.plug_plugSE,
-        i, plugId,
-        events.cur_plug_plugSE
-        , 'plug_plugSE[' + i + ']=%s' // [DEBUG/]
-        ) || updated;
+      updated = setStat(props, curStats.plug_plugSE, i,
+        plugId,
+        events.cur_plug_plugSE/* [DEBUG] */, 'plug_plugSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-      updated = setStat(props, curStats.plug_colorSE,
-        i, (value = options.plugColorSE[i] || curStats.line_color),
-        events.cur_plug_colorSE
-        , 'plug_colorSE[' + i + ']=%s' // [DEBUG/]
-        ) || updated;
+      updated = setStat(props, curStats.plug_colorSE, i,
+        (value = options.plugColorSE[i] || curStats.line_color),
+        events.cur_plug_colorSE/* [DEBUG] */, 'plug_colorSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-      updated = setStat(props, curStats.plug_colorTraSE,
-        i, getAlpha(value) < 1,
-        events.cur_plug_colorTraSE
-        , 'plug_colorTraSE[' + i + ']=%s' // [DEBUG/]
-        ) || updated;
+      updated = setStat(props, curStats.plug_colorTraSE, i,
+        getAlpha(value) < 1,
+        events.cur_plug_colorTraSE/* [DEBUG] */, 'plug_colorTraSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
       if (plugId !== PLUG_BEHIND) { // Not depend on `curStats.plug_enabledSE`
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
@@ -953,17 +943,15 @@
           plugMarkerHeight *= curStats.line_strokeWidth;
         }
 
-        updated = setStat(props, curStats.plug_markerWidthSE,
-          i, plugMarkerWidth,
+        updated = setStat(props, curStats.plug_markerWidthSE, i,
+          plugMarkerWidth,
           events.cur_plug_markerWidthSE
-          , 'plug_markerWidthSE[' + i + ']=%s' // [DEBUG/]
-          ) || updated;
+          /* [DEBUG] */, 'plug_markerWidthSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-        updated = setStat(props, curStats.plug_markerHeightSE,
-          i, plugMarkerHeight,
+        updated = setStat(props, curStats.plug_markerHeightSE, i,
+          plugMarkerHeight,
           events.cur_plug_markerHeightSE
-          , 'plug_markerHeightSE[' + i + ']=%s' // [DEBUG/]
-          ) || updated;
+          /* [DEBUG] */, 'plug_markerHeightSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
         // capsMaskMarker
         curStats.capsMaskMarker_markerWidthSE[i] = width;
@@ -986,8 +974,8 @@
     });
 
     // It might be independent of `curStats.plug_enabledSE` in future version.
-    updated = setStat(props, curStats,
-      'plug_enabled', curStats.plug_enabledSE[0] || curStats.plug_enabledSE[1],
+    updated = setStat(props, curStats, 'plug_enabled',
+      curStats.plug_enabledSE[0] || curStats.plug_enabledSE[1],
       events.cur_plug_enabled) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
@@ -1004,26 +992,25 @@
       outlineWidth,
       updated = false;
 
-    updated = setStat(props, curStats,
-      'lineOutline_enabled', options.lineOutlineEnabled,
+    updated = setStat(props, curStats, 'lineOutline_enabled',
+      options.lineOutlineEnabled,
       events.cur_lineOutline_enabled) || updated;
 
-    updated = setStat(props, curStats,
-      'lineOutline_color', options.lineOutlineColor,
+    updated = setStat(props, curStats, 'lineOutline_color',
+      options.lineOutlineColor,
       events.cur_lineOutline_color) || updated;
 
-    updated = setStat(props, curStats,
-      'lineOutline_colorTra', getAlpha(curStats.lineOutline_color) < 1,
+    updated = setStat(props, curStats, 'lineOutline_colorTra',
+      getAlpha(curStats.lineOutline_color) < 1,
       events.cur_lineOutline_colorTra) || updated;
 
     outlineWidth = curStats.line_strokeWidth * options.lineOutlineSize;
 
-    updated = setStat(props, curStats,
-      'lineOutline_strokeWidth', curStats.line_strokeWidth - outlineWidth * 2,
+    updated = setStat(props, curStats, 'lineOutline_strokeWidth',
+      curStats.line_strokeWidth - outlineWidth * 2,
       events.cur_lineOutline_strokeWidth) || updated;
 
-    updated = setStat(props, curStats,
-      'lineOutline_inStrokeWidth',
+    updated = setStat(props, curStats, 'lineOutline_inStrokeWidth',
       curStats.lineOutline_colorTra ?
         curStats.lineOutline_strokeWidth + SHAPE_GAP * 2 :
         curStats.line_strokeWidth - outlineWidth, // half
@@ -1045,23 +1032,20 @@
     [0, 1].forEach(function(i) {
       var plugId = curStats.plugOutline_plugSE[i], symbolConf, value;
 
-      updated = setStat(props, curStats.plugOutline_enabledSE,
-        i, curStats.plug_enabled && curStats.plug_enabledSE[i] && options.plugOutlineEnabledSE[i],
+      updated = setStat(props, curStats.plugOutline_enabledSE, i,
+        curStats.plug_enabled && curStats.plug_enabledSE[i] && options.plugOutlineEnabledSE[i],
         events.cur_plugOutline_enabledSE
-        , 'plugOutline_enabledSE[' + i + ']=%s' // [DEBUG/]
-        ) || updated;
+        /* [DEBUG] */, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-      updated = setStat(props, curStats.plugOutline_colorSE,
-        i, (value = options.plugOutlineColorSE[i] || curStats.lineOutline_color),
+      updated = setStat(props, curStats.plugOutline_colorSE, i,
+        (value = options.plugOutlineColorSE[i] || curStats.lineOutline_color),
         events.cur_plugOutline_colorSE
-        , 'plugOutline_colorSE[' + i + ']=%s' // [DEBUG/]
-        ) || updated;
+        /* [DEBUG] */, 'plugOutline_colorSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-      updated = setStat(props, curStats.plugOutline_colorTraSE,
-        i, getAlpha(value) < 1,
+      updated = setStat(props, curStats.plugOutline_colorTraSE, i,
+        getAlpha(value) < 1,
         events.cur_plugOutline_colorTraSE
-        , 'plugOutline_colorTraSE[' + i + ']=%s' // [DEBUG/]
-        ) || updated;
+        /* [DEBUG] */, 'plugOutline_colorTraSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
       if (plugId !== PLUG_BEHIND) { // Not depend on `curStats.plugOutline_enabledSE`
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
@@ -1070,20 +1054,18 @@
         value = options.plugOutlineSizeSE[i];
         if (value > symbolConf.outlineMax) { value = symbolConf.outlineMax; }
         value *= symbolConf.outlineBase * 2;
-        updated = setStat(props, curStats.plugOutline_strokeWidthSE,
-          i, value,
+        updated = setStat(props, curStats.plugOutline_strokeWidthSE, i,
+          value,
           events.cur_plugOutline_strokeWidthSE
-          , 'plugOutline_strokeWidthSE[' + i + ']=%s' // [DEBUG/]
-          ) || updated;
+          /* [DEBUG] */, 'plugOutline_strokeWidthSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-        updated = setStat(props, curStats.plugOutline_inStrokeWidthSE,
-          i,
+        updated = setStat(props, curStats.plugOutline_inStrokeWidthSE, i,
           curStats.plugOutline_colorTraSE[i] ?
-            value - SHAPE_GAP / (curStats.line_strokeWidth / DEFAULT_OPTIONS.lineSize) / options.plugSizeSE[i] * 2 :
+            value - SHAPE_GAP / (curStats.line_strokeWidth / DEFAULT_OPTIONS.lineSize) /
+              options.plugSizeSE[i] * 2 :
             value / 2, // half
           events.cur_plugOutline_inStrokeWidthSE
-          , 'plugOutline_inStrokeWidthSE[' + i + ']=%s' // [DEBUG/]
-          ) || updated;
+          /* [DEBUG] */, 'plugOutline_inStrokeWidthSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
       }
     });
 

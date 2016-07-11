@@ -32,6 +32,7 @@ module.exports = grunt => {
   function productSrc(content) {
     return content
       .replace(/[^\n]*\[DEBUG\/\][^\n]*\n?/g, '')
+      .replace(/\/\*\s*\[DEBUG\]\s*\*\/[\s\S]*?\/\*\s*\[\/DEBUG\]\s*\*\//g, '')
       .replace(/[^\n]*\[DEBUG\][\s\S]*?\[\/DEBUG\][^\n]*\n?/g, '');
   }
 
