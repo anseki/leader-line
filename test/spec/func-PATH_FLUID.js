@@ -6,8 +6,8 @@ describe('func-PATH_FLUID', function() {
 
   var func;
 
-  // ================ context
   /* eslint-disable no-unused-vars, indent */
+  // ================ context
   var
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     PATH_STRAIGHT = 1, PATH_ARC = 2, PATH_FLUID = 3, PATH_MAGNET = 4, PATH_GRID = 5,
@@ -15,11 +15,11 @@ describe('func-PATH_FLUID', function() {
     MIN_OH_GRAVITY = 120, MIN_OH_GRAVITY_OH = 8, MIN_OH_GRAVITY_R = 3.75,
     MIN_ADJUST_LEN = 10, MIN_GRID_LEN = 30,
 
+    // context in updatePosition()
     props, options, curStats, curStatsSocketXYSE, pathList;
-
     function socketXY2Point(socketXY) { return {x: socketXY.x, y: socketXY.y}; }
-  /* eslint-enable no-unused-vars, indent */
   // ================ /context
+  /* eslint-enable no-unused-vars, indent */
 
   function initContext(newProps, newOptions) {
     props = newProps;

@@ -4,14 +4,14 @@
 window.addEventListener('load', function() {
   'use strict';
 
-  // ================ context
   /* eslint-disable no-unused-vars, indent */
+  // ================ context
   var
     IS_TRIDENT = !!document.uniqueID,
 
     SVG_NS = 'http://www.w3.org/2000/svg';
-  /* eslint-enable no-unused-vars, indent */
   // ================ /context
+  /* eslint-enable no-unused-vars, indent */
 
   var
     VIEW_WH = 320, // Sync to `cases.scss`

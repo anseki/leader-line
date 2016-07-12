@@ -5,6 +5,11 @@
 
   <style>
 
+th {
+  text-align: left;
+  vertical-align: top;
+}
+
 .view {
   display: block;
   width: 240px;
@@ -26,9 +31,11 @@
 
   </style>
 
-  <script src="../../src/path-data-polyfill/path-data-polyfill.js"></script>
+  <script src="/src/path-data-polyfill/path-data-polyfill.js"></script>
   <script>pathDataPolyfill(window)</script>
+  <script src="../get-source.js"></script>
   <script src="cases.js"></script>
+  <script src="testCasesSvg.json.js"></script>
 </head>
 <body>
 
@@ -41,7 +48,21 @@
     </defs>
   </svg>
 
-  <textarea id="code"></textarea>
+  <table>
+    <tbody id="cases-tbody">
+      <tr>
+        <th></th>
+        <th>Actual</th>
+        <th>Expected</th>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>testCases.json</h2>
+  <textarea id="testCases-json"></textarea>
+
+  <h2>New testCasesSvg.json</h2>
+  <textarea id="testCasesSvg-json"></textarea>
 
 </body>
 </html>

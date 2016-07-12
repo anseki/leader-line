@@ -29,8 +29,8 @@ describe('BBox', function() {
     DIV_WIDTH = {static: 100, absolute: 101},
     DIV_HEIGHT = {static: 50, absolute: 51};
 
-  // ================ context
   /* eslint-disable no-unused-vars, indent */
+  // ================ context
   var
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4;
 
@@ -43,8 +43,8 @@ describe('BBox', function() {
       socketXY.socketId = socketId;
       return socketXY;
     }
-  /* eslint-enable no-unused-vars, indent */
   // ================ /context
+  /* eslint-enable no-unused-vars, indent */
 
   function setUpDocument(props, document, body) {
     var targets = {html: document.documentElement, body: body || document.body};
