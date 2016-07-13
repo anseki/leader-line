@@ -1,11 +1,11 @@
 /* eslint-env jasmine */
-/* global loadPage:false, traceLog:false, customMatchers:false */
+/* global loadPage:false, customMatchers:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
 (function() {
   'use strict';
 
-  var window, document, pageDone, ll;
+  var window, document, traceLog, pageDone, ll;
 
   /* eslint-disable no-unused-vars, indent */
   // ================ context
@@ -19,20 +19,21 @@
     loadPage('spec/common/page.html', function(frmWindow, frmDocument, body, done) {
       window = frmWindow;
       document = frmDocument;
+      traceLog = window.traceLog;
+      traceLog.enabled = true;
       pageDone = done;
       ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm2'));
       beforeDone();
     });
   }
 
-  traceLog.enabled = true;
-
   describe('setOptions()', function() {
 
     beforeEach(loadBefore);
 
     it('setValidId()', function() {
-      var props = window.insProps[ll._id];
+      var props = window.insProps[ll._id],
+        value;
 
       // valid ID
       traceLog.clear();
@@ -59,10 +60,12 @@
       ll.endSocket = 'bottom';
       expect(props.options.socketSE[1]).toBe(SOCKET_BOTTOM);
       expect(ll.endSocket).toBe('bottom');
+      value = window.copyTree(props.aplStats.position_socketXYSE[1]);
       traceLog.clear();
       ll.endSocket = 'auto';
       expect(traceLog.log).toContain('<updatePosition>');
-      expect(traceLog.log).toContain('statsHasChanged:socketXYSE[1]');
+      expect(traceLog.log).toContain('new-position');
+      expect(props.aplStats.position_socketXYSE[1]).not.toEqual(value);
       expect(props.options.socketSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
       expect(ll.endSocket).toBe('auto');
 
@@ -521,13 +524,6 @@
         '<updatePlug>', '<updatePlugOutline>', '<updatePosition>'
       ]);
 
-      traceLog.clear();
-      ll.startPlugColor = 'red'; // option of disabled plug
-      expect(traceLog.log).toContain('<updatePlug>');
-      expect(traceLog.log).toNotContainAny([
-        '<updatePlugOutline>', '<updatePosition>'
-      ]);
-
       ll.color = 'red';
       traceLog.clear();
       ll.endPlugColor = 'auto'; // update option, but same value
@@ -540,11 +536,6 @@
     });
 
     it('needs.LineOutline affects calling update*', function() {
-
-      traceLog.clear();
-      ll.outlineColor = 'red'; // disabled now
-      expect(traceLog.log).toContain('<updateLineOutline>');
-      expect(traceLog.log).not.toContain('<updatePlugOutline>');
 
       traceLog.clear();
       ll.outline = true;

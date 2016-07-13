@@ -27,7 +27,8 @@ describe('BBox', function() {
       'overflow2-top': 64
     },
     DIV_WIDTH = {static: 100, absolute: 101},
-    DIV_HEIGHT = {static: 50, absolute: 51};
+    DIV_HEIGHT = {static: 50, absolute: 51},
+    SHOW_LOG = false;
 
   /* eslint-disable no-unused-vars, indent */
   // ================ context
@@ -140,10 +141,10 @@ describe('BBox', function() {
 
           ['static', 'absolute'].forEach(function(div, i) {
             var actual = createBBox({
-                left: props.aplCapsMaskAnchor.xSE[i],
-                top: props.aplCapsMaskAnchor.ySE[i],
-                width: props.aplCapsMaskAnchor.widthSE[i],
-                height: props.aplCapsMaskAnchor.heightSE[i]
+                left: props.aplStats.capsMaskAnchor_bBoxSE[i].x,
+                top: props.aplStats.capsMaskAnchor_bBoxSE[i].y,
+                width: props.aplStats.capsMaskAnchor_bBoxSE[i].width,
+                height: props.aplStats.capsMaskAnchor_bBoxSE[i].height
               }),
               len = condition.expected[div].reduce(function(sum, prop) { return (sum += DOC_LEN[prop]); }, 0);
             expect(actual)
@@ -208,7 +209,7 @@ describe('BBox', function() {
       it(title, function(done) {
 
         loadPage('spec/bbox/nested-window.html', function(window, document) {
-          var elms = {}, docProps = {}, show = !!document.title;
+          var elms = {}, docProps = {}, show = SHOW_LOG && !!document.title;
           if (show) { console.log('---- ' + title); }
 
           elms.static = document.getElementById('static');
@@ -367,18 +368,18 @@ describe('BBox', function() {
                     width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]})),
 
                 expected = createBBox({
-                  left: props.aplCapsMaskAnchor.xSE[i],
-                  top: props.aplCapsMaskAnchor.ySE[i],
-                  width: props.aplCapsMaskAnchor.widthSE[i],
-                  height: props.aplCapsMaskAnchor.heightSE[i]
+                  left: props.aplStats.capsMaskAnchor_bBoxSE[i].x,
+                  top: props.aplStats.capsMaskAnchor_bBoxSE[i].y,
+                  width: props.aplStats.capsMaskAnchor_bBoxSE[i].width,
+                  height: props.aplStats.capsMaskAnchor_bBoxSE[i].height
                 });
 
               expected.index = bBox.index = iCase; // for error information
               expected.key = bBox.key = key; // for error information
               expect(expected).toEqual(bBox);
 
-              expect(props.aplPosition.socketXYSE[i])
-                .toEqual(getSocketXY(bBox, props.aplPosition.socketXYSE[i].socketId));
+              expect(props.aplStats.position_socketXYSE[i])
+                .toEqual(getSocketXY(bBox, props.aplStats.position_socketXYSE[i].socketId));
             });
 
             if (show) {
@@ -591,18 +592,18 @@ describe('BBox', function() {
                     width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]})),
 
                 expected = createBBox({
-                  left: props.aplCapsMaskAnchor.xSE[i],
-                  top: props.aplCapsMaskAnchor.ySE[i],
-                  width: props.aplCapsMaskAnchor.widthSE[i],
-                  height: props.aplCapsMaskAnchor.heightSE[i]
+                  left: props.aplStats.capsMaskAnchor_bBoxSE[i].x,
+                  top: props.aplStats.capsMaskAnchor_bBoxSE[i].y,
+                  width: props.aplStats.capsMaskAnchor_bBoxSE[i].width,
+                  height: props.aplStats.capsMaskAnchor_bBoxSE[i].height
                 });
 
               expected.index = bBox.index = iCase; // for error information
               expected.key = bBox.key = key; // for error information
               expect(expected).toEqual(bBox);
 
-              expect(props.aplPosition.socketXYSE[i])
-                .toEqual(getSocketXY(bBox, props.aplPosition.socketXYSE[i].socketId));
+              expect(props.aplStats.position_socketXYSE[i])
+                .toEqual(getSocketXY(bBox, props.aplStats.position_socketXYSE[i].socketId));
             });
           });
 

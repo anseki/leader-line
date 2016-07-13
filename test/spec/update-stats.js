@@ -1,11 +1,11 @@
 /* eslint-env jasmine */
-/* global loadPage:false, traceLog:false, customMatchers:false */
+/* global loadPage:false, customMatchers:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
 describe('update-stats', function() {
   'use strict';
 
-  var window, document, pageDone, ll, titles = [];
+  var window, document, traceLog, pageDone, ll, titles = [];
 
   /* eslint-disable no-unused-vars, indent */
   // ================ context
@@ -20,8 +20,6 @@ describe('update-stats', function() {
     return title;
   }
 
-  traceLog.enabled = true;
-
   beforeEach(function(beforeDone) {
     jasmine.addMatchers(customMatchers);
     loadPage('spec/common/page.html', function(frmWindow, frmDocument, body, done) {
@@ -29,6 +27,8 @@ describe('update-stats', function() {
       document = frmDocument;
       pageDone = done;
       ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'));
+      traceLog = window.traceLog;
+      traceLog.enabled = true;
       beforeDone();
     }, 'update-props - ' + titles.shift());
   });
@@ -40,47 +40,49 @@ describe('update-stats', function() {
     traceLog.clear();
     ll.path = 'straight';
     expect(traceLog.log).toContainAll([
-      ['<updatePosition>', 'statsHasChanged:path', 'new-position'],
-      ['<updatePath>', 'statsHasChanged:pathData', 'setPathData']
+      ['<updatePosition>', 'new-position'],
+      ['<updatePath>', 'setPathData']
     ]);
 
     // Change `socketGravitySE`, it doesn't affect pathData because `path` is 'straight'.
     traceLog.clear();
     ll.startSocketGravity = 10;
     expect(traceLog.log).toContainAll([
-      ['<updatePosition>', 'statsHasChanged:socketGravitySE[0]', 'new-position']
+      ['<updatePosition>', 'new-position']
     ]
     // no change
-    .concat(['<updatePath>', '<updateViewBBox>', '<updateMask>']
+    .concat(['<updatePath>', '<updateViewBox>', '<updateMask>']
       .map(function(key) { return [key, 'not-updated']; })));
 
     pageDone();
   });
 
-  it(registerTitle('updateViewBBox'), function() {
+  it(registerTitle('updateViewBox'), function() {
     var props = window.insProps[ll._id];
 
     // down `lineSize` without changing `plugSizeSE`
     // plugBCircleSE[i] = lineSize / DEFAULT_OPTIONS.lineSize(4) * symbolConf.bCircle(8) * plugSizeSE[i]
     ll.startPlug = 'arrow1';
-    expect(props.curViewBBox.plugBCircleSE[0]).toBe(8);
-    expect(props.curViewBBox.plugBCircleSE[1]).toBe(8);
+    expect(props.curStats.viewBox_plugBCircleSE[0]).toBe(8);
+    expect(props.curStats.viewBox_plugBCircleSE[1]).toBe(8);
     traceLog.clear();
     ll.setOptions({
       size: 2, // /= 2
       startPlugSize: 2, // *= 2
       endPlugSize: 2 // *= 2
     });
-    expect(props.curViewBBox.plugBCircleSE[0]).toBe(8);
-    expect(props.curViewBBox.plugBCircleSE[1]).toBe(8);
+    expect(props.curStats.viewBox_plugBCircleSE[0]).toBe(8);
+    expect(props.curStats.viewBox_plugBCircleSE[1]).toBe(8);
     expect(traceLog.log).toContainAll([
-      ['<updateLine>', 'lineSize=2'],
-      ['<updatePlug>', 'widthSE[0]', 'heightSE[0]', 'widthSE[1]', 'heightSE[1]'],
-      ['<updatePosition>', 'statsHasChanged:lineSize', 'new-position']
+      ['<updateLine>', 'line_strokeWidth=2'],
+      ['<updatePlug>', 'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]',
+        'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'],
+      ['<updateLineOutline>', 'lineOutline_strokeWidth=1', 'lineOutline_inStrokeWidth=1.5'],
+      ['<updatePosition>', 'new-position']
     ]
     // no change
-    .concat(['<updateLineOutline>', '<updatePlugOutline>',
-        '<updatePath>', '<updateViewBBox>', '<updateMask>']
+    .concat(['<updatePlugOutline>',
+        '<updatePath>', '<updateViewBox>', '<updateMask>']
       .map(function(key) { return [key, 'not-updated']; })));
 
     // up `lineSize`
@@ -90,16 +92,18 @@ describe('update-stats', function() {
       startPlugSize: 0.2, // /= 5
       endPlugSize: 0.2 // /= 5
     });
-    expect(props.curViewBBox.plugBCircleSE[0]).toBe(8);
-    expect(props.curViewBBox.plugBCircleSE[1]).toBe(8);
+    expect(props.curStats.viewBox_plugBCircleSE[0]).toBe(8);
+    expect(props.curStats.viewBox_plugBCircleSE[1]).toBe(8);
     expect(traceLog.log).toContainAll([
-      ['<updateLine>', 'lineSize=20'],
-      ['<updatePlug>', 'widthSE[0]', 'heightSE[0]', 'widthSE[1]', 'heightSE[1]'],
-      ['<updatePosition>', 'statsHasChanged:lineSize', 'new-position'],
-      ['<updateViewBBox>', 'x', 'y', 'width', 'height']
+      ['<updateLine>', 'line_strokeWidth=20'],
+      ['<updatePlug>', 'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]',
+        'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'],
+      ['<updatePosition>', 'new-position'],
+      ['<updateViewBox>', 'viewBox_bBox.x', 'viewBox_bBox.y',
+        'viewBox_bBox.width', 'viewBox_bBox.height']
     ]
     // no change
-    .concat(['<updateLineOutline>', '<updatePlugOutline>', '<updatePath>', '<updateMask>']
+    .concat(['<updatePlugOutline>', '<updatePath>', '<updateMask>']
       .map(function(key) { return [key, 'not-updated']; })));
 
     pageDone();
@@ -111,14 +115,15 @@ describe('update-stats', function() {
     traceLog.clear();
     ll.size = 8;
     expect(traceLog.log).toContainAll([
-      ['<updateLine>', 'lineSize=8'],
-      ['<updatePosition>', 'statsHasChanged:plugOverheadSE[0]', 'new-position'],
-      ['<updatePath>', 'statsHasChanged:pathData', 'setPathData'],
-      ['<updateViewBBox>', 'x', 'y', 'width', 'height'],
-      ['<updateMask>', 'maskBGRectX', 'maskBGRectY', 'lineMaskX', 'lineMaskY']
+      ['<updateLine>', 'line_strokeWidth=8'],
+      ['<updatePosition>', 'new-position'],
+      ['<updatePath>', 'setPathData'],
+      ['<updateViewBox>', 'viewBox_bBox.x', 'viewBox_bBox.y',
+        'viewBox_bBox.width', 'viewBox_bBox.height'],
+      ['<updateMask>', 'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y']
     ]
     // no change
-    .concat(['<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>']
+    .concat(['<updatePlug>', '<updatePlugOutline>']
       .map(function(key) { return [key, 'not-updated']; })));
 
     pageDone();
