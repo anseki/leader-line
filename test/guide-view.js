@@ -1,3 +1,4 @@
+/* global forceReflow:false */
 /* exported guideView */
 
 var guideView = (function() {
@@ -5,6 +6,7 @@ var guideView = (function() {
 
   var SVG_NS = 'http://www.w3.org/2000/svg',
     PATH_C_SIZE = 5,
+    IS_TRIDENT = !!document.uniqueID,
     guideElements = [];
 
   function addXMarker(point, pathSegs) {
@@ -23,14 +25,17 @@ var guideView = (function() {
 
     Object.keys(window.insProps).forEach(function(id) {
       var props = window.insProps[id], curStats = props.curStats,
-        llSvg = props.svg,
+        llSvg = props.svg, llBBox = {},
         baseDocument = props.baseWindow.document,
-        guideSvg = baseDocument.body.appendChild(document.createElementNS(SVG_NS, 'svg'));
+        guideSvg = baseDocument.body.appendChild(baseDocument.createElementNS(SVG_NS, 'svg')),
+        edgeLeft, edgeRight;
 
       guideSvg.className.baseVal = 'guide-svg';
       guideSvg.setAttribute('viewBox', llSvg.getAttribute('viewBox'));
       (function(guideStyles, llStyles) {
-        ['left', 'top', 'width', 'height'].forEach(function(prop) { guideStyles[prop] = llStyles[prop]; });
+        ['left', 'top', 'width', 'height'].forEach(function(prop) {
+          llBBox[prop] = parseFloat(guideStyles[prop] = llStyles[prop]);
+        });
       })(guideSvg.style, llSvg.style);
 
       // ======== path C
@@ -97,16 +102,22 @@ var guideView = (function() {
         path.setPathData(pathSegs);
       })();
 
+      edgeLeft = llBBox.left;
+      edgeRight = llBBox.left + llBBox.width;
+
       // ======== socket
       (function() {
         var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
           pathSegs = [];
         curStats.capsMaskAnchor_bBoxSE.forEach(function(bBox) {
+          var left = bBox.x, right = bBox.x + bBox.width;
+          if (left < edgeLeft) { edgeLeft = left; }
+          if (right > edgeRight) { edgeRight = right; }
           [
-            {x: bBox.x + bBox.width / 2, y: bBox.y},
-            {x: bBox.x + bBox.width, y: bBox.y + bBox.height / 2},
-            {x: bBox.x + bBox.width / 2, y: bBox.y + bBox.height},
-            {x: bBox.x, y: bBox.y + bBox.height / 2}
+            {x: bBox.x + bBox.width / 2, y: bBox.y}, // TOP
+            {x: right, y: bBox.y + bBox.height / 2}, // RIGHT
+            {x: bBox.x + bBox.width / 2, y: bBox.y + bBox.height}, // BOTTOM
+            {x: left, y: bBox.y + bBox.height / 2} // LEFT
           ].forEach(function(point) { addXMarker(point, pathSegs); });
         });
         path.className.baseVal = 'guide-socket';
@@ -114,6 +125,69 @@ var guideView = (function() {
       })();
 
       guideElements.push(guideSvg);
+
+      (function() {
+        var maskSvg = baseDocument.body.appendChild(baseDocument.createElementNS(SVG_NS, 'svg')),
+          select = baseDocument.body.appendChild(baseDocument.createElement('select')),
+          elmGs = {}, shownG;
+
+        maskSvg.className.baseVal = 'guide-mask-svg';
+        maskSvg.setAttribute('viewBox', llSvg.getAttribute('viewBox'));
+        maskSvg.style.left = edgeRight + (llBBox.left - edgeLeft) + 'px';
+        (function(guideStyles, llStyles) {
+          ['top', 'width', 'height'].forEach(function(prop) { guideStyles[prop] = llStyles[prop]; });
+        })(maskSvg.style, llSvg.style);
+
+        Array.prototype.slice.call(llSvg.getElementsByTagName('mask')).forEach(function(mask, i) {
+          var maskId = mask.id ?
+              mask.id.replace((new RegExp('^leader\\-line\\-' + id + '\\-')), '') : 'MASK-' + i,
+            option = select.appendChild(baseDocument.createElement('option')),
+            transform;
+
+          // Copy elements in <mask> to <g>
+          elmGs[maskId] = maskSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
+          Array.prototype.slice.call(mask.childNodes).forEach(function(node) {
+            var copiedNode = elmGs[maskId].appendChild(node.cloneNode());
+            if (IS_TRIDENT) { forceReflow(copiedNode); }
+          });
+
+          elmGs[maskId].style.display = 'none';
+          option.textContent = maskId;
+          // `<mask>` for `<marker>`
+          if (/^plug/.test(maskId)) {
+            transform = maskSvg.createSVGTransform();
+            transform.setTranslate(maskSvg.viewBox.baseVal.x, maskSvg.viewBox.baseVal.y);
+            elmGs[maskId].transform.baseVal.appendItem(transform);
+          }
+          shownG = shownG || maskId;
+        });
+
+        select.addEventListener('change', function() {
+          var id = select.value;
+          if (id !== shownG) {
+            if (shownG) { elmGs[shownG].style.display = 'none'; }
+            elmGs[id].style.display = 'inline';
+            shownG = id;
+          }
+        }, false);
+        if (shownG) { elmGs[shownG].style.display = 'inline'; }
+
+        select.className = 'guide-mask-select';
+        select.style.left = edgeRight + (llBBox.left - edgeLeft) + 'px'; // maskSvg#left
+        select.style.top = llBBox.top + llBBox.height + 'px'; // maskSvg#bottom
+
+        [llSvg, maskSvg].forEach(function(svg) {
+          var border = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')),
+            viewBox = svg.viewBox.baseVal;
+          border.className.baseVal = 'border';
+          border.x.baseVal.value = viewBox.x - 0.5;
+          border.y.baseVal.value = viewBox.y - 0.5;
+          border.width.baseVal.value = viewBox.width + 1;
+          border.height.baseVal.value = viewBox.height + 1;
+        });
+
+        guideElements.push(maskSvg, select);
+      })();
     });
 
   }

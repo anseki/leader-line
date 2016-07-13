@@ -1,7 +1,13 @@
 
-.guide-svg {
+.guide-svg,
+.guide-mask-svg {
   position: absolute;
   overflow: visible;
+  background-image: url("grid.svg");
+}
+
+.guide-mask-svg {
+  background-color: rgba(160, 160, 160, 0.3);
 }
 
 .guide-c {
@@ -20,4 +26,14 @@
   fill: none;
   stroke-width: 1px;
   stroke: rgba(254, 0, 64, 0.7);
+}
+
+select.guide-mask-select {
+  position: absolute;
+}
+
+.border {
+  stroke: rgba(239, 88, 49, 0.7);
+  stroke-width: 1px;
+  fill: none;
 }
