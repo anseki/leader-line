@@ -2039,6 +2039,13 @@
       forceReflowAdd(props.plugsFace);
     }
     forceReflowApply();
+
+    // [DEBUG]
+    traceLog.add('<update>');
+    Object.keys(updated).forEach(function(key) {
+      if (updated[key]) { traceLog.add('updated.' + key); }
+    });
+    // [/DEBUG]
   }
 
   /**
@@ -2375,6 +2382,13 @@
         }
       }
     })();
+
+    // [DEBUG]
+    traceLog.add('<setOptions>');
+    Object.keys(needs).forEach(function(key) {
+      if (needs[key]) { traceLog.add('needs.' + key); }
+    });
+    // [/DEBUG]
 
     update(props, needs);
     return this;

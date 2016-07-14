@@ -32,27 +32,26 @@
     beforeEach(loadBefore);
 
     it('setValidId()', function() {
-      var props = window.insProps[ll._id],
-        value;
+      var props = window.insProps[ll._id];
 
       // valid ID
       traceLog.clear();
       ll.path = 'straight';
-      expect(traceLog.log).toContain('<updatePath>');
+      expect(traceLog.log).toContain('needs.position');
       expect(props.options.path).toBe(PATH_STRAIGHT);
       expect(ll.path).toBe('straight');
 
       // invalid ID
       traceLog.clear();
       ll.path = 'straightx';
-      expect(traceLog.log).not.toContain('<updatePath>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.path).toBe(PATH_STRAIGHT);
       expect(ll.path).toBe('straight');
 
       // same ID
       traceLog.clear();
       ll.path = 'straight';
-      expect(traceLog.log).not.toContain('<updatePath>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.path).toBe(PATH_STRAIGHT);
       expect(ll.path).toBe('straight');
 
@@ -60,28 +59,26 @@
       ll.endSocket = 'bottom';
       expect(props.options.socketSE[1]).toBe(SOCKET_BOTTOM);
       expect(ll.endSocket).toBe('bottom');
-      value = window.copyTree(props.aplStats.position_socketXYSE[1]);
       traceLog.clear();
       ll.endSocket = 'auto';
-      expect(traceLog.log).toContain('<updatePosition>');
-      expect(traceLog.log).toContain('new-position');
-      expect(props.aplStats.position_socketXYSE[1]).not.toEqual(value);
+      expect(traceLog.log).toContain('needs.position');
       expect(props.options.socketSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
       expect(ll.endSocket).toBe('auto');
 
       // invalid 'auto'
       traceLog.clear();
       ll.path = 'auto';
-      expect(traceLog.log).not.toContain('<updatePath>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.path).toBe(PATH_STRAIGHT);
       expect(ll.path).toBe('straight');
 
       // invalid 'auto', getCurOption
+      ll.startPlug = 'behind';
       expect(props.options.plugSE[0]).toBe('behind');
       expect(ll.startPlug).toBe('behind');
       traceLog.clear();
       ll.startPlug = 'auto';
-      expect(traceLog.log).not.toContain('<updatePlug>');
+      expect(traceLog.log).not.toContain('needs.plug');
       expect(props.options.plugSE[0]).toBe('behind');
       expect(ll.startPlug).toBe('behind');
 
@@ -94,49 +91,49 @@
       // valid value
       traceLog.clear();
       ll.startPlugColor = 'red';
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
       expect(props.options.plugColorSE[0]).toBe('red');
       expect(ll.startPlugColor).toBe('red');
 
       // invalid value
       traceLog.clear();
       ll.startPlugColor = 0;
-      expect(traceLog.log).not.toContain('<updatePlug>');
+      expect(traceLog.log).not.toContain('needs.plug');
       expect(props.options.plugColorSE[0]).toBe('red');
       expect(ll.startPlugColor).toBe('red');
 
       // valid value (additional check)
       traceLog.clear();
       ll.startPlugOutlineSize = 2;
-      expect(traceLog.log).toContain('<updatePlugOutline>');
+      expect(traceLog.log).toContain('needs.plugOutline');
       expect(props.options.plugOutlineSizeSE[0]).toBe(2);
       expect(ll.startPlugOutlineSize).toBe(2);
 
       // invalid value (additional check)
       traceLog.clear();
       ll.startPlugOutlineSize = 0.5;
-      expect(traceLog.log).not.toContain('<updatePlugOutline>');
+      expect(traceLog.log).not.toContain('needs.plugOutline');
       expect(props.options.plugOutlineSizeSE[0]).toBe(2);
       expect(ll.startPlugOutlineSize).toBe(2);
 
       // same value
       traceLog.clear();
       ll.startPlugColor = 'red';
-      expect(traceLog.log).not.toContain('<updatePlug>');
+      expect(traceLog.log).not.toContain('needs.plug');
       expect(props.options.plugColorSE[0]).toBe('red');
       expect(ll.startPlugColor).toBe('red');
 
       // trim -> same value
       traceLog.clear();
       ll.startPlugColor = '  red    ';
-      expect(traceLog.log).not.toContain('<updatePlug>');
+      expect(traceLog.log).not.toContain('needs.plug');
       expect(props.options.plugColorSE[0]).toBe('red');
       expect(ll.startPlugColor).toBe('red');
 
       // 'auto'
       traceLog.clear();
       ll.startPlugColor = 'auto';
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
       expect(props.options.plugColorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
       expect(ll.startPlugColor).toBe('auto');
 
@@ -146,23 +143,30 @@
       expect(ll.size).toBe(12);
       traceLog.clear();
       ll.size = 'auto';
-      expect(traceLog.log).not.toContain('<updateLine>');
+      expect(traceLog.log).not.toContain('needs.line');
       expect(props.options.lineSize).toBe(12);
       expect(ll.size).toBe(12);
 
       // valid value (specified type)
       traceLog.clear();
-      ll.startPlugSize = 2;
-      expect(traceLog.log).toContain('<updatePlug>');
+      ll.startPlugSize = 2; // number
+      expect(traceLog.log).toContain('needs.plug');
       expect(props.options.plugSizeSE[0]).toBe(2);
       expect(ll.startPlugSize).toBe(2);
 
       // invalid value (specified type)
       traceLog.clear();
-      ll.startPlugSize = '3';
-      expect(traceLog.log).not.toContain('<updatePlug>');
+      ll.startPlugSize = '3'; // string
+      expect(traceLog.log).not.toContain('needs.plug');
       expect(props.options.plugSizeSE[0]).toBe(2);
       expect(ll.startPlugSize).toBe(2);
+
+      // valid value (specified type)
+      traceLog.clear();
+      ll.startPlugSize = 3; // number
+      expect(traceLog.log).toContain('needs.plug');
+      expect(props.options.plugSizeSE[0]).toBe(3);
+      expect(ll.startPlugSize).toBe(3);
 
       pageDone();
     });
@@ -174,7 +178,7 @@
       value = props.options.anchorSE[0];
       traceLog.clear();
       ll.start = value;
-      expect(traceLog.log).not.toContain('<updatePosition>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.anchorSE[0]).toBe(value);
       expect(ll.start).toBe(value);
 
@@ -187,7 +191,7 @@
       traceLog.clear();
       ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
       expect(traceLog.log).not.toContain('<bindWindow>');
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
       expect(props.baseWindow).toBe(window);
 
       // Change to element in iframe, `baseWindow` is changed
@@ -195,7 +199,7 @@
       traceLog.clear();
       ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
       expect(traceLog.log).toContain('<bindWindow>');
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
       expect(props.baseWindow).toBe(document.getElementById('iframe1').contentWindow);
 
       // invalid element
@@ -218,77 +222,77 @@
       // array
       traceLog.clear();
       ll.startSocketGravity = [1, 2];
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
       expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
       expect(ll.startSocketGravity).toEqual([1, 2]);
 
       // same array
       traceLog.clear();
       ll.startSocketGravity = [1, 2];
-      expect(traceLog.log).not.toContain('<updatePosition>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
       expect(ll.startSocketGravity).toEqual([1, 2]);
 
       // invalid array
       traceLog.clear();
       ll.startSocketGravity = [1, 'a'];
-      expect(traceLog.log).not.toContain('<updatePosition>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
       expect(ll.startSocketGravity).toEqual([1, 2]);
 
       // array length 1
       traceLog.clear();
       ll.startSocketGravity = [1, 2, 3]; // `3` is ignored and same array
-      expect(traceLog.log).not.toContain('<updatePosition>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.socketGravitySE[0]).toEqual([1, 2]);
       expect(ll.startSocketGravity).toEqual([1, 2]);
 
       // array length 2
       traceLog.clear();
       ll.startSocketGravity = [4, 2, 3]; // `3` is ignored
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
       expect(props.options.socketGravitySE[0]).toEqual([4, 2]);
       expect(ll.startSocketGravity).toEqual([4, 2]);
 
       // 'auto'
       traceLog.clear();
       ll.startSocketGravity = 'auto';
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
       expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
       expect(ll.startSocketGravity).toBe('auto');
 
       // same 'auto'
       traceLog.clear();
       ll.startSocketGravity = 'auto';
-      expect(traceLog.log).not.toContain('<updatePosition>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
       expect(ll.startSocketGravity).toBe('auto');
 
       // invalid value
       traceLog.clear();
       ll.startSocketGravity = -1;
-      expect(traceLog.log).not.toContain('<updatePosition>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
       expect(ll.startSocketGravity).toBe('auto');
 
       // valid value
       traceLog.clear();
       ll.startSocketGravity = 0;
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
       expect(props.options.socketGravitySE[0]).toBe(0);
       expect(ll.startSocketGravity).toBe(0);
 
       // same value
       traceLog.clear();
       ll.startSocketGravity = 0;
-      expect(traceLog.log).not.toContain('<updatePosition>');
+      expect(traceLog.log).not.toContain('needs.position');
       expect(props.options.socketGravitySE[0]).toBe(0);
       expect(ll.startSocketGravity).toBe(0);
 
       pageDone();
     });
 
-    it('needs.Line is affected by options', function() {
+    it('needs.line is affected by options', function() {
 
       // Change to element in iframe, `baseWindow` is not changed
       ll.setOptions({
@@ -298,33 +302,33 @@
       traceLog.clear();
       ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
       expect(traceLog.log).not.toContain('<bindWindow>');
-      expect(traceLog.log).not.toContain('<updateLine>');
+      expect(traceLog.log).not.toContain('needs.line');
 
       // Change to element in iframe, `baseWindow` is changed
       traceLog.clear();
       ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
       expect(traceLog.log).toContain('<bindWindow>');
-      expect(traceLog.log).toContain('<updateLine>');
+      expect(traceLog.log).toContain('needs.line');
 
       // lineColor
       traceLog.clear();
       ll.color = 'red';
-      expect(traceLog.log).toContain('<updateLine>');
+      expect(traceLog.log).toContain('needs.line');
 
       // lineSize
       traceLog.clear();
       ll.size = 2;
-      expect(traceLog.log).toContain('<updateLine>');
+      expect(traceLog.log).toContain('needs.line');
 
       // lineSize invalid
       traceLog.clear();
       ll.size = 0;
-      expect(traceLog.log).not.toContain('<updateLine>');
+      expect(traceLog.log).not.toContain('needs.line');
 
       pageDone();
     });
 
-    it('needs.Plug is affected by options', function() {
+    it('needs.plug is affected by options', function() {
 
       // Change to element in iframe, `baseWindow` is not changed
       ll.setOptions({
@@ -334,50 +338,50 @@
       traceLog.clear();
       ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
       expect(traceLog.log).not.toContain('<bindWindow>');
-      expect(traceLog.log).not.toContain('<updatePlug>');
+      expect(traceLog.log).not.toContain('needs.plug');
 
       // Change to element in iframe, `baseWindow` is changed
       traceLog.clear();
       ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
       expect(traceLog.log).toContain('<bindWindow>');
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
 
       // plugSE
       traceLog.clear();
       ll.startPlug = 'arrow2';
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
       traceLog.clear();
       ll.endPlug = 'square';
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
 
       // plugColorSE
       traceLog.clear();
       ll.startPlugColor = 'red';
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
       traceLog.clear();
       ll.endPlugColor = 'blue';
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
 
       // plugSizeSE
       traceLog.clear();
       ll.startPlugSize = 1.5;
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
       traceLog.clear();
       ll.endPlugSize = 2;
-      expect(traceLog.log).toContain('<updatePlug>');
+      expect(traceLog.log).toContain('needs.plug');
 
       // plugSizeSE invalid
       traceLog.clear();
       ll.startPlugSize = 0;
-      expect(traceLog.log).not.toContain('<updatePlug>');
+      expect(traceLog.log).not.toContain('needs.plug');
       traceLog.clear();
       ll.endPlugSize = 0;
-      expect(traceLog.log).not.toContain('<updatePlug>');
+      expect(traceLog.log).not.toContain('needs.plug');
 
       pageDone();
     });
 
-    it('needs.LineOutline is affected by options', function() {
+    it('needs.lineOutline is affected by options', function() {
 
       // Change to element in iframe, `baseWindow` is not changed
       ll.setOptions({
@@ -387,38 +391,38 @@
       traceLog.clear();
       ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
       expect(traceLog.log).not.toContain('<bindWindow>');
-      expect(traceLog.log).not.toContain('<updateLineOutline>');
+      expect(traceLog.log).not.toContain('needs.lineOutline');
 
       // Change to element in iframe, `baseWindow` is changed
       traceLog.clear();
       ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
       expect(traceLog.log).toContain('<bindWindow>');
-      expect(traceLog.log).toContain('<updateLineOutline>');
+      expect(traceLog.log).toContain('needs.lineOutline');
 
       // lineOutlineEnabled
       traceLog.clear();
       ll.outline = true;
-      expect(traceLog.log).toContain('<updateLineOutline>');
+      expect(traceLog.log).toContain('needs.lineOutline');
 
       // lineOutlineColor
       traceLog.clear();
       ll.outlineColor = 'red';
-      expect(traceLog.log).toContain('<updateLineOutline>');
+      expect(traceLog.log).toContain('needs.lineOutline');
 
       // lineOutlineSize
       traceLog.clear();
       ll.outlineSize = 0.1;
-      expect(traceLog.log).toContain('<updateLineOutline>');
+      expect(traceLog.log).toContain('needs.lineOutline');
 
       // lineOutlineSize invalid
       traceLog.clear();
       ll.outlineSize = 0.5;
-      expect(traceLog.log).not.toContain('<updateLineOutline>');
+      expect(traceLog.log).not.toContain('needs.lineOutline');
 
       pageDone();
     });
 
-    it('needs.PlugOutline is affected by options', function() {
+    it('needs.plugOutline is affected by options', function() {
 
       // Change to element in iframe, `baseWindow` is not changed
       ll.setOptions({
@@ -428,62 +432,62 @@
       traceLog.clear();
       ll.end = document.getElementById('iframe1').contentDocument.getElementById('elm2');
       expect(traceLog.log).not.toContain('<bindWindow>');
-      expect(traceLog.log).not.toContain('<updatePlugOutline>');
+      expect(traceLog.log).not.toContain('needs.plugOutline');
 
       // Change to element in iframe, `baseWindow` is changed
       traceLog.clear();
       ll.start = document.getElementById('iframe1').contentDocument.getElementById('elm1');
       expect(traceLog.log).toContain('<bindWindow>');
-      expect(traceLog.log).toContain('<updatePlugOutline>');
+      expect(traceLog.log).toContain('needs.plugOutline');
 
       // plugOutlineEnabledSE
       traceLog.clear();
       ll.startPlugOutline = true;
-      expect(traceLog.log).toContain('<updatePlugOutline>');
+      expect(traceLog.log).toContain('needs.plugOutline');
       traceLog.clear();
       ll.endPlugOutline = true;
-      expect(traceLog.log).toContain('<updatePlugOutline>');
+      expect(traceLog.log).toContain('needs.plugOutline');
 
       // plugOutlineColorSE
       traceLog.clear();
       ll.startPlugOutlineColor = 'red';
-      expect(traceLog.log).toContain('<updatePlugOutline>');
+      expect(traceLog.log).toContain('needs.plugOutline');
       traceLog.clear();
       ll.endPlugOutlineColor = 'blue';
-      expect(traceLog.log).toContain('<updatePlugOutline>');
+      expect(traceLog.log).toContain('needs.plugOutline');
 
       // plugOutlineSizeSE
       traceLog.clear();
       ll.startPlugOutlineSize = 1.2;
-      expect(traceLog.log).toContain('<updatePlugOutline>');
+      expect(traceLog.log).toContain('needs.plugOutline');
 
       // plugOutlineSizeSE invalid
       traceLog.clear();
       ll.endPlugOutlineSize = 0.9;
-      expect(traceLog.log).not.toContain('<updatePlugOutline>');
+      expect(traceLog.log).not.toContain('needs.plugOutline');
 
       pageDone();
     });
 
-    it('needs.Position is affected by options', function() {
+    it('needs.position is affected by options', function() {
 
       // anchorSE
       traceLog.clear();
       ll.start = document.getElementById('elm3');
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
 
       // path
       traceLog.clear();
       ll.path = 'straight';
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
 
       // socketSE
       traceLog.clear();
       ll.startSocket = 'bottom';
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
       traceLog.clear();
       ll.endSocket = 'bottom';
-      expect(traceLog.log).toContain('<updatePosition>');
+      expect(traceLog.log).toContain('needs.position');
 
       // socketGravitySE was already tested
 
@@ -499,65 +503,102 @@
       loadBefore(beforeDone);
     });
 
-    it('needs.Line affects calling update*', function() {
+    it('needs.line affects calling update*', function() {
 
       traceLog.clear();
       ll.color = 'red';
       expect(traceLog.log).toContainAll([
-        '<updateLine>', '<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>', '<updatePosition>'
+        'needs.line', '<updateLine>',
+        'updated.line', '<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>',
+        '<updateFaces>', '<updatePosition>'
       ]);
 
       traceLog.clear();
       ll.color = 'red'; // same value
       expect(traceLog.log).toNotContainAny([
-        '<updateLine>', '<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>', '<updatePosition>'
+        'needs.line', '<updateLine>',
+        'updated.line', '<updatePlug>', '<updateLineOutline>', '<updatePlugOutline>',
+        '<updateFaces>', '<updatePosition>'
       ]);
 
       pageDone();
     });
 
-    it('needs.Plug affects calling update*', function() {
+    it('needs.plug affects calling update*', function() {
 
       traceLog.clear();
       ll.endPlugColor = 'red';
       expect(traceLog.log).toContainAll([
-        '<updatePlug>', '<updatePlugOutline>', '<updatePosition>'
+        'needs.plug', '<updatePlug>',
+        'updated.plug', '<updatePlugOutline>', '<updateFaces>', '<updatePosition>'
       ]);
 
       ll.color = 'red';
       traceLog.clear();
-      ll.endPlugColor = 'auto'; // update option, but same value
-      expect(traceLog.log).toContain('<updatePlug>');
+      ll.endPlugColor = 'auto'; // update option, but same stats
+      expect(traceLog.log).toContainAll(['needs.plug', '<updatePlug>']);
       expect(traceLog.log).toNotContainAny([
-        '<updatePlugOutline>', '<updatePosition>'
+        'updated.plug', '<updatePlugOutline>', '<updateFaces>', '<updatePosition>'
       ]);
 
       pageDone();
     });
 
-    it('needs.LineOutline affects calling update*', function() {
+    it('needs.lineOutline affects calling update*', function() {
 
       traceLog.clear();
       ll.outline = true;
       expect(traceLog.log).toContainAll([
-        '<updateLineOutline>', '<updatePlugOutline>'
+        'needs.lineOutline', '<updateLineOutline>',
+        'updated.lineOutline', '<updatePlugOutline>', '<updateFaces>'
+      ]);
+
+      ll.outlineColor = 'rgba(255, 0, 0, 0.5)'; // to enable lineOutline_colorTra
+      traceLog.clear();
+      ll.setOptions({size: 10, outlineSize: 0.4}); // update option, but same stats
+      expect(traceLog.log).toContainAll(['needs.lineOutline', '<updateLineOutline>']);
+      expect(traceLog.log).toNotContainAny([
+        'updated.lineOutline' // '<updatePlugOutline>' and '<updateFaces>' are called by updated.line
       ]);
 
       pageDone();
     });
 
-    it('needs.Position affects calling update*', function() {
+    it('needs.plugOutline affects calling update*', function() {
+
+      traceLog.clear();
+      ll.endPlugOutline = true;
+      expect(traceLog.log).toContainAll([
+        'needs.plugOutline', '<updatePlugOutline>',
+        'updated.plugOutline', '<updateFaces>'
+      ]);
+
+      ll.outlineColor = ll.endPlugOutlineColor = 'red';
+      traceLog.clear();
+      ll.endPlugOutlineColor = 'auto'; // update option, but same stats
+      expect(traceLog.log).toContainAll(['needs.plugOutline', '<updatePlugOutline>']);
+      expect(traceLog.log).toNotContainAny([
+        'updated.plugOutline', '<updateFaces>'
+      ]);
+
+      pageDone();
+    });
+
+    it('needs.position affects calling update*', function() {
 
       traceLog.clear();
       ll.path = 'arc';
       expect(traceLog.log).toContainAll([
-        '<updatePosition>', '<updatePath>'
+        'needs.position', '<updatePosition>',
+        'updated.position', '<updatePath>'
       ]);
 
       traceLog.clear();
-      ll.startSocket = 'right'; // update option, but same value
-      expect(traceLog.log).toContain('<updatePosition>');
-      expect(traceLog.log).not.toContain('<updatePath>');
+      ll.startSocket = 'right'; // update option, but same stats
+      expect(traceLog.log).toContainAll(['needs.position', '<updatePosition>']);
+      expect(traceLog.log).toNotContainAny([
+        'updated.position', '<updatePath>'
+      ]);
 
       pageDone();
     });
