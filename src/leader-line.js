@@ -195,11 +195,13 @@
             (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
           props.lineFace.style.strokeDashoffset = '0';
           traceLog.add('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+          traceLog.add('</EFFECTS.dash.init>'); // [DEBUG/]
         },
         remove: function(props) {
           traceLog.add('<EFFECTS.dash.remove>'); // [DEBUG/]
           props.lineFace.style.strokeDasharray = 'none';
           props.lineFace.style.strokeDashoffset = '0';
+          traceLog.add('</EFFECTS.dash.remove>'); // [DEBUG/]
         },
         onSetLine: function(props, setProps) {
           traceLog.add('<EFFECTS.dash.onSetLine>'); // [DEBUG/]
@@ -210,6 +212,7 @@
               (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
             traceLog.add('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
           }
+          traceLog.add('</EFFECTS.dash.onSetLine>'); // [DEBUG/]
         },
         getDashLen: function(props) { return props.options.lineSize * 2; },
         getGapLen: function(props) { return props.options.lineSize; }
@@ -237,12 +240,14 @@
           props.lineFace.style.strokeDashoffset = '0';
           traceLog.add('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
           // effectParams.animId = animId;
+          traceLog.add('</EFFECTS.dashAnim.init>'); // [DEBUG/]
         },
         remove: function(props) {
           traceLog.add('<EFFECTS.dashAnim.remove>'); // [DEBUG/]
           props.lineFace.style.strokeDasharray = 'none';
           props.lineFace.style.strokeDashoffset = '0';
           if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
+          traceLog.add('</EFFECTS.dashAnim.remove>'); // [DEBUG/]
         },
         onSetLine: function(props, setProps) {
           traceLog.add('<EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
@@ -253,6 +258,7 @@
               (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
             traceLog.add('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
           }
+          traceLog.add('</EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
         }
       }
     },
@@ -873,6 +879,7 @@
     aplStats.plug_plugSE[0] = aplStats.plug_plugSE[1] =
       aplStats.plugOutline_plugSE[0] = aplStats.plugOutline_plugSE[1] =
       aplStats.capsMaskMarker_plugSE[0] = aplStats.capsMaskMarker_plugSE[1] = PLUG_BEHIND;
+    traceLog.add('</bindWindow>'); // [DEBUG/]
   }
   window.bindWindow = bindWindow; // [DEBUG/]
 
@@ -907,6 +914,7 @@
       events.cur_line_strokeWidth) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updateLine>'); // [DEBUG/]
     return updated;
   }
 
@@ -975,6 +983,7 @@
       events.cur_plug_enabled) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updatePlug>'); // [DEBUG/]
     return updated;
   }
 
@@ -1000,15 +1009,16 @@
     outlineWidth = curStats.line_strokeWidth * options.lineOutlineSize;
 
     updated = setStat(props, curStats, 'lineOutline_strokeWidth', curStats.line_strokeWidth - outlineWidth * 2,
-      events.cur_lineOutline_strokeWidth) || updated;
+      events.cur_lineOutline_strokeWidth/* [DEBUG] */, 'lineOutline_strokeWidth%_'/* [/DEBUG] */) || updated;
 
     updated = setStat(props, curStats, 'lineOutline_inStrokeWidth',
       curStats.lineOutline_colorTra ?
         curStats.lineOutline_strokeWidth + SHAPE_GAP * 2 :
         curStats.line_strokeWidth - outlineWidth, // half
-      events.cur_lineOutline_inStrokeWidth) || updated;
+      events.cur_lineOutline_inStrokeWidth/* [DEBUG] */, 'lineOutline_inStrokeWidth%_'/* [/DEBUG] */) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updateLineOutline>'); // [DEBUG/]
     return updated;
   }
 
@@ -1046,7 +1056,7 @@
         value *= symbolConf.outlineBase * 2;
         updated = setStat(props, curStats.plugOutline_strokeWidthSE, i, value,
           events.cur_plugOutline_strokeWidthSE
-          /* [DEBUG] */, 'plugOutline_strokeWidthSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
+          /* [DEBUG] */, 'plugOutline_strokeWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
 
         updated = setStat(props, curStats.plugOutline_inStrokeWidthSE, i,
           curStats.plugOutline_colorTraSE[i] ?
@@ -1054,11 +1064,12 @@
               options.plugSizeSE[i] * 2 :
             value / 2, // half
           events.cur_plugOutline_inStrokeWidthSE
-          /* [DEBUG] */, 'plugOutline_inStrokeWidthSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
+          /* [DEBUG] */, 'plugOutline_inStrokeWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
       }
     });
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updatePlugOutline>'); // [DEBUG/]
     return updated;
   }
 
@@ -1233,6 +1244,7 @@
     }
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updateFaces>'); // [DEBUG/]
     return updated;
   }
 
@@ -1697,6 +1709,7 @@
     }
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updatePosition>'); // [DEBUG/]
     return updated;
   }
 
@@ -1760,6 +1773,7 @@
     }
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updatePath>'); // [DEBUG/]
     return updated;
   }
 
@@ -1801,6 +1815,7 @@
     });
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updateViewBox>'); // [DEBUG/]
     return updated;
   }
 
@@ -1970,6 +1985,7 @@
     }
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
+    traceLog.add('</updateMask>'); // [DEBUG/]
     return updated;
   }
 
@@ -1995,6 +2011,7 @@
       props.effect = null;
       props.effectParams = {};
     }
+    traceLog.add('</setEffect>'); // [DEBUG/]
   }
 
   /**
@@ -2045,6 +2062,7 @@
     Object.keys(updated).forEach(function(key) {
       if (updated[key]) { traceLog.add('updated.' + key); }
     });
+    traceLog.add('</update>');
     // [/DEBUG]
   }
 
@@ -2388,6 +2406,7 @@
     Object.keys(needs).forEach(function(key) {
       if (needs[key]) { traceLog.add('needs.' + key); }
     });
+    traceLog.add('</setOptions>');
     // [/DEBUG]
 
     update(props, needs);

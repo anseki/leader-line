@@ -28,20 +28,52 @@ var traceLog = (function() {
     return args.join(' ');
   }
 
-  var traceLog = {
-    log: [],
-    enabled: false,
+  var
+    tags = {}, tagStack = [], reTag = /^<(\/)?(.+?)>$/,
 
-    add: function() {
-      if (traceLog.enabled) {
-        traceLog.log.push(getMessage.apply(null, arguments));
+    traceLog = {
+      log: [],
+      enabled: false,
+
+      add: function() {
+        var message, i, matches, tagName, iStack;
+        if (traceLog.enabled) {
+
+          traceLog.log.push((message = getMessage.apply(null, arguments)));
+          i = traceLog.log.length - 1;
+
+          if ((matches = reTag.exec(message))) {
+            tagName = matches[2];
+            if (matches[1]) { // end tag
+              if (tagStack.length && tagStack[tagStack.length - 1] === tagName) {
+                tagStack.pop();
+              } else if ((iStack = tagStack.lastIndexOf(tagName)) > -1) {
+                console.warn('Droped from stack: ' + tagStack.splice(iStack));
+              } else {
+                throw new Error('Not found tag: ' + tagName);
+              }
+            } else { // start tag
+              tagStack.push(tagName);
+              tags[tagName] = tags[tagName] || [];
+            }
+          } else if (tagStack.length) {
+            tags[tagStack[tagStack.length - 1]].push(i);
+          }
+        }
+      },
+
+      getTaggedLog: function(tagName) {
+        return tags[tagName] ?
+          tags[tagName].map(function(i) { return traceLog.log[i]; }) :
+          null;
+      },
+
+      clear: function() {
+        traceLog.log = [];
+        tags = {};
+        tagStack = [];
       }
-    },
-
-    clear: function() {
-      traceLog.log = [];
-    }
-  };
+    };
 
   return traceLog;
 })();

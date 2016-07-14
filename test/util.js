@@ -22,9 +22,10 @@
       return logSeq.indexOf(keysSeq) > -1;
     }
 
-    return keys.every(function(key) {
-      return Array.isArray(key) ? containsSequence(key) : log.indexOf(key) > -1;
-    });
+    return Array.isArray(log) && Array.isArray(keys) &&
+      keys.every(function(key) {
+        return Array.isArray(key) ? containsSequence(key) : log.indexOf(key) > -1;
+      });
   }
   window.toContainAll = toContainAll;
 
@@ -34,22 +35,23 @@
    * @returns {boolean} - `true` if all `keys` are not contained.
    */
   function toNotContainAny(log, keys) {
-    return keys.every(function(key) {
-      return log.indexOf(key) === -1;
-    });
+    return Array.isArray(log) && Array.isArray(keys) &&
+      keys.every(function(key) {
+        return log.indexOf(key) === -1;
+      });
   }
   window.toNotContainAny = toNotContainAny;
 
   var customMatchers = {
     toContainAll: function() {
       return {compare: function(actual, expected) {
-        return {pass: toContainAll(actual, expected || [])};
+        return {pass: toContainAll(actual, expected)};
       }};
     },
 
     toNotContainAny: function() {
       return {compare: function(actual, expected) {
-        return {pass: toNotContainAny(actual, expected || [])};
+        return {pass: toNotContainAny(actual, expected)};
       }};
     }
   };
