@@ -25,10 +25,10 @@ describe('update-stats', function() {
     loadPage('spec/common/page.html', function(frmWindow, frmDocument, body, done) {
       window = frmWindow;
       document = frmDocument;
-      pageDone = done;
-      ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'));
       traceLog = window.traceLog;
       traceLog.enabled = true;
+      pageDone = done;
+      ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'));
       beforeDone();
     }, 'update-props - ' + titles.shift());
   });
