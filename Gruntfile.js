@@ -148,7 +148,7 @@ module.exports = grunt => {
             return `var ${Object.keys(code).map(codeVar => `${codeVar}=${code[codeVar]}`).join(',')};`;
           }
         },
-        src: `${SRC_PATH}/symbol.html`,
+        src: `${SRC_PATH}/symbols.html`,
         dest: `${SRC_PATH}/defs.js`
       },
 
