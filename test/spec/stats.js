@@ -2,7 +2,7 @@
 /* global loadPage:false, customMatchers:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
-describe('update-stats', function() {
+describe('stats', function() {
   'use strict';
 
   var window, document, traceLog, pageDone, ll, titles = [];
@@ -30,7 +30,7 @@ describe('update-stats', function() {
       pageDone = done;
       ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'));
       beforeDone();
-    }, 'update-props - ' + titles.shift());
+    }/* , 'stats - ' + titles.shift() */);
   });
 
   it(registerTitle('setStat'), function() {
@@ -386,43 +386,401 @@ describe('update-stats', function() {
   });
 
   it(registerTitle('updateFaces'), function() {
-    var props = window.insProps[ll._id];
+    var log, props = window.insProps[ll._id], value;
+
+    // line_color
+    traceLog.clear();
+    ll.color = 'red';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'line_color=red'
+    ]);
+    expect(props.aplStats.line_color).toBe('red');
+
+    // line_strokeWidth
+    traceLog.clear();
+    ll.size = 6;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'line_strokeWidth=6'
+    ]);
+    expect(props.aplStats.line_strokeWidth).toBe(6);
+
+    // lineOutline_enabled
+    traceLog.clear();
+    ll.outline = true;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'lineOutline_enabled=true'
+    ]);
+    expect(props.aplStats.lineOutline_enabled).toBe(true);
+
+    // lineOutline_color
+    traceLog.clear();
+    ll.outlineColor = 'red';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'lineOutline_color=red'
+    ]);
+    expect(props.aplStats.lineOutline_color).toBe('red');
+
+    // lineOutline_strokeWidth
+    traceLog.clear();
+    ll.outlineSize = 0.4;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'lineOutline_strokeWidth'
+    ]);
+    expect(props.aplStats.lineOutline_strokeWidth).toBe(props.curStats.lineOutline_strokeWidth);
+
+    // lineOutline_inStrokeWidth
+    traceLog.clear();
+    ll.outlineSize = 0.25;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'lineOutline_inStrokeWidth'
+    ]);
+    expect(props.aplStats.lineOutline_inStrokeWidth).toBe(props.curStats.lineOutline_inStrokeWidth);
+
+    // lineOutline_enabled false
+    traceLog.clear();
+    ll.outline = false;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'lineOutline_enabled=false'
+    ]);
+    expect(props.aplStats.lineOutline_enabled).toBe(false);
+
+    // lineOutline_color when lineOutline_enabled: false
+    traceLog.clear();
+    ll.outlineColor = 'blue';
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual(['not-updated']);
+    expect(props.curStats.lineOutline_color).toBe('blue'); // only cur* is changed
+    expect(props.aplStats.lineOutline_color).not.toBe('blue');
+
+    // lineOutline_strokeWidth when lineOutline_enabled: false
+    value = props.curStats.lineOutline_strokeWidth;
+    traceLog.clear();
+    ll.outlineSize = 0.3;
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual(['not-updated']);
+    expect(props.curStats.lineOutline_strokeWidth).not.toBe(value); // only cur* is changed
+    expect(props.aplStats.lineOutline_strokeWidth).not.toBe(props.curStats.lineOutline_strokeWidth);
+
+    // lineOutline_inStrokeWidth when lineOutline_enabled: false
+    value = props.curStats.lineOutline_inStrokeWidth;
+    traceLog.clear();
+    ll.outlineSize = 0.35;
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual(['not-updated']);
+    expect(props.curStats.lineOutline_inStrokeWidth).not.toBe(value); // only cur* is changed
+    expect(props.aplStats.lineOutline_inStrokeWidth).not.toBe(props.curStats.lineOutline_inStrokeWidth);
+
+    // lineOutline_enabled true
+    traceLog.clear();
+    ll.outline = true;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'lineOutline_enabled=true', 'lineOutline_color=blue', 'lineOutline_strokeWidth', 'lineOutline_inStrokeWidth'
+    ]);
+    expect(props.aplStats.lineOutline_enabled).toBe(true);
+    expect(props.aplStats.lineOutline_color).toBe('blue');
+    expect(props.aplStats.lineOutline_strokeWidth).toBe(props.curStats.lineOutline_strokeWidth);
+    expect(props.aplStats.lineOutline_inStrokeWidth).toBe(props.curStats.lineOutline_inStrokeWidth);
+
+    // plug_enabledSE, plug_plugSE
+    expect(props.aplStats.plug_enabledSE[0]).toBe(false);
+    traceLog.clear();
+    ll.startPlug = 'arrow2';
+    log = traceLog.getTaggedLog('updateFaces');
+    expect(log).toContainAll([
+      'plug_enabledSE[0]=true', 'plug_plugSE[0]=arrow2'
+    ]);
+    expect(log).toNotContainAny([
+      'plug_enabledSE[1]=true' // already enabled
+    ]);
+    expect(props.aplStats.plug_enabledSE[0]).toBe(true);
+
+    // plug_colorSE
+    traceLog.clear();
+    ll.startPlugColor = 'green';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plug_colorSE[0]=green'
+    ]);
+    expect(props.aplStats.plug_colorSE[0]).toBe('green');
+
+    // plug_markerWidthSE, plug_markerHeightSE
+    traceLog.clear();
+    ll.startPlugSize = 2;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]'
+    ]);
+
+    // plug_enabledSE false
+    traceLog.clear();
+    ll.startPlug = 'behind';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plug_enabledSE[0]=false'
+    ]);
+    expect(props.aplStats.plug_enabledSE[0]).toBe(false);
+
+    // plug_enabledSE false -> plug_enabled false
+    traceLog.clear();
+    ll.endPlug = 'behind';
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual([
+      'plug_enabled=false' // plug_enabledSE[1] is not changed (true)
+    ]);
+    expect(props.aplStats.plug_enabledSE[0]).toBe(false);
+    expect(props.curStats.plug_enabledSE[1]).toBe(false); // only cur* is changed
+    expect(props.aplStats.plug_enabledSE[1]).toBe(true);
+    expect(props.aplStats.plug_enabled).toBe(false);
+
+    // plug_colorSE when plug_enabled: false
+    traceLog.clear();
+    ll.endPlugColor = 'pink';
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual(['not-updated']);
+    expect(props.curStats.plug_colorSE[1]).toBe('pink'); // only cur* is changed
+    expect(props.aplStats.plug_colorSE[1]).not.toBe('pink');
+
+    // plug_markerWidthSE and plug_markerHeightSE are updated when plug_enabled: true
+    traceLog.clear();
+    ll.endPlugSize = 2.2;
+    // updated.plug: false -> updateFaces() is not called
+    expect(traceLog.getTaggedLog('updateFaces') == null).toBe(true); // eslint-disable-line eqeqeq
+
+    // plug_enabledSE true -> plug_enabled true
+    expect(props.curStats.plug_enabledSE[1]).toBe(false);
+    expect(props.aplStats.plug_enabledSE[1]).toBe(true);
+    traceLog.clear();
+    ll.endPlug = 'arrow1';
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual([
+      'plug_enabled=true', // plug_enabledSE[1] is already enabled
+      'plug_colorSE[1]=pink', 'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'
+    ]);
+    expect(props.curStats.plug_enabledSE[1]).toBe(true);
+    expect(props.aplStats.plug_enabledSE[1]).toBe(true);
+    expect(props.aplStats.plug_enabled).toBe(true);
+    expect(props.aplStats.plug_colorSE[1]).toBe('pink');
+    expect(props.aplStats.plug_markerWidthSE[1]).toBe(props.curStats.plug_markerWidthSE[1]);
+    expect(props.aplStats.plug_markerHeightSE[1]).toBe(props.curStats.plug_markerHeightSE[1]);
+
+    // plug_enabledSE false -> plug_enabled false apl*: true
+    traceLog.clear();
+    ll.endPlug = 'behind';
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual([
+      'plug_enabled=false' // plug_enabledSE[1] is not changed (true)
+    ]);
+    expect(props.aplStats.plug_enabledSE[0]).toBe(false);
+    expect(props.curStats.plug_enabledSE[1]).toBe(false); // only cur* is changed
+    expect(props.aplStats.plug_enabledSE[1]).toBe(true);
+    expect(props.aplStats.plug_enabled).toBe(false);
+
+    // plug_enabledSE true -> plug_enabled true apl*: false
+    traceLog.clear();
+    ll.startPlug = 'arrow2';
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual([
+      'plug_enabled=true', 'plug_enabledSE[0]=true', 'plug_enabledSE[1]=false' // plug_enabledSE[1] is changed
+    ]);
+    expect(props.aplStats.plug_enabledSE[0]).toBe(true);
+    expect(props.aplStats.plug_enabledSE[1]).toBe(false);
+    expect(props.aplStats.plug_enabled).toBe(true);
+
+    // plugOutline_enabledSE true
+    traceLog.clear();
+    ll.startPlugOutline = true;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plugOutline_enabledSE[0]=true', 'plugOutline_plugSE[0]=arrow2'
+    ]);
+    expect(props.aplStats.plugOutline_enabledSE[0]).toBe(true);
+
+    // plugOutline_plugSE
+    traceLog.clear();
+    ll.startPlug = 'arrow1';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plugOutline_plugSE[0]=arrow1'
+    ]);
+    expect(props.aplStats.plugOutline_plugSE[0]).toBe('arrow1');
+
+    // plugOutline_colorSE
+    traceLog.clear();
+    ll.startPlugOutlineColor = 'green';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plugOutline_colorSE[0]=green'
+    ]);
+    expect(props.aplStats.plugOutline_colorSE[0]).toBe('green');
+
+    // plugOutline_strokeWidthSE
+    traceLog.clear();
+    ll.startPlugOutlineSize = 1.1;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plugOutline_strokeWidthSE[0]'
+    ]);
+    expect(props.aplStats.plugOutline_strokeWidthSE[0]).toBe(props.curStats.plugOutline_strokeWidthSE[0]);
+
+    // plugOutline_inStrokeWidthSE
+    traceLog.clear();
+    ll.startPlugOutlineSize = 1.2;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plugOutline_inStrokeWidthSE[0]'
+    ]);
+    expect(props.aplStats.plugOutline_inStrokeWidthSE[0]).toBe(props.curStats.plugOutline_inStrokeWidthSE[0]);
+
+    // plugOutline_enabledSE false
+    traceLog.clear();
+    ll.startPlugOutline = false;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plugOutline_enabledSE[0]=false'
+    ]);
+    expect(props.aplStats.plugOutline_enabledSE[0]).toBe(false);
+
+    // plugOutline_plugSE, plugOutline_colorSE, plugOutline_strokeWidthSE, plugOutline_inStrokeWidthSE
+    // when plugOutline_enabledSE: false
+    traceLog.clear();
+    ll.setOptions({startPlug: 'square', startPlugOutlineColor: 'yellow', startPlugOutlineSize: 1.3});
+    log = traceLog.getTaggedLog('updateFaces');
+    expect(log).toContainAll([
+      'plug_plugSE[0]=square'
+    ]);
+    expect(log).toNotContainAny([
+      'plugOutline_plugSE[0]=square', 'plugOutline_colorSE[0]=yellow',
+      'plugOutline_strokeWidthSE[0]', 'plugOutline_inStrokeWidthSE[0]'
+    ]);
+    // only cur* is changed
+    expect(props.curStats.plugOutline_plugSE[0]).toBe('square');
+    expect(props.aplStats.plugOutline_plugSE[0]).not.toBe('square');
+    expect(props.curStats.plugOutline_colorSE[0]).toBe('yellow');
+    expect(props.aplStats.plugOutline_colorSE[0]).not.toBe('yellow');
+
+    // plugOutline_enabledSE true
+    traceLog.clear();
+    ll.startPlugOutline = true;
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plugOutline_enabledSE[0]=true',
+      'plugOutline_plugSE[0]=square', 'plugOutline_colorSE[0]=yellow',
+      'plugOutline_strokeWidthSE[0]', 'plugOutline_inStrokeWidthSE[0]'
+    ]);
+    expect(props.aplStats.plugOutline_plugSE[0]).toBe('square');
+    expect(props.aplStats.plugOutline_colorSE[0]).toBe('yellow');
+    expect(props.aplStats.plugOutline_strokeWidthSE[0]).toBe(props.curStats.plugOutline_strokeWidthSE[0]);
+    expect(props.aplStats.plugOutline_inStrokeWidthSE[0]).toBe(props.curStats.plugOutline_inStrokeWidthSE[0]);
+
+    // plug_enabled false
+    traceLog.clear();
+    ll.startPlug = 'behind';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plug_enabled=false'
+    ]);
+    expect(props.aplStats.plug_enabled).toBe(false);
+
+    // plugOutline_colorSE, plugOutline_strokeWidthSE, plugOutline_inStrokeWidthSE
+    // when plug_enabled: false
+    traceLog.clear();
+    ll.setOptions({startPlugOutlineColor: 'lime', startPlugOutlineSize: 1.4});
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual(['not-updated']);
+    // only cur* is changed
+    expect(props.curStats.plugOutline_colorSE[0]).toBe('lime');
+    expect(props.aplStats.plugOutline_colorSE[0]).not.toBe('lime');
+
+    // plug_enabled true
+    traceLog.clear();
+    ll.startPlug = 'square';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plug_enabled=true',
+      'plugOutline_colorSE[0]=lime',
+      'plugOutline_strokeWidthSE[0]', 'plugOutline_inStrokeWidthSE[0]'
+    ]);
+    expect(props.aplStats.plug_enabled).toBe(true);
+    expect(props.aplStats.plugOutline_plugSE[0]).toBe('square');
+    expect(props.aplStats.plugOutline_colorSE[0]).toBe('lime');
+    expect(props.aplStats.plugOutline_strokeWidthSE[0]).toBe(props.curStats.plugOutline_strokeWidthSE[0]);
+    expect(props.aplStats.plugOutline_inStrokeWidthSE[0]).toBe(props.curStats.plugOutline_inStrokeWidthSE[0]);
+
+    // plug_enabledSE false
+    traceLog.clear();
+    ll.setOptions({startPlug: 'behind', endPlug: 'arrow1'});
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plug_enabledSE[0]=false'
+    ]);
+    expect(props.aplStats.plug_enabledSE[0]).toBe(false);
+
+    // plugOutline_colorSE, plugOutline_strokeWidthSE, plugOutline_inStrokeWidthSE
+    // when plug_enabled: false
+    traceLog.clear();
+    ll.setOptions({startPlugOutlineColor: 'red', startPlugOutlineSize: 1.3});
+    expect(traceLog.getTaggedLog('updateFaces')).toEqual(['not-updated']);
+    // only cur* is changed
+    expect(props.curStats.plugOutline_colorSE[0]).toBe('red');
+    expect(props.aplStats.plugOutline_colorSE[0]).not.toBe('red');
+
+    // plug_enabledSE true
+    traceLog.clear();
+    ll.startPlug = 'disc';
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plug_enabledSE[0]=true',
+      'plugOutline_plugSE[0]=disc', 'plugOutline_colorSE[0]=red',
+      'plugOutline_strokeWidthSE[0]', 'plugOutline_inStrokeWidthSE[0]'
+    ]);
+    expect(props.aplStats.plug_enabledSE[0]).toBe(true);
+    expect(props.aplStats.plugOutline_plugSE[0]).toBe('disc');
+    expect(props.aplStats.plugOutline_colorSE[0]).toBe('red');
+    expect(props.aplStats.plugOutline_strokeWidthSE[0]).toBe(props.curStats.plugOutline_strokeWidthSE[0]);
+    expect(props.aplStats.plugOutline_inStrokeWidthSE[0]).toBe(props.curStats.plugOutline_inStrokeWidthSE[0]);
 
     pageDone();
   });
 
   it(registerTitle('updatePosition'), function() {
 
-    // Change `path`
+    // position_socketXYSE
+    traceLog.clear();
+    ll.startSocket = 'top';
+    expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
+      'position_socketXYSE[0]', 'new-position'
+    ]);
+
+    // position_plugOverheadSE
+    ll.endPlug = 'square';
+    traceLog.clear();
+    ll.endPlug = 'arrow2';
+    expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
+      'position_plugOverheadSE[1]', 'new-position'
+    ]);
+
+    // position_path
     ll.endPlug = 'behind'; // to avoid changing padding by symbol
     traceLog.clear();
     ll.path = 'straight';
-    expect(traceLog.log).toContainAll([
-      ['<updatePosition>', 'new-position'],
-      ['<updatePath>', 'setPathData']
+    expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
+      'position_path', 'new-position'
     ]);
 
-    // Change `socketGravitySE`, it doesn't affect pathData because `path` is 'straight'.
+    // position_lineStrokeWidth
+    traceLog.clear();
+    ll.size = 5;
+    expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
+      'position_lineStrokeWidth', 'new-position'
+    ]);
+
+    // position_socketGravitySE
     traceLog.clear();
     ll.startSocketGravity = 10;
-    expect(traceLog.log).toContainAll([
-      ['<updatePosition>', 'new-position']
-    ]
-    // no change
-    .concat(['<updatePath>', '<updateViewBox>', '<updateMask>']
-      .map(function(key) { return [key, 'not-updated']; })));
+    expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
+      'position_socketGravitySE[0]', 'new-position'
+    ]);
 
     pageDone();
   });
 
   it(registerTitle('updatePath'), function() {
-    var props = window.insProps[ll._id];
+
+    ll.endPlug = 'behind'; // to avoid changing padding by symbol
+    traceLog.clear();
+    ll.path = 'straight';
+    expect(traceLog.getTaggedLog('updatePath')).toEqual(['setPathData']);
+
+    traceLog.clear();
+    ll.startSocketGravity = 0; // `straight` ignores `gravity`
+    expect(traceLog.getTaggedLog('updatePath')).toEqual(['not-updated']);
 
     pageDone();
   });
 
   it(registerTitle('updateViewBox'), function() {
     var props = window.insProps[ll._id];
+
+    traceLog.clear();
+    ll.startPlug = 'arrow2';
+    expect(traceLog.getTaggedLog('updateViewBox')).toEqual(['x', 'y', 'width', 'height']);
 
     // down `lineSize` without changing `plugSizeSE`
     // plugBCircleSE[i] = lineSize / DEFAULT_OPTIONS.lineSize(4) * symbolConf.bCircle(8) * plugSizeSE[i]
@@ -437,17 +795,17 @@ describe('update-stats', function() {
     });
     expect(props.curStats.viewBox_plugBCircleSE[0]).toBe(8);
     expect(props.curStats.viewBox_plugBCircleSE[1]).toBe(8);
-    expect(traceLog.log).toContainAll([
-      ['<updateLine>', 'line_strokeWidth=2'],
-      ['<updatePlug>', 'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]',
-        'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'],
-      ['<updateLineOutline>', 'lineOutline_strokeWidth=1', 'lineOutline_inStrokeWidth=1.5'],
-      ['<updatePosition>', 'new-position']
-    ]
-    // no change
-    .concat(['<updatePlugOutline>',
-        '<updatePath>', '<updateViewBox>', '<updateMask>']
-      .map(function(key) { return [key, 'not-updated']; })));
+    expect(traceLog.getTaggedLog('updateLine')).toContainAll([
+      'line_strokeWidth=2'
+    ]);
+    expect(traceLog.getTaggedLog('updatePlug')).toContainAll([
+      'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]', 'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'
+    ]);
+    expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
+      'new-position'
+    ]);
+    expect(traceLog.getTaggedLog('updatePath')).toEqual(['not-updated']);
+    expect(traceLog.getTaggedLog('updateViewBox')).toEqual(['not-updated']);
 
     // up `lineSize`
     traceLog.clear();
@@ -458,38 +816,296 @@ describe('update-stats', function() {
     });
     expect(props.curStats.viewBox_plugBCircleSE[0]).toBe(8);
     expect(props.curStats.viewBox_plugBCircleSE[1]).toBe(8);
-    expect(traceLog.log).toContainAll([
-      ['<updateLine>', 'line_strokeWidth=20'],
-      ['<updatePlug>', 'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]',
-        'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'],
-      ['<updatePosition>', 'new-position'],
-      ['<updateViewBox>', 'viewBox_bBox.x', 'viewBox_bBox.y',
-        'viewBox_bBox.width', 'viewBox_bBox.height']
-    ]
-    // no change
-    .concat(['<updatePlugOutline>', '<updatePath>', '<updateMask>']
-      .map(function(key) { return [key, 'not-updated']; })));
+    expect(traceLog.getTaggedLog('updateLine')).toContainAll([
+      'line_strokeWidth=20'
+    ]);
+    expect(traceLog.getTaggedLog('updatePlug')).toContainAll([
+      'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]', 'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'
+    ]);
+    expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
+      'new-position'
+    ]);
+    expect(traceLog.getTaggedLog('updatePath')).toEqual(['not-updated']);
+    expect(traceLog.getTaggedLog('updateViewBox')).toEqual(['x', 'y', 'width', 'height']);
 
     pageDone();
   });
 
   it(registerTitle('updateMask'), function() {
-    var props = window.insProps[ll._id];
+    var log, props = window.insProps[ll._id];
 
-    // `mask` is updated when `viewBox` was changed and `<mask>`s are used
+    // maskBGRect_x, maskBGRect_y
+    // props.maskBGRect is used in props.lineMask (!lineOutline_enabled), props.lineOutlineMask
+    expect(props.curStats.capsMaskMarker_enabled).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(true);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
+    expect(props.curStats.caps_enabled).toBe(true);
+    expect(props.curStats.lineMask_enabled && !props.curStats.lineMask_outlineMode).toBe(true); // lineMaskBGEnabled
     traceLog.clear();
-    ll.size = 8;
-    expect(traceLog.log).toContainAll([
-      ['<updateLine>', 'line_strokeWidth=8'],
-      ['<updatePosition>', 'new-position'],
-      ['<updatePath>', 'setPathData'],
-      ['<updateViewBox>', 'viewBox_bBox.x', 'viewBox_bBox.y',
-        'viewBox_bBox.width', 'viewBox_bBox.height'],
-      ['<updateMask>', 'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y']
-    ]
-    // no change
-    .concat(['<updatePlug>', '<updatePlugOutline>']
-      .map(function(key) { return [key, 'not-updated']; })));
+    ll.startSocket = ll.startSocket === 'auto' || ll.startSocket === 'left' ? 'top' : 'left';
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'maskBGRect_x', 'maskBGRect_y'
+    ]);
+
+    ll.setOptions({startPlug: 'arrow1', endPlug: 'behind'});
+    expect(props.curStats.capsMaskMarker_enabled).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(true);
+    expect(props.curStats.caps_enabled).toBe(true);
+    expect(props.curStats.lineMask_enabled && !props.curStats.lineMask_outlineMode).toBe(true); // lineMaskBGEnabled
+    traceLog.clear();
+    ll.startSocket = ll.startSocket === 'auto' || ll.startSocket === 'left' ? 'top' : 'left';
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'maskBGRect_x', 'maskBGRect_y'
+    ]);
+
+    ll.setOptions({startPlug: 'arrow1', endPlug: 'arrow2'});
+    expect(props.curStats.capsMaskMarker_enabled).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
+    expect(props.curStats.caps_enabled).toBe(false);
+    expect(props.curStats.lineMask_enabled && !props.curStats.lineMask_outlineMode).toBe(false); // lineMaskBGEnabled
+    traceLog.clear();
+    ll.startSocket = ll.startSocket === 'auto' || ll.startSocket === 'left' ? 'top' : 'left';
+    expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
+      'maskBGRect_x', 'maskBGRect_y'
+    ]);
+
+    ll.startPlugColor = 'rgba(255, 0, 0, 0.5)';
+    expect(props.curStats.capsMaskMarker_enabled).toBe(true);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
+    expect(props.curStats.caps_enabled).toBe(true);
+    expect(props.curStats.lineMask_enabled && !props.curStats.lineMask_outlineMode).toBe(true); // lineMaskBGEnabled
+    traceLog.clear();
+    ll.startSocket = ll.startSocket === 'auto' || ll.startSocket === 'left' ? 'top' : 'left';
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'maskBGRect_x', 'maskBGRect_y'
+    ]);
+
+    // lineMask_enabled
+    // curStats.lineMask_enabled = curStats.caps_enabled || curStats.lineMask_outlineMode;
+    expect(props.curStats.capsMaskMarker_enabled).toBe(true);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
+    expect(props.curStats.caps_enabled).toBe(true);
+    expect(props.curStats.lineMask_outlineMode).toBe(false);
+    expect(props.curStats.lineMask_enabled).toBe(true);
+    traceLog.clear();
+    ll.startPlugColor = 'rgb(255, 0, 0)';
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'lineMask_enabled=false'
+    ]);
+    expect(props.curStats.lineMask_enabled).toBe(false);
+
+    traceLog.clear();
+    ll.setOptions({startPlug: 'behind', endPlug: 'arrow1', startPlugColor: 'rgb(255, 0, 0)'});
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'lineMask_enabled=true'
+    ]);
+    expect(props.curStats.capsMaskMarker_enabled).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(true);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
+    expect(props.curStats.caps_enabled).toBe(true);
+    expect(props.curStats.lineMask_enabled).toBe(true);
+
+    // lineMask_outlineMode
+    expect(props.curStats.lineMask_outlineMode).toBe(false);
+    traceLog.clear();
+    ll.outline = true;
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'lineMask_outlineMode=true'
+    ]);
+    expect(props.curStats.lineMask_outlineMode).toBe(true);
+
+    // lineMask_x, lineMask_y
+    traceLog.clear();
+    ll.startSocket = ll.startSocket === 'auto' || ll.startSocket === 'left' ? 'top' : 'left';
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'lineMask_x', 'lineMask_y'
+    ]);
+
+    // lineMask_enabled false
+    traceLog.clear();
+    ll.setOptions({startPlug: 'arrow2', endPlug: 'arrow1', outline: false});
+    log = traceLog.getTaggedLog('updateMask');
+    expect(log).toContainAll([
+      'lineMask_enabled=false'
+    ]);
+    expect(log).toNotContainAny([
+      'lineMask_outlineMode=false'
+    ]);
+    expect(props.curStats.capsMaskMarker_enabled).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
+    expect(props.curStats.caps_enabled).toBe(false);
+    expect(props.curStats.lineMask_enabled).toBe(false);
+    expect(props.curStats.lineMask_outlineMode).toBe(false); // apl* is not updated
+    expect(props.aplStats.lineMask_outlineMode).toBe(true); // apl* is not updated
+
+    // lineMask_x, lineMask_y when lineMask_enabled: false
+    traceLog.clear();
+    ll.startSocket = ll.startSocket === 'auto' || ll.startSocket === 'left' ? 'top' : 'left';
+    expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
+      'lineMask_x', 'lineMask_y'
+    ]);
+    // only cur* is changed
+    expect(props.curStats.lineMask_x).toBe(props.curStats.viewBox_bBox.x);
+    expect(props.curStats.lineMask_y).toBe(props.curStats.viewBox_bBox.y);
+    expect(props.aplStats.lineMask_x).not.toBe(props.curStats.viewBox_bBox.x);
+    expect(props.aplStats.lineMask_y).not.toBe(props.curStats.viewBox_bBox.y);
+
+    // lineMask_enabled true
+    traceLog.clear();
+    ll.setOptions({startPlug: 'behind', endPlug: 'arrow1'});
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'lineMask_enabled=true',
+      'lineMask_outlineMode=false', // apl* is updated
+      'lineMask_x', 'lineMask_y'
+    ]);
+    expect(props.curStats.lineMask_enabled).toBe(true);
+    expect(props.aplStats.lineMask_outlineMode).toBe(false); // apl* is updated
+    expect(props.aplStats.lineMask_x).toBe(props.curStats.viewBox_bBox.x);
+    expect(props.aplStats.lineMask_y).toBe(props.curStats.viewBox_bBox.y);
+
+    // capsMaskAnchor_enabledSE, capsMaskAnchor_bBoxSE
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
+    ll.setOptions({end: document.getElementById('elm2'), endPlug: 'behind'});
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'capsMaskAnchor_enabledSE[1]=true',
+      'capsMaskAnchor_bBoxSE[1].x', 'capsMaskAnchor_bBoxSE[1].y'
+    ]);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(true);
+
+    // caps_enabled false
+    traceLog.clear();
+    ll.setOptions({startPlug: 'arrow2', endPlug: 'arrow1', outline: true});
+    log = traceLog.getTaggedLog('updateMask');
+    expect(log).toContainAll([
+      'caps_enabled=false'
+    ]);
+    expect(log).toNotContainAny([
+      'capsMaskAnchor_enabledSE[1]=false'
+    ]);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
+    expect(props.aplStats.capsMaskAnchor_enabledSE[1]).toBe(true); // apl* is not updated
+    expect(props.curStats.caps_enabled).toBe(false);
+    expect(props.curStats.lineMask_enabled).toBe(true);
+    expect(props.aplStats.lineMask_outlineMode).toBe(true);
+
+    // capsMaskAnchor_bBoxSE when caps_enabled false
+    ll.end = document.getElementById('elm3');
+    expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
+      'capsMaskAnchor_bBoxSE[1].x', 'capsMaskAnchor_bBoxSE[1].y'
+    ]);
+
+    // caps_enabled true
+    traceLog.clear();
+    ll.endPlug = 'behind';
+    log = traceLog.getTaggedLog('updateMask');
+    expect(log).toContainAll([
+      'caps_enabled=true',
+      'capsMaskAnchor_bBoxSE[1].x', 'capsMaskAnchor_bBoxSE[1].y'
+    ]);
+    expect(log).toNotContainAny([
+      'capsMaskAnchor_enabledSE[1]=true' // apl* was not disabled
+    ]);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(false);
+    expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(true);
+    expect(props.aplStats.capsMaskAnchor_enabledSE[1]).toBe(true); // apl* is not updated (was not disabled)
+    expect(props.curStats.caps_enabled).toBe(true);
+
+
+    // capsMaskAnchor_bBoxSE when capsMaskAnchor_enabledSE false
+    ll.start = document.getElementById('elm2');
+    expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
+      'capsMaskAnchor_bBoxSE[0].x', 'capsMaskAnchor_bBoxSE[0].y'
+    ]);
+
+    // capsMaskAnchor_enabledSE true
+    traceLog.clear();
+    ll.startPlug = 'behind';
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'capsMaskAnchor_enabledSE[0]=true',
+      'capsMaskAnchor_bBoxSE[0].x', 'capsMaskAnchor_bBoxSE[0].y'
+    ]);
+    expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(true);
+
+    // capsMaskMarker_enabled, capsMaskMarker_enabledSE,
+    // capsMaskMarker_plugSE, capsMaskMarker_markerWidthSE, capsMaskMarker_markerHeightSE
+    traceLog.clear();
+    ll.setOptions({endPlug: 'square', endPlugColor: 'rgba(255, 0, 0, 0.5)'});
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'capsMaskMarker_enabled=true', 'capsMaskMarker_enabledSE[1]=true',
+      'capsMaskMarker_plugSE[1]=square', 'capsMaskMarker_markerWidthSE[1]', 'capsMaskMarker_markerHeightSE[1]'
+    ]);
+
+    // capsMaskMarker_enabledSE false
+    traceLog.clear();
+    ll.endPlugColor = 'rgb(255, 0, 0)';
+    log = traceLog.getTaggedLog('updateMask');
+    expect(log).toContainAll([
+      'capsMaskMarker_enabled=false'
+    ]);
+    expect(log).toNotContainAny([
+      'capsMaskMarker_enabledSE[1]=false' // apl* is not updated
+    ]);
+
+    // capsMaskMarker_plugSE, capsMaskMarker_markerWidthSE, capsMaskMarker_markerHeightSE
+    // when capsMaskMarker_enabledSE false
+    ll.endPlug = 'arrow2';
+    expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
+      'capsMaskMarker_plugSE[1]=arrow2', 'capsMaskMarker_markerWidthSE[1]', 'capsMaskMarker_markerHeightSE[1]'
+    ]);
+
+    // capsMaskMarker_enabledSE true
+    traceLog.clear();
+    ll.endPlugColor = 'rgba(255, 0, 0, 0.5)';
+    log = traceLog.getTaggedLog('updateMask');
+    expect(log).toContainAll([
+      'capsMaskMarker_enabled=true',
+      'capsMaskMarker_plugSE[1]=arrow2', 'capsMaskMarker_markerWidthSE[1]', 'capsMaskMarker_markerHeightSE[1]'
+    ]);
+    expect(log).toNotContainAny([
+      'capsMaskMarker_enabledSE[1]=true' // apl* was not disabled
+    ]);
+
+    // lineOutlineMask_x, lineOutlineMask_y
+    ll.outline = true;
+    expect(props.curStats.lineOutline_enabled).toBe(true);
+    traceLog.clear();
+    ll.startSocket = ll.startSocket === 'auto' || ll.startSocket === 'left' ? 'top' : 'left';
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'lineOutlineMask_x', 'lineOutlineMask_y'
+    ]);
+
+    // lineOutline_enabled false
+    traceLog.clear();
+    ll.outline = false;
+    expect(props.curStats.lineOutline_enabled).toBe(false);
+
+    // lineOutlineMask_x, lineOutlineMask_y when lineOutline_enabled: false
+    traceLog.clear();
+    ll.startSocket = ll.startSocket === 'auto' || ll.startSocket === 'left' ? 'top' : 'left';
+    expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
+      'lineOutlineMask_x', 'lineOutlineMask_y'
+    ]);
+    // only cur* is changed
+    expect(props.curStats.lineOutlineMask_x).toBe(props.curStats.viewBox_bBox.x);
+    expect(props.curStats.lineOutlineMask_y).toBe(props.curStats.viewBox_bBox.y);
+    expect(props.aplStats.lineOutlineMask_x).not.toBe(props.curStats.viewBox_bBox.x);
+    expect(props.aplStats.lineOutlineMask_y).not.toBe(props.curStats.viewBox_bBox.y);
+
+    // lineOutline_enabled true
+    traceLog.clear();
+    ll.outline = true;
+    expect(traceLog.getTaggedLog('updateMask')).toContainAll([
+      'lineOutlineMask_x', 'lineOutlineMask_y'
+    ]);
+    expect(props.curStats.lineOutline_enabled).toBe(true);
+    expect(props.aplStats.lineOutlineMask_x).toBe(props.curStats.viewBox_bBox.x);
+    expect(props.aplStats.lineOutlineMask_y).toBe(props.curStats.viewBox_bBox.y);
 
     pageDone();
   });

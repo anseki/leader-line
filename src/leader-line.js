@@ -129,24 +129,20 @@
     pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
 
     /**
-     * @typedef {{hasSE, hasProps, hasChanged}} StatConf
-     */
-
-    /**
-     * @typedef {{group: {name: StatConf}}} StatConfGroups
+     * @typedef {{hasSE, hasProps, hasChanged, iniValue}} StatConf
      */
 
     STATS = {
-      line_altColor: {}, line_color: {}, line_colorTra: {}, line_strokeWidth: {},
-      plug_enabled: {}, plug_enabledSE: {hasSE: true},
-      plug_plugSE: {hasSE: true},
+      line_altColor: {iniValue: false}, line_color: {}, line_colorTra: {}, line_strokeWidth: {},
+      plug_enabled: {iniValue: false}, plug_enabledSE: {hasSE: true, iniValue: false},
+      plug_plugSE: {hasSE: true, iniValue: PLUG_BEHIND},
       plug_colorSE: {hasSE: true}, plug_colorTraSE: {hasSE: true},
       plug_markerWidthSE: {hasSE: true}, plug_markerHeightSE: {hasSE: true},
-      lineOutline_enabled: {},
+      lineOutline_enabled: {iniValue: false},
       lineOutline_color: {}, lineOutline_colorTra: {},
       lineOutline_strokeWidth: {}, lineOutline_inStrokeWidth: {},
-      plugOutline_enabledSE: {hasSE: true},
-      plugOutline_plugSE: {hasSE: true},
+      plugOutline_enabledSE: {hasSE: true, iniValue: false},
+      plugOutline_plugSE: {hasSE: true, iniValue: PLUG_BEHIND},
       plugOutline_colorSE: {hasSE: true}, plugOutline_colorTraSE: {hasSE: true},
       plugOutline_strokeWidthSE: {hasSE: true}, plugOutline_inStrokeWidthSE: {hasSE: true},
       position_socketXYSE: {hasSE: true, hasProps: true}, position_plugOverheadSE: {hasSE: true},
@@ -154,17 +150,17 @@
       path_pathData: {},
       viewBox_bBox: {hasProps: true},
       viewBox_plugBCircleSE: {hasSE: true}, viewBox_pathEdge: {hasProps: true},
-      lineMask_enabled: {},
-      lineMask_outlineMode: {},
+      lineMask_enabled: {iniValue: false},
+      lineMask_outlineMode: {iniValue: false},
       lineMask_x: {}, lineMask_y: {},
       lineOutlineMask_x: {}, lineOutlineMask_y: {},
       maskBGRect_x: {}, maskBGRect_y: {},
-      capsMaskAnchor_enabledSE: {hasSE: true},
+      capsMaskAnchor_enabledSE: {hasSE: true, iniValue: false},
       capsMaskAnchor_bBoxSE: {hasSE: true, hasProps: true},
-      capsMaskMarker_enabled: {}, capsMaskMarker_enabledSE: {hasSE: true},
-      capsMaskMarker_plugSE: {hasSE: true},
+      capsMaskMarker_enabled: {iniValue: false}, capsMaskMarker_enabledSE: {hasSE: true, iniValue: false},
+      capsMaskMarker_plugSE: {hasSE: true, iniValue: PLUG_BEHIND},
       capsMaskMarker_markerWidthSE: {hasSE: true}, capsMaskMarker_markerHeightSE: {hasSE: true},
-      caps_enabled: {}
+      caps_enabled: {iniValue: false}
     },
 
     /**
@@ -865,20 +861,12 @@
     // Init stats
     Object.keys(STATS).forEach(function(name) {
       var statConf = STATS[name];
-      aplStats[name] = statConf.hasSE ? (statConf.hasProps ? [{}, {}] : []) : statConf.hasProps ? {} : null;
+      aplStats[name] =
+        statConf.iniValue != null ? ( // eslint-disable-line eqeqeq
+          statConf.hasSE ? [statConf.iniValue, statConf.iniValue] : statConf.iniValue
+        ) :
+        statConf.hasSE ? (statConf.hasProps ? [{}, {}] : []) : statConf.hasProps ? {} : null;
     });
-    aplStats.plug_enabled =
-      aplStats.plug_enabledSE[0] = aplStats.plug_enabledSE[1] =
-      aplStats.lineOutline_enabled =
-      aplStats.plugOutline_enabledSE[0] = aplStats.plugOutline_enabledSE[1] =
-      aplStats.lineMask_enabled = aplStats.lineMask_outlineMode =
-      aplStats.capsMaskAnchor_enabledSE[0] = aplStats.capsMaskAnchor_enabledSE[1] =
-      aplStats.capsMaskMarker_enabled =
-      aplStats.capsMaskMarker_enabledSE[0] = aplStats.capsMaskMarker_enabledSE[1] =
-      aplStats.caps_enabled = false;
-    aplStats.plug_plugSE[0] = aplStats.plug_plugSE[1] =
-      aplStats.plugOutline_plugSE[0] = aplStats.plugOutline_plugSE[1] =
-      aplStats.capsMaskMarker_plugSE[0] = aplStats.capsMaskMarker_plugSE[1] = PLUG_BEHIND;
     traceLog.add('</bindWindow>'); // [DEBUG/]
   }
   window.bindWindow = bindWindow; // [DEBUG/]
@@ -1115,7 +1103,8 @@
         updated = true;
       }
 
-      if (setStat(props, aplStats, 'lineOutline_strokeWidth', (value = curStats.lineOutline_strokeWidth))) {
+      if (setStat(props, aplStats, 'lineOutline_strokeWidth', (value = curStats.lineOutline_strokeWidth)
+          /* [DEBUG] */, null, 'lineOutline_strokeWidth%_'/* [/DEBUG] */)) {
         props.lineOutlineMaskShape.style.strokeWidth = value;
         updated = true;
         if (IS_TRIDENT) {
@@ -1126,7 +1115,8 @@
         }
       }
 
-      if (setStat(props, aplStats, 'lineOutline_inStrokeWidth', (value = curStats.lineOutline_inStrokeWidth))) {
+      if (setStat(props, aplStats, 'lineOutline_inStrokeWidth', (value = curStats.lineOutline_inStrokeWidth)
+          /* [DEBUG] */, null, 'lineOutline_inStrokeWidth%_'/* [/DEBUG] */)) {
         props.lineMaskShape.style.strokeWidth = value;
         updated = true;
         if (IS_TRIDENT) {
@@ -1227,14 +1217,14 @@
 
             if (setStat(props, aplStats.plugOutline_strokeWidthSE, i,
                 (value = curStats.plugOutline_strokeWidthSE[i])
-                /* [DEBUG] */, null, 'plugOutline_strokeWidthSE[' + i + ']=%s'/* [/DEBUG] */)) {
+                /* [DEBUG] */, null, 'plugOutline_strokeWidthSE[' + i + ']%_'/* [/DEBUG] */)) {
               props.plugOutlineMaskShapeSE[i].style.strokeWidth = value;
               updated = true;
             }
 
             if (setStat(props, aplStats.plugOutline_inStrokeWidthSE, i,
                 (value = curStats.plugOutline_inStrokeWidthSE[i])
-                /* [DEBUG] */, null, 'plugOutline_inStrokeWidthSE[' + i + ']=%s'/* [/DEBUG] */)) {
+                /* [DEBUG] */, null, 'plugOutline_inStrokeWidthSE[' + i + ']%_'/* [/DEBUG] */)) {
               props.plugMaskShapeSE[i].style.strokeWidth = value;
               updated = true;
             }
@@ -1335,6 +1325,24 @@
         });
       }
     })();
+
+    // [DEBUG]
+    if (curStats.position_path !== aplStats.position_path) { traceLog.add('position_path'); }
+    if (curStats.position_lineStrokeWidth !== aplStats.position_lineStrokeWidth) {
+      traceLog.add('position_lineStrokeWidth');
+    }
+    [0, 1].forEach(function(i) {
+      if (curStats.position_plugOverheadSE[i] !== aplStats.position_plugOverheadSE[i]) {
+        traceLog.add('position_plugOverheadSE[' + i + ']');
+      }
+      if (socketXYHasChanged(curSocketXYSE[i], aplStats.position_socketXYSE[i])) {
+        traceLog.add('position_socketXYSE[' + i + ']');
+      }
+      if (socketGravityHasChanged(curSocketGravitySE[i], aplStats.position_socketGravitySE[i])) {
+        traceLog.add('position_socketGravitySE[' + i + ']');
+      }
+    });
+    // [/DEBUG]
 
     if (curStats.position_path !== aplStats.position_path ||
         curStats.position_lineStrokeWidth !== aplStats.position_lineStrokeWidth ||
@@ -1806,7 +1814,7 @@
     ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
       var value;
       if ((value = curBBox[boxKey]) !== aplBBox[boxKey]) {
-        traceLog.add('viewBox_bBox.' + boxKey); // [DEBUG/]
+        traceLog.add(boxKey); // [DEBUG/]
         viewBox[boxKey] = aplBBox[boxKey] = value;
         styles[BBOX_PROP[boxKey]] = value +
           (boxKey === 'x' || boxKey === 'y' ? props.bodyOffset[boxKey] : 0) + 'px';
@@ -2096,13 +2104,19 @@
     Object.keys(STATS).forEach(function(name) {
       var statConf = STATS[name];
       if (statConf.hasSE) {
-        if (statConf.hasProps) {
+        if (statConf.iniValue != null) { // eslint-disable-line eqeqeq
+          props.curStats[name] = [statConf.iniValue, statConf.iniValue];
+          props.aplStats[name] = [statConf.iniValue, statConf.iniValue];
+        } else if (statConf.hasProps) {
           props.curStats[name] = [{}, {}];
           props.aplStats[name] = [{}, {}];
         } else {
           props.curStats[name] = [];
           props.aplStats[name] = [];
         }
+      } else if (statConf.iniValue != null) { // eslint-disable-line eqeqeq
+        props.curStats[name] = statConf.iniValue;
+        props.aplStats[name] = statConf.iniValue;
       } else if (statConf.hasProps) {
         props.curStats[name] = {};
         props.aplStats[name] = {};
