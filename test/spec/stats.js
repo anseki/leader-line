@@ -30,10 +30,10 @@ describe('stats', function() {
       pageDone = done;
       ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'));
       beforeDone();
-    }/* , 'stats - ' + titles.shift() */);
+    }, 'stats - ' + titles.shift());
   });
 
-  it(registerTitle('setStat'), function() {
+  it(registerTitle('setStat()'), function() {
     var props = window.insProps[ll._id];
 
     // update
@@ -58,7 +58,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updateLine'), function() {
+  it(registerTitle('updateLine()'), function() {
 
     // line_color
     traceLog.clear();
@@ -84,7 +84,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updatePlug'), function() {
+  it(registerTitle('updatePlug()'), function() {
     var log, props = window.insProps[ll._id],
       plugMarkerWidth, plugMarkerHeight;
 
@@ -223,7 +223,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updateLineOutline'), function() {
+  it(registerTitle('updateLineOutline()'), function() {
 
     // lineOutline_enabled
     traceLog.clear();
@@ -291,7 +291,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updatePlugOutline'), function() {
+  it(registerTitle('updatePlugOutline()'), function() {
     var props = window.insProps[ll._id];
 
     // plugOutline_enabledSE 1 plug_enabledSE[0]: false
@@ -385,7 +385,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updateFaces'), function() {
+  it(registerTitle('updateFaces()'), function() {
     var log, props = window.insProps[ll._id], value;
 
     // line_color
@@ -719,7 +719,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updatePosition'), function() {
+  it(registerTitle('updatePosition()'), function() {
 
     // position_socketXYSE
     traceLog.clear();
@@ -761,7 +761,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updatePath'), function() {
+  it(registerTitle('updatePath()'), function() {
 
     ll.endPlug = 'behind'; // to avoid changing padding by symbol
     traceLog.clear();
@@ -775,7 +775,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updateViewBox'), function() {
+  it(registerTitle('updateViewBox()'), function() {
     var props = window.insProps[ll._id];
 
     traceLog.clear();
@@ -831,7 +831,7 @@ describe('stats', function() {
     pageDone();
   });
 
-  it(registerTitle('updateMask'), function() {
+  it(registerTitle('updateMask()'), function() {
     var log, props = window.insProps[ll._id];
 
     // maskBGRect_x, maskBGRect_y
@@ -1106,6 +1106,142 @@ describe('stats', function() {
     expect(props.curStats.lineOutline_enabled).toBe(true);
     expect(props.aplStats.lineOutlineMask_x).toBe(props.curStats.viewBox_bBox.x);
     expect(props.aplStats.lineOutlineMask_y).toBe(props.curStats.viewBox_bBox.y);
+
+    pageDone();
+  });
+
+  it(registerTitle('iniValue avoids unnecessary updating'), function() {
+
+    ll.remove();
+
+    traceLog.clear();
+    ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm2'));
+    expect(traceLog.log).toEqual([
+      /* eslint-disable indent */
+      '<bindWindow>', '</bindWindow>',
+      '<setOptions>',
+        'needs.position', 'needs.effect', 'needs.faces', 'needs.plugOutline', 'needs.lineOutline',
+        'needs.plug', 'needs.line',
+      '</setOptions>',
+
+      '<updateLine>',
+        // default stats: line_altColor, line_colorTra
+        'line_color=coral', 'line_strokeWidth=4',
+      '</updateLine>',
+
+      '<updatePlug>',
+        // default stats: plug_enabledSE[0], plug_plugSE[0], plug_colorTraSE
+        'plug_colorSE[0]=coral',
+        'plug_enabledSE[1]=true', 'plug_plugSE[1]=arrow1', 'plug_colorSE[1]=coral',
+        'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]',
+        'plug_enabled=true',
+      '</updatePlug>',
+
+      '<updateLineOutline>',
+        // default stats: lineOutline_enabled, lineOutline_colorTra
+        'lineOutline_color=indianred',
+        'lineOutline_strokeWidth',
+        'lineOutline_inStrokeWidth',
+      '</updateLineOutline>',
+
+      '<updatePlugOutline>',
+        // default stats: plugOutline_enabledSE, plugOutline_plugSE, plugOutline_colorTraSE
+        'plugOutline_colorSE[0]=indianred',
+        'plugOutline_colorSE[1]=indianred',
+        'plugOutline_strokeWidthSE[1]',
+        'plugOutline_inStrokeWidthSE[1]',
+      '</updatePlugOutline>',
+
+      '<updateFaces>',
+        // default stats: plug_enabledSE[0], plug_plugSE[0]
+        'line_color=coral', 'line_strokeWidth=4',
+        'plug_enabled=true',
+        'plug_enabledSE[1]=true', 'plug_plugSE[1]=arrow1', 'plug_colorSE[1]=coral',
+        'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]',
+      '</updateFaces>',
+
+      '<updatePosition>',
+        // default stats: position_socketGravitySE
+        'position_path', 'position_lineStrokeWidth',
+        'position_plugOverheadSE[0]', 'position_socketXYSE[0]',
+        'position_plugOverheadSE[1]', 'position_socketXYSE[1]',
+        'new-position',
+      '</updatePosition>',
+
+      '<updatePath>', 'setPathData', '</updatePath>',
+      '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
+
+      '<updateMask>',
+        // default stats: lineMask_outlineMode, capsMaskAnchor_enabledSE[1], capsMaskMarker_plugSE[0]
+        'maskBGRect_x', 'maskBGRect_y',
+        'lineMask_enabled=true', 'lineMask_x', 'lineMask_y',
+        'caps_enabled=true',
+        'capsMaskAnchor_enabledSE[0]=true',
+        'capsMaskAnchor_bBoxSE[0].x', 'capsMaskAnchor_bBoxSE[0].y',
+        'capsMaskAnchor_bBoxSE[0].width', 'capsMaskAnchor_bBoxSE[0].height',
+      '</updateMask>',
+
+      '<setEffect>', '</setEffect>',
+
+      '<update>',
+        'updated.line', 'updated.plug', 'updated.lineOutline', 'updated.plugOutline', 'updated.faces',
+        'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask',
+      '</update>'
+      /* eslint-enable indent */
+    ]);
+
+    traceLog.clear();
+    ll.setOptions({start: document.getElementById('iframe1').contentDocument.getElementById('elm1'),
+      end: document.getElementById('iframe1').contentDocument.getElementById('elm2')});
+    expect(traceLog.log).toEqual([
+      /* eslint-disable indent */
+      '<bindWindow>', '</bindWindow>',
+      '<setOptions>',
+        'needs.position', 'needs.effect', 'needs.faces', 'needs.plugOutline', 'needs.lineOutline',
+        'needs.plug', 'needs.line',
+      '</setOptions>',
+
+      '<updateLine>', 'not-updated', '</updateLine>',
+      '<updatePlug>', 'not-updated', '</updatePlug>',
+      '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
+      '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
+
+      '<updateFaces>',
+        // default stats: plug_enabledSE[0], plug_plugSE[0]
+        'line_color=coral', 'line_strokeWidth=4',
+        'plug_enabled=true',
+        'plug_enabledSE[1]=true', 'plug_plugSE[1]=arrow1', 'plug_colorSE[1]=coral',
+        'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]',
+      '</updateFaces>',
+
+      '<updatePosition>',
+        // default stats: position_socketGravitySE
+        'position_path', 'position_lineStrokeWidth',
+        'position_plugOverheadSE[0]', 'position_socketXYSE[0]',
+        'position_plugOverheadSE[1]', 'position_socketXYSE[1]',
+        'new-position',
+      '</updatePosition>',
+
+      '<updatePath>', 'setPathData', '</updatePath>',
+      '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
+
+      '<updateMask>',
+        // default stats: lineMask_outlineMode, capsMaskAnchor_enabledSE[1], capsMaskMarker_plugSE[0]
+        'maskBGRect_x', 'maskBGRect_y',
+        'lineMask_enabled=true', 'lineMask_x', 'lineMask_y',
+        'caps_enabled=true',
+        'capsMaskAnchor_enabledSE[0]=true',
+        'capsMaskAnchor_bBoxSE[0].x', 'capsMaskAnchor_bBoxSE[0].y',
+        'capsMaskAnchor_bBoxSE[0].width', 'capsMaskAnchor_bBoxSE[0].height',
+      '</updateMask>',
+
+      '<setEffect>', '</setEffect>',
+
+      '<update>',
+        'updated.faces', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask',
+      '</update>'
+      /* eslint-enable indent */
+    ]);
 
     pageDone();
   });

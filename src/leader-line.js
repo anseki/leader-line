@@ -133,17 +133,17 @@
      */
 
     STATS = {
-      line_altColor: {iniValue: false}, line_color: {}, line_colorTra: {}, line_strokeWidth: {},
+      line_altColor: {iniValue: false}, line_color: {}, line_colorTra: {iniValue: false}, line_strokeWidth: {},
       plug_enabled: {iniValue: false}, plug_enabledSE: {hasSE: true, iniValue: false},
       plug_plugSE: {hasSE: true, iniValue: PLUG_BEHIND},
-      plug_colorSE: {hasSE: true}, plug_colorTraSE: {hasSE: true},
+      plug_colorSE: {hasSE: true}, plug_colorTraSE: {hasSE: true, iniValue: false},
       plug_markerWidthSE: {hasSE: true}, plug_markerHeightSE: {hasSE: true},
       lineOutline_enabled: {iniValue: false},
-      lineOutline_color: {}, lineOutline_colorTra: {},
+      lineOutline_color: {}, lineOutline_colorTra: {iniValue: false},
       lineOutline_strokeWidth: {}, lineOutline_inStrokeWidth: {},
       plugOutline_enabledSE: {hasSE: true, iniValue: false},
       plugOutline_plugSE: {hasSE: true, iniValue: PLUG_BEHIND},
-      plugOutline_colorSE: {hasSE: true}, plugOutline_colorTraSE: {hasSE: true},
+      plugOutline_colorSE: {hasSE: true}, plugOutline_colorTraSE: {hasSE: true, iniValue: false},
       plugOutline_strokeWidthSE: {hasSE: true}, plugOutline_inStrokeWidthSE: {hasSE: true},
       position_socketXYSE: {hasSE: true, hasProps: true}, position_plugOverheadSE: {hasSE: true},
       position_path: {}, position_lineStrokeWidth: {}, position_socketGravitySE: {hasSE: true},
@@ -2042,7 +2042,7 @@
     if (needs.plugOutline || updated.line || updated.plug || updated.lineOutline) {
       updated.plugOutline = updatePlugOutline(props);
     }
-    if (updated.line || updated.plug || updated.lineOutline || updated.plugOutline) {
+    if (needs.faces || updated.line || updated.plug || updated.lineOutline || updated.plugOutline) {
       updated.faces = updateFaces(props);
     }
     if ((needs.position || updated.line || updated.plug) &&
@@ -2322,7 +2322,7 @@
     if (needsWindow &&
         (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
-      needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.effect = true;
+      needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.faces = needs.effect = true;
     }
 
     needs.position = setValidId('path', PATH_KEY_2_ID) || needs.position;

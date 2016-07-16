@@ -5,7 +5,7 @@
 describe('funcs', function() {
   'use strict';
 
-  describe('hasChanged', function() {
+  describe('hasChanged()', function() {
 
     // dismantled `isObject()`
     function _isObject(obj) {
@@ -47,7 +47,7 @@ describe('funcs', function() {
       }
     };
 
-    describe('_isObject', function() {
+    describe('_isObject()', function() {
       it('5', function() { expect(_isObject(5)).toBe('0:true,1:false,5:false'); });
       it('\'a\'', function() { expect(_isObject('a')).toBe('0:true,1:false,5:false'); });
       it('true', function() { expect(_isObject(true)).toBe('0:true,1:false,5:false'); });
@@ -63,7 +63,7 @@ describe('funcs', function() {
       it('document.body', function() { expect(_isObject(document.body)).toBe('0:true,1:false,5:false'); });
     });
 
-    describe('copyTree', function() {
+    describe('copyTree()', function() {
       var copyTree, pageDone, obj2;
 
       beforeAll(function(beforeDone) {
@@ -120,7 +120,7 @@ describe('funcs', function() {
       });
     });
 
-    describe('hasChanged', function() {
+    describe('hasChanged()', function() {
       var hasChanged, pageDone;
 
       beforeAll(function(beforeDone) {
@@ -246,7 +246,7 @@ describe('funcs', function() {
 
   });
 
-  describe('getAlpha', function() {
+  describe('getAlpha()', function() {
     var getAlpha, pageDone;
 
     beforeAll(function(beforeDone) {
