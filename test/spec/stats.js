@@ -30,7 +30,7 @@ describe('stats', function() {
       pageDone = done;
       ll = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'));
       beforeDone();
-    }, 'stats - ' + titles.shift());
+    }/* , 'stats - ' + titles.shift() */);
   });
 
   it(registerTitle('setStat()'), function() {

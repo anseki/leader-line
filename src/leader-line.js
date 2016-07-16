@@ -112,11 +112,11 @@
       var toString = {}.toString, fnToString = {}.hasOwnProperty.toString,
         objFnString = fnToString.call(Object);
       return function(obj) {
-        var proto, cstrtr;
+        var proto, constructor;
         return obj && toString.call(obj) === '[object Object]' &&
           (!(proto = Object.getPrototypeOf(obj)) ||
-            (cstrtr = proto.hasOwnProperty('constructor') && proto.constructor) &&
-            typeof cstrtr === 'function' && fnToString.call(cstrtr) === objFnString);
+            (constructor = proto.hasOwnProperty('constructor') && proto.constructor) &&
+            typeof constructor === 'function' && fnToString.call(constructor) === objFnString);
       };
     })(),
     /* [DEBUG/]
@@ -131,7 +131,6 @@
     /**
      * @typedef {{hasSE, hasProps, hasChanged, iniValue}} StatConf
      */
-
     STATS = {
       line_altColor: {iniValue: false}, line_color: {}, line_colorTra: {iniValue: false}, line_strokeWidth: {},
       plug_enabled: {iniValue: false}, plug_enabledSE: {hasSE: true, iniValue: false},
@@ -163,130 +162,19 @@
       caps_enabled: {iniValue: false}
     },
 
-    /**
-     * @typedef {Object} EFFECT_CONF
-     * @property {Function} validParams - (props, effectParams) All params must be added even if it is `null`.
-     * @property {Function} init - (props, effectParams)
-     * @property {Function} remove - (props)
-     * @property {Function} [onSetLine] - (props, setProps)
-     * @property {Function} [onSetPlug] - (props, setPropsSE)
-     * @property {Function} [onPosition] - (props, pathList)
-     * @property {Function} [onUpdatePath] - (props, pathList)
-     * @property {Function} [onUpdateAnchorBBox] - (props, i)
-     */
-    EFFECTS = {
-      dash: { // effectParams: dashLen, gapLen
-        validParams: function(props, effectParams) {
-          return ['dashLen', 'gapLen'].reduce(function(params, param) {
-            params[param] =
-              typeof effectParams[param] === 'number' && effectParams[param] > 0 ?
-                effectParams[param] : null;
-            return params;
-          }, {});
-        },
-        init: function(props, effectParams) {
-          traceLog.add('<EFFECTS.dash.init>'); // [DEBUG/]
-          props.lineFace.style.strokeDasharray =
-            (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-            (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
-          props.lineFace.style.strokeDashoffset = '0';
-          traceLog.add('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
-          traceLog.add('</EFFECTS.dash.init>'); // [DEBUG/]
-        },
-        remove: function(props) {
-          traceLog.add('<EFFECTS.dash.remove>'); // [DEBUG/]
-          props.lineFace.style.strokeDasharray = 'none';
-          props.lineFace.style.strokeDashoffset = '0';
-          traceLog.add('</EFFECTS.dash.remove>'); // [DEBUG/]
-        },
-        onSetLine: function(props, setProps) {
-          traceLog.add('<EFFECTS.dash.onSetLine>'); // [DEBUG/]
-          if ((!setProps || setProps.indexOf('lineSize') > -1) &&
-              (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
-            props.lineFace.style.strokeDasharray =
-              (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-              (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
-            traceLog.add('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
-          }
-          traceLog.add('</EFFECTS.dash.onSetLine>'); // [DEBUG/]
-        },
-        getDashLen: function(props) { return props.options.lineSize * 2; },
-        getGapLen: function(props) { return props.options.lineSize; }
-      },
-
-      dashAnim: { // effectParams: dashLen, gapLen, duration
-        validParams: function(props, effectParams) {
-          var params = ['dashLen', 'gapLen'].reduce(function(params, param) {
-            params[param] =
-              typeof effectParams[param] === 'number' && effectParams[param] > 0 ?
-                effectParams[param] : null;
-            return params;
-          }, {});
-          params.duration =
-            typeof effectParams.duration === 'number' && effectParams.duration > 10 ?
-              effectParams.duration : null;
-          return params;
-        },
-        init: function(props, effectParams) {
-          traceLog.add('<EFFECTS.dashAnim.init>'); // [DEBUG/]
-          if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
-          props.lineFace.style.strokeDasharray =
-            (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-            (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
-          props.lineFace.style.strokeDashoffset = '0';
-          traceLog.add('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
-          // effectParams.animId = animId;
-          traceLog.add('</EFFECTS.dashAnim.init>'); // [DEBUG/]
-        },
-        remove: function(props) {
-          traceLog.add('<EFFECTS.dashAnim.remove>'); // [DEBUG/]
-          props.lineFace.style.strokeDasharray = 'none';
-          props.lineFace.style.strokeDashoffset = '0';
-          if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
-          traceLog.add('</EFFECTS.dashAnim.remove>'); // [DEBUG/]
-        },
-        onSetLine: function(props, setProps) {
-          traceLog.add('<EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
-          if ((!setProps || setProps.indexOf('lineSize') > -1) &&
-              (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
-            props.lineFace.style.strokeDasharray =
-              (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-              (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
-            traceLog.add('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
-          }
-          traceLog.add('</EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
-        }
-      }
-    },
+    EFFECTS,
 
     /**
      * @typedef {Object.<_id: number, props>} insProps
      */
-    insProps = {}, insId = 0, svg2Supported, forceReflowTargets = [];
+    insProps = {},
+
+    insId = 0, svg2Supported;
 
   // [DEBUG]
   window.insProps = insProps;
   window.isObject = isObject;
   // [/DEBUG]
-
-  function forceReflow(target) {
-    // for TRIDENT and BLINK bug (reflow like `offsetWidth` can't update)
-    setTimeout(function() {
-      var parent = target.parentNode, next = target.nextSibling;
-      // It has to be removed first for BLINK.
-      parent.insertBefore(parent.removeChild(target), next);
-    }, 0);
-  }
-  window.forceReflow = forceReflow; // [DEBUG/]
-
-  function forceReflowAdd(target) {
-    if (forceReflowTargets.indexOf(target) < 0) { forceReflowTargets.push(target); }
-  }
-
-  function forceReflowApply() {
-    forceReflowTargets.forEach(function(target) { forceReflow(target); });
-    forceReflowTargets = [];
-  }
 
   function hasChanged(a, b) {
     var typeA;
@@ -575,8 +463,28 @@
   }
   window.getCubicT = getCubicT; // [DEBUG/]
 
+  function forceReflow(target) {
+    // for TRIDENT and BLINK bug (reflow like `offsetWidth` can't update)
+    setTimeout(function() {
+      var parent = target.parentNode, next = target.nextSibling;
+      // It has to be removed first for BLINK.
+      parent.insertBefore(parent.removeChild(target), next);
+    }, 0);
+  }
+  window.forceReflow = forceReflow; // [DEBUG/]
+
+  function forceReflowAdd(props, target) {
+    if (props.reflowTargets.indexOf(target) < 0) { props.reflowTargets.push(target); }
+  }
+
+  function forceReflowApply(props) {
+    props.reflowTargets.forEach(function(target) { forceReflow(target); });
+    props.reflowTargets = [];
+  }
+
   /**
    * Apply `orient` (and `viewBox`) to `marker`.
+   * @param {props} props - `props` of `LeaderLine` instance.
    * @param {SVGMarkerElement} marker - Target `<marker>` element.
    * @param {string} orient - `'auto'`, `'auto-start-reverse'` or angle.
    * @param {BBox} bBox - `BBox` as `viewBox` of the marker.
@@ -585,7 +493,7 @@
    * @param {SVGElement} marked - Target element that has `marker-start/end` such as `<path>`.
    * @returns {void}
    */
-  function setMarkerOrient(marker, orient, bBox, svg, shape, marked) {
+  function setMarkerOrient(props, marker, orient, bBox, svg, shape, marked) {
     var transform, viewBox, reverseView;
     // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of
     // `SVGMarkerElement` don't work in browsers other than Chrome.
@@ -620,7 +528,7 @@
     viewBox.height = bBox.height;
 
     // [TRIDENT] markerOrient is not updated when plugSE is changed
-    if (IS_TRIDENT) { forceReflowAdd(marked); }
+    if (IS_TRIDENT) { forceReflowAdd(props, marked); }
   }
 
   function getMarkerProps(i, symbolConf) {
@@ -628,6 +536,29 @@
       prop: i ? 'markerEnd' : 'markerStart',
       orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
     };
+  }
+
+  function initStats(props, container, statsConf) {
+    Object.keys(statsConf).forEach(function(statName) {
+      var statConf = statsConf[statName];
+      container[statName] =
+        statConf.iniValue != null ? ( // eslint-disable-line eqeqeq
+          statConf.hasSE ? [statConf.iniValue, statConf.iniValue] : statConf.iniValue
+        ) :
+        statConf.hasSE ? (statConf.hasProps ? [{}, {}] : []) : statConf.hasProps ? {} : null;
+    });
+  }
+
+  function setStat(props, container, statName, value, eventHandlers/* [DEBUG] */, log/* [/DEBUG] */) {
+    if (value !== container[statName]) {
+      traceLog.add(log || statName + '=%s', value); // [DEBUG/]
+      container[statName] = value;
+      if (eventHandlers) {
+        eventHandlers.forEach(function(handler) { handler(props, value, statName); });
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -859,29 +790,11 @@
     props.effectParams = {};
 
     // Init stats
-    Object.keys(STATS).forEach(function(name) {
-      var statConf = STATS[name];
-      aplStats[name] =
-        statConf.iniValue != null ? ( // eslint-disable-line eqeqeq
-          statConf.hasSE ? [statConf.iniValue, statConf.iniValue] : statConf.iniValue
-        ) :
-        statConf.hasSE ? (statConf.hasProps ? [{}, {}] : []) : statConf.hasProps ? {} : null;
-    });
+    initStats(props, aplStats, STATS);
+
     traceLog.add('</bindWindow>'); // [DEBUG/]
   }
   window.bindWindow = bindWindow; // [DEBUG/]
-
-  function setStat(props, container, key, value, eventHandlers/* [DEBUG] */, log/* [/DEBUG] */) {
-    if (value !== container[key]) {
-      traceLog.add(log || key + '=%s', value); // [DEBUG/]
-      container[key] = value;
-      if (eventHandlers) {
-        eventHandlers.forEach(function(handler) { handler(props, value, key); });
-      }
-      return true;
-    }
-    return false;
-  }
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
@@ -1081,12 +994,12 @@
       if (IS_GECKO || IS_TRIDENT) {
         // [TRIDENT] plugsFace is not updated when lineSize is changed
         // [GECKO] plugsFace is ignored
-        forceReflowAdd(props.lineShape);
+        forceReflowAdd(props, props.lineShape);
         if (IS_TRIDENT) {
           // [TRIDENT] lineColor is ignored
-          forceReflowAdd(props.lineFace);
+          forceReflowAdd(props, props.lineFace);
           // [TRIDENT] lineMaskCaps is ignored when lineSize is changed
-          forceReflowAdd(props.lineMaskCaps);
+          forceReflowAdd(props, props.lineMaskCaps);
         }
       }
     }
@@ -1109,9 +1022,9 @@
         updated = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
-          forceReflowAdd(props.lineOutlineMaskCaps);
+          forceReflowAdd(props, props.lineOutlineMaskCaps);
           // [TRIDENT] lineOutlineColor is ignored
-          forceReflowAdd(props.lineOutlineFace);
+          forceReflowAdd(props, props.lineOutlineFace);
         }
       }
 
@@ -1121,9 +1034,9 @@
         updated = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
-          forceReflowAdd(props.lineOutlineMaskCaps);
+          forceReflowAdd(props, props.lineOutlineMaskCaps);
           // [TRIDENT] lineOutlineColor is ignored
-          forceReflowAdd(props.lineOutlineFace);
+          forceReflowAdd(props, props.lineOutlineFace);
         }
       }
     }
@@ -1152,12 +1065,12 @@
           if (setStat(props, aplStats.plug_plugSE, i, plugId
               /* [DEBUG] */, null, 'plug_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
             props.plugFaceSE[i].href.baseVal = '#' + symbolConf.elmId;
-            setMarkerOrient(props.plugMarkerSE[i], marker.orient,
+            setMarkerOrient(props, props.plugMarkerSE[i], marker.orient,
               symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
             updated = true;
             if (IS_GECKO) {
               // [GECKO] plugsFace is not updated when plugSE is changed
-              forceReflowAdd(props.plugsFace);
+              forceReflowAdd(props, props.plugsFace);
             }
           }
 
@@ -1167,7 +1080,7 @@
             updated = true;
             if (IS_BLINK && !curStats.line_colorTra) {
               // [BLINK] capsMaskLine is not updated when line has no alpha
-              forceReflowAdd(props.capsMaskLine);
+              forceReflowAdd(props, props.capsMaskLine);
             }
           }
 
@@ -1767,12 +1680,12 @@
 
       if (IS_TRIDENT) {
         // [TRIDENT] markerOrient is not updated when path is changed
-        forceReflowAdd(props.plugsFace);
+        forceReflowAdd(props, props.plugsFace);
         // [TRIDENT] lineMaskCaps is ignored when path is changed
-        forceReflowAdd(props.lineMaskCaps);
+        forceReflowAdd(props, props.lineMaskCaps);
       } else if (IS_GECKO) {
         // [GECKO] path is not updated when path is changed
-        forceReflowAdd(props.linePath);
+        forceReflowAdd(props, props.linePath);
       }
 
       if (props.events.apl_path) {
@@ -1955,13 +1868,13 @@
               if (setStat(props, aplStats.capsMaskMarker_plugSE, i, plugId
                   /* [DEBUG] */, null, 'capsMaskMarker_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
                 props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
-                setMarkerOrient(props.capsMaskMarkerSE[i], marker.orient,
+                setMarkerOrient(props, props.capsMaskMarkerSE[i], marker.orient,
                   symbolConf.bBox, props.svg, props.capsMaskMarkerShapeSE[i], props.capsMaskLine);
                 updated = true;
                 if (IS_GECKO) {
                   // [GECKO] plugsFace is not updated when plugSE is changed
-                  forceReflowAdd(props.capsMaskLine);
-                  forceReflowAdd(props.lineFace);
+                  forceReflowAdd(props, props.capsMaskLine);
+                  forceReflowAdd(props, props.lineFace);
                 }
               }
 
@@ -2057,13 +1970,13 @@
 
     if (IS_BLINK && updated.line && !updated.path) {
       // [BLINK] lineSize is not updated when path is not changed
-      forceReflowAdd(props.lineShape);
+      forceReflowAdd(props, props.lineShape);
     }
     if (IS_BLINK && updated.plug && !updated.line) {
       // [BLINK] plugColorSE is not updated when Line is not changed
-      forceReflowAdd(props.plugsFace);
+      forceReflowAdd(props, props.plugsFace);
     }
-    forceReflowApply();
+    forceReflowApply(props);
 
     // [DEBUG]
     traceLog.add('<update>');
@@ -2082,46 +1995,26 @@
    */
   function LeaderLine(start, end, options) {
     var that = this,
-      props = { // Initialize properties as array.
+      props = {
+        // Initialize properties as array.
         options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
-          plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []}
+          plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []},
+        curStats: {}, aplStats: {}, reflowTargets: []
       },
       prefix;
 
-    function createSetter(name) {
+    function createSetter(propName) {
       return function(value) {
         var options = {};
-        options[name] = value;
+        options[propName] = value;
         that.setOptions(options);
       };
     }
 
     Object.defineProperty(this, '_id', {value: insId++});
     insProps[this._id] = props;
-
-    props.curStats = {};
-    props.aplStats = {};
-    Object.keys(STATS).forEach(function(name) {
-      var statConf = STATS[name];
-      if (statConf.hasSE) {
-        if (statConf.iniValue != null) { // eslint-disable-line eqeqeq
-          props.curStats[name] = [statConf.iniValue, statConf.iniValue];
-          props.aplStats[name] = [statConf.iniValue, statConf.iniValue];
-        } else if (statConf.hasProps) {
-          props.curStats[name] = [{}, {}];
-          props.aplStats[name] = [{}, {}];
-        } else {
-          props.curStats[name] = [];
-          props.aplStats[name] = [];
-        }
-      } else if (statConf.iniValue != null) { // eslint-disable-line eqeqeq
-        props.curStats[name] = statConf.iniValue;
-        props.aplStats[name] = statConf.iniValue;
-      } else if (statConf.hasProps) {
-        props.curStats[name] = {};
-        props.aplStats[name] = {};
-      }
-    });
+    initStats(props, props.curStats, STATS);
+    initStats(props, props.aplStats, STATS);
 
     // handlers
     props.events = [
@@ -2165,16 +2058,16 @@
           ['startPlugOutlineColor', 'plugOutlineColorSE', 0], ['endPlugOutlineColor', 'plugOutlineColorSE', 1],
           ['startPlugOutlineSize', 'plugOutlineSizeSE', 0], ['endPlugOutlineSize', 'plugOutlineSizeSE', 1]]
       .forEach(function(conf) {
-        var name = conf[0], optionName = conf[1], i = conf[2];
-        Object.defineProperty(that, name, {
+        var propName = conf[0], optionName = conf[1], i = conf[2];
+        Object.defineProperty(that, propName, {
           get: function() {
             var value = // Don't use closure.
               i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
               optionName ? insProps[that._id].options[optionName] :
-              insProps[that._id].options[name];
+              insProps[that._id].options[propName];
             return value == null ? KEYWORD_AUTO : copyTree(value); // eslint-disable-line eqeqeq
           },
-          set: createSetter(name),
+          set: createSetter(propName),
           enumerable: true
         });
       });
@@ -2183,12 +2076,12 @@
         ['startSocket', SOCKET_KEY_2_ID, 'socketSE', 0], ['endSocket', SOCKET_KEY_2_ID, 'socketSE', 1],
         ['startPlug', PLUG_KEY_2_ID, 'plugSE', 0], ['endPlug', PLUG_KEY_2_ID, 'plugSE', 1]]
       .forEach(function(conf) {
-        var name = conf[0], key2Id = conf[1], optionName = conf[2], i = conf[3];
-        Object.defineProperty(that, name, {
+        var propName = conf[0], key2Id = conf[1], optionName = conf[2], i = conf[3];
+        Object.defineProperty(that, propName, {
           get: function() {
             var value = optionName ? // Don't use closure.
               insProps[that._id].options[optionName][i] :
-              insProps[that._id].options[name],
+              insProps[that._id].options[propName],
               key;
             return !value ? KEYWORD_AUTO :
               Object.keys(key2Id).some(function(optKey) {
@@ -2196,23 +2089,23 @@
                 return false;
               }) ? key : new Error('It\'s broken');
           },
-          set: createSetter(name),
+          set: createSetter(propName),
           enumerable: true
         });
       });
     // Setup option accessor methods (*effect) e.g. ['startPlugEffect', 'plugEffectSE', 0]
     [['effect']]
       .forEach(function(conf) {
-        var name = conf[0], optionName = conf[1], i = conf[2];
-        Object.defineProperty(that, name, {
+        var propName = conf[0], optionName = conf[1], i = conf[2];
+        Object.defineProperty(that, propName, {
           get: function() {
             var value = // Don't use closure.
               i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
               optionName ? insProps[that._id].options[optionName] :
-              insProps[that._id].options[name];
+              insProps[that._id].options[propName];
             return value ? [value[0], copyTree(value[1])] : void 0;
           },
-          set: createSetter(name),
+          set: createSetter(propName),
           enumerable: true
         });
       });
@@ -2244,7 +2137,7 @@
     var props = insProps[this._id], options = props.options,
       newWindow, needsWindow, needs = {};
 
-    function getCurOption(name, optionName, index) {
+    function getCurOption(propName, optionName, index) {
       var curOption = {};
       if (optionName) {
         if (index != null) { // eslint-disable-line eqeqeq
@@ -2258,17 +2151,17 @@
         }
       } else {
         curOption.container = options;
-        curOption.key = name;
-        curOption.default = DEFAULT_OPTIONS[name];
+        curOption.key = propName;
+        curOption.default = DEFAULT_OPTIONS[propName];
       }
       curOption.acceptsAuto = curOption.default == null; // eslint-disable-line eqeqeq
       return curOption;
     }
 
-    function setValidId(name, key2Id, optionName, index) {
-      var curOption = getCurOption(name, optionName, index), updated, key, id;
-      if (newOptions[name] != null && // eslint-disable-line eqeqeq
-          (key = (newOptions[name] + '').toLowerCase()) && (
+    function setValidId(propName, key2Id, optionName, index) {
+      var curOption = getCurOption(propName, optionName, index), updated, key, id;
+      if (newOptions[propName] != null && // eslint-disable-line eqeqeq
+          (key = (newOptions[propName] + '').toLowerCase()) && (
             curOption.acceptsAuto && key === KEYWORD_AUTO ||
             (id = key2Id[key])
           ) && id !== curOption.container[curOption.key]) {
@@ -2282,15 +2175,15 @@
       return updated;
     }
 
-    function setValidType(name, type, optionName, index, check, trim) {
-      var curOption = getCurOption(name, optionName, index), updated, value;
+    function setValidType(propName, type, optionName, index, check, trim) {
+      var curOption = getCurOption(propName, optionName, index), updated, value;
       if (!type) {
-        if (curOption.default == null) { throw new Error('Invalid `type`: ' + name); } // eslint-disable-line eqeqeq
+        if (curOption.default == null) { throw new Error('Invalid `type`: ' + propName); } // eslint-disable-line eqeqeq
         type = typeof curOption.default;
       }
-      if (newOptions[name] != null && ( // eslint-disable-line eqeqeq
-            curOption.acceptsAuto && (newOptions[name] + '').toLowerCase() === KEYWORD_AUTO ||
-            typeof (value = newOptions[name]) === type &&
+      if (newOptions[propName] != null && ( // eslint-disable-line eqeqeq
+            curOption.acceptsAuto && (newOptions[propName] + '').toLowerCase() === KEYWORD_AUTO ||
+            typeof (value = newOptions[propName]) === type &&
             ((value = trim && type === 'string' && value ? value.trim() : value) || true) &&
             (!check || check(value))
           ) && value !== curOption.container[curOption.key]) {
@@ -2366,10 +2259,10 @@
       function(value) { return value > 0; }) || needs.line;
 
     // Plug
-    ['startPlug', 'endPlug'].forEach(function(name, i) {
-      needs.plug = setValidId(name, PLUG_KEY_2_ID, 'plugSE', i) || needs.plug;
-      needs.plug = setValidType(name + 'Color', 'string', 'plugColorSE', i, null, true) || needs.plug;
-      needs.plug = setValidType(name + 'Size', null, 'plugSizeSE', i,
+    ['startPlug', 'endPlug'].forEach(function(propName, i) {
+      needs.plug = setValidId(propName, PLUG_KEY_2_ID, 'plugSE', i) || needs.plug;
+      needs.plug = setValidType(propName + 'Color', 'string', 'plugColorSE', i, null, true) || needs.plug;
+      needs.plug = setValidType(propName + 'Size', null, 'plugSizeSE', i,
         function(value) { return value > 0; }) || needs.plug;
     });
 
@@ -2380,11 +2273,11 @@
       function(value) { return value > 0 && value <= 0.48; }) || needs.lineOutline;
 
     // PlugOutline
-    ['startPlugOutline', 'endPlugOutline'].forEach(function(name, i) {
-      needs.plugOutline = setValidType(name, null, 'plugOutlineEnabledSE', i) || needs.plugOutline;
-      needs.plugOutline = setValidType(name + 'Color', 'string', 'plugOutlineColorSE', i) || needs.plugOutline;
+    ['startPlugOutline', 'endPlugOutline'].forEach(function(propName, i) {
+      needs.plugOutline = setValidType(propName, null, 'plugOutlineEnabledSE', i) || needs.plugOutline;
+      needs.plugOutline = setValidType(propName + 'Color', 'string', 'plugOutlineColorSE', i) || needs.plugOutline;
       // `outlineMax` is checked in `updatePlugOutline`.
-      needs.plugOutline = setValidType(name + 'Size', null, 'plugOutlineSizeSE', i,
+      needs.plugOutline = setValidType(propName + 'Size', null, 'plugOutlineSizeSE', i,
         function(value) { return value >= 1; }) || needs.plugOutline;
     });
 
@@ -2438,6 +2331,102 @@
       props.baseWindow.document.body.removeChild(props.svg);
     }
     delete insProps[this._id];
+  };
+
+  /**
+   * @typedef {Object} EffectConf
+   * @property {Function} validParams - (props, effectParams) All params must be added even if it is `null`.
+   * @property {Function} init - (props, effectParams)
+   * @property {Function} remove - (props)
+   * @property {Function} [onSetLine] - (props, setProps)
+   * @property {Function} [onSetPlug] - (props, setPropsSE)
+   * @property {Function} [onPosition] - (props, pathList)
+   * @property {Function} [onUpdatePath] - (props, pathList)
+   * @property {Function} [onUpdateAnchorBBox] - (props, i)
+   */
+  EFFECTS = {
+    dash: { // effectParams: dashLen, gapLen
+      validParams: function(props, effectParams) {
+        return ['dashLen', 'gapLen'].reduce(function(params, param) {
+          params[param] =
+            typeof effectParams[param] === 'number' && effectParams[param] > 0 ?
+              effectParams[param] : null;
+          return params;
+        }, {});
+      },
+      init: function(props, effectParams) {
+        traceLog.add('<EFFECTS.dash.init>'); // [DEBUG/]
+        props.lineFace.style.strokeDasharray =
+          (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+          (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
+        props.lineFace.style.strokeDashoffset = '0';
+        traceLog.add('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+        traceLog.add('</EFFECTS.dash.init>'); // [DEBUG/]
+      },
+      remove: function(props) {
+        traceLog.add('<EFFECTS.dash.remove>'); // [DEBUG/]
+        props.lineFace.style.strokeDasharray = 'none';
+        props.lineFace.style.strokeDashoffset = '0';
+        traceLog.add('</EFFECTS.dash.remove>'); // [DEBUG/]
+      },
+      onSetLine: function(props, setProps) {
+        traceLog.add('<EFFECTS.dash.onSetLine>'); // [DEBUG/]
+        if ((!setProps || setProps.indexOf('lineSize') > -1) &&
+            (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
+          props.lineFace.style.strokeDasharray =
+            (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+            (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
+          traceLog.add('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+        }
+        traceLog.add('</EFFECTS.dash.onSetLine>'); // [DEBUG/]
+      },
+      getDashLen: function(props) { return props.options.lineSize * 2; },
+      getGapLen: function(props) { return props.options.lineSize; }
+    },
+
+    dashAnim: { // effectParams: dashLen, gapLen, duration
+      validParams: function(props, effectParams) {
+        var params = ['dashLen', 'gapLen'].reduce(function(params, param) {
+          params[param] =
+            typeof effectParams[param] === 'number' && effectParams[param] > 0 ?
+              effectParams[param] : null;
+          return params;
+        }, {});
+        params.duration =
+          typeof effectParams.duration === 'number' && effectParams.duration > 10 ?
+            effectParams.duration : null;
+        return params;
+      },
+      init: function(props, effectParams) {
+        traceLog.add('<EFFECTS.dashAnim.init>'); // [DEBUG/]
+        if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
+        props.lineFace.style.strokeDasharray =
+          (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+          (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
+        props.lineFace.style.strokeDashoffset = '0';
+        traceLog.add('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+        // effectParams.animId = animId;
+        traceLog.add('</EFFECTS.dashAnim.init>'); // [DEBUG/]
+      },
+      remove: function(props) {
+        traceLog.add('<EFFECTS.dashAnim.remove>'); // [DEBUG/]
+        props.lineFace.style.strokeDasharray = 'none';
+        props.lineFace.style.strokeDashoffset = '0';
+        if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
+        traceLog.add('</EFFECTS.dashAnim.remove>'); // [DEBUG/]
+      },
+      onSetLine: function(props, setProps) {
+        traceLog.add('<EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
+        if ((!setProps || setProps.indexOf('lineSize') > -1) &&
+            (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
+          props.lineFace.style.strokeDasharray =
+            (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
+            (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
+          traceLog.add('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+        }
+        traceLog.add('</EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
+      }
+    }
   };
 
   return LeaderLine;
