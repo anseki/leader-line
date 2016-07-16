@@ -463,6 +463,21 @@
   }
   window.getCubicT = getCubicT; // [DEBUG/]
 
+  function addEventHandler(props, type, handler) {
+    if (!props.events[type]) {
+      props.events[type] = [handler];
+    } else if (props.events[type].indexOf(handler) < 0) {
+      props.events[type].push(handler);
+    }
+  }
+
+  function removeEventHandler(props, type, handler) {
+    var i;
+    if (props.events[type] && (i = props.events[type].indexOf(handler)) > -1) {
+      props.events[type].splice(i, 1);
+    }
+  }
+
   function forceReflow(target) {
     // for TRIDENT and BLINK bug (reflow like `offsetWidth` can't update)
     setTimeout(function() {
@@ -538,7 +553,7 @@
     };
   }
 
-  function initStats(props, container, statsConf) {
+  function initStats(container, statsConf) {
     Object.keys(statsConf).forEach(function(statName) {
       var statConf = statsConf[statName];
       container[statName] =
@@ -549,12 +564,12 @@
     });
   }
 
-  function setStat(props, container, statName, value, eventHandlers/* [DEBUG] */, log/* [/DEBUG] */) {
-    if (value !== container[statName]) {
-      traceLog.add(log || statName + '=%s', value); // [DEBUG/]
-      container[statName] = value;
+  function setStat(props, container, key, value, eventHandlers/* [DEBUG] */, log/* [/DEBUG] */) {
+    if (value !== container[key]) {
+      traceLog.add(log || key + '=%s', value); // [DEBUG/]
+      container[key] = value;
       if (eventHandlers) {
-        eventHandlers.forEach(function(handler) { handler(props, value, statName); });
+        eventHandlers.forEach(function(handler) { handler(props, value, key); });
       }
       return true;
     }
@@ -562,8 +577,7 @@
   }
 
   /**
-   * Setup `baseWindow`, `bodyOffset`, `pathList`,
-   *    stats (`cur*` and `apl*`), `effect`, `effectParams`, SVG elements.
+   * Setup `baseWindow`, stats (`cur*` and `apl*`), SVG elements, etc.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
    * @returns {void}
@@ -785,12 +799,8 @@
     props.svg = baseDocument.body.appendChild(svg);
 
     props.pathList = {baseVal: [], animVal: []};
-    props.effect = null;
-    if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
-    props.effectParams = {};
-
     // Init stats
-    initStats(props, aplStats, STATS);
+    initStats(aplStats, STATS);
 
     traceLog.add('</bindWindow>'); // [DEBUG/]
   }
@@ -980,15 +990,18 @@
    */
   function updateFaces(props) {
     traceLog.add('<updateFaces>'); // [DEBUG/]
-    var curStats = props.curStats, aplStats = props.aplStats,
+    var curStats = props.curStats, aplStats = props.aplStats, events = props.events,
       value, updated = false;
 
-    if (!curStats.line_altColor && setStat(props, aplStats, 'line_color', (value = curStats.line_color))) {
+    if (!curStats.line_altColor &&
+        setStat(props, aplStats, 'line_color', (value = curStats.line_color),
+          events.apl_line_color)) {
       props.lineFace.style.stroke = value;
       updated = true;
     }
 
-    if (setStat(props, aplStats, 'line_strokeWidth', (value = curStats.line_strokeWidth))) {
+    if (setStat(props, aplStats, 'line_strokeWidth', (value = curStats.line_strokeWidth),
+        events.apl_line_strokeWidth)) {
       props.lineShape.style.strokeWidth = value;
       updated = true;
       if (IS_GECKO || IS_TRIDENT) {
@@ -1004,20 +1017,22 @@
       }
     }
 
-    if (setStat(props, aplStats, 'lineOutline_enabled', (value = curStats.lineOutline_enabled))) {
+    if (setStat(props, aplStats, 'lineOutline_enabled', (value = curStats.lineOutline_enabled),
+        events.apl_lineOutline_enabled)) {
       props.lineOutlineFace.style.display = value ? 'inline' : 'none';
       updated = true;
     }
 
     if (curStats.lineOutline_enabled) {
 
-      if (setStat(props, aplStats, 'lineOutline_color', (value = curStats.lineOutline_color))) {
+      if (setStat(props, aplStats, 'lineOutline_color', (value = curStats.lineOutline_color),
+          events.apl_lineOutline_color)) {
         props.lineOutlineFace.style.stroke = value;
         updated = true;
       }
 
-      if (setStat(props, aplStats, 'lineOutline_strokeWidth', (value = curStats.lineOutline_strokeWidth)
-          /* [DEBUG] */, null, 'lineOutline_strokeWidth%_'/* [/DEBUG] */)) {
+      if (setStat(props, aplStats, 'lineOutline_strokeWidth', (value = curStats.lineOutline_strokeWidth),
+          events.apl_lineOutline_strokeWidth/* [DEBUG] */, 'lineOutline_strokeWidth%_'/* [/DEBUG] */)) {
         props.lineOutlineMaskShape.style.strokeWidth = value;
         updated = true;
         if (IS_TRIDENT) {
@@ -1028,8 +1043,8 @@
         }
       }
 
-      if (setStat(props, aplStats, 'lineOutline_inStrokeWidth', (value = curStats.lineOutline_inStrokeWidth)
-          /* [DEBUG] */, null, 'lineOutline_inStrokeWidth%_'/* [/DEBUG] */)) {
+      if (setStat(props, aplStats, 'lineOutline_inStrokeWidth', (value = curStats.lineOutline_inStrokeWidth),
+          events.apl_lineOutline_inStrokeWidth/* [DEBUG] */, 'lineOutline_inStrokeWidth%_'/* [/DEBUG] */)) {
         props.lineMaskShape.style.strokeWidth = value;
         updated = true;
         if (IS_TRIDENT) {
@@ -1041,7 +1056,8 @@
       }
     }
 
-    if (setStat(props, aplStats, 'plug_enabled', (value = curStats.plug_enabled))) {
+    if (setStat(props, aplStats, 'plug_enabled', (value = curStats.plug_enabled),
+        events.apl_plug_enabled)) {
       props.lineFace.style.stroke = value;
       props.plugsFace.style.display = value ? 'inline' : 'none';
       updated = true;
@@ -1054,16 +1070,16 @@
           symbolConf = plugId !== PLUG_BEHIND ? SYMBOLS[PLUG_2_SYMBOL[plugId]] : null,
           marker = getMarkerProps(i, symbolConf);
 
-        if (setStat(props, aplStats.plug_enabledSE, i, (value = curStats.plug_enabledSE[i])
-            /* [DEBUG] */, null, 'plug_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
+        if (setStat(props, aplStats.plug_enabledSE, i, (value = curStats.plug_enabledSE[i]),
+            events.apl_plug_enabledSE/* [DEBUG] */, 'plug_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
           props.plugsFace.style[marker.prop] = value ? 'url(#' + props.plugMarkerIdSE[i] + ')' : 'none';
           updated = true;
         }
 
         if (curStats.plug_enabledSE[i]) {
 
-          if (setStat(props, aplStats.plug_plugSE, i, plugId
-              /* [DEBUG] */, null, 'plug_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
+          if (setStat(props, aplStats.plug_plugSE, i, plugId,
+              events.apl_plug_plugSE/* [DEBUG] */, 'plug_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
             props.plugFaceSE[i].href.baseVal = '#' + symbolConf.elmId;
             setMarkerOrient(props, props.plugMarkerSE[i], marker.orient,
               symbolConf.bBox, props.svg, props.plugMarkerShapeSE[i], props.plugsFace);
@@ -1074,8 +1090,8 @@
             }
           }
 
-          if (setStat(props, aplStats.plug_colorSE, i, (value = curStats.plug_colorSE[i])
-              /* [DEBUG] */, null, 'plug_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
+          if (setStat(props, aplStats.plug_colorSE, i, (value = curStats.plug_colorSE[i]),
+              events.apl_plug_colorSE/* [DEBUG] */, 'plug_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
             props.plugFaceSE[i].style.fill = value;
             updated = true;
             if (IS_BLINK && !curStats.line_colorTra) {
@@ -1087,15 +1103,16 @@
           // plug_markerWidthSE, plug_markerHeightSE
           ['markerWidth', 'markerHeight'].forEach(function(markerKey) {
             var statKey = 'plug_' + markerKey + 'SE';
-            if (setStat(props, aplStats[statKey], i, (value = curStats[statKey][i])
-                /* [DEBUG] */, null, statKey + '[' + i + ']%_'/* [/DEBUG] */)) {
+            if (setStat(props, aplStats[statKey], i, (value = curStats[statKey][i]),
+                events['apl_' + statKey]/* [DEBUG] */, statKey + '[' + i + ']%_'/* [/DEBUG] */)) {
               props.plugMarkerSE[i][markerKey].baseVal.value = value;
               updated = true;
             }
           });
 
-          if (setStat(props, aplStats.plugOutline_enabledSE, i, (value = curStats.plugOutline_enabledSE[i])
-              /* [DEBUG] */, null, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
+          if (setStat(props, aplStats.plugOutline_enabledSE, i, (value = curStats.plugOutline_enabledSE[i]),
+              events.apl_plugOutline_enabledSE
+              /* [DEBUG] */, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
             if (value) {
               props.plugFaceSE[i].style.mask = 'url(#' + props.plugMaskIdSE[i] + ')';
               props.plugOutlineFaceSE[i].style.display = 'inline';
@@ -1108,8 +1125,9 @@
 
           if (curStats.plugOutline_enabledSE[i]) {
 
-            if (setStat(props, aplStats.plugOutline_plugSE, i, plugId
-                /* [DEBUG] */, null, 'plugOutline_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
+            if (setStat(props, aplStats.plugOutline_plugSE, i, plugId,
+                events.apl_plugOutline_plugSE
+                /* [DEBUG] */, 'plugOutline_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
               props.plugOutlineFaceSE[i].href.baseVal =
                 props.plugMaskShapeSE[i].href.baseVal =
                 props.plugOutlineMaskShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
@@ -1122,22 +1140,25 @@
               updated = true;
             }
 
-            if (setStat(props, aplStats.plugOutline_colorSE, i, (value = curStats.plugOutline_colorSE[i])
-                /* [DEBUG] */, null, 'plugOutline_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
+            if (setStat(props, aplStats.plugOutline_colorSE, i, (value = curStats.plugOutline_colorSE[i]),
+                events.apl_plugOutline_colorSE
+                /* [DEBUG] */, 'plugOutline_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
               props.plugOutlineFaceSE[i].style.fill = value;
               updated = true;
             }
 
             if (setStat(props, aplStats.plugOutline_strokeWidthSE, i,
-                (value = curStats.plugOutline_strokeWidthSE[i])
-                /* [DEBUG] */, null, 'plugOutline_strokeWidthSE[' + i + ']%_'/* [/DEBUG] */)) {
+                (value = curStats.plugOutline_strokeWidthSE[i]),
+                events.apl_plugOutline_strokeWidthSE
+                /* [DEBUG] */, 'plugOutline_strokeWidthSE[' + i + ']%_'/* [/DEBUG] */)) {
               props.plugOutlineMaskShapeSE[i].style.strokeWidth = value;
               updated = true;
             }
 
             if (setStat(props, aplStats.plugOutline_inStrokeWidthSE, i,
-                (value = curStats.plugOutline_inStrokeWidthSE[i])
-                /* [DEBUG] */, null, 'plugOutline_inStrokeWidthSE[' + i + ']%_'/* [/DEBUG] */)) {
+                (value = curStats.plugOutline_inStrokeWidthSE[i]),
+                events.apl_plugOutline_inStrokeWidthSE
+                /* [DEBUG] */, 'plugOutline_inStrokeWidthSE[' + i + ']%_'/* [/DEBUG] */)) {
               props.plugMaskShapeSE[i].style.strokeWidth = value;
               updated = true;
             }
@@ -1917,21 +1938,25 @@
    */
   function setEffect(props) {
     traceLog.add('<setEffect>'); // [DEBUG/]
-    var options = props.options,
-      effectConf, effectParams;
+    var curStats = props.curStats, aplStats = props.aplStats, enabled;
 
-    if (options.effect) {
-      effectConf = EFFECTS[options.effect[0]];
-      effectParams = options.effect[1];
-      if (props.effect && effectConf !== props.effect) { props.effect.remove(props); }
-      effectConf.init(props, effectParams);
-      props.effect = effectConf;
-      props.effectParams = effectParams;
-    } else if (props.effect) { // Since it might have been called by `bindWindow`, check `props.effect`.
-      props.effect.remove(props);
-      props.effect = null;
-      props.effectParams = {};
-    }
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var effectConf = EFFECTS[effectName],
+        keyEnabled = effectName + '_enabled', keyOptions = effectName + '_options',
+        curOptions = curStats[keyOptions];
+
+      if (setStat(props, aplStats, keyEnabled, (enabled = curStats[keyEnabled]))) { // ON/OFF
+        if (enabled) { aplStats[keyOptions] = copyTree(curOptions); }
+        effectConf[enabled ? 'init' : 'remove'](props);
+
+      } else if (enabled &&
+          hasChanged(curOptions, aplStats[keyOptions])) { // update options
+        effectConf.remove(props);
+        aplStats[keyOptions] = copyTree(curOptions);
+        effectConf.init(props);
+      }
+    });
+
     traceLog.add('</setEffect>'); // [DEBUG/]
   }
 
@@ -1999,7 +2024,7 @@
         // Initialize properties as array.
         options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
           plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []},
-        curStats: {}, aplStats: {}, reflowTargets: []
+        curStats: {}, aplStats: {}, events: {}, reflowTargets: []
       },
       prefix;
 
@@ -2011,17 +2036,17 @@
       };
     }
 
+    initStats(props.curStats, STATS);
+    initStats(props.aplStats, STATS);
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var effectStats = EFFECTS[effectName].stats;
+      initStats(props.curStats, effectStats);
+      initStats(props.aplStats, effectStats);
+      props.options[effectName] = false;
+    });
+
     Object.defineProperty(this, '_id', {value: insId++});
     insProps[this._id] = props;
-    initStats(props, props.curStats, STATS);
-    initStats(props, props.aplStats, STATS);
-
-    // handlers
-    props.events = [
-    ].reduce(function(events, eventType) {
-      events[eventType] = [];
-      return events;
-    }, {});
 
     prefix = APP_ID + '-' + this._id;
     props.linePathId = prefix + '-line-path';
@@ -2093,22 +2118,16 @@
           enumerable: true
         });
       });
-    // Setup option accessor methods (*effect) e.g. ['startPlugEffect', 'plugEffectSE', 0]
-    [['effect']]
-      .forEach(function(conf) {
-        var propName = conf[0], optionName = conf[1], i = conf[2];
-        Object.defineProperty(that, propName, {
-          get: function() {
-            var value = // Don't use closure.
-              i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
-              optionName ? insProps[that._id].options[optionName] :
-              insProps[that._id].options[propName];
-            return value ? [value[0], copyTree(value[1])] : void 0;
-          },
-          set: createSetter(propName),
-          enumerable: true
-        });
+    // Setup option accessor methods (effect)
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      Object.defineProperty(that, effectName, {
+        get: function() {
+          return copyTree(insProps[that._id].options[effectName]); // Don't use closure.
+        },
+        set: createSetter(effectName),
+        enumerable: true
       });
+    });
   }
 
   /**
@@ -2215,7 +2234,7 @@
     if (needsWindow &&
         (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
-      needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.faces = needs.effect = true;
+      needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.faces = true;
     }
 
     needs.position = setValidId('path', PATH_KEY_2_ID) || needs.position;
@@ -2282,31 +2301,25 @@
     });
 
     // effect
-    (function() {
-      var effectName, effectParams;
-      if (newOptions.hasOwnProperty('effect')) {
-        if (newOptions.effect) {
-          if (typeof newOptions.effect === 'string') {
-            effectName = newOptions.effect;
-            effectParams = {};
-          } else if (Array.isArray(newOptions.effect) && typeof newOptions.effect[0] === 'string') {
-            effectName = newOptions.effect[0];
-            effectParams = newOptions.effect[1] || {};
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var value, keyEnabled = effectName + '_enabled', keyOptions = effectName + '_options';
+      if (newOptions.hasOwnProperty(effectName)) {
+        value = newOptions[effectName];
+        if (isObject(value)) {
+          props.curStats[keyEnabled] = true;
+          value = props.curStats[keyOptions] = EFFECTS[effectName].validOptions(value);
+        } else { // boolean
+          value = props.curStats[keyEnabled] = !!value;
+          if (value) {
+            props.curStats[keyOptions] = EFFECTS[effectName].validOptions({});
           }
-          if (EFFECTS[effectName]) {
-            effectParams = EFFECTS[effectName].validParams(props, effectParams);
-            if (!options.effect || effectName !== options.effect[0] ||
-                hasChanged(options.effect[1], effectParams)) {
-              options.effect = [effectName, effectParams];
-              needs.effect = true;
-            }
-          }
-        } else if (options.effect) { // on -> off
-          options.effect = null;
+        }
+        if (hasChanged(value, options[effectName])) {
+          options[effectName] = value;
           needs.effect = true;
         }
       }
-    })();
+    });
 
     // [DEBUG]
     traceLog.add('<setOptions>');
@@ -2335,99 +2348,71 @@
 
   /**
    * @typedef {Object} EffectConf
-   * @property {Function} validParams - (props, effectParams) All params must be added even if it is `null`.
-   * @property {Function} init - (props, effectParams)
+   * @property {{statName: string, StatConf}} stats - Additional stats.
+   * @property {Function} validOptions - (effectOptions)
+   * @property {Function} init - (props)
    * @property {Function} remove - (props)
-   * @property {Function} [onSetLine] - (props, setProps)
-   * @property {Function} [onSetPlug] - (props, setPropsSE)
-   * @property {Function} [onPosition] - (props, pathList)
-   * @property {Function} [onUpdatePath] - (props, pathList)
-   * @property {Function} [onUpdateAnchorBBox] - (props, i)
+   * @property {Function} update - (props)
+   * @property {boolean} animation
    */
   EFFECTS = {
-    dash: { // effectParams: dashLen, gapLen
-      validParams: function(props, effectParams) {
-        return ['dashLen', 'gapLen'].reduce(function(params, param) {
-          params[param] =
-            typeof effectParams[param] === 'number' && effectParams[param] > 0 ?
-              effectParams[param] : null;
-          return params;
+    dash: { // effectOptions: len, gap
+      stats: {dash_len: {}, dash_gap: {}},
+      validOptions: function(effectOptions) {
+        return ['len', 'gap'].reduce(function(options, optionName) {
+          options[optionName] =
+            typeof effectOptions[optionName] === 'number' && effectOptions[optionName] > 0 ?
+              effectOptions[optionName] : null;
+          return options;
         }, {});
       },
-      init: function(props, effectParams) {
+
+      init: function(props) {
         traceLog.add('<EFFECTS.dash.init>'); // [DEBUG/]
-        props.lineFace.style.strokeDasharray =
-          (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-          (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
+        addEventHandler(props, 'apl_line_strokeWidth', EFFECTS.dash.update);
         props.lineFace.style.strokeDashoffset = '0';
-        traceLog.add('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+        EFFECTS.dash.update(props);
         traceLog.add('</EFFECTS.dash.init>'); // [DEBUG/]
       },
+
       remove: function(props) {
         traceLog.add('<EFFECTS.dash.remove>'); // [DEBUG/]
+        removeEventHandler(props, 'apl_line_strokeWidth', EFFECTS.dash.update);
         props.lineFace.style.strokeDasharray = 'none';
         props.lineFace.style.strokeDashoffset = '0';
+        initStats(props.aplStats, EFFECTS.dash.stats);
         traceLog.add('</EFFECTS.dash.remove>'); // [DEBUG/]
       },
-      onSetLine: function(props, setProps) {
-        traceLog.add('<EFFECTS.dash.onSetLine>'); // [DEBUG/]
-        if ((!setProps || setProps.indexOf('lineSize') > -1) &&
-            (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
-          props.lineFace.style.strokeDasharray =
-            (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-            (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
-          traceLog.add('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
-        }
-        traceLog.add('</EFFECTS.dash.onSetLine>'); // [DEBUG/]
-      },
-      getDashLen: function(props) { return props.options.lineSize * 2; },
-      getGapLen: function(props) { return props.options.lineSize; }
-    },
 
-    dashAnim: { // effectParams: dashLen, gapLen, duration
-      validParams: function(props, effectParams) {
-        var params = ['dashLen', 'gapLen'].reduce(function(params, param) {
-          params[param] =
-            typeof effectParams[param] === 'number' && effectParams[param] > 0 ?
-              effectParams[param] : null;
-          return params;
-        }, {});
-        params.duration =
-          typeof effectParams.duration === 'number' && effectParams.duration > 10 ?
-            effectParams.duration : null;
-        return params;
-      },
-      init: function(props, effectParams) {
-        traceLog.add('<EFFECTS.dashAnim.init>'); // [DEBUG/]
-        if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
-        props.lineFace.style.strokeDasharray =
-          (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-          (effectParams.gapLen || EFFECTS.dash.getGapLen(props));
-        props.lineFace.style.strokeDashoffset = '0';
-        traceLog.add('strokeDasharray=' + (effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
-        // effectParams.animId = animId;
-        traceLog.add('</EFFECTS.dashAnim.init>'); // [DEBUG/]
-      },
-      remove: function(props) {
-        traceLog.add('<EFFECTS.dashAnim.remove>'); // [DEBUG/]
-        props.lineFace.style.strokeDasharray = 'none';
-        props.lineFace.style.strokeDashoffset = '0';
-        if (props.effectParams && props.effectParams.animId) { anim.remove(props.effectParams.animId); }
-        traceLog.add('</EFFECTS.dashAnim.remove>'); // [DEBUG/]
-      },
-      onSetLine: function(props, setProps) {
-        traceLog.add('<EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
-        if ((!setProps || setProps.indexOf('lineSize') > -1) &&
-            (!props.effectParams.dashLen || !props.effectParams.gapLen)) {
-          props.lineFace.style.strokeDasharray =
-            (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' +
-            (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props));
-          traceLog.add('strokeDasharray=' + (props.effectParams.dashLen || EFFECTS.dash.getDashLen(props)) + ',' + (props.effectParams.gapLen || EFFECTS.dash.getGapLen(props))); // [DEBUG/]
+      update: function(props) {
+        traceLog.add('<EFFECTS.dash.update>'); // [DEBUG/]
+        var curStats = props.curStats, aplStats = props.aplStats,
+          effectOptions = aplStats.dash_options,
+          update = false;
+
+        update = setStat(props, curStats, 'dash_len', effectOptions.len || aplStats.line_strokeWidth * 2) || update;
+        update = setStat(props, curStats, 'dash_gap', effectOptions.gap || aplStats.line_strokeWidth) || update;
+
+        if (update) {
+          update = setStat(props, aplStats, 'dash_len', curStats.dash_len) || update;
+          update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap) || update;
+          if (update) {
+            props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
+          }
         }
-        traceLog.add('</EFFECTS.dashAnim.onSetLine>'); // [DEBUG/]
+        traceLog.add('</EFFECTS.dash.update>'); // [DEBUG/]
       }
     }
   };
+
+  Object.keys(EFFECTS).forEach(function(effectName) {
+    var effectConf = EFFECTS[effectName], effectStats = effectConf.stats;
+    effectStats[effectName + '_enabled'] = {iniValue: false};
+    effectStats[effectName + '_options'] = {hasProps: true};
+    if (effectConf.animation) {
+      effectStats[effectName + '_animId'] = {};
+    }
+  });
 
   return LeaderLine;
 })();
