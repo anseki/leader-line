@@ -7,14 +7,6 @@ describe('stats', function() {
 
   var window, document, traceLog, pageDone, ll, titles = [];
 
-  /* eslint-disable no-unused-vars, indent */
-  // ================ context
-  var
-    SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
-    PATH_STRAIGHT = 1, PATH_ARC = 2, PATH_FLUID = 3, PATH_MAGNET = 4, PATH_GRID = 5;
-  // ================ /context
-  /* eslint-enable no-unused-vars, indent */
-
   function registerTitle(title) {
     titles.push(title);
     return title;

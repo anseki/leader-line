@@ -801,6 +801,13 @@
     props.pathList = {baseVal: [], animVal: []};
     // Init stats
     initStats(aplStats, STATS);
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var keyEnabled = effectName + '_enabled';
+      if (aplStats[keyEnabled]) {
+        EFFECTS[effectName].remove(props);
+        aplStats[keyEnabled] = false; // it might not have been disabled by remove().
+      }
+    });
 
     traceLog.add('</bindWindow>'); // [DEBUG/]
   }
@@ -1949,9 +1956,10 @@
         if (enabled) { aplStats[keyOptions] = copyTree(curOptions); }
         effectConf[enabled ? 'init' : 'remove'](props);
 
-      } else if (enabled &&
-          hasChanged(curOptions, aplStats[keyOptions])) { // update options
+      } else if (enabled && hasChanged(curOptions, aplStats[keyOptions])) { // update options
+        // traceLog is called by EFFECTS.*
         effectConf.remove(props);
+        aplStats[keyEnabled] = true; // it might have been disabled by remove().
         aplStats[keyOptions] = copyTree(curOptions);
         effectConf.init(props);
       }
@@ -2234,7 +2242,7 @@
     if (needsWindow &&
         (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
       bindWindow(props, newWindow);
-      needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.faces = true;
+      needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.faces = needs.effect = true;
     }
 
     needs.position = setValidId('path', PATH_KEY_2_ID) || needs.position;
@@ -2323,9 +2331,7 @@
 
     // [DEBUG]
     traceLog.add('<setOptions>');
-    Object.keys(needs).forEach(function(key) {
-      if (needs[key]) { traceLog.add('needs.' + key); }
-    });
+    Object.keys(needs).forEach(function(key) { if (needs[key]) { traceLog.add('needs.' + key); } });
     traceLog.add('</setOptions>');
     // [/DEBUG]
 
@@ -2390,15 +2396,17 @@
           effectOptions = aplStats.dash_options,
           update = false;
 
-        update = setStat(props, curStats, 'dash_len', effectOptions.len || aplStats.line_strokeWidth * 2) || update;
-        update = setStat(props, curStats, 'dash_gap', effectOptions.gap || aplStats.line_strokeWidth) || update;
+        setStat(props, curStats, 'dash_len', effectOptions.len || aplStats.line_strokeWidth * 2
+          /* [DEBUG] */, null, 'curStats.dash_len=%s'/* [/DEBUG] */);
+        setStat(props, curStats, 'dash_gap', effectOptions.gap || aplStats.line_strokeWidth
+          /* [DEBUG] */, null, 'curStats.dash_gap=%s'/* [/DEBUG] */);
 
+        update = setStat(props, aplStats, 'dash_len', curStats.dash_len
+          /* [DEBUG] */, null, 'aplStats.dash_len=%s'/* [/DEBUG] */) || update;
+        update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap
+          /* [DEBUG] */, null, 'aplStats.dash_gap=%s'/* [/DEBUG] */) || update;
         if (update) {
-          update = setStat(props, aplStats, 'dash_len', curStats.dash_len) || update;
-          update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap) || update;
-          if (update) {
-            props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
-          }
+          props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
         }
         traceLog.add('</EFFECTS.dash.update>'); // [DEBUG/]
       }
