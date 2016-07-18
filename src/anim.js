@@ -33,6 +33,7 @@ var anim =
      * @param {boolean} finish
      * @param {number} timeRatio - Progress [0, 1].
      * @param {number} outputRatio - Progress [0, 1].
+     * @returns {} - `false` to stop.
      */
 
     /**
@@ -42,24 +43,25 @@ var anim =
      * @property {number} duration
      * @property {number} count - `0` as infinite.
      * @property {{value, timeRatio: number, outputRatio: number}[]} frames
-     * @property {(number|null)} framesStart - The time when first frame ran, or `null` if it is not running.
+     * @property {(number|null)} framesStart - The time when first frame ran, or `null` if it is not playing.
      * @property {number} loopsLeft - A counter for loop.
-     * @property {boolean} reverse
+     * @property {number} lastFrame - index of last frame that ran.
+     * @property {boolean} reverse - Play backwards.
      */
 
     /** @type {task[]} */
     tasks = [],
-    newAnimId = -1,
+    newAnimId = 0,
     requestID;
 
   window.addReqFrameAnim2 = function(cb) { requestAnim = cb; }; // [DEBUG/]
   window.delReqFrameAnim2 = function(cb) { cancelAnim = cb; }; // [DEBUG/]
   window.tasks = tasks; // [DEBUG/]
 
-  var running; // [DEBUG/]
+  var playing; // [DEBUG/]
 
   function step() {
-    running = true; // [DEBUG/]
+    playing = true; // [DEBUG/]
     var now = Date.now(), next = false;
     if (requestID) {
       cancelAnim.call(window, requestID);
@@ -73,7 +75,7 @@ var anim =
       timeLen = now - task.framesStart;
 
       if (timeLen >= task.duration && task.count && task.loopsLeft <= 1) {
-        frame = task.frames[task.reverse ? 0 : task.frames.length - 1];
+        frame = task.frames[(task.lastFrame = task.reverse ? 0 : task.frames.length - 1)];
         task.frameCallback(frame.value, true, frame.timeRatio, frame.outputRatio);
         task.framesStart = null;
         return;
@@ -82,7 +84,7 @@ var anim =
         loops = Math.floor(timeLen / task.duration);
         if (task.count) {
           if (loops >= task.loopsLeft) { // Here `task.loopsLeft > 1`
-            frame = task.frames[task.reverse ? 0 : task.frames.length - 1];
+            frame = task.frames[(task.lastFrame = task.reverse ? 0 : task.frames.length - 1)];
             task.frameCallback(frame.value, true, frame.timeRatio, frame.outputRatio);
             task.framesStart = null;
             return;
@@ -94,12 +96,9 @@ var anim =
       }
 
       if (task.reverse) { timeLen = task.duration - timeLen; }
-      frame = task.frames[Math.round(timeLen / MSPF)];
+      frame = task.frames[(task.lastFrame = Math.round(timeLen / MSPF))];
       if (task.frameCallback(frame.value, false, frame.timeRatio, frame.outputRatio
-          // [DEBUG]
-          , timeLen
-          // [/DEBUG]
-          ) !== false) {
+          /* [DEBUG] */, timeLen/* [/DEBUG] */) !== false) {
         next = true;
       } else {
         task.framesStart = null;
@@ -110,22 +109,26 @@ var anim =
   }
 
   // [DEBUG]
-  window.anim_lastRunning = false;
+  window.anim_lastPlaying = false;
   window.anim_watchStart = function() {
     window.anim_watchTimer = setInterval(function() {
-      if (running !== window.anim_lastRunning) {
-        document.body.style.backgroundColor = running ? '#f7f6cb' : '#fff'; // not `''` for TRIDENT bug
-        window.anim_lastRunning = running;
+      if (playing !== window.anim_lastPlaying) {
+        document.body.style.backgroundColor = playing ? '#f7f6cb' : '#fff'; // not `''` for TRIDENT bug
+        window.anim_lastPlaying = playing;
       }
-      running = false;
+      playing = false;
     }, 200);
   };
   window.anim_watchStop = function() { clearInterval(window.anim_watchTimer); };
   // [/DEBUG]
 
-  function startTask(task) {
+  function startTask(task, timeRatio) {
     task.framesStart = Date.now();
+    if (timeRatio != null) { // eslint-disable-line eqeqeq
+      task.framesStart -= task.duration * (task.reverse ? 1 - timeRatio : timeRatio);
+    }
     task.loopsLeft = task.count;
+    task.lastFrame = null;
     step();
   }
 
@@ -143,8 +146,8 @@ var anim =
      * @param {number} duration - task property
      * @param {number} count - task property
      * @param {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
-     * @param {boolean} [reverse] - running property
-     * @returns {number} - animID to remove.
+     * @param {boolean} [reverse] - playing property
+     * @returns {number} - animId to control the task.
      */
     add: function(valueCallback, frameCallback, duration, count, timing, reverse) {
       var animId = ++newAnimId, task, frames,
@@ -211,7 +214,7 @@ var anim =
       if (tasks.some(function(task, i) {
         if (task.animId === animId) {
           iRemove = i;
-          task.framesStart = null; // for `tasks.forEach` that is running now.
+          task.framesStart = null; // for `tasks.forEach` that is playing now.
           return true;
         }
         return false;
@@ -220,25 +223,40 @@ var anim =
       }
     },
 
-    start: function(animId, reverse) {
+    /**
+     * @param {number} animId - Target task.
+     * @param {boolean} reverse - Play backwards.
+     * @param {number} [timeRatio] - Play from the midst. [0, 1]
+     * @returns {void}
+     */
+    start: function(animId, reverse, timeRatio) {
       tasks.some(function(task) {
         if (task.animId === animId) {
           task.reverse = !!reverse;
-          startTask(task);
+          startTask(task, timeRatio);
           return true;
         }
         return false;
       });
     },
 
+    /**
+     * @param {number} animId - Target task.
+     * @returns {(number|undefined)} - timeRatio of last frame that ran. [0, 1]
+     */
     stop: function(animId) {
+      var timeRatio;
       tasks.some(function(task) {
         if (task.animId === animId) {
           task.framesStart = null;
+          if (task.lastFrame != null) { // eslint-disable-line eqeqeq
+            timeRatio = task.frames[task.lastFrame].timeRatio;
+          }
           return true;
         }
         return false;
       });
+      return timeRatio;
     },
 
     validTiming: function(timing) {

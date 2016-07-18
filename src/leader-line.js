@@ -55,9 +55,7 @@
      * @property {number} outlineMax
      */
 
-    /**
-     * @typedef {{symbolId: string, SymbolConf}} SYMBOLS
-     */
+    /** @typedef {{symbolId: string, SymbolConf}} SYMBOLS */
 
     PLUG_BEHIND = 'behind',
     DEFS_ID = APP_ID + '-defs',
@@ -128,9 +126,7 @@
     [DEBUG/] */
     pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
 
-    /**
-     * @typedef {{hasSE, hasProps, hasChanged, iniValue}} StatConf
-     */
+    /** @typedef {{hasSE, hasProps, hasChanged, iniValue}} StatConf */
     STATS = {
       line_altColor: {iniValue: false}, line_color: {}, line_colorTra: {iniValue: false}, line_strokeWidth: {},
       plug_enabled: {iniValue: false}, plug_enabledSE: {hasSE: true, iniValue: false},
@@ -164,9 +160,7 @@
 
     EFFECTS,
 
-    /**
-     * @typedef {Object.<_id: number, props>} insProps
-     */
+    /** @typedef {Object.<_id: number, props>} insProps */
     insProps = {},
 
     insId = 0, svg2Supported;
