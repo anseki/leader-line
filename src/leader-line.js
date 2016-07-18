@@ -1811,7 +1811,7 @@
 
     if (curStats.lineMask_enabled) { // Includes `outlineMode`
 
-      // when lineMask is shown
+      // lineMask_outlineMode
       if (setStat(props, aplStats, 'lineMask_outlineMode', (value = curStats.lineMask_outlineMode))) {
         if (value) {
           props.lineMaskBG.style.display = 'none';
@@ -1887,6 +1887,7 @@
 
             if (curStats.capsMaskMarker_enabledSE[i]) {
 
+              // capsMaskMarker_plugSE
               if (setStat(props, aplStats.capsMaskMarker_plugSE, i, plugId
                   /* [DEBUG] */, null, 'capsMaskMarker_plugSE[' + i + ']=%s'/* [/DEBUG] */)) {
                 props.capsMaskMarkerShapeSE[i].href.baseVal = '#' + symbolConf.elmId;
@@ -2304,16 +2305,16 @@
 
     // effect
     Object.keys(EFFECTS).forEach(function(effectName) {
-      var value, keyEnabled = effectName + '_enabled', keyOptions = effectName + '_options';
+      var value, keyEnabled = effectName + '_enabled';
       if (newOptions.hasOwnProperty(effectName)) {
         value = newOptions[effectName];
         if (isObject(value)) {
           props.curStats[keyEnabled] = true;
-          value = props.curStats[keyOptions] = EFFECTS[effectName].validOptions(value);
+          value = EFFECTS[effectName].getValidOptions(props, value);
         } else { // boolean
           value = props.curStats[keyEnabled] = !!value;
           if (value) {
-            props.curStats[keyOptions] = EFFECTS[effectName].validOptions({});
+            EFFECTS[effectName].getValidOptions(props, {}); // to save to curStats
           }
         }
         if (hasChanged(value, options[effectName])) {
@@ -2346,75 +2347,110 @@
     delete insProps[this._id];
   };
 
-  /**
-   * @typedef {Object} EffectConf
-   * @property {{statName: string, StatConf}} stats - Additional stats.
-   * @property {Function} validOptions - (effectOptions)
-   * @property {Function} init - (props)
-   * @property {Function} remove - (props)
-   * @property {Function} update - (props)
-   * @property {boolean} animation
-   */
-  EFFECTS = {
-    dash: { // effectOptions: len, gap
-      stats: {dash_len: {}, dash_gap: {}},
-      validOptions: function(effectOptions) {
-        return ['len', 'gap'].reduce(function(options, optionName) {
-          options[optionName] =
-            typeof effectOptions[optionName] === 'number' && effectOptions[optionName] > 0 ?
-              effectOptions[optionName] : null;
-          return options;
-        }, {});
-      },
+  (function() {
 
-      init: function(props) {
-        traceLog.add('<EFFECTS.dash.init>'); // [DEBUG/]
-        addEventHandler(props, 'apl_line_strokeWidth', EFFECTS.dash.update);
-        props.lineFace.style.strokeDashoffset = '0';
-        EFFECTS.dash.update(props);
-        traceLog.add('</EFFECTS.dash.init>'); // [DEBUG/]
-      },
+    /**
+     * @typedef {Object} AnimOptions
+     * @property {number} duration
+     * @property {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
+     */
 
-      remove: function(props) {
-        traceLog.add('<EFFECTS.dash.remove>'); // [DEBUG/]
-        removeEventHandler(props, 'apl_line_strokeWidth', EFFECTS.dash.update);
-        props.lineFace.style.strokeDasharray = 'none';
-        props.lineFace.style.strokeDashoffset = '0';
-        initStats(props.aplStats, EFFECTS.dash.stats);
-        traceLog.add('</EFFECTS.dash.remove>'); // [DEBUG/]
-      },
+    function getValidAnimOptions(props, effectOptions, statName, defaultAnimOptions, defaultEnabled) {
+      var validAnimOptions;
 
-      update: function(props) {
-        traceLog.add('<EFFECTS.dash.update>'); // [DEBUG/]
-        var curStats = props.curStats, aplStats = props.aplStats,
-          effectOptions = aplStats.dash_options,
-          update = false;
-
-        setStat(props, curStats, 'dash_len', effectOptions.len || aplStats.line_strokeWidth * 2
-          /* [DEBUG] */, null, 'curStats.dash_len=%s'/* [/DEBUG] */);
-        setStat(props, curStats, 'dash_gap', effectOptions.gap || aplStats.line_strokeWidth
-          /* [DEBUG] */, null, 'curStats.dash_gap=%s'/* [/DEBUG] */);
-
-        update = setStat(props, aplStats, 'dash_len', curStats.dash_len
-          /* [DEBUG] */, null, 'aplStats.dash_len=%s'/* [/DEBUG] */) || update;
-        update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap
-          /* [DEBUG] */, null, 'aplStats.dash_gap=%s'/* [/DEBUG] */) || update;
-        if (update) {
-          props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
-        }
-        traceLog.add('</EFFECTS.dash.update>'); // [DEBUG/]
+      function getOptions(animOptions) {
+        return {
+          duration: typeof animOptions.duration === 'number' && animOptions.duration > 0 ?
+            animOptions.duration : defaultAnimOptions.duration,
+          timing: anim.validTiming(animOptions.timing) ?
+            animOptions.timing : copyTree(defaultAnimOptions.timing)
+        };
       }
-    }
-  };
 
-  Object.keys(EFFECTS).forEach(function(effectName) {
-    var effectConf = EFFECTS[effectName], effectStats = effectConf.stats;
-    effectStats[effectName + '_enabled'] = {iniValue: false};
-    effectStats[effectName + '_options'] = {hasProps: true};
-    if (effectConf.animation) {
-      effectStats[effectName + '_animId'] = {};
+      if (!effectOptions.hasOwnProperty('animation')) {
+        validAnimOptions = !!defaultEnabled;
+        if (validAnimOptions) { props.curStats[statName] = getOptions({}); }
+      } else if (isObject(effectOptions.animation)) {
+        validAnimOptions = props.curStats[statName] = getOptions(effectOptions.animation);
+      } else { // boolean
+        validAnimOptions = !!effectOptions.animation;
+        if (validAnimOptions) { props.curStats[statName] = getOptions({}); }
+      }
+
+      return validAnimOptions;
     }
-  });
+
+    /**
+     * @typedef {Object} EffectConf
+     * @property {{statName: string, StatConf}} stats - Additional stats.
+     * @property {Function} getValidOptions - (props, effectOptions)
+     * @property {Function} init - (props)
+     * @property {Function} remove - (props)
+     * @property {Function} update - (props)
+     */
+    EFFECTS = {
+      dash: { // effectOptions: animation, len, gap
+        stats: {dash_anim: {iniValue: false}, dash_len: {}, dash_gap: {}},
+        getValidOptions: function(props, effectOptions) {
+          var validOptions = ['len', 'gap'].reduce(function(options, optionName) {
+            options[optionName] =
+              typeof effectOptions[optionName] === 'number' && effectOptions[optionName] > 0 ?
+                effectOptions[optionName] : null;
+            return options;
+          }, {});
+          validOptions.animation = getValidAnimOptions(props, effectOptions,
+            'dash_anim', {duration: 1000, timing: 'linear'});
+          props.curStats.dash_options = validOptions;
+          return validOptions;
+        },
+
+        init: function(props) {
+          traceLog.add('<EFFECTS.dash.init>'); // [DEBUG/]
+          addEventHandler(props, 'apl_line_strokeWidth', EFFECTS.dash.update);
+          props.lineFace.style.strokeDashoffset = '0';
+          EFFECTS.dash.update(props);
+          traceLog.add('</EFFECTS.dash.init>'); // [DEBUG/]
+        },
+
+        remove: function(props) {
+          traceLog.add('<EFFECTS.dash.remove>'); // [DEBUG/]
+          removeEventHandler(props, 'apl_line_strokeWidth', EFFECTS.dash.update);
+          props.lineFace.style.strokeDasharray = 'none';
+          props.lineFace.style.strokeDashoffset = '0';
+          initStats(props.aplStats, EFFECTS.dash.stats);
+          traceLog.add('</EFFECTS.dash.remove>'); // [DEBUG/]
+        },
+
+        update: function(props) {
+          traceLog.add('<EFFECTS.dash.update>'); // [DEBUG/]
+          var curStats = props.curStats, aplStats = props.aplStats,
+            effectOptions = aplStats.dash_options,
+            update = false;
+
+          setStat(props, curStats, 'dash_len', effectOptions.len || aplStats.line_strokeWidth * 2
+            /* [DEBUG] */, null, 'curStats.dash_len=%s'/* [/DEBUG] */);
+          setStat(props, curStats, 'dash_gap', effectOptions.gap || aplStats.line_strokeWidth
+            /* [DEBUG] */, null, 'curStats.dash_gap=%s'/* [/DEBUG] */);
+
+          update = setStat(props, aplStats, 'dash_len', curStats.dash_len
+            /* [DEBUG] */, null, 'aplStats.dash_len=%s'/* [/DEBUG] */) || update;
+          update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap
+            /* [DEBUG] */, null, 'aplStats.dash_gap=%s'/* [/DEBUG] */) || update;
+          if (update) {
+            props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
+          }
+          traceLog.add('</EFFECTS.dash.update>'); // [DEBUG/]
+        }
+      }
+    };
+
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var effectStats = EFFECTS[effectName].stats;
+      effectStats[effectName + '_enabled'] = {iniValue: false};
+      effectStats[effectName + '_options'] = {hasProps: true};
+    });
+
+  })();
 
   return LeaderLine;
 })();
