@@ -2341,14 +2341,14 @@
           props.curStats[keyEnabled] = true;
           value = props.curStats[keyOptions] = effectConf.getValidOptions(newOption);
           if (effectConf.anim) {
-            props.curStats[keyOptions].animation = props.curStats[keyAnimOptions] = parseAnimOptions(newOption);
+            props.curStats[keyOptions].animation = parseAnimOptions(newOption);
           }
         } else { // boolean
           value = props.curStats[keyEnabled] = !!newOption;
           if (value) {
             props.curStats[keyOptions] = effectConf.getValidOptions({});
             if (effectConf.anim) {
-              props.curStats[keyOptions].animation = props.curStats[keyAnimOptions] = parseAnimOptions({});
+              props.curStats[keyOptions].animation = parseAnimOptions({});
             }
           }
         }
@@ -2447,6 +2447,25 @@
         if (update) {
           props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
         }
+
+        if (curStats.dash_animOptions) {
+          if (aplStats.dash_animOptions && ( // ON -> ON (update)
+              update || hasChanged(curStats.dash_animOptions, aplStats.dash_animOptions))) {
+            traceLog.add('anim.remove'); // [DEBUG/]
+            ///
+            aplStats.dash_animOptions = null;
+          }
+          if (!aplStats.dash_animOptions) { // OFF -> ON
+            traceLog.add('anim.add'); // [DEBUG/]
+            ///
+            aplStats.dash_animOptions = copyTree(curStats.dash_animOptions);
+          }
+        } else if (aplStats.dash_animOptions) { // ON -> OFF
+          traceLog.add('anim.remove'); // [DEBUG/]
+          ///
+          aplStats.dash_animOptions = null;
+        }
+
         traceLog.add('</EFFECTS.dash.update>'); // [DEBUG/]
       }
     }
