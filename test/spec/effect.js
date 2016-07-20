@@ -131,9 +131,8 @@ describe('effect', function() {
       traceLog.clear();
       ll.dash = true;
       expect(traceLog.getTaggedLog('setEffect')).toEqual(['dash_enabled=true']);
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
+      expect(traceLog.log).toContainAll(['<EFFECTS.dash.init>', '<EFFECTS.dash.update>']);
       expect(traceLog.log).not.toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(ll.dash).toBe(true);
@@ -144,9 +143,9 @@ describe('effect', function() {
       ll.dash = {}; // change this, and call setEffect()
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]); // not include dash_enabled
       // nothing is called because dash_enabled and dash_options is not changed
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.update>');
+      expect(traceLog.log).toNotContainAny([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual(value);
@@ -159,9 +158,9 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]); // not include dash_enabled
       // nothing is called because dash_enabled and dash_options is not changed
       // reset
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({len: 15, gap: null, animation: false});
@@ -175,12 +174,11 @@ describe('effect', function() {
         start: document.getElementById('iframe1').contentDocument.getElementById('elm1'),
         end: document.getElementById('iframe1').contentDocument.getElementById('elm2')
       });
-      expect(traceLog.log).toContain('<bindWindow>');
       // remove() in <bindWindow> -> init()
       expect(traceLog.getTaggedLog('setEffect')).toEqual(['dash_enabled=true']);
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
+      expect(traceLog.log).toContainAll([
+        '<bindWindow>', '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({len: 15, gap: null, animation: false});
@@ -191,9 +189,8 @@ describe('effect', function() {
       traceLog.clear();
       ll.dash = false;
       expect(traceLog.getTaggedLog('setEffect')).toEqual(['dash_enabled=false']);
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.init>');
       expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.update>');
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.update>']);
       expect(props.curStats.dash_enabled).toBe(false);
       expect(props.aplStats.dash_enabled).toBe(false);
       expect(props.curStats.dash_options).toEqual({len: 15, gap: null, animation: false}); // it's not cleared
@@ -204,7 +201,7 @@ describe('effect', function() {
     });
 
     it(registerTitle('optimize effectOptions'), function() {
-      var props = window.insProps[ll._id];
+      var props = window.insProps[ll._id], log;
 
       // default stats
       expect(props.curStats.dash_enabled).toBe(false);
@@ -217,11 +214,9 @@ describe('effect', function() {
       ll.dash = true;
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual(['dash_enabled=true']);
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
+      expect(traceLog.log).toContainAll(['<EFFECTS.dash.init>', '<EFFECTS.dash.update>']);
       expect(traceLog.log).not.toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.add');
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.remove');
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toNotContainAny(['anim.add', 'anim.remove']);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({len: null, gap: null, animation: false});
@@ -235,9 +230,9 @@ describe('effect', function() {
       ll.dash = {};
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.update>'); // called by init
+      expect(traceLog.log).toNotContainAny([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
@@ -252,11 +247,10 @@ describe('effect', function() {
       ll.dash = {len: 5};
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.add');
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.remove');
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toNotContainAny(['anim.add', 'anim.remove']);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({len: 5, gap: null, animation: false});
@@ -272,9 +266,9 @@ describe('effect', function() {
       ll.dash = {animation: false};
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.update>'); // called by init
+      expect(traceLog.log).toNotContainAny([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
@@ -290,11 +284,12 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
       // reset
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toContain('anim.add');
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.remove');
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
+      log = traceLog.getTaggedLog('EFFECTS.dash.update');
+      expect(log).toContain('anim.add');
+      expect(log).not.toContain('anim.remove');
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
@@ -311,12 +306,13 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
       // reset
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
       // update remove -> add (already removed by EFFECTS.dash.remove when options was changed)
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toContain('anim.add');
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.remove');
+      log = traceLog.getTaggedLog('EFFECTS.dash.update');
+      expect(log).toContain('anim.add');
+      expect(log).not.toContain('anim.remove');
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
@@ -336,12 +332,13 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
       // reset
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
       // update remove -> add (already removed by EFFECTS.dash.remove when options was changed)
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toContain('anim.add');
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.remove');
+      log = traceLog.getTaggedLog('EFFECTS.dash.update');
+      expect(log).toContain('anim.add');
+      expect(log).not.toContain('anim.remove');
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
@@ -360,12 +357,12 @@ describe('effect', function() {
       ll.size = 5;
       expect(traceLog.getTaggedLog('setOptions')).not.toContain('needs.effect');
       // reset
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).not.toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by event
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.remove>']);
+      expect(traceLog.log).toContain('<EFFECTS.dash.update>');
       // update remove -> add
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toContain('anim.add');
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toContain('anim.remove');
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toContainAll([
+        'anim.add', 'anim.remove'
+      ]);
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
@@ -385,12 +382,13 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
       // reset
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.update>'); // called by init
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
       // remove (already removed by EFFECTS.dash.remove when options was changed)
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.add');
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).not.toContain('anim.remove');
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toNotContainAny([
+        'anim.add', 'anim.remove'
+      ]);
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
@@ -423,6 +421,7 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
         'curStats.dash_len=' + len,
         'curStats.dash_gap=' + gap,
+        'curStats.dash_maxOffset=' + (len + gap),
         'aplStats.dash_len=' + len,
         'aplStats.dash_gap=' + gap
       ]);
@@ -430,14 +429,61 @@ describe('effect', function() {
       expect(props.aplStats.dash_len).toBe(len);
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
 
       // update() by events
       traceLog.clear();
       ll.size = 5;
       len = 10;
       gap = 5;
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.remove>']);
       expect(traceLog.getTaggedLog('updateFaces')).toContain('line_strokeWidth=5');
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
+        'curStats.dash_len=' + len,
+        'curStats.dash_gap=' + gap,
+        'curStats.dash_maxOffset=' + (len + gap),
+        'aplStats.dash_len=' + len,
+        'aplStats.dash_gap=' + gap
+      ]);
+      expect(props.curStats.dash_len).toBe(len);
+      expect(props.aplStats.dash_len).toBe(len);
+      expect(props.curStats.dash_gap).toBe(gap);
+      expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // update() by options
+      len = 10; // same
+      gap = 6;
+      traceLog.clear();
+      ll.dash = {len: len, gap: gap};
+      expect(traceLog.log).toContainAll(['<EFFECTS.dash.remove>', '<EFFECTS.dash.init>']);
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
+        // curStats.dash_len are not updated (curStats* were not cleared by remove())
+        'curStats.dash_gap=' + gap,
+        'curStats.dash_maxOffset=' + (len + gap),
+        'aplStats.dash_len=' + len,
+        'aplStats.dash_gap=' + gap
+      ]);
+      expect(props.curStats.dash_len).toBe(len);
+      expect(props.aplStats.dash_len).toBe(len);
+      expect(props.curStats.dash_gap).toBe(gap);
+      expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // update() by options same dash_maxOffset
+      len = 8;
+      gap = 8;
+      traceLog.clear();
+      ll.dash = {len: len, gap: gap};
+      expect(traceLog.log).toContainAll(['<EFFECTS.dash.remove>', '<EFFECTS.dash.init>']);
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
+        // curStats.dash_maxOffset are not updated (curStats* were not cleared by remove())
         'curStats.dash_len=' + len,
         'curStats.dash_gap=' + gap,
         'aplStats.dash_len=' + len,
@@ -447,34 +493,23 @@ describe('effect', function() {
       expect(props.aplStats.dash_len).toBe(len);
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
-
-      // update() by options
-      len = 10; // same
-      gap = 6;
-      traceLog.clear();
-      ll.dash = {len: len, gap: gap};
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
-      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
-        // curStats.dash_len are not updated (curStats* were not cleared by remove())
-        'curStats.dash_gap=' + gap,
-        'aplStats.dash_len=' + len,
-        'aplStats.dash_gap=' + gap
-      ]);
-      expect(props.curStats.dash_len).toBe(len);
-      expect(props.aplStats.dash_len).toBe(len);
-      expect(props.curStats.dash_gap).toBe(gap);
-      expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
 
       // update() by events (ignored)
       traceLog.clear();
       ll.size = 4; // len: 8, gap: 4 when `auto`
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.remove>']);
       expect(traceLog.getTaggedLog('updateFaces')).toContain('line_strokeWidth=4');
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([]); // not updated
       expect(props.curStats.dash_len).toBe(len);
       expect(props.aplStats.dash_len).toBe(len);
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
 
       // update() by bindWindow()
       traceLog.clear();
@@ -482,10 +517,8 @@ describe('effect', function() {
         start: document.getElementById('iframe1').contentDocument.getElementById('elm1'),
         end: document.getElementById('iframe1').contentDocument.getElementById('elm2')
       });
-      expect(traceLog.log).toContain('<bindWindow>');
       // remove() in <bindWindow> -> init()
-      expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
-      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
+      expect(traceLog.log).toContainAll(['<bindWindow>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.init>']);
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
         // cur* are not updated
         'aplStats.dash_len=' + len,
@@ -495,10 +528,14 @@ describe('effect', function() {
       expect(props.aplStats.dash_len).toBe(len);
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
 
       // remove()
       traceLog.clear();
       ll.dash = false;
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.update>']);
       expect(traceLog.log).toContain('<EFFECTS.dash.remove>');
       expect(props.events.apl_line_strokeWidth.length).toBe(0); // removeEventHandler
       // curStats* are not cleared
@@ -506,6 +543,116 @@ describe('effect', function() {
       expect(props.aplStats.dash_len == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // anim - init()
+      ll.size = 5;
+      len = 10; // default: line_strokeWidth * 2
+      gap = 5; // default: line_strokeWidth
+      traceLog.clear();
+      ll.dash = {animation: true};
+      expect(traceLog.log).toContain('<EFFECTS.dash.init>');
+      expect(props.events.apl_line_strokeWidth.length).toBe(1); // addEventHandler
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
+        'curStats.dash_len=' + len,
+        'curStats.dash_gap=' + gap,
+        'curStats.dash_maxOffset=' + (len + gap),
+        'aplStats.dash_len=' + len,
+        'aplStats.dash_gap=' + gap,
+        'aplStats.dash_maxOffset=' + (len + gap),
+        'anim.add'
+      ]);
+      expect(props.curStats.dash_len).toBe(len);
+      expect(props.aplStats.dash_len).toBe(len);
+      expect(props.curStats.dash_gap).toBe(gap);
+      expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset).toBe(len + gap);
+      expect(props.curStats.dash_animId != null).toBe(true); // eslint-disable-line eqeqeq
+
+      // anim - update by AnimOptions (the effect is removed -> inited)
+      traceLog.clear();
+      ll.dash = {animation: {duration: 2000}};
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
+      // update remove -> add (already removed by EFFECTS.dash.remove when options was changed)
+      expect(props.events.apl_line_strokeWidth.length).toBe(1); // addEventHandler
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
+        'aplStats.dash_len=' + len,
+        'aplStats.dash_gap=' + gap,
+        'aplStats.dash_maxOffset=' + (len + gap),
+        'anim.add' // anim.remove is not called
+      ]);
+      expect(props.curStats.dash_len).toBe(len);
+      expect(props.aplStats.dash_len).toBe(len);
+      expect(props.curStats.dash_gap).toBe(gap);
+      expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset).toBe(len + gap);
+      expect(props.curStats.dash_animId != null).toBe(true); // eslint-disable-line eqeqeq
+
+      // anim - update by event
+      traceLog.clear();
+      ll.size = 6;
+      len = 12;
+      gap = 6;
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.remove>']);
+      expect(traceLog.getTaggedLog('updateFaces')).toContain('line_strokeWidth=6');
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
+        'curStats.dash_len=' + len,
+        'curStats.dash_gap=' + gap,
+        'curStats.dash_maxOffset=' + (len + gap),
+        'aplStats.dash_len=' + len,
+        'aplStats.dash_gap=' + gap,
+        'aplStats.dash_maxOffset=' + (len + gap),
+        'anim.remove', 'anim.add'
+      ]);
+      expect(props.curStats.dash_len).toBe(len);
+      expect(props.aplStats.dash_len).toBe(len);
+      expect(props.curStats.dash_gap).toBe(gap);
+      expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset).toBe(len + gap);
+      expect(props.curStats.dash_animId != null).toBe(true); // eslint-disable-line eqeqeq
+
+      // anim - update by event same
+      ll.dash = {len: 12, gap: 6, animation: true};
+      traceLog.clear();
+      ll.size = 8;
+      len = 12;
+      gap = 6;
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.remove>']);
+      expect(traceLog.getTaggedLog('updateFaces')).toContain('line_strokeWidth=8');
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([]);
+      expect(props.curStats.dash_len).toBe(len);
+      expect(props.aplStats.dash_len).toBe(len);
+      expect(props.curStats.dash_gap).toBe(gap);
+      expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset).toBe(len + gap);
+      expect(props.curStats.dash_animId != null).toBe(true); // eslint-disable-line eqeqeq
+
+      // anim - remove
+      traceLog.clear();
+      ll.dash = {len: 12, gap: 6, animation: false};
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
+      expect(props.events.apl_line_strokeWidth.length).toBe(1); // addEventHandler, it's not changed
+      expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
+        'aplStats.dash_len=' + len,
+        'aplStats.dash_gap=' + gap
+      ]);
+      expect(props.curStats.dash_len).toBe(len);
+      expect(props.aplStats.dash_len).toBe(len);
+      expect(props.curStats.dash_gap).toBe(gap);
+      expect(props.aplStats.dash_gap).toBe(gap);
+      expect(props.curStats.dash_maxOffset).toBe(len + gap);
+      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
 
       pageDone();
     });

@@ -2399,7 +2399,7 @@
    */
   EFFECTS = {
     dash: {
-      stats: {dash_len: {}, dash_gap: {}},
+      stats: {dash_len: {}, dash_gap: {}, dash_maxOffset: {}},
       anim: true, defaultAnimOptions: {duration: 1000, timing: 'linear'},
 
       // effectOptions: len, gap
@@ -2422,7 +2422,12 @@
 
       remove: function(props) {
         traceLog.add('<EFFECTS.dash.remove>'); // [DEBUG/]
+        var curStats = props.curStats;
         removeEventHandler(props, 'apl_line_strokeWidth', EFFECTS.dash.update);
+        if (curStats.dash_animId) {
+          anim.remove(curStats.dash_animId);
+          curStats.dash_animId = null;
+        }
         props.lineFace.style.strokeDasharray = 'none';
         props.lineFace.style.strokeDashoffset = '0';
         initStats(props.aplStats, EFFECTS.dash.stats);
@@ -2433,12 +2438,15 @@
         traceLog.add('<EFFECTS.dash.update>'); // [DEBUG/]
         var curStats = props.curStats, aplStats = props.aplStats,
           effectOptions = aplStats.dash_options,
-          update = false;
+          update = false, timeRatio;
 
         setStat(props, curStats, 'dash_len', effectOptions.len || aplStats.line_strokeWidth * 2
           /* [DEBUG] */, null, 'curStats.dash_len=%s'/* [/DEBUG] */);
         setStat(props, curStats, 'dash_gap', effectOptions.gap || aplStats.line_strokeWidth
           /* [DEBUG] */, null, 'curStats.dash_gap=%s'/* [/DEBUG] */);
+
+        setStat(props, curStats, 'dash_maxOffset', curStats.dash_len + curStats.dash_gap
+          /* [DEBUG] */, null, 'curStats.dash_maxOffset=%s'/* [/DEBUG] */);
 
         update = setStat(props, aplStats, 'dash_len', curStats.dash_len
           /* [DEBUG] */, null, 'aplStats.dash_len=%s'/* [/DEBUG] */) || update;
@@ -2449,20 +2457,38 @@
         }
 
         if (curStats.dash_animOptions) {
+          update = setStat(props, aplStats, 'dash_maxOffset', curStats.dash_maxOffset
+            /* [DEBUG] */, null, 'aplStats.dash_maxOffset=%s'/* [/DEBUG] */);
+
           if (aplStats.dash_animOptions && ( // ON -> ON (update)
+              // Normally, animOptions is not changed because the effect was removed when it was changed.
               update || hasChanged(curStats.dash_animOptions, aplStats.dash_animOptions))) {
             traceLog.add('anim.remove'); // [DEBUG/]
-            ///
+            if (curStats.dash_animId) {
+              timeRatio = anim.stop(curStats.dash_animId);
+              anim.remove(curStats.dash_animId);
+            }
             aplStats.dash_animOptions = null;
           }
+
           if (!aplStats.dash_animOptions) { // OFF -> ON
             traceLog.add('anim.add'); // [DEBUG/]
-            ///
+            curStats.dash_animId = anim.add(function(outputRatio) {
+              return (1 - outputRatio) * aplStats.dash_maxOffset + 'px';
+            }, function(value) {
+              props.lineFace.style.strokeDashoffset = value;
+            }, curStats.dash_animOptions.duration, 0, curStats.dash_animOptions.timing, false, timeRatio);
             aplStats.dash_animOptions = copyTree(curStats.dash_animOptions);
           }
+
         } else if (aplStats.dash_animOptions) { // ON -> OFF
+          // Normally, anim was already removed when effectOptions was changed.
           traceLog.add('anim.remove'); // [DEBUG/]
-          ///
+          if (curStats.dash_animId) {
+            anim.remove(curStats.dash_animId);
+            curStats.dash_animId = null;
+          }
+          props.lineFace.style.strokeDashoffset = '0';
           aplStats.dash_animOptions = null;
         }
 

@@ -146,10 +146,11 @@ var anim =
      * @param {number} duration - task property
      * @param {number} count - task property
      * @param {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
-     * @param {boolean} [reverse] - playing property
+     * @param {(boolean|null)} reverse - playing property
+     * @param {number} [timeRatio] - Play from the midst. [0, 1]
      * @returns {number} - animId to control the task.
      */
-    add: function(valueCallback, frameCallback, duration, count, timing, reverse) {
+    add: function(valueCallback, frameCallback, duration, count, timing, reverse, timeRatio) {
       var animId = ++newAnimId, task, frames,
         stepX, stepT, nextX, t, point;
 
@@ -204,7 +205,7 @@ var anim =
         reverse: !!reverse
       };
       tasks.push(task);
-      startTask(task);
+      startTask(task, timeRatio);
 
       return animId;
     },
