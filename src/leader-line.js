@@ -944,10 +944,13 @@
       updated = false;
 
     [0, 1].forEach(function(i) {
-      var plugId = curStats.plugOutline_plugSE[i], symbolConf, value;
+      var plugId = curStats.plugOutline_plugSE[i],
+        symbolConf = plugId !== PLUG_BEHIND ? SYMBOLS[PLUG_2_SYMBOL[plugId]] : null,
+        value;
 
       updated = setStat(props, curStats.plugOutline_enabledSE, i,
-        curStats.plug_enabled && curStats.plug_enabledSE[i] && options.plugOutlineEnabledSE[i],
+        curStats.plug_enabled && curStats.plug_enabledSE[i] &&
+          symbolConf.outlineBase && options.plugOutlineEnabledSE[i],
         events.cur_plugOutline_enabledSE
         /* [DEBUG] */, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
@@ -960,8 +963,7 @@
         events.cur_plugOutline_colorTraSE
         /* [DEBUG] */, 'plugOutline_colorTraSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-      if (plugId !== PLUG_BEHIND) { // Not depend on `curStats.plugOutline_enabledSE`
-        symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
+      if (curStats.plugOutline_enabledSE[i]) {
 
         value = options.plugOutlineSizeSE[i];
         if (value > symbolConf.outlineMax) { value = symbolConf.outlineMax; }
