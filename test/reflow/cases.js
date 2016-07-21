@@ -58,7 +58,7 @@ window.addEventListener('load', function() {
             startPlug: 'square',
             endPlug: 'square'
           });
-          // [BLINK] lineSize is not updated when path is not changed
+          // [BLINK], [WEBKIT] lineSize is not updated when path is not changed
           setTimeout(function() {
             ll.size += 10;
           }, 500);
@@ -199,7 +199,7 @@ window.addEventListener('load', function() {
       },
       {
         fnc: function() {
-          // [BLINK] capsMaskMarkerShapeSE is not updated when line has no alpha
+          // [BLINK], [WEBKIT] capsMaskMarkerShapeSE is not updated when line has no alpha
           ll.setOptions({
             color: 'rgb(255, 0, 0)'
           });

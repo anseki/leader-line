@@ -126,7 +126,7 @@
     [DEBUG/] */
     pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
 
-    /** @typedef {{hasSE, hasProps, hasChanged, iniValue}} StatConf */
+    /** @typedef {{hasSE, hasProps, iniValue}} StatConf */
     STATS = {
       line_altColor: {iniValue: false}, line_color: {}, line_colorTra: {iniValue: false}, line_strokeWidth: {},
       plug_enabled: {iniValue: false}, plug_enabledSE: {hasSE: true, iniValue: false},
@@ -168,6 +168,11 @@
   // [DEBUG]
   window.insProps = insProps;
   window.isObject = isObject;
+  window.IS_TRIDENT = IS_TRIDENT;
+  window.IS_BLINK = IS_BLINK;
+  window.IS_GECKO = IS_GECKO;
+  window.IS_EDGE = IS_EDGE;
+  window.IS_WEBKIT = IS_WEBKIT;
   // [/DEBUG]
 
   function hasChanged(a, b) {
@@ -198,13 +203,13 @@
   /**
    * Parse and get an alpha channel in color notation.
    * @param {string} color - A color notation such as `'rgba(10, 20, 30, 0.6)'`.
-   * @returns {number} - A value of alpha channel ([0, 1]) such as `0.6`.
+   * @returns {Array} - Alpha channel ([0, 1]) such as `0.6`, and base color. e.g. [0.6, 'rgb(10, 20, 30)']
    */
   function getAlpha(color) {
-    var matches, func, args, alpha = 1;
+    var matches, func, args, alpha = 1, baseColor = (color = (color + '').trim());
 
     function parseAlpha(value) {
-      var alpha = 1, matches = /^\s*([\d\.]+)\s*(\%)?\s*$/.exec(value);
+      var alpha = 1, matches = /^([\d\.]+)\s*(\%)?$/.exec(value);
       if (matches) {
         alpha = parseFloat(matches[1]);
         if (matches[2]) {
@@ -217,20 +222,37 @@
     }
 
     // Unsupported: `currentcolor`, `color()`, `deprecated-system-color`
-    if ((matches = /^\s*(rgba|hsla|hwb|gray|device\-cmyk)\s*\(([\s\S]+)\)\s*$/i.exec(color))) {
+    if ((matches = /^(rgba|hsla|hwb|gray|device\-cmyk)\s*\(([\s\S]+)\)$/i.exec(color))) {
       func = matches[1].toLowerCase();
-      args = matches[2].split(',');
-      alpha =
-        (func === 'rgba' || func === 'hsla' || func === 'hwb') && args.length === 4 ? parseAlpha(args[3]) :
-        func === 'gray' && args.length === 2 ? parseAlpha(args[1]) :
-        func === 'device-cmyk' && args.length >= 5 ? parseAlpha(args[4]) :
-        1;
-    } else if ((matches = /^\s*\#(?:[\da-f]{6}([\da-f]{2})|[\da-f]{3}([\da-f]))\s*$/i.exec(color))) {
-      alpha = parseInt(matches[1] ? matches[1] : matches[2] + matches[2], 16) / 255;
-    } else if (/^\s*transparent\s*$/i.test(color)) {
+      args = matches[2].trim().split(/\s*,\s*/);
+      if (func === 'rgba' && args.length === 4) {
+        alpha = parseAlpha(args[3]);
+        baseColor = 'rgb(' + args.slice(0, 3).join(', ') + ')';
+      } else if (func === 'hsla' && args.length === 4) {
+        alpha = parseAlpha(args[3]);
+        baseColor = 'hsl(' + args.slice(0, 3).join(', ') + ')';
+      } else if (func === 'hwb' && args.length === 4) {
+        alpha = parseAlpha(args[3]);
+        baseColor = 'hwb(' + args.slice(0, 3).join(', ') + ')';
+      } else if (func === 'gray' && args.length === 2) {
+        alpha = parseAlpha(args[1]);
+        baseColor = 'gray(' + args[0] + ')';
+      } else if (func === 'device-cmyk' && args.length >= 5) {
+        alpha = parseAlpha(args[4]);
+        baseColor = 'device-cmyk(' + args.slice(0, 4).join(', ') + ')'; // omit <F>
+      }
+    } else if ((matches = /^\#(?:([\da-f]{6})([\da-f]{2})|([\da-f]{3})([\da-f]))$/i.exec(color))) {
+      if (matches[1]) {
+        alpha = parseInt(matches[2], 16) / 255;
+        baseColor = '#' + matches[1];
+      } else {
+        alpha = parseInt(matches[4] + matches[4], 16) / 255;
+        baseColor = '#' + matches[3];
+      }
+    } else if (color.toLocaleLowerCase() === 'transparent') {
       alpha = 0;
     }
-    return alpha;
+    return [alpha, baseColor];
   }
   window.getAlpha = getAlpha; // [DEBUG/]
 
@@ -570,6 +592,16 @@
     return false;
   }
 
+  // [DEBUG]
+  function checkCurStats(props, key, i, value, log) {
+    /* eslint-disable eqeqeq */
+    if (value !== (i == null ? props.curStats[key] : props.curStats[key][i])) {
+      traceLog.add(log || 'curStats.' + key + (i == null ? '' : '[' + i + ']') + '=%s', value);
+    }
+    /* eslint-enable eqeqeq */
+  }
+  // [/DEBUG]
+
   /**
    * Setup `baseWindow`, stats (`cur*` and `apl*`), SVG elements, etc.
    * @param {props} props - `props` of `LeaderLine` instance.
@@ -722,6 +754,9 @@
     props.lineGradient = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
     props.lineGradient.id = props.lineGradientId;
     props.lineGradient.gradientUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
+    ['x1', 'y1', 'x2', 'y2'].forEach(function(prop) {
+      props.lineGradient[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+    });
     props.lineGradientStopSE = [0, 1].map(function(i) {
       var element = props.lineGradient.appendChild(baseDocument.createElementNS(SVG_NS, 'stop'));
       try {
@@ -792,7 +827,7 @@
 
     props.svg = baseDocument.body.appendChild(svg);
 
-    props.pathList = {baseVal: [], animVal: []};
+    props.pathList = {};
     // Init stats
     initStats(aplStats, STATS);
     Object.keys(EFFECTS).forEach(function(effectName) {
@@ -818,12 +853,8 @@
 
     updated = setStat(props, curStats, 'line_color', options.lineColor,
       events.cur_line_color) || updated;
-
-    updated = setStat(props, curStats, 'line_colorTra', getAlpha(curStats.line_color) < 1,
-      events.cur_line_colorTra) || updated;
-
-    updated = setStat(props, curStats, 'line_strokeWidth', options.lineSize,
-      events.cur_line_strokeWidth) || updated;
+    updated = setStat(props, curStats, 'line_colorTra', getAlpha(curStats.line_color)[0] < 1) || updated;
+    updated = setStat(props, curStats, 'line_strokeWidth', options.lineSize) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
     traceLog.add('</updateLine>'); // [DEBUG/]
@@ -843,36 +874,29 @@
       var plugId = options.plugSE[i], symbolConf,
         width, height, plugMarkerWidth, plugMarkerHeight, value;
 
-      updated = setStat(props, curStats.plug_enabledSE, i, plugId !== PLUG_BEHIND,
-        events.cur_plug_enabledSE/* [DEBUG] */, 'plug_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
-
-      updated = setStat(props, curStats.plug_plugSE, i, plugId,
-        events.cur_plug_plugSE/* [DEBUG] */, 'plug_plugSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
-
+      updated = setStat(props, curStats.plug_enabledSE, i, plugId !== PLUG_BEHIND
+        /* [DEBUG] */, null, 'plug_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
+      updated = setStat(props, curStats.plug_plugSE, i, plugId
+        /* [DEBUG] */, null, 'plug_plugSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
       updated = setStat(props, curStats.plug_colorSE, i, (value = options.plugColorSE[i] || curStats.line_color),
         events.cur_plug_colorSE/* [DEBUG] */, 'plug_colorSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
-
-      updated = setStat(props, curStats.plug_colorTraSE, i, getAlpha(value) < 1,
-        events.cur_plug_colorTraSE/* [DEBUG] */, 'plug_colorTraSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
+      updated = setStat(props, curStats.plug_colorTraSE, i, getAlpha(value)[0] < 1
+        /* [DEBUG] */, null, 'plug_colorTraSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
       if (plugId !== PLUG_BEHIND) { // Not depend on `curStats.plug_enabledSE`
         symbolConf = SYMBOLS[PLUG_2_SYMBOL[plugId]];
         plugMarkerWidth = width = symbolConf.widthR * options.plugSizeSE[i];
         plugMarkerHeight = height = symbolConf.heightR * options.plugSizeSE[i];
-
         if (IS_WEBKIT) {
           // [WEBKIT] mask in marker is resized with rasterise
           plugMarkerWidth *= curStats.line_strokeWidth;
           plugMarkerHeight *= curStats.line_strokeWidth;
         }
 
-        updated = setStat(props, curStats.plug_markerWidthSE, i, plugMarkerWidth,
-          events.cur_plug_markerWidthSE
-          /* [DEBUG] */, 'plug_markerWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
-
-        updated = setStat(props, curStats.plug_markerHeightSE, i, plugMarkerHeight,
-          events.cur_plug_markerHeightSE
-          /* [DEBUG] */, 'plug_markerHeightSE[' + i + ']%_'/* [/DEBUG] */) || updated;
+        updated = setStat(props, curStats.plug_markerWidthSE, i, plugMarkerWidth
+          /* [DEBUG] */, null, 'plug_markerWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
+        updated = setStat(props, curStats.plug_markerHeightSE, i, plugMarkerHeight
+          /* [DEBUG] */, null, 'plug_markerHeightSE[' + i + ']%_'/* [/DEBUG] */) || updated;
 
         curStats.capsMaskMarker_markerWidthSE[i] = width;
         curStats.capsMaskMarker_markerHeightSE[i] = height;
@@ -891,8 +915,8 @@
     });
 
     // It might be independent of `curStats.plug_enabledSE` in future version.
-    updated = setStat(props, curStats, 'plug_enabled', curStats.plug_enabledSE[0] || curStats.plug_enabledSE[1],
-      events.cur_plug_enabled) || updated;
+    updated = setStat(props, curStats, 'plug_enabled',
+      curStats.plug_enabledSE[0] || curStats.plug_enabledSE[1]) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
     traceLog.add('</updatePlug>'); // [DEBUG/]
@@ -905,29 +929,24 @@
    */
   function updateLineOutline(props) {
     traceLog.add('<updateLineOutline>'); // [DEBUG/]
-    var options = props.options, curStats = props.curStats, events = props.events,
+    var options = props.options, curStats = props.curStats,
       outlineWidth,
       updated = false;
 
-    updated = setStat(props, curStats, 'lineOutline_enabled', options.lineOutlineEnabled,
-      events.cur_lineOutline_enabled) || updated;
-
-    updated = setStat(props, curStats, 'lineOutline_color', options.lineOutlineColor,
-      events.cur_lineOutline_color) || updated;
-
-    updated = setStat(props, curStats, 'lineOutline_colorTra', getAlpha(curStats.lineOutline_color) < 1,
-      events.cur_lineOutline_colorTra) || updated;
+    updated = setStat(props, curStats, 'lineOutline_enabled', options.lineOutlineEnabled) || updated;
+    updated = setStat(props, curStats, 'lineOutline_color', options.lineOutlineColor) || updated;
+    updated = setStat(props, curStats, 'lineOutline_colorTra',
+      getAlpha(curStats.lineOutline_color)[0] < 1) || updated;
 
     outlineWidth = curStats.line_strokeWidth * options.lineOutlineSize;
 
-    updated = setStat(props, curStats, 'lineOutline_strokeWidth', curStats.line_strokeWidth - outlineWidth * 2,
-      events.cur_lineOutline_strokeWidth/* [DEBUG] */, 'lineOutline_strokeWidth%_'/* [/DEBUG] */) || updated;
-
+    updated = setStat(props, curStats, 'lineOutline_strokeWidth', curStats.line_strokeWidth - outlineWidth * 2
+      /* [DEBUG] */, null, 'lineOutline_strokeWidth%_'/* [/DEBUG] */) || updated;
     updated = setStat(props, curStats, 'lineOutline_inStrokeWidth',
       curStats.lineOutline_colorTra ?
         curStats.lineOutline_strokeWidth + SHAPE_GAP * 2 :
-        curStats.line_strokeWidth - outlineWidth, // half
-      events.cur_lineOutline_inStrokeWidth/* [DEBUG] */, 'lineOutline_inStrokeWidth%_'/* [/DEBUG] */) || updated;
+        curStats.line_strokeWidth - outlineWidth // half
+      /* [DEBUG] */, null, 'lineOutline_inStrokeWidth%_'/* [/DEBUG] */) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
     traceLog.add('</updateLineOutline>'); // [DEBUG/]
@@ -940,7 +959,7 @@
    */
   function updatePlugOutline(props) {
     traceLog.add('<updatePlugOutline>'); // [DEBUG/]
-    var options = props.options, curStats = props.curStats, events = props.events,
+    var options = props.options, curStats = props.curStats,
       updated = false;
 
     [0, 1].forEach(function(i) {
@@ -952,35 +971,27 @@
         options.plugOutlineEnabledSE[i] &&
           // `curStats.plug_enabled` might be independent of `curStats.plug_enabledSE` in future version.
           curStats.plug_enabled && curStats.plug_enabledSE[i] &&
-          !!symbolConf && !!symbolConf.outlineBase, // Not depend on `curStats.plug_enabledSE`
-        events.cur_plugOutline_enabledSE
-        /* [DEBUG] */, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
-
+          !!symbolConf && !!symbolConf.outlineBase // Not depend on `curStats.plug_enabledSE`
+        /* [DEBUG] */, null, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
       updated = setStat(props, curStats.plugOutline_colorSE, i,
-        (value = options.plugOutlineColorSE[i] || curStats.lineOutline_color),
-        events.cur_plugOutline_colorSE
-        /* [DEBUG] */, 'plugOutline_colorSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
-
-      updated = setStat(props, curStats.plugOutline_colorTraSE, i, getAlpha(value) < 1,
-        events.cur_plugOutline_colorTraSE
-        /* [DEBUG] */, 'plugOutline_colorTraSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
+        (value = options.plugOutlineColorSE[i] || curStats.lineOutline_color)
+        /* [DEBUG] */, null, 'plugOutline_colorSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
+      updated = setStat(props, curStats.plugOutline_colorTraSE, i, getAlpha(value)[0] < 1
+        /* [DEBUG] */, null, 'plugOutline_colorTraSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
       if (symbolConf && symbolConf.outlineBase) { // Not depend on `curStats.plugOutline_enabledSE`
 
         value = options.plugOutlineSizeSE[i];
         if (value > symbolConf.outlineMax) { value = symbolConf.outlineMax; }
         value *= symbolConf.outlineBase * 2;
-        updated = setStat(props, curStats.plugOutline_strokeWidthSE, i, value,
-          events.cur_plugOutline_strokeWidthSE
-          /* [DEBUG] */, 'plugOutline_strokeWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
-
+        updated = setStat(props, curStats.plugOutline_strokeWidthSE, i, value
+          /* [DEBUG] */, null, 'plugOutline_strokeWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
         updated = setStat(props, curStats.plugOutline_inStrokeWidthSE, i,
           curStats.plugOutline_colorTraSE[i] ?
             value - SHAPE_GAP / (curStats.line_strokeWidth / DEFAULT_OPTIONS.lineSize) /
               options.plugSizeSE[i] * 2 :
-            value / 2, // half
-          events.cur_plugOutline_inStrokeWidthSE
-          /* [DEBUG] */, 'plugOutline_inStrokeWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
+            value / 2 // half
+          /* [DEBUG] */, null, 'plugOutline_inStrokeWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
       }
     });
 
@@ -1063,7 +1074,6 @@
 
     if (setStat(props, aplStats, 'plug_enabled', (value = curStats.plug_enabled),
         events.apl_plug_enabled)) {
-      props.lineFace.style.stroke = value;
       props.plugsFace.style.display = value ? 'inline' : 'none';
       updated = true;
     }
@@ -1099,8 +1109,8 @@
               events.apl_plug_colorSE/* [DEBUG] */, 'plug_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
             props.plugFaceSE[i].style.fill = value;
             updated = true;
-            if (IS_BLINK && !curStats.line_colorTra) {
-              // [BLINK] capsMaskLine is not updated when line has no alpha
+            if ((IS_BLINK || IS_WEBKIT) && !curStats.line_colorTra) {
+              // [BLINK], [WEBKIT] capsMaskMarkerShapeSE is not updated when line has no alpha
               forceReflowAdd(props, props.capsMaskLine);
             }
           }
@@ -1293,6 +1303,7 @@
       // New position
       traceLog.add('new-position'); // [DEBUG/]
       props.pathList.baseVal = pathList = [];
+      props.pathList.animVal = null;
 
       // Generate path segments
       switch (curStats.position_path) {
@@ -1669,7 +1680,7 @@
     var curStats = props.curStats, aplStats = props.aplStats,
       curPathData,
       curPathEdge = curStats.viewBox_pathEdge,
-      pathList = props.pathList.baseVal,
+      pathList = props.pathList.animVal || props.pathList.baseVal,
       updated = false;
 
     function pathDataHasChanged(a, b) {
@@ -1811,6 +1822,9 @@
     if (setStat(props, aplStats, 'lineMask_enabled', (value = curStats.lineMask_enabled))) {
       props.lineFace.style.mask = value ? 'url(#' + props.lineMaskId + ')' : 'none';
       updated = true;
+      if (IS_WEBKIT) {
+        forceReflowAdd(props, props.lineMask);
+      }
     }
 
     if (curStats.lineMask_enabled) { // Includes `outlineMode`
@@ -1841,6 +1855,9 @@
         props.lineMaskCaps.style.display = props.lineOutlineMaskCaps.style.display =
           value ? 'inline' : 'none';
         updated = true;
+        if (IS_WEBKIT) {
+          forceReflowAdd(props, props.capsMaskLine);
+        }
       }
 
       if (curStats.caps_enabled) {
@@ -1853,6 +1870,9 @@
               /* [DEBUG] */, null, 'capsMaskAnchor_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
             props.capsMaskAnchorSE[i].style.display = value ? 'inline' : 'none';
             updated = true;
+            if (IS_WEBKIT) {
+              forceReflowAdd(props, props.lineMask);
+            }
           }
 
           if (curStats.capsMaskAnchor_enabledSE[i]) {
@@ -2000,8 +2020,8 @@
       setEffect(props);
     }
 
-    if (IS_BLINK && updated.line && !updated.path) {
-      // [BLINK] lineSize is not updated when path is not changed
+    if ((IS_BLINK || IS_WEBKIT) && updated.line && !updated.path) {
+      // [BLINK], [WEBKIT] lineSize is not updated when path is not changed
       forceReflowAdd(props, props.lineShape);
     }
     if (IS_BLINK && updated.plug && !updated.line) {
@@ -2444,13 +2464,12 @@
           effectOptions = aplStats.dash_options,
           update = false, timeRatio;
 
-        setStat(props, curStats, 'dash_len', effectOptions.len || aplStats.line_strokeWidth * 2
-          /* [DEBUG] */, null, 'curStats.dash_len=%s'/* [/DEBUG] */);
-        setStat(props, curStats, 'dash_gap', effectOptions.gap || aplStats.line_strokeWidth
-          /* [DEBUG] */, null, 'curStats.dash_gap=%s'/* [/DEBUG] */);
-
-        setStat(props, curStats, 'dash_maxOffset', curStats.dash_len + curStats.dash_gap
-          /* [DEBUG] */, null, 'curStats.dash_maxOffset=%s'/* [/DEBUG] */);
+        checkCurStats(props, 'dash_len', null, effectOptions.len || aplStats.line_strokeWidth * 2); // [DEBUG/]
+        curStats.dash_len = effectOptions.len || aplStats.line_strokeWidth * 2;
+        checkCurStats(props, 'dash_gap', null, effectOptions.gap || aplStats.line_strokeWidth); // [DEBUG/]
+        curStats.dash_gap = effectOptions.gap || aplStats.line_strokeWidth;
+        checkCurStats(props, 'dash_maxOffset', null, curStats.dash_len + curStats.dash_gap); // [DEBUG/]
+        curStats.dash_maxOffset = curStats.dash_len + curStats.dash_gap;
 
         update = setStat(props, aplStats, 'dash_len', curStats.dash_len
           /* [DEBUG] */, null, 'aplStats.dash_len=%s'/* [/DEBUG] */) || update;
@@ -2497,6 +2516,84 @@
         }
 
         traceLog.add('</EFFECTS.dash.update>'); // [DEBUG/]
+      }
+    },
+
+    gradient: {
+      stats: {gradient_colorSE: {hasSE: true}, gradient_pointSE: {hasSE: true, hasProps: true}},
+
+      // effectOptions: startColor, endColor
+      getValidOptions: function(effectOptions) {
+        return ['startColor', 'endColor'].reduce(function(options, optionName) {
+          options[optionName] =
+            typeof effectOptions[optionName] === 'string' ? effectOptions[optionName] : null;
+          return options;
+        }, {});
+      },
+
+      init: function(props) {
+        traceLog.add('<EFFECTS.gradient.init>'); // [DEBUG/]
+        addEventHandler(props, 'cur_plug_colorSE', EFFECTS.gradient.update);
+        addEventHandler(props, 'apl_path', EFFECTS.gradient.update);
+        props.curStats.line_altColor = true;
+        props.lineFace.style.stroke = 'url(#' + props.lineGradientId + ')';
+        EFFECTS.gradient.update(props);
+        traceLog.add('</EFFECTS.gradient.init>'); // [DEBUG/]
+      },
+
+      remove: function(props) {
+        traceLog.add('<EFFECTS.gradient.remove>'); // [DEBUG/]
+        removeEventHandler(props, 'cur_plug_colorSE', EFFECTS.gradient.update);
+        removeEventHandler(props, 'apl_path', EFFECTS.gradient.update);
+        props.curStats.line_altColor = false;
+        props.lineFace.style.stroke = props.curStats.line_color;
+        initStats(props.aplStats, EFFECTS.gradient.stats);
+        traceLog.add('</EFFECTS.gradient.remove>'); // [DEBUG/]
+      },
+
+      update: function(props) {
+        traceLog.add('<EFFECTS.gradient.update>'); // [DEBUG/]
+        var curStats = props.curStats, aplStats = props.aplStats,
+          effectOptions = aplStats.gradient_options,
+          pathList = props.pathList.animVal || props.pathList.baseVal,
+          pathSeg, point;
+
+        ['startColor', 'endColor'].forEach(function(optionName, i) {
+          checkCurStats(props, 'gradient_colorSE', i, effectOptions[optionName] || curStats.plug_colorSE[i]); // [DEBUG/]
+          curStats.gradient_colorSE[i] = effectOptions[optionName] || curStats.plug_colorSE[i];
+        });
+
+        point = pathList[0][0];
+        curStats.gradient_pointSE[0] = {x: point.x, y: point.y}; // first point of first seg
+        pathSeg = pathList[pathList.length - 1];
+        point = pathSeg[pathSeg.length - 1];
+        curStats.gradient_pointSE[1] = {x: point.x, y: point.y}; // last point of last seg
+
+        [0, 1].forEach(function(i) {
+          var value;
+
+          if (setStat(props, aplStats.gradient_colorSE, i, (value = curStats.gradient_colorSE[i])
+              /* [DEBUG] */, null, 'aplStats.gradient_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
+            if (IS_WEBKIT) {
+              // [WEBKIT] stopColor doesn't support alpha channel
+              value = getAlpha(value);
+              props.lineGradientStopSE[i].style.stopColor = value[1];
+              props.lineGradientStopSE[i].style.stopOpacity = value[0];
+            } else {
+              props.lineGradientStopSE[i].style.stopColor = value;
+            }
+          }
+
+          ['x', 'y'].forEach(function(pointKey) {
+            if ((value = curStats.gradient_pointSE[i][pointKey]) !== aplStats.gradient_pointSE[i][pointKey]) {
+              traceLog.add('aplStats.gradient_pointSE[' + i + '].' + pointKey); // [DEBUG/]
+              props.lineGradient[pointKey + (i + 1)].baseVal.value = aplStats.gradient_pointSE[i][pointKey] = value;
+            }
+          });
+
+        });
+
+        traceLog.add('</EFFECTS.gradient.update>'); // [DEBUG/]
       }
     }
   };

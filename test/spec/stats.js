@@ -850,9 +850,11 @@ describe('stats', function() {
     expect(traceLog.getTaggedLog('updateLine')).toContainAll([
       'line_strokeWidth=2'
     ]);
-    expect(traceLog.getTaggedLog('updatePlug')).toContainAll([
-      'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]', 'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'
-    ]);
+    if (!window.IS_WEBKIT) {
+      expect(traceLog.getTaggedLog('updatePlug')).toContainAll([
+        'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]', 'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'
+      ]);
+    }
     expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
       'new-position'
     ]);
@@ -871,9 +873,11 @@ describe('stats', function() {
     expect(traceLog.getTaggedLog('updateLine')).toContainAll([
       'line_strokeWidth=20'
     ]);
-    expect(traceLog.getTaggedLog('updatePlug')).toContainAll([
-      'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]', 'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'
-    ]);
+    if (!window.IS_WEBKIT) {
+      expect(traceLog.getTaggedLog('updatePlug')).toContainAll([
+        'plug_markerWidthSE[0]', 'plug_markerHeightSE[0]', 'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]'
+      ]);
+    }
     expect(traceLog.getTaggedLog('updatePosition')).toContainAll([
       'new-position'
     ]);

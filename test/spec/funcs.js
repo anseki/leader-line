@@ -262,69 +262,71 @@ describe('funcs', function() {
     });
 
     it('ignored notations', function() {
-      expect(getAlpha('')).toBe(1);
-      expect(getAlpha('rgba')).toBe(1);
-      expect(getAlpha('rgb(10, 20, 30)')).toBe(1);
-      expect(getAlpha('#aabbcc')).toBe(1);
-      expect(getAlpha('#abc')).toBe(1);
-      expect(getAlpha('aabbcc99')).toBe(1);
-      expect(getAlpha('abc9')).toBe(1);
-      expect(getAlpha('red')).toBe(1);
+      expect(getAlpha('')).toEqual([1, '']);
+      expect(getAlpha('rgba')).toEqual([1, 'rgba']);
+      expect(getAlpha('rgb(10, 20, 30)')).toEqual([1, 'rgb(10, 20, 30)']);
+      expect(getAlpha('#aabbcc')).toEqual([1, '#aabbcc']);
+      expect(getAlpha('#abc')).toEqual([1, '#abc']);
+      expect(getAlpha('aabbcc99')).toEqual([1, 'aabbcc99']);
+      expect(getAlpha('abc9')).toEqual([1, 'abc9']);
+      expect(getAlpha('red')).toEqual([1, 'red']);
     });
 
     it('rgba, hsla, hwb', function() {
-      expect(getAlpha('rgba(10, 20, 30, 0.6)')).toBe(0.6);
-      expect(getAlpha('hsla(10, 20, 30, 0.6)')).toBe(0.6);
-      expect(getAlpha('hwb(10, 20, 30, 0.6)')).toBe(0.6);
-      expect(getAlpha('rgba(10, 20, 30)')).toBe(1);
+      expect(getAlpha('rgba(10, 20, 30, 0.6)')).toEqual([0.6, 'rgb(10, 20, 30)']);
+      expect(getAlpha('hsla(10, 20, 30, 0.6)')).toEqual([0.6, 'hsl(10, 20, 30)']);
+      expect(getAlpha('hwb(10, 20, 30, 0.6)')).toEqual([0.6, 'hwb(10, 20, 30)']);
+      expect(getAlpha('rgba(10, 20, 30)')).toEqual([1, 'rgba(10, 20, 30)']);
 
-      expect(getAlpha('  rGBa  (  10  , 20  , 30  , 0.6  )  ')).toBe(0.6);
+      expect(getAlpha('  rGBa  (  10  , 20  , 30  , 0.6  )  ')).toEqual([0.6, 'rgb(10, 20, 30)']);
     });
 
     it('gray', function() {
-      expect(getAlpha('gray(10, 0.6)')).toBe(0.6);
-      expect(getAlpha('gray(10)')).toBe(1);
+      expect(getAlpha('gray(10, 0.6)')).toEqual([0.6, 'gray(10)']);
+      expect(getAlpha('gray(10)')).toEqual([1, 'gray(10)']);
 
-      expect(getAlpha('  gRAy  (  10 ,  0.6  )  ')).toBe(0.6);
+      expect(getAlpha('  gRAy  (  10 ,  0.6  )  ')).toEqual([0.6, 'gray(10)']);
     });
 
     it('device-cmyk', function() {
-      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%, 0.6)')).toBe(0.6);
-      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%, 0.6, red)')).toBe(0.6);
-      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%)')).toBe(1);
+      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%, 0.6)')).toEqual([0.6, 'device-cmyk(10%, 20%, 30%, 40%)']);
+      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%, 0.6, red)')).toEqual([0.6, 'device-cmyk(10%, 20%, 30%, 40%)']);
+      expect(getAlpha('device-cmyk(10%, 20%, 30%, 40%)')).toEqual([1, 'device-cmyk(10%, 20%, 30%, 40%)']);
 
-      expect(getAlpha('  device-cMYk  (  10%  , 20%  , 30%  , 40%  , 0.6  )  ')).toBe(0.6);
+      expect(getAlpha('  device-cMYk  (  10%  , 20%  , 30%  , 40%  , 0.6  )  '))
+        .toEqual([0.6, 'device-cmyk(10%, 20%, 30%, 40%)']);
     });
 
     it('parseAlpha', function() {
-      expect(getAlpha('rgba(10, 20, 30, 60%)')).toBe(0.6);
-      expect(getAlpha('rgba(10, 20, 30, 60.5%)')).toBe(0.605);
-      expect(getAlpha('rgba(10, 20, 30, 100%)')).toBe(1);
-      expect(getAlpha('rgba(10, 20, 30, -10%)')).toBe(1);
-      expect(getAlpha('rgba(10, 20, 30, 110%)')).toBe(1);
-      expect(getAlpha('rgba(10, 20, 30, 1)')).toBe(1);
-      expect(getAlpha('rgba(10, 20, 30, -0.1)')).toBe(1);
-      expect(getAlpha('rgba(10, 20, 30, 1.1)')).toBe(1);
+      expect(getAlpha('rgba(10, 20, 30, 60%)')).toEqual([0.6, 'rgb(10, 20, 30)']);
+      expect(getAlpha('rgba(10, 20, 30, 60.5%)')).toEqual([0.605, 'rgb(10, 20, 30)']);
+      expect(getAlpha('rgba(10, 20, 30, 100%)')).toEqual([1, 'rgb(10, 20, 30)']);
+      expect(getAlpha('rgba(10, 20, 30, -10%)')).toEqual([1, 'rgb(10, 20, 30)']);
+      expect(getAlpha('rgba(10, 20, 30, 110%)')).toEqual([1, 'rgb(10, 20, 30)']);
+      expect(getAlpha('rgba(10, 20, 30, 1)')).toEqual([1, 'rgb(10, 20, 30)']);
+      expect(getAlpha('rgba(10, 20, 30, -0.1)')).toEqual([1, 'rgb(10, 20, 30)']);
+      expect(getAlpha('rgba(10, 20, 30, 1.1)')).toEqual([1, 'rgb(10, 20, 30)']);
 
-      expect(getAlpha('rgba(10, 20, 30, 60 % )')).toBe(0.6);
-      expect(getAlpha('  device-cmyk  (  10%  , 20%  , 30%  , 40%  , 60 % ,  red  )  ')).toBe(0.6);
+      expect(getAlpha('rgba(10, 20, 30, 60 % )')).toEqual([0.6, 'rgb(10, 20, 30)']);
+      expect(getAlpha('  device-cmyk  (  10%  , 20%  , 30%  , 40%  , 60 % ,  red  )  '))
+        .toEqual([0.6, 'device-cmyk(10%, 20%, 30%, 40%)']);
     });
 
     it('RGB-Hex', function() {
-      expect(getAlpha('#aabbcc99')).toBe(0.6);
-      expect(getAlpha('#abc9')).toBe(0.6);
-      expect(getAlpha('#aabbcc00')).toBe(0);
-      expect(getAlpha('#abc0')).toBe(0);
-      expect(getAlpha('#aabbccff')).toBe(1);
-      expect(getAlpha('#abcf')).toBe(1);
+      expect(getAlpha('#aabbcc99')).toEqual([0.6, '#aabbcc']);
+      expect(getAlpha('#abc9')).toEqual([0.6, '#abc']);
+      expect(getAlpha('#aabbcc00')).toEqual([0, '#aabbcc']);
+      expect(getAlpha('#abc0')).toEqual([0, '#abc']);
+      expect(getAlpha('#aabbccff')).toEqual([1, '#aabbcc']);
+      expect(getAlpha('#abcf')).toEqual([1, '#abc']);
 
-      expect(getAlpha('  #aaBBCc99  ')).toBe(0.6);
-      expect(getAlpha('  #aBC9  ')).toBe(0.6);
+      expect(getAlpha('  #aaBBCc99  ')).toEqual([0.6, '#aaBBCc']);
+      expect(getAlpha('  #aBC9  ')).toEqual([0.6, '#aBC']);
     });
 
     it('transparent', function() {
-      expect(getAlpha('transparent')).toBe(0);
-      expect(getAlpha('  trANSPARent  ')).toBe(0);
+      expect(getAlpha('transparent')).toEqual([0, 'transparent']);
+      expect(getAlpha('  trANSPARent  ')).toEqual([0, 'trANSPARent']);
     });
   });
 
