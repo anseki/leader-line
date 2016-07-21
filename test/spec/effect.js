@@ -403,7 +403,7 @@ describe('effect', function() {
 
   });
 
-  describe('EFFECTS.*', function() {
+  describe('EFFECTS', function() {
 
     beforeEach(loadBefore);
 
@@ -653,6 +653,181 @@ describe('effect', function() {
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
       expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+
+      pageDone();
+    });
+
+    it(registerTitle('gradient'), function() {
+      var props = window.insProps[ll._id],
+        color0, color1, point0, point1;
+
+      ll.startPlug = ll.endPlug = 'square'; // to disable overhead
+
+      // init()
+      ll.setOptions({
+        startPlugColor: (color0 = 'red'), // default: plug_colorSE[0]
+        endPlugColor: (color1 = 'blue') // default: plug_colorSE[1]
+      });
+      point0 = {x: props.aplStats.position_socketXYSE[0].x, y: props.aplStats.position_socketXYSE[0].y};
+      point1 = {x: props.aplStats.position_socketXYSE[1].x, y: props.aplStats.position_socketXYSE[1].y};
+      traceLog.clear();
+      ll.gradient = true;
+      expect(traceLog.log).toContain('<EFFECTS.gradient.init>');
+      expect(props.events.cur_plug_colorSE.length).toBe(1); // addEventHandler
+      expect(props.events.apl_path.length).toBe(1); // addEventHandler
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
+        'curStats.gradient_colorSE[0]=' + color0,
+        'curStats.gradient_colorSE[1]=' + color1,
+        'aplStats.gradient_colorSE[0]=' + color0,
+        'aplStats.gradient_pointSE[0].x', 'aplStats.gradient_pointSE[0].y',
+        'aplStats.gradient_colorSE[1]=' + color1,
+        'aplStats.gradient_pointSE[1].x', 'aplStats.gradient_pointSE[1].y'
+      ]);
+      expect(props.curStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.curStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.aplStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.aplStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
+      expect(props.aplStats.gradient_pointSE[1]).toEqual(point1);
+
+      // update() by events cur_plug_colorSE
+      traceLog.clear();
+      ll.startPlugColor = (color0 = 'green');
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.gradient.init>', '<EFFECTS.gradient.remove>']);
+      expect(traceLog.getTaggedLog('updatePlug')).toContain('plug_colorSE[0]=green');
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
+        'curStats.gradient_colorSE[0]=' + color0,
+        'aplStats.gradient_colorSE[0]=' + color0
+      ]);
+      expect(props.curStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.curStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.aplStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.aplStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
+      expect(props.aplStats.gradient_pointSE[1]).toEqual(point1);
+
+      // update() by events cur_line_color -> cur_plug_colorSE
+      ll.endPlugColor = 'auto';
+      traceLog.clear();
+      ll.color = (color1 = 'lime');
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.gradient.init>', '<EFFECTS.gradient.remove>']);
+      expect(traceLog.getTaggedLog('updateLine')).toContain('line_color=lime');
+      expect(traceLog.getTaggedLog('updatePlug')).toContain('plug_colorSE[1]=lime');
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
+        'curStats.gradient_colorSE[1]=' + color1,
+        'aplStats.gradient_colorSE[1]=' + color1
+      ]);
+      expect(props.curStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.curStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.aplStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.aplStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
+      expect(props.aplStats.gradient_pointSE[1]).toEqual(point1);
+
+      // update() by events apl_path
+      traceLog.clear();
+      ll.end = document.getElementById('elm2');
+      point1 = {x: props.aplStats.position_socketXYSE[1].x, y: props.aplStats.position_socketXYSE[1].y};
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.gradient.init>', '<EFFECTS.gradient.remove>']);
+      expect(traceLog.getTaggedLog('updatePath')).toContain('setPathData');
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
+        'aplStats.gradient_pointSE[1].x', 'aplStats.gradient_pointSE[1].y'
+      ]);
+      expect(props.curStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.curStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.aplStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.aplStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
+      expect(props.aplStats.gradient_pointSE[1]).toEqual(point1);
+
+      // update() by options
+      color0 = 'green'; // same
+      color1 = 'yellow';
+      traceLog.clear();
+      ll.gradient = {startColor: color0, endColor: color1};
+      expect(traceLog.log).toContainAll(['<EFFECTS.gradient.remove>', '<EFFECTS.gradient.init>']);
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
+        // curStats.gradient_colorSE[0] are not updated (curStats* were not cleared by remove())
+        'curStats.gradient_colorSE[1]=' + color1,
+        'aplStats.gradient_colorSE[0]=' + color0,
+        'aplStats.gradient_pointSE[0].x', 'aplStats.gradient_pointSE[0].y',
+        'aplStats.gradient_colorSE[1]=' + color1,
+        'aplStats.gradient_pointSE[1].x', 'aplStats.gradient_pointSE[1].y'
+      ]);
+      expect(props.curStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.curStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.aplStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.aplStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
+      expect(props.aplStats.gradient_pointSE[1]).toEqual(point1);
+
+      // update() by events (ignored)
+      traceLog.clear();
+      ll.endPlugColor = 'pink';
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.gradient.init>', '<EFFECTS.gradient.remove>']);
+      expect(traceLog.getTaggedLog('updatePlug')).toContain('plug_colorSE[1]=pink');
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([]); // not updated
+      expect(props.curStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.curStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.aplStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.aplStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
+      expect(props.aplStats.gradient_pointSE[1]).toEqual(point1);
+
+      // update() by bindWindow()
+      traceLog.clear();
+      ll.setOptions({
+        start: document.getElementById('iframe1').contentDocument.getElementById('elm1'),
+        end: document.getElementById('iframe1').contentDocument.getElementById('elm2')
+      });
+      point0 = {x: props.aplStats.position_socketXYSE[0].x, y: props.aplStats.position_socketXYSE[0].y};
+      point1 = {x: props.aplStats.position_socketXYSE[1].x, y: props.aplStats.position_socketXYSE[1].y};
+      // remove() in <bindWindow> -> init()
+      expect(traceLog.log).toContainAll(['<bindWindow>', '<EFFECTS.gradient.remove>', '<EFFECTS.gradient.init>']);
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
+        // cur* are not updated
+        'aplStats.gradient_colorSE[0]=' + color0,
+        'aplStats.gradient_pointSE[0].x', 'aplStats.gradient_pointSE[0].y',
+        'aplStats.gradient_colorSE[1]=' + color1,
+        'aplStats.gradient_pointSE[1].x', 'aplStats.gradient_pointSE[1].y'
+      ]);
+      expect(props.curStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.curStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.aplStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.aplStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
+      expect(props.aplStats.gradient_pointSE[1]).toEqual(point1);
+
+      // remove()
+      traceLog.clear();
+      ll.gradient = false;
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.gradient.init>', '<EFFECTS.gradient.update>']);
+      expect(traceLog.log).toContain('<EFFECTS.gradient.remove>');
+      expect(props.events.cur_plug_colorSE.length).toBe(0); // removeEventHandler
+      expect(props.events.apl_path.length).toBe(0); // removeEventHandler
+      // curStats* are not cleared
+      expect(props.curStats.gradient_colorSE[0]).toBe(color0);
+      expect(props.aplStats.gradient_colorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.gradient_colorSE[1]).toBe(color1);
+      expect(props.aplStats.gradient_colorSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
+      expect(props.aplStats.gradient_pointSE[0]).toEqual({});
+      expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
+      expect(props.aplStats.gradient_pointSE[1]).toEqual({});
 
       pageDone();
     });

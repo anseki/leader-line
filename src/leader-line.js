@@ -1109,9 +1109,9 @@
               events.apl_plug_colorSE/* [DEBUG] */, 'plug_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
             props.plugFaceSE[i].style.fill = value;
             updated = true;
-            if ((IS_BLINK || IS_WEBKIT) && !curStats.line_colorTra) {
-              // [BLINK], [WEBKIT] capsMaskMarkerShapeSE is not updated when line has no alpha
-              forceReflowAdd(props, props.capsMaskLine);
+            if ((IS_BLINK || IS_WEBKIT || IS_TRIDENT) && !curStats.line_colorTra) {
+              // [BLINK], [WEBKIT], [TRIDENT] capsMaskMarkerShapeSE is not updated when line has no alpha
+              forceReflowAdd(props, IS_TRIDENT ? props.lineMaskCaps : props.capsMaskLine);
             }
           }
 
@@ -1160,6 +1160,11 @@
                 /* [DEBUG] */, 'plugOutline_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
               props.plugOutlineFaceSE[i].style.fill = value;
               updated = true;
+              if (IS_TRIDENT) {
+                // [TRIDENT] lineMaskCaps is not updated when plugOutline_colorTraSE is changed
+                forceReflowAdd(props, props.lineMaskCaps);
+                forceReflowAdd(props, props.lineOutlineMaskCaps);
+              }
             }
 
             if (setStat(props, aplStats.plugOutline_strokeWidthSE, i,

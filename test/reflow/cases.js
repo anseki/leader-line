@@ -78,7 +78,7 @@ window.addEventListener('load', function() {
       },
       {
         fnc: function() {
-          // [None]
+          // [TRIDENT] lineMaskCaps is not updated when plugOutline_colorTraSE is changed
           ll.setOptions({
             startPlug: 'arrow2',
             outline: true,
@@ -199,7 +199,7 @@ window.addEventListener('load', function() {
       },
       {
         fnc: function() {
-          // [BLINK], [WEBKIT] capsMaskMarkerShapeSE is not updated when line has no alpha
+          // [BLINK], [WEBKIT], [TRIDENT] capsMaskMarkerShapeSE is not updated when line has no alpha
           ll.setOptions({
             color: 'rgb(255, 0, 0)'
           });
