@@ -50,9 +50,9 @@
      * @property {number} heightR
      * @property {number} bCircle
      * @property {number} overhead
-     * @property {boolean} noRotate
-     * @property {number} outlineBase
-     * @property {number} outlineMax
+     * @property {(boolean|null)} noRotate
+     * @property {(number|null)} outlineBase
+     * @property {(number|null)} outlineMax
      */
 
     /** @typedef {{symbolId: string, SymbolConf}} SYMBOLS */
@@ -949,8 +949,10 @@
         value;
 
       updated = setStat(props, curStats.plugOutline_enabledSE, i,
-        curStats.plug_enabled && curStats.plug_enabledSE[i] &&
-          symbolConf.outlineBase && options.plugOutlineEnabledSE[i],
+        options.plugOutlineEnabledSE[i] &&
+          // `curStats.plug_enabled` might be independent of `curStats.plug_enabledSE` in future version.
+          curStats.plug_enabled && curStats.plug_enabledSE[i] &&
+          !!symbolConf && !!symbolConf.outlineBase, // Not depend on `curStats.plug_enabledSE`
         events.cur_plugOutline_enabledSE
         /* [DEBUG] */, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
@@ -963,7 +965,7 @@
         events.cur_plugOutline_colorTraSE
         /* [DEBUG] */, 'plugOutline_colorTraSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
 
-      if (curStats.plugOutline_enabledSE[i]) {
+      if (symbolConf && symbolConf.outlineBase) { // Not depend on `curStats.plugOutline_enabledSE`
 
         value = options.plugOutlineSizeSE[i];
         if (value > symbolConf.outlineMax) { value = symbolConf.outlineMax; }

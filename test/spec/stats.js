@@ -374,6 +374,66 @@ describe('stats', function() {
       'plugOutline_inStrokeWidthSE[0]'
     ]);
 
+    // plugOutline_strokeWidthSE is limited by symbolConf
+    // arrow2: {outlineBase: 1, outlineMax: 1.75}
+    traceLog.clear();
+    ll.startPlugOutlineSize = 1.7;
+    expect(traceLog.getTaggedLog('updatePlugOutline')).toContainAll([
+      'plugOutline_strokeWidthSE[0]', 'plugOutline_inStrokeWidthSE[0]'
+    ]);
+    expect(props.options.plugOutlineEnabledSE[0]).toBe(true);
+    expect(props.curStats.plugOutline_enabledSE[0]).toBe(true);
+    expect(props.curStats.plugOutline_strokeWidthSE[0]).toBe(3.4); // options.plugOutlineSizeSE * outlineBase * 2
+    expect(ll.startPlugOutlineSize).toBe(1.7);
+
+    // over outlineMax
+    traceLog.clear();
+    ll.startPlugOutlineSize = 1.76;
+    expect(traceLog.getTaggedLog('updatePlugOutline')).toContainAll([
+      'plugOutline_strokeWidthSE[0]', 'plugOutline_inStrokeWidthSE[0]'
+    ]);
+    expect(props.options.plugOutlineEnabledSE[0]).toBe(true);
+    expect(props.curStats.plugOutline_enabledSE[0]).toBe(true);
+    // adjusted
+    expect(props.curStats.plugOutline_strokeWidthSE[0]).toBe(3.5); // options.plugOutlineSizeSE * outlineBase * 2
+    expect(ll.startPlugOutlineSize).toBe(1.76); // not adjusted
+
+    // outlineMax
+    traceLog.clear();
+    ll.startPlugOutlineSize = 1.75;
+    expect(traceLog.getTaggedLog('updatePlugOutline')).toEqual(['not-updated']); // not changed
+    expect(props.options.plugOutlineEnabledSE[0]).toBe(true);
+    expect(props.curStats.plugOutline_enabledSE[0]).toBe(true);
+    expect(props.curStats.plugOutline_strokeWidthSE[0]).toBe(3.5); // options.plugOutlineSizeSE * outlineBase * 2
+    expect(ll.startPlugOutlineSize).toBe(1.75);
+
+    // change symbol
+    // arrow1: {outlineBase: 2, outlineMax: 1.5}
+    traceLog.clear();
+    ll.startPlug = 'arrow1';
+    expect(traceLog.getTaggedLog('updatePlugOutline')).toContainAll([
+      'plugOutline_strokeWidthSE[0]', 'plugOutline_inStrokeWidthSE[0]'
+    ]);
+    expect(props.options.plugOutlineEnabledSE[0]).toBe(true);
+    expect(props.curStats.plugOutline_enabledSE[0]).toBe(true);
+    // adjusted
+    expect(props.curStats.plugOutline_strokeWidthSE[0]).toBe(6); // options.plugOutlineSizeSE * outlineBase * 2
+    expect(ll.startPlugOutlineSize).toBe(1.75); // not adjusted
+
+    // change symbol
+    // hand: {outlineMax: null}
+    traceLog.clear();
+    ll.startPlug = 'hand';
+    expect(traceLog.getTaggedLog('updatePlugOutline')).toContainAll([
+      'plugOutline_enabledSE[0]=false'
+    ]);
+    expect(traceLog.getTaggedLog('updateFaces')).toContainAll([
+      'plugOutline_enabledSE[0]=false'
+    ]);
+    expect(props.options.plugOutlineEnabledSE[0]).toBe(true);
+    expect(props.curStats.plugOutline_enabledSE[0]).toBe(false);
+    expect(ll.startPlugOutlineSize).toBe(1.75); // not adjusted
+
     pageDone();
   });
 
