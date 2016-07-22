@@ -25,7 +25,7 @@ describe('effect', function() {
     }, 'effect - ' + titles.shift());
   }
 
-  describe('update', function() {
+  describe('effectOptions', function() {
 
     beforeEach(loadBefore);
 
@@ -64,7 +64,7 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('setEffect')).toEqual(['dash_enabled=true']);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(ll.dash).toEqual({len: 15, gap: null, animation: false});
+      expect(ll.dash).toEqual({len: 15, gap: 'auto', animation: false});
 
       // update options
       traceLog.clear();
@@ -73,7 +73,7 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]); // not include dash_enabled
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(ll.dash).toEqual({len: 16, gap: null, animation: false});
+      expect(ll.dash).toEqual({len: 16, gap: 'auto', animation: false});
 
       // options -> true
       traceLog.clear();
@@ -122,7 +122,7 @@ describe('effect', function() {
     });
 
     it(registerTitle('setEffect()'), function() {
-      var props = window.insProps[ll._id], value;
+      var props = window.insProps[ll._id];
 
       // OFF -> ON
       expect(props.curStats.dash_enabled).toBe(false);
@@ -135,10 +135,11 @@ describe('effect', function() {
       expect(traceLog.log).not.toContain('<EFFECTS.dash.remove>');
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
+      expect(props.curStats.dash_options).toEqual({animation: false}); // default options
+      expect(props.aplStats.dash_options).toEqual({animation: false}); // default options
       expect(ll.dash).toBe(true);
 
       // same
-      value = props.curStats.dash_options; // default options
       traceLog.clear();
       ll.dash = {}; // change this, and call setEffect()
       expect(traceLog.getTaggedLog('setEffect')).toEqual([]); // not include dash_enabled
@@ -148,9 +149,9 @@ describe('effect', function() {
       ]);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual(value);
-      expect(props.aplStats.dash_options).toEqual(value);
-      expect(ll.dash).toEqual(value); // it's normalized, default options
+      expect(props.curStats.dash_options).toEqual({animation: false}); // default options
+      expect(props.aplStats.dash_options).toEqual({animation: false}); // default options
+      expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // default options
 
       // update options
       traceLog.clear();
@@ -163,10 +164,10 @@ describe('effect', function() {
       ]);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: 15, gap: null, animation: false});
-      expect(props.aplStats.dash_options).toEqual({len: 15, gap: null, animation: false});
+      expect(props.curStats.dash_options).toEqual({len: 15, animation: false});
+      expect(props.aplStats.dash_options).toEqual({len: 15, animation: false});
       expect(props.curStats.dash_options).not.toBe(props.aplStats.dash_options); // it's copy
-      expect(ll.dash).toEqual({len: 15, gap: null, animation: false});
+      expect(ll.dash).toEqual({len: 15, gap: 'auto', animation: false});
 
       // Change to element in iframe, `baseWindow` is changed
       traceLog.clear();
@@ -181,9 +182,9 @@ describe('effect', function() {
       ]);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: 15, gap: null, animation: false});
-      expect(props.aplStats.dash_options).toEqual({len: 15, gap: null, animation: false});
-      expect(ll.dash).toEqual({len: 15, gap: null, animation: false});
+      expect(props.curStats.dash_options).toEqual({len: 15, animation: false});
+      expect(props.aplStats.dash_options).toEqual({len: 15, animation: false});
+      expect(ll.dash).toEqual({len: 15, gap: 'auto', animation: false});
 
       // ON -> OFF
       traceLog.clear();
@@ -193,7 +194,7 @@ describe('effect', function() {
       expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.update>']);
       expect(props.curStats.dash_enabled).toBe(false);
       expect(props.aplStats.dash_enabled).toBe(false);
-      expect(props.curStats.dash_options).toEqual({len: 15, gap: null, animation: false}); // it's not cleared
+      expect(props.curStats.dash_options).toEqual({len: 15, animation: false}); // it's not cleared
       expect(props.aplStats.dash_options).toEqual({});
       expect(ll.dash).toBe(false);
 
@@ -219,8 +220,8 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toNotContainAny(['anim.add', 'anim.remove']);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: null, gap: null, animation: false});
-      expect(props.aplStats.dash_options).toEqual({len: null, gap: null, animation: false});
+      expect(props.curStats.dash_options).toEqual({animation: false});
+      expect(props.aplStats.dash_options).toEqual({animation: false});
       expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(ll.dash).toBe(true);
@@ -236,11 +237,11 @@ describe('effect', function() {
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: null, gap: null, animation: false});
-      expect(props.aplStats.dash_options).toEqual({len: null, gap: null, animation: false});
+      expect(props.curStats.dash_options).toEqual({animation: false});
+      expect(props.aplStats.dash_options).toEqual({animation: false});
       expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(ll.dash).toEqual({len: null, gap: null, animation: false}); // optimized
+      expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // optimized
 
       // option object update, animation: null
       traceLog.clear();
@@ -253,11 +254,11 @@ describe('effect', function() {
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toNotContainAny(['anim.add', 'anim.remove']);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: 5, gap: null, animation: false});
-      expect(props.aplStats.dash_options).toEqual({len: 5, gap: null, animation: false});
+      expect(props.curStats.dash_options).toEqual({len: 5, animation: false});
+      expect(props.aplStats.dash_options).toEqual({len: 5, animation: false});
       expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(ll.dash).toEqual({len: 5, gap: null, animation: false}); // optimized
+      expect(ll.dash).toEqual({len: 5, gap: 'auto', animation: false}); // optimized
 
       // option object, animation: false
       ll.dash = true;
@@ -272,11 +273,11 @@ describe('effect', function() {
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: null, gap: null, animation: false});
-      expect(props.aplStats.dash_options).toEqual({len: null, gap: null, animation: false});
+      expect(props.curStats.dash_options).toEqual({animation: false});
+      expect(props.aplStats.dash_options).toEqual({animation: false});
       expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(ll.dash).toEqual({len: null, gap: null, animation: false}); // optimized
+      expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // optimized
 
       // option object, animation: true
       traceLog.clear();
@@ -293,12 +294,12 @@ describe('effect', function() {
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: null, gap: null, animation: true});
-      expect(props.aplStats.dash_options).toEqual({len: null, gap: null, animation: true});
+      expect(props.curStats.dash_options).toEqual({animation: true});
+      expect(props.aplStats.dash_options).toEqual({animation: true});
       // `animation` is `true`, but `dash_animOptions` has default options
       expect(props.curStats.dash_animOptions).toEqual({duration: 1000, timing: 'linear'});
       expect(props.aplStats.dash_animOptions).toEqual({duration: 1000, timing: 'linear'});
-      expect(ll.dash).toEqual({len: null, gap: null, animation: true}); // optimized
+      expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: true}); // optimized
 
       // option object, animation: object
       traceLog.clear();
@@ -317,14 +318,12 @@ describe('effect', function() {
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       // `animation` is `dash_animOptions`
-      expect(props.curStats.dash_options).toEqual(
-        {len: null, gap: null, animation: {duration: 1000, timing: 'linear'}});
-      expect(props.aplStats.dash_options).toEqual(
-        {len: null, gap: null, animation: {duration: 1000, timing: 'linear'}});
+      expect(props.curStats.dash_options).toEqual({animation: {duration: 1000, timing: 'linear'}});
+      expect(props.aplStats.dash_options).toEqual( {animation: {duration: 1000, timing: 'linear'}});
       expect(props.curStats.dash_animOptions).toEqual({duration: 1000, timing: 'linear'}); // optimized
       expect(props.aplStats.dash_animOptions).toEqual({duration: 1000, timing: 'linear'}); // optimized
       expect(ll.dash).toEqual(
-        {len: null, gap: null, animation: {duration: 1000, timing: 'linear'}}); // optimized
+        {len: 'auto', gap: 'auto', animation: {duration: 1000, timing: 'linear'}}); // optimized
 
       // option object, animation: object update
       traceLog.clear();
@@ -343,14 +342,12 @@ describe('effect', function() {
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       // `animation` is `dash_animOptions`
-      expect(props.curStats.dash_options).toEqual(
-        {len: null, gap: null, animation: {duration: 1500, timing: 'linear'}});
-      expect(props.aplStats.dash_options).toEqual(
-        {len: null, gap: null, animation: {duration: 1500, timing: 'linear'}});
+      expect(props.curStats.dash_options).toEqual({animation: {duration: 1500, timing: 'linear'}});
+      expect(props.aplStats.dash_options).toEqual({animation: {duration: 1500, timing: 'linear'}});
       expect(props.curStats.dash_animOptions).toEqual({duration: 1500, timing: 'linear'}); // optimized
       expect(props.aplStats.dash_animOptions).toEqual({duration: 1500, timing: 'linear'}); // optimized
       expect(ll.dash).toEqual(
-        {len: null, gap: null, animation: {duration: 1500, timing: 'linear'}}); // optimized
+        {len: 'auto', gap: 'auto', animation: {duration: 1500, timing: 'linear'}}); // optimized
 
       // updated by event
       traceLog.clear();
@@ -367,14 +364,12 @@ describe('effect', function() {
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
       // `animation` is `dash_animOptions`
-      expect(props.curStats.dash_options).toEqual(
-        {len: null, gap: null, animation: {duration: 1500, timing: 'linear'}});
-      expect(props.aplStats.dash_options).toEqual(
-        {len: null, gap: null, animation: {duration: 1500, timing: 'linear'}});
+      expect(props.curStats.dash_options).toEqual({animation: {duration: 1500, timing: 'linear'}});
+      expect(props.aplStats.dash_options).toEqual({animation: {duration: 1500, timing: 'linear'}});
       expect(props.curStats.dash_animOptions).toEqual({duration: 1500, timing: 'linear'}); // optimized
       expect(props.aplStats.dash_animOptions).toEqual({duration: 1500, timing: 'linear'}); // optimized
       expect(ll.dash).toEqual(
-        {len: null, gap: null, animation: {duration: 1500, timing: 'linear'}}); // optimized
+        {len: 'auto', gap: 'auto', animation: {duration: 1500, timing: 'linear'}}); // optimized
 
       // option object, animation: false
       traceLog.clear();
@@ -392,11 +387,79 @@ describe('effect', function() {
       // it's not updated.
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: null, gap: null, animation: false});
-      expect(props.aplStats.dash_options).toEqual({len: null, gap: null, animation: false});
+      expect(props.curStats.dash_options).toEqual({animation: false});
+      expect(props.aplStats.dash_options).toEqual({animation: false});
       expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(ll.dash).toEqual({len: null, gap: null, animation: false}); // optimized
+      expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // optimized
+
+      // valid value
+      traceLog.clear();
+      ll.dash = {len: 5, gap: 10};
+      expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
+      expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
+      // reset
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
+      expect(props.curStats.dash_enabled).toBe(true);
+      expect(props.aplStats.dash_enabled).toBe(true);
+      expect(props.curStats.dash_options).toEqual({len: 5, gap: 10, animation: false});
+      expect(props.aplStats.dash_options).toEqual({len: 5, gap: 10, animation: false});
+      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.dash).toEqual({len: 5, gap: 10, animation: false}); // optimized
+
+      // invalid value
+      traceLog.clear();
+      ll.dash = {len: 'a', gap: 0}; // these are ignored
+      expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
+      expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
+      // reset
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
+      expect(props.curStats.dash_enabled).toBe(true);
+      expect(props.aplStats.dash_enabled).toBe(true);
+      expect(props.curStats.dash_options).toEqual({animation: false});
+      expect(props.aplStats.dash_options).toEqual({animation: false});
+      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // optimized
+
+      // valid auto
+      traceLog.clear();
+      ll.dash = {len: 'auto', gap: 10};
+      expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
+      expect(traceLog.getTaggedLog('setEffect')).toEqual([]);
+      // reset
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dash.init>', '<EFFECTS.dash.remove>', '<EFFECTS.dash.update>'
+      ]);
+      expect(props.curStats.dash_enabled).toBe(true);
+      expect(props.aplStats.dash_enabled).toBe(true);
+      expect(props.curStats.dash_options).toEqual({len: undefined, gap: 10, animation: false});
+      expect(props.aplStats.dash_options).toEqual({len: undefined, gap: 10, animation: false});
+      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.dash).toEqual({len: 'auto', gap: 10, animation: false}); // optimized
+
+      // invalid auto
+      traceLog.clear();
+      ll.dropShadow = {len: 'auto', gap: 10}; // default len: 15
+      expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
+      expect(traceLog.getTaggedLog('setEffect')).toEqual(['dropShadow_enabled=true']);
+      // reset
+      expect(traceLog.log).toContainAll([
+        '<EFFECTS.dropShadow.init>'
+      ]);
+      expect(props.curStats.dropShadow_enabled).toBe(true);
+      expect(props.aplStats.dropShadow_enabled).toBe(true);
+      expect(props.curStats.dropShadow_options).toEqual({len: 15, gap: 10});
+      expect(props.aplStats.dropShadow_options).toEqual({len: 15, gap: 10});
+      expect(props.curStats.dropShadow_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dropShadow_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(ll.dropShadow).toEqual({len: 15, gap: 10}); // optimized
 
       pageDone();
     });

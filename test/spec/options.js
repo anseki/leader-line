@@ -2,7 +2,7 @@
 /* global loadPage:false, customMatchers:false */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
-(function() {
+describe('options', function() {
   'use strict';
 
   var window, document, traceLog, pageDone, ll;
@@ -130,6 +130,23 @@
       expect(traceLog.getTaggedLog('setOptions')).not.toContain('needs.plug');
       expect(props.options.plugColorSE[0]).toBe('red');
       expect(ll.startPlugColor).toBe('red');
+
+      // trim *color*
+      traceLog.clear();
+      ll.setOptions({
+        color: '  red    ',
+        endPlugColor: '  green    ',
+        outlineColor: '  yellow    ',
+        startPlugOutlineColor: '  pink    '
+      });
+      expect(props.options.lineColor).toBe('red');
+      expect(props.options.plugColorSE[1]).toBe('green');
+      expect(props.options.lineOutlineColor).toBe('yellow');
+      expect(props.options.plugOutlineColorSE[0]).toBe('pink');
+      expect(ll.color).toBe('red');
+      expect(ll.endPlugColor).toBe('green');
+      expect(ll.outlineColor).toBe('yellow');
+      expect(ll.startPlugOutlineColor).toBe('pink');
 
       // 'auto'
       traceLog.clear();
@@ -614,4 +631,4 @@
 
   });
 
-})();
+});

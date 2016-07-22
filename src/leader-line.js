@@ -176,13 +176,14 @@
   // [/DEBUG]
 
   function hasChanged(a, b) {
-    var typeA;
+    var typeA, keysA;
     return typeof a !== typeof b ||
       (typeA = isObject(a) ? 'obj' : Array.isArray(a) ? 'array' : '') !==
         (isObject(b) ? 'obj' : Array.isArray(b) ? 'array' : '') ||
       (
         typeA === 'obj' ?
-          Object.keys(a).some(function(prop) { return hasChanged(a[prop], b[prop]); }) :
+          hasChanged((keysA = Object.keys(a)), Object.keys(b)) ||
+            keysA.some(function(prop) { return hasChanged(a[prop], b[prop]); }) :
         typeA === 'array' ?
           a.length !== b.length || a.some(function(aVal, i) { return hasChanged(aVal, b[i]); }) :
         a !== b
@@ -2156,29 +2157,27 @@
       var effectConf = EFFECTS[effectName];
 
       function getOptions(optEffect) {
-        var effectOptions =
-          effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
-            var propName = optionConf[1], key2IdType = optionConf[2],
-              optionName = optionConf[3], i = optionConf[4],
-              value = // Don't use closure.
-                i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
-                optionName ? insProps[that._id].options[optionName] :
-                insProps[that._id].options[propName],
-              key;
-            effectOptions[propName] = optionConf[0] === 'id' ? (
-                !value ? KEYWORD_AUTO :
-                Object.keys(key2IdType).some(function(optKey) {
-                  if (key2IdType[optKey] === value) { key = optKey; return true; }
-                  return false;
-                }) ? key : new Error('It\'s broken')
-              ) : (
-                value == null ? KEYWORD_AUTO : copyTree(value) // eslint-disable-line eqeqeq
-              );
-            return effectOptions;
-          }, {});
+        var effectOptions = effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
+          var propName = optionConf[1], key2Id = optionConf[2],
+            optionName = optionConf[3], i = optionConf[4],
+            value =
+              i != null ? optEffect[optionName][i] : // eslint-disable-line eqeqeq
+              optionName ? optEffect[optionName] :
+              optEffect[propName],
+            key;
+          effectOptions[propName] = optionConf[0] === 'id' ? (
+              !value ? KEYWORD_AUTO :
+              Object.keys(key2Id).some(function(optKey) {
+                if (key2Id[optKey] === value) { key = optKey; return true; }
+                return false;
+              }) ? key : new Error('It\'s broken')
+            ) : (
+              value == null ? KEYWORD_AUTO : copyTree(value) // eslint-disable-line eqeqeq
+            );
+          return effectOptions;
+        }, {});
         if (effectConf.anim) {
-          effectOptions.animation =
-            isObject(optEffect.animation) ? copyTree(optEffect.animation) : optEffect.animation;
+          effectOptions.animation = copyTree(optEffect.animation);
         }
         return effectOptions;
       }
@@ -2633,15 +2632,6 @@
         ['type', 'endColor', 'string', 'colorSE', 1, null, null, true]
       ],
 
-      // effectOptions: startColor, endColor
-      getValidOptions: function(effectOptions) {
-        return ['startColor', 'endColor'].reduce(function(options, optionName) {
-          options[optionName] =
-            typeof effectOptions[optionName] === 'string' ? effectOptions[optionName] : null;
-          return options;
-        }, {});
-      },
-
       init: function(props) {
         traceLog.add('<EFFECTS.gradient.init>'); // [DEBUG/]
         addEventHandler(props, 'cur_plug_colorSE', EFFECTS.gradient.update);
@@ -2669,9 +2659,9 @@
           pathList = props.pathList.animVal || props.pathList.baseVal,
           pathSeg, point;
 
-        ['startColor', 'endColor'].forEach(function(optionName, i) {
-          checkCurStats(props, 'gradient_colorSE', i, effectOptions[optionName] || curStats.plug_colorSE[i]); // [DEBUG/]
-          curStats.gradient_colorSE[i] = effectOptions[optionName] || curStats.plug_colorSE[i];
+        [0, 1].forEach(function(i) {
+          checkCurStats(props, 'gradient_colorSE', i, effectOptions.colorSE[i] || curStats.plug_colorSE[i]); // [DEBUG/]
+          curStats.gradient_colorSE[i] = effectOptions.colorSE[i] || curStats.plug_colorSE[i];
         });
 
         point = pathList[0][0];
@@ -2705,6 +2695,30 @@
         });
 
         traceLog.add('</EFFECTS.gradient.update>'); // [DEBUG/]
+      }
+    },
+
+    dropShadow: {
+      stats: {dropShadow_colorSE: {hasSE: true}, dropShadow_pointSE: {hasSE: true, hasProps: true}},
+
+      optionsConf: [
+        ['type', 'len', 'number', null, null, 15, function(value) { return value > 0; }],
+        ['type', 'gap', 'number', null, null, null, function(value) { return value > 0; }]
+      ],
+
+      init: function(props) {
+        traceLog.add('<EFFECTS.dropShadow.init>'); // [DEBUG/]
+        traceLog.add('</EFFECTS.dropShadow.init>'); // [DEBUG/]
+      },
+
+      remove: function(props) {
+        traceLog.add('<EFFECTS.dropShadow.remove>'); // [DEBUG/]
+        traceLog.add('</EFFECTS.dropShadow.remove>'); // [DEBUG/]
+      },
+
+      update: function(props) {
+        traceLog.add('<EFFECTS.dropShadow.update>'); // [DEBUG/]
+        traceLog.add('</EFFECTS.dropShadow.update>'); // [DEBUG/]
       }
     }
   };
