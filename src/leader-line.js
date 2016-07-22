@@ -2136,9 +2136,10 @@
         var propName = conf[0], key2Id = conf[1], optionName = conf[2], i = conf[3];
         Object.defineProperty(that, propName, {
           get: function() {
-            var value = optionName ? // Don't use closure.
-              insProps[that._id].options[optionName][i] :
-              insProps[that._id].options[propName],
+            var value = // Don't use closure.
+                i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
+                optionName ? insProps[that._id].options[optionName] :
+                insProps[that._id].options[propName],
               key;
             return !value ? KEYWORD_AUTO :
               Object.keys(key2Id).some(function(optKey) {
@@ -2152,9 +2153,40 @@
       });
     // Setup option accessor methods (effect)
     Object.keys(EFFECTS).forEach(function(effectName) {
+      var effectConf = EFFECTS[effectName];
+
+      function getOptions(optEffect) {
+        var effectOptions =
+          effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
+            var propName = optionConf[1], key2IdType = optionConf[2],
+              optionName = optionConf[3], i = optionConf[4],
+              value = // Don't use closure.
+                i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
+                optionName ? insProps[that._id].options[optionName] :
+                insProps[that._id].options[propName],
+              key;
+            effectOptions[propName] = optionConf[0] === 'id' ? (
+                !value ? KEYWORD_AUTO :
+                Object.keys(key2IdType).some(function(optKey) {
+                  if (key2IdType[optKey] === value) { key = optKey; return true; }
+                  return false;
+                }) ? key : new Error('It\'s broken')
+              ) : (
+                value == null ? KEYWORD_AUTO : copyTree(value) // eslint-disable-line eqeqeq
+              );
+            return effectOptions;
+          }, {});
+        if (effectConf.anim) {
+          effectOptions.animation =
+            isObject(optEffect.animation) ? copyTree(optEffect.animation) : optEffect.animation;
+        }
+        return effectOptions;
+      }
+
       Object.defineProperty(that, effectName, {
         get: function() {
-          return copyTree(insProps[that._id].options[effectName]); // Don't use closure.
+          var value = insProps[that._id].options[effectName];
+          return isObject(value) ? getOptions(value) : value;
         },
         set: createSetter(effectName),
         enumerable: true
@@ -2319,14 +2351,16 @@
 
     // LineOutline
     needs.lineOutline = setValidType('outline', null, 'lineOutlineEnabled') || needs.lineOutline;
-    needs.lineOutline = setValidType('outlineColor', null, 'lineOutlineColor') || needs.lineOutline;
+    needs.lineOutline = setValidType('outlineColor', null, 'lineOutlineColor',
+      null, null, true) || needs.lineOutline;
     needs.lineOutline = setValidType('outlineSize', null, 'lineOutlineSize', null,
       function(value) { return value > 0 && value <= 0.48; }) || needs.lineOutline;
 
     // PlugOutline
     ['startPlugOutline', 'endPlugOutline'].forEach(function(propName, i) {
       needs.plugOutline = setValidType(propName, null, 'plugOutlineEnabledSE', i) || needs.plugOutline;
-      needs.plugOutline = setValidType(propName + 'Color', 'string', 'plugOutlineColorSE', i) || needs.plugOutline;
+      needs.plugOutline = setValidType(propName + 'Color', 'string', 'plugOutlineColorSE', i,
+        null, true) || needs.plugOutline;
       // `outlineMax` is checked in `updatePlugOutline`.
       needs.plugOutline = setValidType(propName + 'Size', null, 'plugOutlineSizeSE', i,
         function(value) { return value >= 1; }) || needs.plugOutline;
@@ -2336,9 +2370,73 @@
     Object.keys(EFFECTS).forEach(function(effectName) {
       var effectConf = EFFECTS[effectName],
         keyEnabled = effectName + '_enabled', keyOptions = effectName + '_options',
-        keyAnimOptions = effectName + '_animOptions', newOption, value;
+        keyAnimOptions = effectName + '_animOptions',
+        newOption, optEffect;
 
-      function parseAnimOptions(effectOptions) {
+      function getCurOption(effectOptions, propName, optionName, index, defaultValue) {
+        var curOption = {};
+        if (optionName) {
+          if (index != null) { // eslint-disable-line eqeqeq
+            curOption.container = (effectOptions[optionName] = effectOptions[optionName] || []);
+            curOption.key = index;
+          } else {
+            curOption.container = effectOptions;
+            curOption.key = optionName;
+          }
+        } else {
+          curOption.container = effectOptions;
+          curOption.key = propName;
+        }
+        curOption.default = defaultValue;
+        curOption.acceptsAuto = curOption.default == null; // eslint-disable-line eqeqeq
+        return curOption;
+      }
+
+      function setValidId(effectOptions, newEffectOptions, propName, key2Id, optionName, index, defaultValue) {
+        var curOption = getCurOption(effectOptions, propName, optionName, index, defaultValue), key, id;
+        if (newEffectOptions[propName] != null && // eslint-disable-line eqeqeq
+            (key = (newEffectOptions[propName] + '').toLowerCase()) && (
+              curOption.acceptsAuto && key === KEYWORD_AUTO ||
+              (id = key2Id[key])
+            )) {
+          curOption.container[curOption.key] = id; // `undefined` when `KEYWORD_AUTO`
+        }
+        if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
+          curOption.container[curOption.key] = curOption.default;
+        }
+      }
+
+      function setValidType(effectOptions, newEffectOptions, propName, type, optionName, index, defaultValue,
+          check, trim) {
+        var curOption = getCurOption(effectOptions, propName, optionName, index, defaultValue), value;
+        if (!type) {
+          if (curOption.default == null) { throw new Error('Invalid `type`: ' + propName); } // eslint-disable-line eqeqeq
+          type = typeof curOption.default;
+        }
+        if (newEffectOptions[propName] != null && ( // eslint-disable-line eqeqeq
+              curOption.acceptsAuto && (newEffectOptions[propName] + '').toLowerCase() === KEYWORD_AUTO ||
+              typeof (value = newEffectOptions[propName]) === type &&
+              ((value = trim && type === 'string' && value ? value.trim() : value) || true) &&
+              (!check || check(value))
+            )) {
+          curOption.container[curOption.key] = value; // `undefined` when `KEYWORD_AUTO`
+        }
+        if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
+          curOption.container[curOption.key] = curOption.default;
+        }
+      }
+
+      function getValidOptions(newEffectOptions) {
+        var effectOptions = {};
+        effectConf.optionsConf.forEach(function(optionConf) {
+          (typeof optionConf[0] === 'function' ? optionConf[0] :
+              optionConf[0] === 'id' ? setValidId : setValidType)
+            .apply(null, [effectOptions, newEffectOptions].concat(optionConf.slice(1)));
+        });
+        return effectOptions;
+      }
+
+      function parseAnimOptions(newEffectOptions) {
         var optAnimation;
 
         function getOptions(animOptions) {
@@ -2351,13 +2449,13 @@
           };
         }
 
-        if (!effectOptions.hasOwnProperty('animation')) {
+        if (!newEffectOptions.hasOwnProperty('animation')) {
           optAnimation = !!effectConf.defaultEnabled;
           props.curStats[keyAnimOptions] = optAnimation ? getOptions({}) : null;
-        } else if (isObject(effectOptions.animation)) {
-          optAnimation = props.curStats[keyAnimOptions] = getOptions(effectOptions.animation);
+        } else if (isObject(newEffectOptions.animation)) {
+          optAnimation = props.curStats[keyAnimOptions] = getOptions(newEffectOptions.animation);
         } else { // boolean
-          optAnimation = !!effectOptions.animation;
+          optAnimation = !!newEffectOptions.animation;
           props.curStats[keyAnimOptions] = optAnimation ? getOptions({}) : null;
         }
         return optAnimation;
@@ -2368,22 +2466,22 @@
 
         if (isObject(newOption)) {
           props.curStats[keyEnabled] = true;
-          value = props.curStats[keyOptions] = effectConf.getValidOptions(newOption);
+          optEffect = props.curStats[keyOptions] = getValidOptions(newOption);
           if (effectConf.anim) {
             props.curStats[keyOptions].animation = parseAnimOptions(newOption);
           }
         } else { // boolean
-          value = props.curStats[keyEnabled] = !!newOption;
-          if (value) {
-            props.curStats[keyOptions] = effectConf.getValidOptions({});
+          optEffect = props.curStats[keyEnabled] = !!newOption;
+          if (optEffect) {
+            props.curStats[keyOptions] = getValidOptions({});
             if (effectConf.anim) {
               props.curStats[keyOptions].animation = parseAnimOptions({});
             }
           }
         }
 
-        if (hasChanged(value, options[effectName])) {
-          options[effectName] = value;
+        if (hasChanged(optEffect, options[effectName])) {
+          options[effectName] = optEffect;
           needs.effect = true;
         }
       }
@@ -2419,6 +2517,14 @@
    */
 
   /**
+   * @typedef {Array} EffectOptionConf - Args for checking ID or Type (or function)
+   *    ['id', propName, key2Id, optionName, index, defaultValue] or
+   *    ['type', propName, type, optionName, index, defaultValue, check, trim] or
+   *    [function(effectOptions, newEffectOptions, propName, type, optionName, index),
+   *            propName, type, optionName, index]
+   */
+
+  /**
    * @typedef {Object} EffectConf
    * @property {{statName: string, StatConf}} stats - Additional stats.
    * @property {Function} getValidOptions - (effectOptions)
@@ -2431,15 +2537,10 @@
       stats: {dash_len: {}, dash_gap: {}, dash_maxOffset: {}},
       anim: true, defaultAnimOptions: {duration: 1000, timing: 'linear'},
 
-      // effectOptions: len, gap
-      getValidOptions: function(effectOptions) {
-        return ['len', 'gap'].reduce(function(options, optionName) {
-          options[optionName] =
-            typeof effectOptions[optionName] === 'number' && effectOptions[optionName] > 0 ?
-              effectOptions[optionName] : null;
-          return options;
-        }, {});
-      },
+      optionsConf: [
+        ['type', 'len', 'number', null, null, null, function(value) { return value > 0; }],
+        ['type', 'gap', 'number', null, null, null, function(value) { return value > 0; }]
+      ],
 
       init: function(props) {
         traceLog.add('<EFFECTS.dash.init>'); // [DEBUG/]
@@ -2526,6 +2627,11 @@
 
     gradient: {
       stats: {gradient_colorSE: {hasSE: true}, gradient_pointSE: {hasSE: true, hasProps: true}},
+
+      optionsConf: [
+        ['type', 'startColor', 'string', 'colorSE', 0, null, null, true],
+        ['type', 'endColor', 'string', 'colorSE', 1, null, null, true]
+      ],
 
       // effectOptions: startColor, endColor
       getValidOptions: function(effectOptions) {
