@@ -33,6 +33,12 @@
    * @property {number} y
    */
 
+  /**
+   * @typedef {Object} AnimOptions
+   * @property {number} duration
+   * @property {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
+   */
+
   var
     APP_ID = 'leader-line',
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
@@ -127,6 +133,7 @@
     pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
 
     /** @typedef {{hasSE, hasProps, iniValue}} StatConf */
+    /** @type {{statId: string, StatConf}} */
     STATS = {
       line_altColor: {iniValue: false}, line_color: {}, line_colorTra: {iniValue: false}, line_strokeWidth: {},
       plug_enabled: {iniValue: false}, plug_enabledSE: {hasSE: true, iniValue: false},
@@ -157,10 +164,14 @@
       capsMaskMarker_markerWidthSE: {hasSE: true}, capsMaskMarker_markerHeightSE: {hasSE: true},
       caps_enabled: {iniValue: false}
     },
+    SHOW_STATS = {
+      show_on: {}, show_effect: {}, show_animOptions: {}, show_animId: {}
+    },
+    DEFAULT_SHOW_EFFECT = 'fade',
 
-    EFFECTS,
+    EFFECTS, SHOW_EFFECTS,
 
-    /** @typedef {Object.<_id: number, props>} insProps */
+    /** @type {Object.<_id: number, props>} */
     insProps = {},
 
     insId = 0, svg2Supported;
@@ -826,8 +837,6 @@
     props.plugsFace.href.baseVal = '#' + props.lineShapeId;
     props.plugsFace.style.display = 'none';
 
-    props.svg = baseDocument.body.appendChild(svg);
-
     props.pathList = {};
     // Init stats
     initStats(aplStats, STATS);
@@ -838,6 +847,14 @@
         aplStats[keyEnabled] = false; // it might not have been disabled by remove().
       }
     });
+
+    if (props.curStats.show_animId) {
+      SHOW_EFFECTS[aplStats.show_effect].stop(props, true); // svg.style.visibility is set
+    } else if (!props.isShown) {
+      svg.style.visibility = 'hidden';
+    }
+
+    props.svg = baseDocument.body.appendChild(svg);
 
     traceLog.add('</bindWindow>'); // [DEBUG/]
   }
@@ -2045,6 +2062,50 @@
     // [/DEBUG]
   }
 
+  function getValidAnimOptions(animOptions, defaultAnimOptions) {
+    return {
+      duration: typeof animOptions.duration === 'number' && animOptions.duration > 0 ?
+        animOptions.duration : defaultAnimOptions.duration,
+      timing: anim.validTiming(animOptions.timing) ?
+        animOptions.timing : copyTree(defaultAnimOptions.timing)
+    };
+  }
+
+  function show(props, on, effectName, animOptions) {
+    traceLog.add('<show>'); // [DEBUG/]
+    var curStats = props.curStats, aplStats = props.aplStats, update = {}, timeRatio;
+
+    function updateStats() {
+      ['show_on', 'show_effect', 'show_animOptions'].forEach(function(statName) {
+        aplStats[statName] = curStats[statName];
+      });
+    }
+
+    curStats.show_on = on;
+    if (effectName && SHOW_EFFECTS[effectName]) {
+      curStats.show_effect = effectName;
+      curStats.show_animOptions = getValidAnimOptions(
+        isObject(animOptions) ? animOptions : {}, SHOW_EFFECTS[effectName].defaultAnimOptions);
+    }
+
+    update.show_on = curStats.show_on !== aplStats.show_on;
+    update.options = curStats.show_effect !== aplStats.show_effect ||
+      hasChanged(curStats.show_animOptions, aplStats.show_animOptions);
+
+    if (props.curStats.show_animId) {
+      if (update.show_on || update.options) {
+        timeRatio = SHOW_EFFECTS[aplStats.show_effect].stop(props);
+        updateStats();
+        SHOW_EFFECTS[aplStats.show_effect][update.options ? 'init' : 'update'](props, timeRatio);
+      }
+    } else if (update.show_on) {
+      updateStats();
+      SHOW_EFFECTS[aplStats.show_effect][update.options ? 'init' : 'update'](props);
+    }
+
+    traceLog.add('</show>'); // [DEBUG/]
+  }
+
   /**
    * @class
    * @param {Element} [start] - Alternative to `options.start`.
@@ -2077,6 +2138,10 @@
       initStats(props.aplStats, effectStats);
       props.options[effectName] = false;
     });
+    initStats(props.curStats, SHOW_STATS);
+    initStats(props.aplStats, SHOW_STATS);
+    props.curStats.show_effect = DEFAULT_SHOW_EFFECT;
+    props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
 
     Object.defineProperty(this, '_id', {value: insId++});
     insProps[this._id] = props;
@@ -2103,6 +2168,7 @@
     options = options || {};
     if (start) { options.start = start; }
     if (end) { options.end = end; }
+    props.isShown = props.aplStats.show_on = !options.hide; // isShown is applied in setOptions -> bindWindow
     this.setOptions(options);
 
     // Setup option accessor methods (direct)
@@ -2398,24 +2464,17 @@
       function parseAnimOptions(newEffectOptions) {
         var optAnimation, keyAnimOptions = effectName + '_animOptions';
 
-        function getOptions(animOptions) {
-          var defaultAnimOptions = effectConf.defaultAnimOptions;
-          return {
-            duration: typeof animOptions.duration === 'number' && animOptions.duration > 0 ?
-              animOptions.duration : defaultAnimOptions.duration,
-            timing: anim.validTiming(animOptions.timing) ?
-              animOptions.timing : copyTree(defaultAnimOptions.timing)
-          };
-        }
-
         if (!newEffectOptions.hasOwnProperty('animation')) {
           optAnimation = !!effectConf.defaultEnabled;
-          props.curStats[keyAnimOptions] = optAnimation ? getOptions({}) : null;
+          props.curStats[keyAnimOptions] =
+            optAnimation ? getValidAnimOptions({}, effectConf.defaultAnimOptions) : null;
         } else if (isObject(newEffectOptions.animation)) {
-          optAnimation = props.curStats[keyAnimOptions] = getOptions(newEffectOptions.animation);
+          optAnimation = props.curStats[keyAnimOptions] =
+            getValidAnimOptions(newEffectOptions.animation, effectConf.defaultAnimOptions);
         } else { // boolean
           optAnimation = !!newEffectOptions.animation;
-          props.curStats[keyAnimOptions] = optAnimation ? getOptions({}) : null;
+          props.curStats[keyAnimOptions] =
+            optAnimation ? getValidAnimOptions({}, effectConf.defaultAnimOptions) : null;
         }
         return optAnimation;
       }
@@ -2469,11 +2528,15 @@
     delete insProps[this._id];
   };
 
-  /**
-   * @typedef {Object} AnimOptions
-   * @property {number} duration
-   * @property {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
-   */
+  LeaderLine.prototype.show = function(effectName, animOptions) {
+    show(insProps[this._id], true, effectName, animOptions);
+    return this;
+  };
+
+  LeaderLine.prototype.hide = function(effectName, animOptions) {
+    show(insProps[this._id], false, effectName, animOptions);
+    return this;
+  };
 
   /**
    * @typedef {Array} EffectOptionConf - Args for checking ID or Type (or function)
@@ -2486,11 +2549,16 @@
   /**
    * @typedef {Object} EffectConf
    * @property {{statName: string, StatConf}} stats - Additional stats.
-   * @property {Function} getValidOptions - (effectOptions)
-   * @property {Function} init - (props)
-   * @property {Function} remove - (props)
-   * @property {Function} update - (props)
+   * @property {EffectOptionConf[]} optionsConf
+   * @property {Function} init - function(props)
+   * @property {Function} remove - function(props)
+   * @property {Function} update - function(props[, valueByEvent])
+   * @property {boolean} [anim] - Support animation.
+   * @property {AnimOptions} [defaultAnimOptions]
+   * @property {boolean} [defaultAnimEnabled]
    */
+
+  /** @type {{effectId: string, EffectConf}} */
   EFFECTS = {
     dash: {
       stats: {dash_len: {}, dash_gap: {}, dash_maxOffset: {}},
@@ -2504,7 +2572,7 @@
       init: function(props) {
         traceLog.add('<EFFECTS.dash.init>'); // [DEBUG/]
         addEventHandler(props, 'apl_line_strokeWidth', EFFECTS.dash.update);
-        props.lineFace.style.strokeDashoffset = '0';
+        props.lineFace.style.strokeDashoffset = 0;
         EFFECTS.dash.update(props);
         traceLog.add('</EFFECTS.dash.init>'); // [DEBUG/]
       },
@@ -2518,7 +2586,7 @@
           curStats.dash_animId = null;
         }
         props.lineFace.style.strokeDasharray = 'none';
-        props.lineFace.style.strokeDashoffset = '0';
+        props.lineFace.style.strokeDashoffset = 0;
         initStats(props.aplStats, EFFECTS.dash.stats);
         traceLog.add('</EFFECTS.dash.remove>'); // [DEBUG/]
       },
@@ -2576,7 +2644,7 @@
             anim.remove(curStats.dash_animId);
             curStats.dash_animId = null;
           }
-          props.lineFace.style.strokeDashoffset = '0';
+          props.lineFace.style.strokeDashoffset = 0;
           aplStats.dash_animOptions = null;
         }
 
@@ -2692,6 +2760,118 @@
       effectStats[effectName + '_animId'] = {};
     }
   });
+
+  /**
+   * @typedef {Object} ShowEffectConf
+   * @property {{statName: string, StatConf}} stats - Additional stats. *** NOT SUPPORTED
+   * @property {Function} init - function(props, timeRatio)
+   * @property {Function} stop - function(props, finish) returns timeRatio
+   * @property {Function} update - function(props[, valueByEvent])
+   * @property {AnimOptions} defaultAnimOptions
+   */
+
+  /** @type {{effectId: string, EffectConf}} */
+  SHOW_EFFECTS = {
+    fade: {
+      defaultAnimOptions: {duration: 1000, timing: 'linear'},
+
+      init: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.fade.init>'); // [DEBUG/]
+        var curStats = props.curStats;
+        if (timeRatio == null) { // eslint-disable-line eqeqeq
+          props.svg.style.opacity = props.aplStats.show_on ? 0 : 1;
+          if (!props.isShown) {
+            props.svg.style.visibility = '';
+            props.isShown = true;
+          }
+        }
+        if (curStats.show_animId) {
+          anim.remove(curStats.show_animId);
+          curStats.show_animId = null;
+        }
+        SHOW_EFFECTS.fade.update(props);
+        traceLog.add('</SHOW_EFFECTS.fade.init>'); // [DEBUG/]
+      },
+
+      stop: function(props, finish) {
+        traceLog.add('<SHOW_EFFECTS.fade.stop>'); // [DEBUG/]
+        var curStats = props.curStats, timeRatio;
+        timeRatio = curStats.show_animId ? anim.stop(curStats.show_animId) : 1;
+        if (finish) {
+          if ((props.isShown = props.aplStats.show_on)) {
+            props.svg.style.opacity = 1;
+            props.svg.style.visibility = '';
+          } else {
+            props.svg.style.opacity = 0;
+            props.svg.style.visibility = 'hidden';
+          }
+          timeRatio = 1;
+        }
+        traceLog.add('</SHOW_EFFECTS.fade.stop>'); // [DEBUG/]
+        return timeRatio;
+      },
+
+      update: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.fade.update>'); // [DEBUG/]
+        var curStats = props.curStats, aplStats = props.aplStats,
+          effectOptions = aplStats.dash_options,
+          update = false, timeRatio;
+
+        checkCurStats(props, 'dash_len', null, effectOptions.len || aplStats.line_strokeWidth * 2); // [DEBUG/]
+        curStats.dash_len = effectOptions.len || aplStats.line_strokeWidth * 2;
+        checkCurStats(props, 'dash_gap', null, effectOptions.gap || aplStats.line_strokeWidth); // [DEBUG/]
+        curStats.dash_gap = effectOptions.gap || aplStats.line_strokeWidth;
+        checkCurStats(props, 'dash_maxOffset', null, curStats.dash_len + curStats.dash_gap); // [DEBUG/]
+        curStats.dash_maxOffset = curStats.dash_len + curStats.dash_gap;
+
+        update = setStat(props, aplStats, 'dash_len', curStats.dash_len
+          /* [DEBUG] */, null, 'aplStats.dash_len=%s'/* [/DEBUG] */) || update;
+        update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap
+          /* [DEBUG] */, null, 'aplStats.dash_gap=%s'/* [/DEBUG] */) || update;
+        if (update) {
+          props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
+        }
+
+        if (curStats.dash_animOptions) {
+          update = setStat(props, aplStats, 'dash_maxOffset', curStats.dash_maxOffset
+            /* [DEBUG] */, null, 'aplStats.dash_maxOffset=%s'/* [/DEBUG] */);
+
+          if (aplStats.dash_animOptions && ( // ON -> ON (update)
+              // Normally, animOptions is not changed because the effect was removed when it was changed.
+              update || hasChanged(curStats.dash_animOptions, aplStats.dash_animOptions))) {
+            traceLog.add('anim.remove'); // [DEBUG/]
+            if (curStats.show_animId) {
+              timeRatio = anim.stop(curStats.show_animId);
+              anim.remove(curStats.show_animId);
+            }
+            aplStats.dash_animOptions = null;
+          }
+
+          if (!aplStats.dash_animOptions) { // OFF -> ON
+            traceLog.add('anim.add'); // [DEBUG/]
+            curStats.show_animId = anim.add(function(outputRatio) {
+              return (1 - outputRatio) * aplStats.dash_maxOffset + 'px';
+            }, function(value) {
+              props.lineFace.style.strokeDashoffset = value;
+            }, curStats.dash_animOptions.duration, 0, curStats.dash_animOptions.timing, false, timeRatio);
+            aplStats.dash_animOptions = copyTree(curStats.dash_animOptions);
+          }
+
+        } else if (aplStats.dash_animOptions) { // ON -> OFF
+          // Normally, anim was already removed when effectOptions was changed.
+          traceLog.add('anim.remove'); // [DEBUG/]
+          if (curStats.show_animId) {
+            anim.remove(curStats.show_animId);
+            curStats.show_animId = null;
+          }
+          props.lineFace.style.strokeDashoffset = 0;
+          aplStats.dash_animOptions = null;
+        }
+
+        traceLog.add('</SHOW_EFFECTS.fade.update>'); // [DEBUG/]
+      }
+    }
+  };
 
   return LeaderLine;
 })();
