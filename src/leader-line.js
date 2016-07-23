@@ -2158,14 +2158,14 @@
 
       function getOptions(optEffect) {
         var effectOptions = effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
-          var propName = optionConf[1], key2Id = optionConf[2],
+          var optionClass = optionConf[0], propName = optionConf[1], key2Id = optionConf[2],
             optionName = optionConf[3], i = optionConf[4],
             value =
               i != null ? optEffect[optionName][i] : // eslint-disable-line eqeqeq
               optionName ? optEffect[optionName] :
               optEffect[propName],
             key;
-          effectOptions[propName] = optionConf[0] === 'id' ? (
+          effectOptions[propName] = optionClass === 'id' ? (
               !value ? KEYWORD_AUTO :
               Object.keys(key2Id).some(function(optKey) {
                 if (key2Id[optKey] === value) { key = optKey; return true; }
@@ -2219,29 +2219,27 @@
     var props = insProps[this._id], options = props.options,
       newWindow, needsWindow, needs = {};
 
-    function getCurOption(propName, optionName, index) {
+    function getCurOption(root, propName, optionName, index, defaultValue) {
       var curOption = {};
       if (optionName) {
         if (index != null) { // eslint-disable-line eqeqeq
-          curOption.container = options[optionName];
+          curOption.container = root[optionName];
           curOption.key = index;
-          curOption.default = DEFAULT_OPTIONS[optionName] && DEFAULT_OPTIONS[optionName][index];
         } else {
-          curOption.container = options;
+          curOption.container = root;
           curOption.key = optionName;
-          curOption.default = DEFAULT_OPTIONS[optionName];
         }
       } else {
-        curOption.container = options;
+        curOption.container = root;
         curOption.key = propName;
-        curOption.default = DEFAULT_OPTIONS[propName];
       }
+      curOption.default = defaultValue;
       curOption.acceptsAuto = curOption.default == null; // eslint-disable-line eqeqeq
       return curOption;
     }
 
-    function setValidId(propName, key2Id, optionName, index) {
-      var curOption = getCurOption(propName, optionName, index), updated, key, id;
+    function setValidId(root, newOptions, propName, key2Id, optionName, index, defaultValue) {
+      var curOption = getCurOption(root, propName, optionName, index, defaultValue), updated, key, id;
       if (newOptions[propName] != null && // eslint-disable-line eqeqeq
           (key = (newOptions[propName] + '').toLowerCase()) && (
             curOption.acceptsAuto && key === KEYWORD_AUTO ||
@@ -2257,10 +2255,11 @@
       return updated;
     }
 
-    function setValidType(propName, type, optionName, index, check, trim) {
-      var curOption = getCurOption(propName, optionName, index), updated, value;
+    function setValidType(root, newOptions, propName, type, optionName, index, defaultValue, check, trim) {
+      var curOption = getCurOption(root, propName, optionName, index, defaultValue), updated, value;
       if (!type) {
-        if (curOption.default == null) { throw new Error('Invalid `type`: ' + propName); } // eslint-disable-line eqeqeq
+        // eslint-disable-next-line eqeqeq
+        if (curOption.default == null) { throw new Error('Invalid `type`: ' + propName); }
         type = typeof curOption.default;
       }
       if (newOptions[propName] != null && ( // eslint-disable-line eqeqeq
@@ -2300,9 +2299,12 @@
       needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.faces = needs.effect = true;
     }
 
-    needs.position = setValidId('path', PATH_KEY_2_ID) || needs.position;
-    needs.position = setValidId('startSocket', SOCKET_KEY_2_ID, 'socketSE', 0) || needs.position;
-    needs.position = setValidId('endSocket', SOCKET_KEY_2_ID, 'socketSE', 1) || needs.position;
+    needs.position = setValidId(options, newOptions, 'path',
+      PATH_KEY_2_ID, null, null, DEFAULT_OPTIONS.path) || needs.position;
+    needs.position = setValidId(options, newOptions, 'startSocket',
+      SOCKET_KEY_2_ID, 'socketSE', 0) || needs.position;
+    needs.position = setValidId(options, newOptions, 'endSocket',
+      SOCKET_KEY_2_ID, 'socketSE', 1) || needs.position;
 
     // socketGravitySE
     [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {
@@ -2336,32 +2338,41 @@
     });
 
     // Line
-    needs.line = setValidType('color', null, 'lineColor', null, null, true) || needs.line;
-    needs.line = setValidType('size', null, 'lineSize', null,
+    needs.line = setValidType(options, newOptions, 'color',
+      null, 'lineColor', null, DEFAULT_OPTIONS.lineColor, null, true) || needs.line;
+    needs.line = setValidType(options, newOptions, 'size',
+      null, 'lineSize', null, DEFAULT_OPTIONS.lineSize,
       function(value) { return value > 0; }) || needs.line;
 
     // Plug
     ['startPlug', 'endPlug'].forEach(function(propName, i) {
-      needs.plug = setValidId(propName, PLUG_KEY_2_ID, 'plugSE', i) || needs.plug;
-      needs.plug = setValidType(propName + 'Color', 'string', 'plugColorSE', i, null, true) || needs.plug;
-      needs.plug = setValidType(propName + 'Size', null, 'plugSizeSE', i,
+      needs.plug = setValidId(options, newOptions, propName,
+        PLUG_KEY_2_ID, 'plugSE', i, DEFAULT_OPTIONS.plugSE[i]) || needs.plug;
+      needs.plug = setValidType(options, newOptions, propName + 'Color',
+        'string', 'plugColorSE', i, null, null, true) || needs.plug;
+      needs.plug = setValidType(options, newOptions, propName + 'Size',
+        null, 'plugSizeSE', i, DEFAULT_OPTIONS.plugSizeSE[i],
         function(value) { return value > 0; }) || needs.plug;
     });
 
     // LineOutline
-    needs.lineOutline = setValidType('outline', null, 'lineOutlineEnabled') || needs.lineOutline;
-    needs.lineOutline = setValidType('outlineColor', null, 'lineOutlineColor',
-      null, null, true) || needs.lineOutline;
-    needs.lineOutline = setValidType('outlineSize', null, 'lineOutlineSize', null,
+    needs.lineOutline = setValidType(options, newOptions, 'outline',
+      null, 'lineOutlineEnabled', null, DEFAULT_OPTIONS.lineOutlineEnabled) || needs.lineOutline;
+    needs.lineOutline = setValidType(options, newOptions, 'outlineColor',
+      null, 'lineOutlineColor', null, DEFAULT_OPTIONS.lineOutlineColor, null, true) || needs.lineOutline;
+    needs.lineOutline = setValidType(options, newOptions, 'outlineSize',
+      null, 'lineOutlineSize', null, DEFAULT_OPTIONS.lineOutlineSize,
       function(value) { return value > 0 && value <= 0.48; }) || needs.lineOutline;
 
     // PlugOutline
     ['startPlugOutline', 'endPlugOutline'].forEach(function(propName, i) {
-      needs.plugOutline = setValidType(propName, null, 'plugOutlineEnabledSE', i) || needs.plugOutline;
-      needs.plugOutline = setValidType(propName + 'Color', 'string', 'plugOutlineColorSE', i,
-        null, true) || needs.plugOutline;
+      needs.plugOutline = setValidType(options, newOptions, propName,
+        null, 'plugOutlineEnabledSE', i, DEFAULT_OPTIONS.plugOutlineEnabledSE[i]) || needs.plugOutline;
+      needs.plugOutline = setValidType(options, newOptions, propName + 'Color',
+        'string', 'plugOutlineColorSE', i, null, null, true) || needs.plugOutline;
       // `outlineMax` is checked in `updatePlugOutline`.
-      needs.plugOutline = setValidType(propName + 'Size', null, 'plugOutlineSizeSE', i,
+      needs.plugOutline = setValidType(options, newOptions, propName + 'Size',
+        null, 'plugOutlineSizeSE', i, DEFAULT_OPTIONS.plugOutlineSizeSE[i],
         function(value) { return value >= 1; }) || needs.plugOutline;
     });
 
@@ -2369,74 +2380,23 @@
     Object.keys(EFFECTS).forEach(function(effectName) {
       var effectConf = EFFECTS[effectName],
         keyEnabled = effectName + '_enabled', keyOptions = effectName + '_options',
-        keyAnimOptions = effectName + '_animOptions',
         newOption, optEffect;
-
-      function getCurOption(effectOptions, propName, optionName, index, defaultValue) {
-        var curOption = {};
-        if (optionName) {
-          if (index != null) { // eslint-disable-line eqeqeq
-            curOption.container = (effectOptions[optionName] = effectOptions[optionName] || []);
-            curOption.key = index;
-          } else {
-            curOption.container = effectOptions;
-            curOption.key = optionName;
-          }
-        } else {
-          curOption.container = effectOptions;
-          curOption.key = propName;
-        }
-        curOption.default = defaultValue;
-        curOption.acceptsAuto = curOption.default == null; // eslint-disable-line eqeqeq
-        return curOption;
-      }
-
-      function setValidId(effectOptions, newEffectOptions, propName, key2Id, optionName, index, defaultValue) {
-        var curOption = getCurOption(effectOptions, propName, optionName, index, defaultValue), key, id;
-        if (newEffectOptions[propName] != null && // eslint-disable-line eqeqeq
-            (key = (newEffectOptions[propName] + '').toLowerCase()) && (
-              curOption.acceptsAuto && key === KEYWORD_AUTO ||
-              (id = key2Id[key])
-            )) {
-          curOption.container[curOption.key] = id; // `undefined` when `KEYWORD_AUTO`
-        }
-        if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
-          curOption.container[curOption.key] = curOption.default;
-        }
-      }
-
-      function setValidType(effectOptions, newEffectOptions, propName, type, optionName, index, defaultValue,
-          check, trim) {
-        var curOption = getCurOption(effectOptions, propName, optionName, index, defaultValue), value;
-        if (!type) {
-          if (curOption.default == null) { throw new Error('Invalid `type`: ' + propName); } // eslint-disable-line eqeqeq
-          type = typeof curOption.default;
-        }
-        if (newEffectOptions[propName] != null && ( // eslint-disable-line eqeqeq
-              curOption.acceptsAuto && (newEffectOptions[propName] + '').toLowerCase() === KEYWORD_AUTO ||
-              typeof (value = newEffectOptions[propName]) === type &&
-              ((value = trim && type === 'string' && value ? value.trim() : value) || true) &&
-              (!check || check(value))
-            )) {
-          curOption.container[curOption.key] = value; // `undefined` when `KEYWORD_AUTO`
-        }
-        if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
-          curOption.container[curOption.key] = curOption.default;
-        }
-      }
 
       function getValidOptions(newEffectOptions) {
         var effectOptions = {};
         effectConf.optionsConf.forEach(function(optionConf) {
-          (typeof optionConf[0] === 'function' ? optionConf[0] :
-              optionConf[0] === 'id' ? setValidId : setValidType)
+          var optionClass = optionConf[0], optionName = optionConf[3], i = optionConf[4];
+          // eslint-disable-next-line eqeqeq
+          if (i != null && !effectOptions[optionName]) { effectOptions[optionName] = []; }
+          (typeof optionClass === 'function' ? optionClass :
+              optionClass === 'id' ? setValidId : setValidType)
             .apply(null, [effectOptions, newEffectOptions].concat(optionConf.slice(1)));
         });
         return effectOptions;
       }
 
       function parseAnimOptions(newEffectOptions) {
-        var optAnimation;
+        var optAnimation, keyAnimOptions = effectName + '_animOptions';
 
         function getOptions(animOptions) {
           var defaultAnimOptions = effectConf.defaultAnimOptions;
@@ -2702,7 +2662,7 @@
       stats: {dropShadow_colorSE: {hasSE: true}, dropShadow_pointSE: {hasSE: true, hasProps: true}},
 
       optionsConf: [
-        ['type', 'len', 'number', null, null, 15, function(value) { return value > 0; }],
+        ['type', 'len', null, null, null, 15, function(value) { return value > 0; }],
         ['type', 'gap', 'number', null, null, null, function(value) { return value > 0; }]
       ],
 

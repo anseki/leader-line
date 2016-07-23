@@ -438,8 +438,8 @@ describe('effect', function() {
       ]);
       expect(props.curStats.dash_enabled).toBe(true);
       expect(props.aplStats.dash_enabled).toBe(true);
-      expect(props.curStats.dash_options).toEqual({len: undefined, gap: 10, animation: false});
-      expect(props.aplStats.dash_options).toEqual({len: undefined, gap: 10, animation: false});
+      expect(props.curStats.dash_options).toEqual({gap: 10, animation: false});
+      expect(props.aplStats.dash_options).toEqual({gap: 10, animation: false});
       expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(ll.dash).toEqual({len: 'auto', gap: 10, animation: false}); // optimized
