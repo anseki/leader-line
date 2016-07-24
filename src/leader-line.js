@@ -2785,7 +2785,7 @@
   /** @type {{effectId: string, EffectConf}} */
   SHOW_EFFECTS = {
     fade: {
-      defaultAnimOptions: {duration: 1000, timing: 'linear'},
+      defaultAnimOptions: {duration: 300, timing: 'linear'},
 
       init: function(props, timeRatio) {
         traceLog.add('<SHOW_EFFECTS.fade.init>'); // [DEBUG/]
@@ -2848,6 +2848,84 @@
           }
         }
         traceLog.add('</SHOW_EFFECTS.fade.stop>'); // [DEBUG/]
+        return timeRatio;
+      }
+    },
+
+    draw: {
+      defaultAnimOptions: {duration: 1000, timing: 'linear'},
+
+      init: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.draw.init>'); // [DEBUG/]
+        var curStats = props.curStats, aplStats = props.aplStats,
+          pathList = props.pathList.baseVal, pathSegsLen = [], pathLenAll = 0;
+        if (curStats.show_animId) { anim.remove(curStats.show_animId); }
+
+        pathList.forEach(function(points) {
+          var pathLen = (points.length === 2 ? getPointsLength : getCubicLength).apply(null, points);
+          pathSegsLen.push(pathLen);
+          pathLenAll += pathLen;
+        });
+
+        curStats.show_animId = anim.add(
+          function(outputRatio) {
+            return outputRatio;
+          },
+          function(value, finish) {
+            if (finish) {
+              curStats.show_inAnim = false;
+              SHOW_EFFECTS.draw.stop(props, true);
+            } else {
+              props.svg.style.opacity = value;
+            }
+          },
+          aplStats.show_animOptions.duration, 1, aplStats.show_animOptions.timing, null, false);
+        SHOW_EFFECTS.draw.start(props, timeRatio);
+        traceLog.add('</SHOW_EFFECTS.draw.init>'); // [DEBUG/]
+      },
+
+      start: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.draw.start>'); // [DEBUG/]
+        var curStats = props.curStats, prevTimeRatio;
+        if (curStats.show_inAnim) {
+          prevTimeRatio = anim.stop(curStats.show_animId);
+        }
+        if (!props.isShown) {
+          props.svg.style.visibility = '';
+          props.isShown = true;
+        }
+        // [DEBUG]
+        traceLog.add('timeRatio=' +
+          // eslint-disable-next-line eqeqeq
+          (timeRatio != null ? 'timeRatio' : prevTimeRatio != null ? 'prevTimeRatio' : 'NONE'));
+        // [/DEBUG]
+        curStats.show_inAnim = true;
+        anim.start(curStats.show_animId, !props.aplStats.show_on,
+          timeRatio != null ? timeRatio : prevTimeRatio); // eslint-disable-line eqeqeq
+        traceLog.add('</SHOW_EFFECTS.draw.start>'); // [DEBUG/]
+      },
+
+      stop: function(props, finish, on) {
+        traceLog.add('<SHOW_EFFECTS.draw.stop>'); // [DEBUG/]
+        traceLog.add('finish=' + finish); // [DEBUG/]
+        // [DEBUG]
+        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on'); // eslint-disable-line eqeqeq
+        // [/DEBUG]
+        var curStats = props.curStats, timeRatio;
+        on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
+        traceLog.add(dbgLog + '=' + on); // [DEBUG/]
+        timeRatio = curStats.show_inAnim ? anim.stop(curStats.show_animId) : on ? 1 : 0;
+        curStats.show_inAnim = false;
+        if (finish) {
+          if ((props.isShown = on)) {
+            props.svg.style.opacity = 1;
+            props.svg.style.visibility = '';
+          } else {
+            props.svg.style.opacity = 0;
+            props.svg.style.visibility = 'hidden';
+          }
+        }
+        traceLog.add('</SHOW_EFFECTS.draw.stop>'); // [DEBUG/]
         return timeRatio;
       }
     }
