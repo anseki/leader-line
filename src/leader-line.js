@@ -165,7 +165,7 @@
       caps_enabled: {iniValue: false}
     },
     SHOW_STATS = {
-      show_on: {}, show_effect: {}, show_animOptions: {}, show_animId: {}
+      show_on: {}, show_effect: {}, show_animOptions: {}, show_animId: {}, show_inAnim: {}
     },
     DEFAULT_SHOW_EFFECT = 'fade',
 
@@ -848,7 +848,7 @@
       }
     });
 
-    if (props.curStats.show_animId) {
+    if (props.curStats.show_inAnim) {
       SHOW_EFFECTS[aplStats.show_effect].stop(props, true); // svg.style.visibility is set
     } else if (!props.isShown) {
       svg.style.visibility = 'hidden';
@@ -2089,20 +2089,27 @@
     }
 
     update.show_on = curStats.show_on !== aplStats.show_on;
-    update.options = curStats.show_effect !== aplStats.show_effect ||
-      hasChanged(curStats.show_animOptions, aplStats.show_animOptions);
+    update.show_effect = curStats.show_effect !== aplStats.show_effect;
+    update.show_animOptions = hasChanged(curStats.show_animOptions, aplStats.show_animOptions);
 
-    if (props.curStats.show_animId) {
-      if (update.show_on || update.options) {
-        timeRatio = SHOW_EFFECTS[aplStats.show_effect].stop(props);
+    if (update.show_effect || update.show_animOptions) {
+      if (curStats.show_inAnim) { // change and continue
+        timeRatio = update.show_effect ?
+          SHOW_EFFECTS[aplStats.show_effect].stop(props, true, true) : // reset prev effect
+          SHOW_EFFECTS[aplStats.show_effect].stop(props);
         updateStats();
-        SHOW_EFFECTS[aplStats.show_effect][update.options ? 'init' : 'update'](props, timeRatio);
+        SHOW_EFFECTS[aplStats.show_effect].init(props, timeRatio);
+      } else if (update.show_on) { // init
+        if (aplStats.show_effect && update.show_effect) {
+          SHOW_EFFECTS[aplStats.show_effect].stop(props, true, true); // reset prev effect
+        }
+        updateStats();
+        SHOW_EFFECTS[aplStats.show_effect].init(props);
       }
-    } else if (update.show_on) {
+    } else if (update.show_on) { // restart
       updateStats();
-      SHOW_EFFECTS[aplStats.show_effect][update.options ? 'init' : 'update'](props);
+      SHOW_EFFECTS[aplStats.show_effect].start(props);
     }
-
     traceLog.add('</show>'); // [DEBUG/]
   }
 
@@ -2521,7 +2528,13 @@
   };
 
   LeaderLine.prototype.remove = function() {
-    var props = insProps[this._id];
+    var props = insProps[this._id], curStats = props.curStats;
+
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      if (curStats[effectName + '_animId']) { anim.remove(curStats[effectName + '_animId']); }
+    });
+    if (curStats.show_animId) { anim.remove(curStats.show_animId); }
+
     if (props.baseWindow && props.svg) {
       props.baseWindow.document.body.removeChild(props.svg);
     }
@@ -2629,11 +2642,10 @@
 
           if (!aplStats.dash_animOptions) { // OFF -> ON
             traceLog.add('anim.add'); // [DEBUG/]
-            curStats.dash_animId = anim.add(function(outputRatio) {
-              return (1 - outputRatio) * aplStats.dash_maxOffset + 'px';
-            }, function(value) {
-              props.lineFace.style.strokeDashoffset = value;
-            }, curStats.dash_animOptions.duration, 0, curStats.dash_animOptions.timing, false, timeRatio);
+            curStats.dash_animId = anim.add(
+              function(outputRatio) { return (1 - outputRatio) * aplStats.dash_maxOffset + 'px'; },
+              function(value) { props.lineFace.style.strokeDashoffset = value; },
+              curStats.dash_animOptions.duration, 0, curStats.dash_animOptions.timing, false, timeRatio);
             aplStats.dash_animOptions = copyTree(curStats.dash_animOptions);
           }
 
@@ -2764,9 +2776,9 @@
   /**
    * @typedef {Object} ShowEffectConf
    * @property {{statName: string, StatConf}} stats - Additional stats. *** NOT SUPPORTED
-   * @property {Function} init - function(props, timeRatio)
-   * @property {Function} stop - function(props, finish) returns timeRatio
-   * @property {Function} update - function(props[, valueByEvent])
+   * @property {Function} init - function(props[, timeRatio])
+   * @property {Function} start - function(props[, timeRatio])
+   * @property {Function} stop - function(props[, finish[, on]]) returns previous timeRatio
    * @property {AnimOptions} defaultAnimOptions
    */
 
@@ -2777,98 +2789,66 @@
 
       init: function(props, timeRatio) {
         traceLog.add('<SHOW_EFFECTS.fade.init>'); // [DEBUG/]
-        var curStats = props.curStats;
-        if (timeRatio == null) { // eslint-disable-line eqeqeq
-          props.svg.style.opacity = props.aplStats.show_on ? 0 : 1;
-          if (!props.isShown) {
-            props.svg.style.visibility = '';
-            props.isShown = true;
-          }
-        }
-        if (curStats.show_animId) {
-          anim.remove(curStats.show_animId);
-          curStats.show_animId = null;
-        }
-        SHOW_EFFECTS.fade.update(props);
+        var curStats = props.curStats, aplStats = props.aplStats;
+        if (curStats.show_animId) { anim.remove(curStats.show_animId); }
+        curStats.show_animId = anim.add(
+          function(outputRatio) { return outputRatio; },
+          function(value, finish) {
+            if (finish) {
+              curStats.show_inAnim = false;
+              SHOW_EFFECTS.fade.stop(props, true);
+            } else {
+              props.svg.style.opacity = value;
+            }
+          },
+          aplStats.show_animOptions.duration, 1, aplStats.show_animOptions.timing, null, false);
+        SHOW_EFFECTS.fade.start(props, timeRatio);
         traceLog.add('</SHOW_EFFECTS.fade.init>'); // [DEBUG/]
       },
 
-      stop: function(props, finish) {
+      start: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.fade.start>'); // [DEBUG/]
+        var curStats = props.curStats, prevTimeRatio;
+        if (curStats.show_inAnim) {
+          prevTimeRatio = anim.stop(curStats.show_animId);
+        }
+        if (!props.isShown) {
+          props.svg.style.visibility = '';
+          props.isShown = true;
+        }
+        // [DEBUG]
+        traceLog.add('timeRatio=' +
+          // eslint-disable-next-line eqeqeq
+          (timeRatio != null ? 'timeRatio' : prevTimeRatio != null ? 'prevTimeRatio' : 'NONE'));
+        // [/DEBUG]
+        curStats.show_inAnim = true;
+        anim.start(curStats.show_animId, !props.aplStats.show_on,
+          timeRatio != null ? timeRatio : prevTimeRatio); // eslint-disable-line eqeqeq
+        traceLog.add('</SHOW_EFFECTS.fade.start>'); // [DEBUG/]
+      },
+
+      stop: function(props, finish, on) {
         traceLog.add('<SHOW_EFFECTS.fade.stop>'); // [DEBUG/]
+        traceLog.add('finish=' + finish); // [DEBUG/]
+        // [DEBUG]
+        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on'); // eslint-disable-line eqeqeq
+        // [/DEBUG]
         var curStats = props.curStats, timeRatio;
-        timeRatio = curStats.show_animId ? anim.stop(curStats.show_animId) : 1;
+        on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
+        traceLog.add(dbgLog + '=' + on); // [DEBUG/]
+        timeRatio = curStats.show_inAnim ? anim.stop(curStats.show_animId) : on ? 1 : 0;
+        curStats.show_inAnim = false;
         if (finish) {
-          if ((props.isShown = props.aplStats.show_on)) {
+          if ((props.isShown = on)) {
             props.svg.style.opacity = 1;
             props.svg.style.visibility = '';
           } else {
             props.svg.style.opacity = 0;
             props.svg.style.visibility = 'hidden';
           }
-          timeRatio = 1;
         }
         traceLog.add('</SHOW_EFFECTS.fade.stop>'); // [DEBUG/]
         return timeRatio;
-      },
-
-      update: function(props, timeRatio) {
-        traceLog.add('<SHOW_EFFECTS.fade.update>'); // [DEBUG/]
-        var curStats = props.curStats, aplStats = props.aplStats,
-          effectOptions = aplStats.dash_options,
-          update = false, timeRatio;
-
-        checkCurStats(props, 'dash_len', null, effectOptions.len || aplStats.line_strokeWidth * 2); // [DEBUG/]
-        curStats.dash_len = effectOptions.len || aplStats.line_strokeWidth * 2;
-        checkCurStats(props, 'dash_gap', null, effectOptions.gap || aplStats.line_strokeWidth); // [DEBUG/]
-        curStats.dash_gap = effectOptions.gap || aplStats.line_strokeWidth;
-        checkCurStats(props, 'dash_maxOffset', null, curStats.dash_len + curStats.dash_gap); // [DEBUG/]
-        curStats.dash_maxOffset = curStats.dash_len + curStats.dash_gap;
-
-        update = setStat(props, aplStats, 'dash_len', curStats.dash_len
-          /* [DEBUG] */, null, 'aplStats.dash_len=%s'/* [/DEBUG] */) || update;
-        update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap
-          /* [DEBUG] */, null, 'aplStats.dash_gap=%s'/* [/DEBUG] */) || update;
-        if (update) {
-          props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
-        }
-
-        if (curStats.dash_animOptions) {
-          update = setStat(props, aplStats, 'dash_maxOffset', curStats.dash_maxOffset
-            /* [DEBUG] */, null, 'aplStats.dash_maxOffset=%s'/* [/DEBUG] */);
-
-          if (aplStats.dash_animOptions && ( // ON -> ON (update)
-              // Normally, animOptions is not changed because the effect was removed when it was changed.
-              update || hasChanged(curStats.dash_animOptions, aplStats.dash_animOptions))) {
-            traceLog.add('anim.remove'); // [DEBUG/]
-            if (curStats.show_animId) {
-              timeRatio = anim.stop(curStats.show_animId);
-              anim.remove(curStats.show_animId);
-            }
-            aplStats.dash_animOptions = null;
-          }
-
-          if (!aplStats.dash_animOptions) { // OFF -> ON
-            traceLog.add('anim.add'); // [DEBUG/]
-            curStats.show_animId = anim.add(function(outputRatio) {
-              return (1 - outputRatio) * aplStats.dash_maxOffset + 'px';
-            }, function(value) {
-              props.lineFace.style.strokeDashoffset = value;
-            }, curStats.dash_animOptions.duration, 0, curStats.dash_animOptions.timing, false, timeRatio);
-            aplStats.dash_animOptions = copyTree(curStats.dash_animOptions);
-          }
-
-        } else if (aplStats.dash_animOptions) { // ON -> OFF
-          // Normally, anim was already removed when effectOptions was changed.
-          traceLog.add('anim.remove'); // [DEBUG/]
-          if (curStats.show_animId) {
-            anim.remove(curStats.show_animId);
-            curStats.show_animId = null;
-          }
-          props.lineFace.style.strokeDashoffset = 0;
-          aplStats.dash_animOptions = null;
-        }
-
-        traceLog.add('</SHOW_EFFECTS.fade.update>'); // [DEBUG/]
       }
     }
   };
