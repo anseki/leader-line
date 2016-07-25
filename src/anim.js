@@ -243,16 +243,25 @@ var anim =
 
     /**
      * @param {number} animId - Target task.
-     * @returns {(number|undefined)} - timeRatio of last frame that ran. [0, 1]
+     * @param {boolean} [getTimeRatioByFrame] - Return timeRatio of last frame that ran. [0, 1]
+     * @returns {(number|undefined)} - timeRatio [0, 1]
      */
-    stop: function(animId) {
+    stop: function(animId, getTimeRatioByFrame) {
       var timeRatio;
       tasks.some(function(task) {
         if (task.animId === animId) {
-          task.framesStart = null;
-          if (task.lastFrame != null) { // eslint-disable-line eqeqeq
+          if (!getTimeRatioByFrame) {
+            timeRatio = (Date.now() - task.framesStart) / task.duration;
+            if (task.reverse) { timeRatio = 1 - timeRatio; }
+            if (timeRatio < 0) {
+              timeRatio = 0;
+            } else if (timeRatio > 1) {
+              timeRatio = 1;
+            }
+          } else if (task.lastFrame != null) { // eslint-disable-line eqeqeq
             timeRatio = task.frames[task.lastFrame].timeRatio;
           }
+          task.framesStart = null;
           return true;
         }
         return false;

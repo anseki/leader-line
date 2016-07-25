@@ -2930,6 +2930,7 @@
           (timeRatio != null ? 'timeRatio' : prevTimeRatio != null ? 'prevTimeRatio' : 'NONE'));
         // [/DEBUG]
         curStats.show_inAnim = true;
+        addEventHandler(props, 'apl_position', SHOW_EFFECTS.draw.update);
         anim.start(curStats.show_animId, !props.aplStats.show_on,
           timeRatio != null ? timeRatio : prevTimeRatio); // eslint-disable-line eqeqeq
         traceLog.add('</SHOW_EFFECTS.draw.start>'); // [DEBUG/]
@@ -2962,6 +2963,10 @@
         }
         traceLog.add('</SHOW_EFFECTS.draw.stop>'); // [DEBUG/]
         return timeRatio;
+      },
+
+      update: function(props) {
+        SHOW_EFFECTS.draw.init(props, SHOW_EFFECTS.draw.stop(props)); // reset
       }
     }
   };
