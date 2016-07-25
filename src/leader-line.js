@@ -2033,8 +2033,10 @@
     if (needs.faces || updated.line || updated.plug || updated.lineOutline || updated.plugOutline) {
       updated.faces = updateFaces(props);
     }
-    if ((needs.position || updated.line || updated.plug) &&
-        (updated.position = updatePosition(props))) {
+    if (needs.position || updated.line || updated.plug) {
+      updated.position = updatePosition(props);
+    }
+    if (needs.path || updated.position) {
       updated.path = updatePath(props);
     }
     updated.viewBox = updateViewBox(props);
@@ -2075,7 +2077,7 @@
     traceLog.add('<show>'); // [DEBUG/]
     var curStats = props.curStats, aplStats = props.aplStats, update = {}, timeRatio;
 
-    function updateStats() {
+    function applyStats() {
       ['show_on', 'show_effect', 'show_animOptions'].forEach(function(statName) {
         aplStats[statName] = curStats[statName];
       });
@@ -2097,17 +2099,17 @@
         timeRatio = update.show_effect ?
           SHOW_EFFECTS[aplStats.show_effect].stop(props, true, true) : // reset prev effect
           SHOW_EFFECTS[aplStats.show_effect].stop(props);
-        updateStats();
+        applyStats();
         SHOW_EFFECTS[aplStats.show_effect].init(props, timeRatio);
       } else if (update.show_on) { // init
         if (aplStats.show_effect && update.show_effect) {
           SHOW_EFFECTS[aplStats.show_effect].stop(props, true, true); // reset prev effect
         }
-        updateStats();
+        applyStats();
         SHOW_EFFECTS[aplStats.show_effect].init(props);
       }
     } else if (update.show_on) { // restart
-      updateStats();
+      applyStats();
       SHOW_EFFECTS[aplStats.show_effect].start(props);
     }
     traceLog.add('</show>'); // [DEBUG/]
@@ -2731,9 +2733,7 @@
               props.lineGradient[pointKey + (i + 1)].baseVal.value = aplStats.gradient_pointSE[i][pointKey] = value;
             }
           });
-
         });
-
         traceLog.add('</EFFECTS.gradient.update>'); // [DEBUG/]
       }
     },
@@ -2869,14 +2869,44 @@
 
         curStats.show_animId = anim.add(
           function(outputRatio) {
-            return outputRatio;
+            var pathLen, i = -1, newPathList, points, point;
+
+            if (outputRatio === 0) {
+              // This path shows incorrect angle of plug because it can't get the angle.
+              // This is for updatePath only when show_on === true.
+              newPathList = [[pathList[0][0], pathList[0][0]]]; // line from start to start
+            } else if (outputRatio === 1) {
+              newPathList = pathList;
+            } else {
+              pathLen = pathLenAll * outputRatio;
+              newPathList = [];
+              while (pathLen >= pathSegsLen[++i]) {
+                newPathList.push(pathList[i]);
+                pathLen -= pathSegsLen[i];
+              }
+              if (pathLen) {
+                points = pathList[i];
+                if (points.length === 2) {
+                  newPathList.push([
+                    points[0],
+                    getPointOnLine(points[0], points[1], pathLen / pathSegsLen[i])
+                  ]);
+                } else {
+                  point = getPointOnCubic(points[0], points[1], points[2], points[3],
+                    getCubicT(points[0], points[1], points[2], points[3], pathLen));
+                  newPathList.push([points[0], point.fromP1, point.fromP2, point]);
+                }
+              }
+            }
+            return newPathList;
           },
           function(value, finish) {
             if (finish) {
               curStats.show_inAnim = false;
               SHOW_EFFECTS.draw.stop(props, true);
             } else {
-              props.svg.style.opacity = value;
+              props.pathList.animVal = value;
+              update(props, {path: true});
             }
           },
           aplStats.show_animOptions.duration, 1, aplStats.show_animOptions.timing, null, false);
@@ -2918,10 +2948,15 @@
         curStats.show_inAnim = false;
         if (finish) {
           if ((props.isShown = on)) {
-            props.svg.style.opacity = 1;
+            props.pathList.animVal = null;
+            update(props, {path: true});
             props.svg.style.visibility = '';
           } else {
-            props.svg.style.opacity = 0;
+            // This path shows incorrect angle of plug because it can't get the angle.
+            // But this is hidden. This is for updatePath.
+            props.pathList.animVal =
+              [[props.pathList.baseVal[0][0], props.pathList.baseVal[0][0]]]; // line from start to start
+            update(props, {path: true});
             props.svg.style.visibility = 'hidden';
           }
         }
