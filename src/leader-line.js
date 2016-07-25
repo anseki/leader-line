@@ -2966,7 +2966,12 @@
       },
 
       update: function(props) {
-        SHOW_EFFECTS.draw.init(props, SHOW_EFFECTS.draw.stop(props)); // reset
+        removeEventHandler(props, 'apl_position', SHOW_EFFECTS.draw.update);
+        if (props.curStats.show_inAnim) {
+          SHOW_EFFECTS.draw.init(props, SHOW_EFFECTS.draw.stop(props)); // reset
+        } else {
+          props.aplStats.show_animOptions = {}; // Make show() reset for new path at next time
+        }
       }
     }
   };
