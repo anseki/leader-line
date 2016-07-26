@@ -2795,7 +2795,6 @@
           function(outputRatio) { return outputRatio; },
           function(value, finish) {
             if (finish) {
-              curStats.show_inAnim = false;
               SHOW_EFFECTS.fade.stop(props, true);
             } else {
               props.svg.style.opacity = value;
@@ -2853,7 +2852,7 @@
     },
 
     draw: {
-      defaultAnimOptions: {duration: 1000, timing: 'linear'},
+      defaultAnimOptions: {duration: 500, timing: [0.58, 0, 0.42, 1]},
 
       init: function(props, timeRatio) {
         traceLog.add('<SHOW_EFFECTS.draw.init>'); // [DEBUG/]
@@ -2902,7 +2901,6 @@
           },
           function(value, finish) {
             if (finish) {
-              curStats.show_inAnim = false;
               SHOW_EFFECTS.draw.stop(props, true);
             } else {
               props.pathList.animVal = value;
@@ -2972,6 +2970,47 @@
         } else {
           props.aplStats.show_animOptions = {}; // Make show() reset for new path at next time
         }
+      }
+    },
+
+    none: {
+      defaultAnimOptions: {},
+
+      init: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.none.init>'); // [DEBUG/]
+        var curStats = props.curStats;
+        if (curStats.show_animId) {
+          anim.remove(curStats.show_animId);
+          curStats.show_animId = null;
+        }
+        SHOW_EFFECTS.none.start(props, timeRatio);
+        traceLog.add('</SHOW_EFFECTS.none.init>'); // [DEBUG/]
+      },
+
+      start: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.none.start>'); // [DEBUG/]
+        // [DEBUG]
+        traceLog.add('timeRatio=' + (timeRatio != null ? 'timeRatio' : 'NONE')); // eslint-disable-line eqeqeq
+        // [/DEBUG]
+        SHOW_EFFECTS.none.stop(props, true);
+        traceLog.add('</SHOW_EFFECTS.none.start>'); // [DEBUG/]
+      },
+
+      stop: function(props, finish, on) {
+        traceLog.add('<SHOW_EFFECTS.none.stop>'); // [DEBUG/]
+        traceLog.add('finish=' + finish); // [DEBUG/]
+        // [DEBUG]
+        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on'); // eslint-disable-line eqeqeq
+        // [/DEBUG]
+        var curStats = props.curStats;
+        on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
+        traceLog.add(dbgLog + '=' + on); // [DEBUG/]
+        curStats.show_inAnim = false;
+        if (finish) {
+          props.svg.style.visibility = (props.isShown = on) ? '' : 'hidden';
+        }
+        traceLog.add('</SHOW_EFFECTS.none.stop>'); // [DEBUG/]
+        return on ? 1 : 0;
       }
     }
   };
