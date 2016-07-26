@@ -625,7 +625,7 @@
     var SVG_NS = 'http://www.w3.org/2000/svg',
       baseDocument = newWindow.document,
       defs, stylesHtml, stylesBody, bodyOffset = {x: 0, y: 0},
-      svg, elmDefs, maskCaps, element, aplStats = props.aplStats;
+      elmDefs, maskCaps, element, aplStats = props.aplStats;
 
     function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
 
@@ -690,10 +690,10 @@
     props.bodyOffset = bodyOffset;
 
     // Main SVG
-    svg = baseDocument.createElementNS(SVG_NS, 'svg');
-    svg.className.baseVal = APP_ID;
-    if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
-    elmDefs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
+    props.svg = baseDocument.createElementNS(SVG_NS, 'svg');
+    props.svg.className.baseVal = APP_ID;
+    if (!props.svg.viewBox.baseVal) { props.svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
+    elmDefs = props.svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
 
     props.linePath = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
     props.linePath.id = props.linePathId;
@@ -784,7 +784,7 @@
       return element;
     });
 
-    props.face = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
+    props.face = props.svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
 
     props.lineFace = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     props.lineFace.href.baseVal = '#' + props.lineShapeId;
@@ -851,10 +851,9 @@
     if (props.curStats.show_inAnim) {
       SHOW_EFFECTS[aplStats.show_effect].stop(props, true); // svg.style.visibility is set
     } else if (!props.isShown) {
-      svg.style.visibility = 'hidden';
+      props.svg.style.visibility = 'hidden';
     }
-
-    props.svg = baseDocument.body.appendChild(svg);
+    baseDocument.body.appendChild(props.svg);
 
     traceLog.add('</bindWindow>'); // [DEBUG/]
   }
@@ -2074,7 +2073,6 @@
   }
 
   function show(props, on, effectName, animOptions) {
-    traceLog.add('<show>'); // [DEBUG/]
     var curStats = props.curStats, aplStats = props.aplStats, update = {}, timeRatio;
 
     function applyStats() {
@@ -2112,7 +2110,14 @@
       applyStats();
       SHOW_EFFECTS[aplStats.show_effect].start(props);
     }
-    traceLog.add('</show>'); // [DEBUG/]
+
+    // [DEBUG]
+    traceLog.add('<show>');
+    Object.keys(update).forEach(function(key) {
+      if (update[key]) { traceLog.add('update.' + key); }
+    });
+    traceLog.add('</show>');
+    // [/DEBUG]
   }
 
   /**
@@ -2762,6 +2767,7 @@
       }
     }
   };
+  window.EFFECTS = EFFECTS; // [DEBUG/]
 
   Object.keys(EFFECTS).forEach(function(effectName) {
     var effectConf = EFFECTS[effectName], effectStats = effectConf.stats;
@@ -2784,6 +2790,47 @@
 
   /** @type {{effectId: string, EffectConf}} */
   SHOW_EFFECTS = {
+    none: {
+      defaultAnimOptions: {},
+
+      init: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.none.init>'); // [DEBUG/]
+        var curStats = props.curStats;
+        if (curStats.show_animId) {
+          anim.remove(curStats.show_animId);
+          curStats.show_animId = null;
+        }
+        SHOW_EFFECTS.none.start(props, timeRatio);
+        traceLog.add('</SHOW_EFFECTS.none.init>'); // [DEBUG/]
+      },
+
+      start: function(props, timeRatio) {
+        traceLog.add('<SHOW_EFFECTS.none.start>'); // [DEBUG/]
+        // [DEBUG]
+        traceLog.add('timeRatio=' + (timeRatio != null ? 'timeRatio' : 'NONE')); // eslint-disable-line eqeqeq
+        // [/DEBUG]
+        SHOW_EFFECTS.none.stop(props, true);
+        traceLog.add('</SHOW_EFFECTS.none.start>'); // [DEBUG/]
+      },
+
+      stop: function(props, finish, on) {
+        traceLog.add('<SHOW_EFFECTS.none.stop>'); // [DEBUG/]
+        traceLog.add('finish=' + finish); // [DEBUG/]
+        // [DEBUG]
+        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on'); // eslint-disable-line eqeqeq
+        // [/DEBUG]
+        var curStats = props.curStats;
+        on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
+        traceLog.add(dbgLog + '=' + on); // [DEBUG/]
+        curStats.show_inAnim = false;
+        if (finish) {
+          props.svg.style.visibility = (props.isShown = on) ? '' : 'hidden';
+        }
+        traceLog.add('</SHOW_EFFECTS.none.stop>'); // [DEBUG/]
+        return on ? 1 : 0;
+      }
+    },
+
     fade: {
       defaultAnimOptions: {duration: 300, timing: 'linear'},
 
@@ -2971,49 +3018,9 @@
           props.aplStats.show_animOptions = {}; // Make show() reset for new path at next time
         }
       }
-    },
-
-    none: {
-      defaultAnimOptions: {},
-
-      init: function(props, timeRatio) {
-        traceLog.add('<SHOW_EFFECTS.none.init>'); // [DEBUG/]
-        var curStats = props.curStats;
-        if (curStats.show_animId) {
-          anim.remove(curStats.show_animId);
-          curStats.show_animId = null;
-        }
-        SHOW_EFFECTS.none.start(props, timeRatio);
-        traceLog.add('</SHOW_EFFECTS.none.init>'); // [DEBUG/]
-      },
-
-      start: function(props, timeRatio) {
-        traceLog.add('<SHOW_EFFECTS.none.start>'); // [DEBUG/]
-        // [DEBUG]
-        traceLog.add('timeRatio=' + (timeRatio != null ? 'timeRatio' : 'NONE')); // eslint-disable-line eqeqeq
-        // [/DEBUG]
-        SHOW_EFFECTS.none.stop(props, true);
-        traceLog.add('</SHOW_EFFECTS.none.start>'); // [DEBUG/]
-      },
-
-      stop: function(props, finish, on) {
-        traceLog.add('<SHOW_EFFECTS.none.stop>'); // [DEBUG/]
-        traceLog.add('finish=' + finish); // [DEBUG/]
-        // [DEBUG]
-        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on'); // eslint-disable-line eqeqeq
-        // [/DEBUG]
-        var curStats = props.curStats;
-        on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
-        traceLog.add(dbgLog + '=' + on); // [DEBUG/]
-        curStats.show_inAnim = false;
-        if (finish) {
-          props.svg.style.visibility = (props.isShown = on) ? '' : 'hidden';
-        }
-        traceLog.add('</SHOW_EFFECTS.none.stop>'); // [DEBUG/]
-        return on ? 1 : 0;
-      }
     }
   };
+  window.SHOW_EFFECTS = SHOW_EFFECTS; // [DEBUG/]
 
   return LeaderLine;
 })();
