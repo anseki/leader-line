@@ -2918,8 +2918,8 @@
             var pathLen, i = -1, newPathList, points, point;
 
             if (outputRatio === 0) {
-              // This path shows incorrect angle of plug because it can't get the angle.
-              // This is for updatePath only when show_on === true.
+              // This path might show incorrect angle of plug because it can't get the angle.
+              // This path is for updatePath only when show_on === true.
               newPathList = [[pathList[0][0], pathList[0][0]]]; // line from start to start
             } else if (outputRatio === 1) {
               newPathList = pathList;
@@ -2998,8 +2998,8 @@
             update(props, {path: true});
             props.svg.style.visibility = '';
           } else {
-            // This path shows incorrect angle of plug because it can't get the angle.
-            // But this is hidden. This is for updatePath.
+            // This path might show incorrect angle of plug because it can't get the angle.
+            // But this is hidden. This path is for updatePath.
             props.pathList.animVal =
               [[props.pathList.baseVal[0][0], props.pathList.baseVal[0][0]]]; // line from start to start
             update(props, {path: true});
