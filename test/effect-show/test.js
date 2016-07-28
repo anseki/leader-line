@@ -20,173 +20,60 @@ window.addEventListener('load', function() {
     [
       {
         fnc: function() {
-          ll.setOptions({
-            startPlug: 'arrow2',
-            outline: true,
-            outlineColor: 'rgba(255, 0, 0, 0.5)'
-          });
-          // [TRIDENT] plugsFace is not updated when lineSize is changed
+          // hide and show with same effect and options
+          ll.hide('fade', {duration: 2000});
           timer = setTimeout(function() {
-            ll.size += 2;
-          }, 500);
+            ll.show();
+          }, 3000);
         }
       },
       {
         fnc: function() {
-          ll.setOptions({
-            startPlug: 'square',
-            endPlug: 'square'
-          });
-          // [BLINK], [WEBKIT] lineSize is not updated when path is not changed
+          // hide and show when it is running
+          ll.hide('draw', {duration: 2000});
           timer = setTimeout(function() {
-            ll.size += 10;
-          }, 500);
+            ll.show();
+          }, 1000);
         }
       },
       {
         fnc: function() {
-          // [TRIDENT] lineColor is ignored
-          // [TRIDENT] lineOutlineColor is ignored
-          // [GECKO] plugsFace is ignored
-          ll.setOptions({
-            startPlug: 'arrow2',
-            outline: true,
-            outlineColor: 'rgba(255, 0, 0, 0.5)'
-          });
-        }
-      },
-      {
-        fnc: function() {
-          // [TRIDENT] lineMaskCaps is not updated when plugOutline_colorTraSE is changed
-          ll.setOptions({
-            startPlug: 'arrow2',
-            outline: true,
-            outlineColor: 'rgba(255, 0, 0, 0.5)',
-            endPlugOutline: true
-          });
+          // change effect when it is running
+          ll.hide('fade', {duration: 2000});
           timer = setTimeout(function() {
-            ll.setOptions({
-              startPlugOutline: true,
-              startPlugOutlineColor: 'rgba(0, 0,255, 0.5)',
-              endPlugOutlineColor: 'rgba(0, 255, 0, 0.5)'
-            });
-          }, 500);
+            ll.hide('draw', {duration: 2000, timing: 'linear'});
+          }, 1000);
         }
       },
       {
         fnc: function() {
-          // [None] plugOutlineSizeSE is ignored when exists plug is changed
-          ll.setOptions({
-            startPlug: 'arrow2'
-          });
+          // change options when it is running
+          ll.hide('draw', {duration: 2000, timing: 'linear'});
           timer = setTimeout(function() {
-            ll.setOptions({
-              startPlugOutline: true,
-              startPlugOutlineColor: 'rgba(0, 0,255, 0.5)',
-              endPlugOutline: true,
-              endPlugOutlineColor: 'rgba(0, 255, 0, 0.5)',
-              startPlugOutlineSize: 3,
-              endPlugOutlineSize: 3
-            });
-          }, 500);
+            ll.hide('draw', {duration: 8000, timing: 'linear'});
+          }, 1000);
         }
       },
       {
         fnc: function() {
-          ll.setOptions({
-            path: 'straight'
-          });
-          // [TRIDENT] markerOrient is not updated when plugSE is changed
-          // [GECKO] plugsFace is not updated when plugSE is changed
+          // change effect and options when it is running
+          ll.hide('fade', {duration: 2000, timing: 'linear'});
           timer = setTimeout(function() {
-            ll.setOptions({
-              startPlug: 'arrow1',
-              endPlug: 'arrow2'
-            });
-          }, 500);
+            ll.show('draw', {duration: 8000, timing: 'linear'});
+          }, 1000);
         }
       },
       {
         fnc: function() {
-          ll.setOptions({
-            startPlug: 'arrow1'
-          });
-          // [TRIDENT] markerOrient is not updated when path is changed
-          // [TRIDENT] lineMaskCaps is ignored when path is changed
-          // [GECKO] path is not updated when path is changed
-          timer = setTimeout(function() {
-            ll.setOptions({
-              path: 'straight'
-            });
-          }, 500);
-        }
-      },
-      {
-        fnc: function() {
-          ll.setOptions({
-            startPlug: 'arrow2',
-            outline: true,
-            outlineColor: 'rgba(255, 0, 0, 0.5)'
-          });
-          // [TRIDENT] lineMaskCaps is ignored when lineSize is changed
-          // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
-          timer = setTimeout(function() {
-            ll.size += 2;
-          }, 500);
-        }
-      },
-      {
-        fnc: function() {
-          ll.setOptions({
-            startPlug: 'arrow2',
-            outline: true,
-            outlineColor: 'rgba(255, 0, 0, 0.5)'
-          });
-          // [TRIDENT] alpha of outlineColor is removed when lineSize is changed
-          timer = setTimeout(function() {
-            ll.size += 2;
-          }, 500);
-        }
-      },
-      {
-        fnc: function() {
-          ll.setOptions({
-            outline: true,
-            outlineColor: 'rgba(255, 0, 0, 0.5)'
-          });
-          // [None]
+          ll.hide('none');
+          // change base-window when it is running
+          ll.show('draw', {duration: 2000});
           timer = setTimeout(function() {
             ll.setOptions({
               start: anchorC0,
               end: anchorC1
             });
-          }, 500);
-        }
-      },
-      {
-        fnc: function() {
-          // [BLINK] plugColorSE is not updated when Line is not changed
-          ll.setOptions({
-            endPlugColor: 'rgb(255, 0, 0)'
-          });
-          timer = setTimeout(function() {
-            ll.setOptions({
-              endPlugColor: 'rgb(0, 255, 0)'
-            });
-          }, 500);
-        }
-      },
-      {
-        fnc: function() {
-          // [BLINK], [WEBKIT], [TRIDENT] capsMaskMarkerShapeSE is not updated when line has no alpha
-          ll.setOptions({
-            color: 'rgb(255, 0, 0)'
-          });
-          timer = setTimeout(function() {
-            ll.setOptions({
-              endPlugColor: 'rgba(0, 255, 0, 0.5)'
-            });
-          }, 500);
+          }, 1000);
         }
       }
     ]);

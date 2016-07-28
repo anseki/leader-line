@@ -1714,41 +1714,43 @@
         });
     }
 
-    // Convert to `pathData`.
-    curStats.path_pathData = curPathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
-    curPathEdge.x1 = curPathEdge.x2 = pathList[0][0].x;
-    curPathEdge.y1 = curPathEdge.y2 = pathList[0][0].y;
-    pathList.forEach(function(points) {
-      curPathData.push(points.length === 2 ?
-        {type: 'L', values: [points[1].x, points[1].y]} :
-        {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
-      points.forEach(function(point) {
-        if (point.x < curPathEdge.x1) { curPathEdge.x1 = point.x; }
-        if (point.x > curPathEdge.x2) { curPathEdge.x2 = point.x; }
-        if (point.y < curPathEdge.y1) { curPathEdge.y1 = point.y; }
-        if (point.y > curPathEdge.y2) { curPathEdge.y2 = point.y; }
+    if (pathList) {
+      // Convert to `pathData`.
+      curStats.path_pathData = curPathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
+      curPathEdge.x1 = curPathEdge.x2 = pathList[0][0].x;
+      curPathEdge.y1 = curPathEdge.y2 = pathList[0][0].y;
+      pathList.forEach(function(points) {
+        curPathData.push(points.length === 2 ?
+          {type: 'L', values: [points[1].x, points[1].y]} :
+          {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
+        points.forEach(function(point) {
+          if (point.x < curPathEdge.x1) { curPathEdge.x1 = point.x; }
+          if (point.x > curPathEdge.x2) { curPathEdge.x2 = point.x; }
+          if (point.y < curPathEdge.y1) { curPathEdge.y1 = point.y; }
+          if (point.y > curPathEdge.y2) { curPathEdge.y2 = point.y; }
+        });
       });
-    });
 
-    // Apply `pathData`
-    if (pathDataHasChanged(curPathData, aplStats.path_pathData)) {
-      traceLog.add('setPathData'); // [DEBUG/]
-      props.linePath.setPathData(curPathData);
-      aplStats.path_pathData = curPathData; // Since curPathData is new anytime, it doesn't need copy.
-      updated = true;
+      // Apply `pathData`
+      if (pathDataHasChanged(curPathData, aplStats.path_pathData)) {
+        traceLog.add('setPathData'); // [DEBUG/]
+        props.linePath.setPathData(curPathData);
+        aplStats.path_pathData = curPathData; // Since curPathData is new anytime, it doesn't need copy.
+        updated = true;
 
-      if (IS_TRIDENT) {
-        // [TRIDENT] markerOrient is not updated when path is changed
-        forceReflowAdd(props, props.plugsFace);
-        // [TRIDENT] lineMaskCaps is ignored when path is changed
-        forceReflowAdd(props, props.lineMaskCaps);
-      } else if (IS_GECKO) {
-        // [GECKO] path is not updated when path is changed
-        forceReflowAdd(props, props.linePath);
-      }
+        if (IS_TRIDENT) {
+          // [TRIDENT] markerOrient is not updated when path is changed
+          forceReflowAdd(props, props.plugsFace);
+          // [TRIDENT] lineMaskCaps is ignored when path is changed
+          forceReflowAdd(props, props.lineMaskCaps);
+        } else if (IS_GECKO) {
+          // [GECKO] path is not updated when path is changed
+          forceReflowAdd(props, props.linePath);
+        }
 
-      if (props.events.apl_path) {
-        props.events.apl_path.forEach(function(handler) { handler(props, curPathData); });
+        if (props.events.apl_path) {
+          props.events.apl_path.forEach(function(handler) { handler(props, curPathData); });
+        }
       }
     }
 
