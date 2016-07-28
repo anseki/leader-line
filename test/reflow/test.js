@@ -188,6 +188,14 @@ window.addEventListener('load', function() {
             });
           }, 500);
         }
+      },
+      {
+        fnc: function() {
+          // [TRIDENT] masks is ignored when opacity of svg is changed
+          timer = setTimeout(function() {
+            ll.hide('fade', {duration: 2000});
+          }, 500);
+        }
       }
     ]);
 

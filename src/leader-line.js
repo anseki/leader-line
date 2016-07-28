@@ -2847,6 +2847,8 @@
               SHOW_EFFECTS.fade.stop(props, true);
             } else {
               props.svg.style.opacity = value;
+              // [TRIDENT] masks is ignored when opacity of svg is changed
+              if (IS_TRIDENT) { forceReflowAdd(props, props.svg); forceReflowApply(props); }
             }
           },
           aplStats.show_animOptions.duration, 1, aplStats.show_animOptions.timing, null, false);
