@@ -1,0 +1,62 @@
+/* line 2, function-test.scss */
+body {
+  margin: 0;
+  padding: 0;
+  border-style: none;
+}
+
+/* line 8, function-test.scss */
+#list {
+  margin: 10px 0 0;
+  box-sizing: border-box;
+  height: 480px;
+  border: 1px solid #ccc;
+  overflow: auto;
+}
+/* line 15, function-test.scss */
+#list input[type="radio"] {
+  display: none;
+}
+/* line 18, function-test.scss */
+#list input[type="radio"] + label {
+  display: block;
+  margin: 5px;
+}
+/* line 22, function-test.scss */
+#list input[type="radio"] + label > pre {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  font-size: 1em;
+  font-family: Monaco, "Lucida Console", monospace;
+}
+/* line 29, function-test.scss */
+#list input[type="radio"] + label > pre .comment {
+  color: #48bf48;
+}
+/* line 35, function-test.scss */
+#list input[type="radio"]:checked + label > pre {
+  border-color: #3172d7;
+  background-color: #eaeff7;
+}
+
+/* line 42, function-test.scss */
+#list-head {
+  margin: 15px 5px 5px;
+}
+
+/* line 46, function-test.scss */
+#btn-next {
+  font-size: 1.2em;
+}
+
+/* line 50, function-test.scss */
+#case-label {
+  margin-left: 20px;
+  font-size: 1.4em;
+  font-weight: bold;
+}
+/* line 55, function-test.scss */
+#case-label span {
+  color: #1037cb;
+}

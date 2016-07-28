@@ -1,0 +1,48 @@
+
+h2 {
+  margin: 5px;
+}
+
+#view {
+  position: relative;
+  height: 260px;
+  background-color: #ddd;
+}
+
+.anchor {
+  width: 80px;
+  height: 80px;
+  position: absolute;
+}
+
+#anchor-0 {
+  left: 10px;
+  top: 10px;
+  background-color: rgba(127, 205, 255, 0.8);
+}
+
+#anchor-1 {
+  left: 640px;
+  top: 160px;
+  background-color: rgba(255, 127, 205, 0.8);
+}
+
+#anchor-c0 {
+  left: 5px;
+  top: 5px;
+  background-color: rgba(51, 138, 54, 0.8);
+}
+
+#anchor-c1 {
+  left: 300px;
+  top: 30px;
+  background-color: rgba(149, 119, 40, 0.8);
+}
+
+#iframe1 {
+  position: absolute;
+  left: 160px;
+  top: 5px;
+  width: 400px;
+  height: 200px;
+}

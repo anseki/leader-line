@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="/src/defs.js"></script>
+  <script src="/src/path-data-polyfill/path-data-polyfill.js"></script>
+  <script src="/traceLog.js"></script>
+  <script src="/src/leader-line.js"></script>
+
+  <link rel="stylesheet" href="../function-test/function-test.css">
+  <script src="../function-test/function-test.js"></script>
+  <script src="test.js"></script>
+
+  <link rel="stylesheet" href="view.css">
+</head>
+<body>
+  <h2>Testing for browser bug (reflow)</h2>
+
+  <div id="view">
+    <div class="anchor" id="anchor-0"></div>
+    <div class="anchor" id="anchor-1"></div>
+    <iframe id="iframe1" src="index-c1.html"></iframe>
+  </div>
+
+</body>
+</html>

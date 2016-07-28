@@ -1,0 +1,56 @@
+
+body {
+  margin: 0;
+  padding: 0;
+  border-style: none;
+}
+
+#list {
+  margin: 10px 0 0;
+  box-sizing: border-box;
+  height: 480px;
+  border: 1px solid #ccc;
+  overflow: auto;
+
+  input[type="radio"] {
+    display: none;
+
+    + label {
+      display: block;
+      margin: 5px;
+
+      & > pre {
+        margin: 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        font-size: 1em;
+        font-family: Monaco, "Lucida Console", monospace;
+
+        .comment {
+          color: #48bf48;
+        }
+      }
+    }
+
+    &:checked + label > pre {
+      border-color: #3172d7;
+      background-color: #eaeff7;
+    }
+  }
+}
+
+#list-head {
+  margin: 15px 5px 5px;
+}
+
+#btn-next {
+  font-size: 1.2em;
+}
+
+#case-label {
+  margin-left: 20px;
+  font-size: 1.4em;
+  font-weight: bold;
+
+  span { color: #1037cb; }
+}
