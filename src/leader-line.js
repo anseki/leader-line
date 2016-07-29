@@ -168,13 +168,13 @@
       show_on: {}, show_effect: {}, show_animOptions: {}, show_animId: {}, show_inAnim: {}
     },
     DEFAULT_SHOW_EFFECT = 'fade',
-
-    EFFECTS, SHOW_EFFECTS,
+    EFFECTS, SHOW_EFFECTS, ATTACHMENTS,
 
     /** @type {Object.<_id: number, props>} */
     insProps = {},
-
-    insId = 0, svg2Supported;
+    /** @type {Object.<_id: number, props>} */
+    insPropsAtt = {},
+    insId = 0, insIdAtt = 0, svg2Supported;
 
   // [DEBUG]
   window.insProps = insProps;
@@ -3025,6 +3025,46 @@
     }
   };
   window.SHOW_EFFECTS = SHOW_EFFECTS; // [DEBUG/]
+
+  /**
+   * @class
+   * @param {AttachmentConf} conf - Target AttachmentConf.
+   * @param {Object} options - Initial options.
+   */
+  function LeaderLineAttachment(conf, options) {
+    var propsAtt = {conf: conf};
+
+    initStats(propsAtt.curStats, conf.stats);
+    initStats(propsAtt.aplStats, conf.stats);
+
+    Object.defineProperty(this, '_id', {value: insIdAtt++});
+    insPropsAtt[this._id] = propsAtt;
+
+    propsAtt.isShown = !options.hide; // isShown is applied in bind
+    this.setOptions(options);
+
+    Object.defineProperty(this, 'isRemoved', {
+      get: function() { return !!insPropsAtt[this._id]; }
+    });
+  }
+
+  LeaderLineAttachment.prototype.remove = function() {
+    var propsAtt = insPropsAtt[this._id];
+    if (!this.isRemoved) {
+      propsAtt.conf.remove(propsAtt);
+      delete insPropsAtt[this._id];
+    }
+  };
+
+  function attachmentBind() {
+
+  }
+
+  function attachmentUnbind() {
+
+  }
+
+  ATTACHMENTS = {};
 
   return LeaderLine;
 })();
