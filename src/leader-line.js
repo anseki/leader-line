@@ -173,8 +173,8 @@
     /** @type {Object.<_id: number, props>} */
     insProps = {},
     /** @type {Object.<_id: number, props>} */
-    insPropsAtt = {},
-    insId = 0, insIdAtt = 0, svg2Supported;
+    insPropsAtc = {},
+    insId = 0, insIdAtc = 0, svg2Supported;
 
   // [DEBUG]
   window.insProps = insProps;
@@ -2123,6 +2123,32 @@
   }
 
   /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {propsAtc} propsAtc - `propsAtc` of `LeaderLineAttachment` instance.
+   * @returns {boolean} - `true` when binding succeeded.
+   */
+  function atcBind(props, propsAtc) {
+    if (props.atcs.indexOf(propsAtc) < 0 && propsAtc.conf.bind(props, propsAtc)) {
+      props.atcs.push(propsAtc);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {propsAtc} propsAtc - `propsAtc` of `LeaderLineAttachment` instance.
+   * @returns {void}
+   */
+  function atcUnbind(props, propsAtc) {
+    var i;
+    if ((i = props.atcs.indexOf(propsAtc)) > -1) {
+      propsAtc.conf.unbind(props, propsAtc);
+      props.atcs.splice(i, 1);
+    }
+  }
+
+  /**
    * @class
    * @param {Element} [start] - Alternative to `options.start`.
    * @param {Element} [end] - Alternative to `options.end`.
@@ -2134,7 +2160,7 @@
         // Initialize properties as array.
         options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
           plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []},
-        curStats: {}, aplStats: {}, events: {}, reflowTargets: []
+        curStats: {}, aplStats: {}, atcs: [], events: {}, reflowTargets: []
       },
       prefix;
 
@@ -2543,6 +2569,10 @@
       if (curStats[effectName + '_animId']) { anim.remove(curStats[effectName + '_animId']); }
     });
     if (curStats.show_animId) { anim.remove(curStats.show_animId); }
+
+    props.atcs.forEach(function(propsAtc) {
+      propsAtc.conf.unbind(props, propsAtc); // Don't use atcUnbind that changes props.atcs
+    });
 
     if (props.baseWindow && props.svg) {
       props.baseWindow.document.body.removeChild(props.svg);
@@ -3032,37 +3062,29 @@
    * @param {Object} options - Initial options.
    */
   function LeaderLineAttachment(conf, options) {
-    var propsAtt = {conf: conf};
+    var propsAtc = {conf: conf};
 
-    initStats(propsAtt.curStats, conf.stats);
-    initStats(propsAtt.aplStats, conf.stats);
+    initStats(propsAtc.curStats, conf.stats);
+    initStats(propsAtc.aplStats, conf.stats);
 
-    Object.defineProperty(this, '_id', {value: insIdAtt++});
-    insPropsAtt[this._id] = propsAtt;
+    Object.defineProperty(this, '_id', {value: insIdAtc++});
+    insPropsAtc[this._id] = propsAtc;
 
-    propsAtt.isShown = !options.hide; // isShown is applied in bind
+    propsAtc.isShown = !options.hide; // isShown is applied in bind
     this.setOptions(options);
 
     Object.defineProperty(this, 'isRemoved', {
-      get: function() { return !!insPropsAtt[this._id]; }
+      get: function() { return !!insPropsAtc[this._id]; }
     });
   }
 
   LeaderLineAttachment.prototype.remove = function() {
-    var propsAtt = insPropsAtt[this._id];
-    if (!this.isRemoved) {
-      propsAtt.conf.remove(propsAtt);
-      delete insPropsAtt[this._id];
+    var propsAtc = insPropsAtc[this._id];
+    if (propsAtc) {
+      propsAtc.conf.remove(propsAtc);
+      delete insPropsAtc[this._id];
     }
   };
-
-  function attachmentBind() {
-
-  }
-
-  function attachmentUnbind() {
-
-  }
 
   ATTACHMENTS = {};
 
