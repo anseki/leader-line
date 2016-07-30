@@ -1987,6 +1987,9 @@
     if (on !== props.isShown) {
       traceLog.add('on=' + on); // [DEBUG/]
       props.svg.style.visibility = (props.isShown = on) ? '' : 'hidden';
+      if (props.events.svgShow) {
+        props.events.svgShow.forEach(function(handler) { handler(props, on); });
+      }
     }
     traceLog.add('</svgShow>'); // [DEBUG/]
   }

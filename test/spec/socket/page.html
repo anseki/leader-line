@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="/src/defs.js"></script>
+  <script src="/src/anim.js"></script>
+  <script src="/src/path-data-polyfill/path-data-polyfill.js"></script>
+  <script src="/traceLog.js"></script>
+  <script src="/src/leader-line.js"></script>
+  <style>
+    .view {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      background-color: #eee;
+      margin: 10px;
+    }
+
+    .view > div {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background-color: rgba(150, 255, 127, 0.5);
+    }
+
+    .center { left: 85px; top: 85px; }
+    .top    { left: 86px; top: 10px; }
+    .right  { left: 160px; top: 86px; }
+    .bottom { left: 86px; top: 160px; }
+    .left   { left: 10px; top: 86px; }
+    .view > div.center-0 { width: 0; height: 0; left: 100px; top: 100px; }
+    .view > div.top-0    { width: 0; height: 0; left: 101px; top: 25px; }
+    .view > div.right-0  { width: 0; height: 0; left: 175px; top: 101px; }
+    .view > div.bottom-0 { width: 0; height: 0; left: 101px; top: 175px; }
+    .view > div.left-0   { width: 0; height: 0; left: 25px; top: 101px; }
+  </style>
+
+  <link rel="stylesheet" href="/guide-view.css">
+  <script src="/guide-view.js"></script>
+</head>
+<body>
+  <div class="view">
+    <div id="elm1-center" class="center">elm1-center</div>
+    <div id="elm1-top" class="top">elm1-top</div>
+    <div id="elm1-right" class="right">elm1-right</div>
+    <div id="elm1-bottom" class="bottom">elm1-bottom</div>
+    <div id="elm1-left" class="left">elm1-left</div>
+  </div>
+
+  <div class="view">
+    <div id="elm2-out" style="left: 10px; top: 10px; width: 180px; height: 180px;">elm2-out</div>
+    <div id="elm2-in" class="center">elm2-in</div>
+  </div>
+
+  <div class="view">
+    <div id="elm3-center" class="center" style="width: 0; left: 100px;">elm3-center</div>
+    <div id="elm3-top" class="top">elm3-top</div>
+    <div id="elm3-right" class="right">elm3-right</div>
+    <div id="elm3-bottom" class="bottom">elm3-bottom</div>
+    <div id="elm3-left" class="left">elm3-left</div>
+  </div>
+
+  <div class="view">
+    <div id="elm4-center" class="center" style="height: 0; top: 100px;">elm4-center</div>
+    <div id="elm4-top" class="top">elm4-top</div>
+    <div id="elm4-right" class="right">elm4-right</div>
+    <div id="elm4-bottom" class="bottom">elm4-bottom</div>
+    <div id="elm4-left" class="left">elm4-left</div>
+  </div>
+
+  <div class="view">
+    <div id="elm5-center" class="center-0">elm5-center</div>
+    <div id="elm5-top" class="top">elm5-top</div>
+    <div id="elm5-right" class="right">elm5-right</div>
+    <div id="elm5-bottom" class="bottom">elm5-bottom</div>
+    <div id="elm5-left" class="left">elm5-left</div>
+  </div>
+
+  <div class="view">
+    <div id="elm6-center" class="center-0">elm6-center</div>
+    <div id="elm6-top" class="top-0">elm6-top</div>
+    <div id="elm6-right" class="right-0">elm6-right</div>
+    <div id="elm6-bottom" class="bottom-0">elm6-bottom</div>
+    <div id="elm6-left" class="left-0">elm6-left</div>
+  </div>
+</body>
+</html>
