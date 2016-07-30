@@ -1264,35 +1264,59 @@
         curSocketXYSE[0] = getSocketXY(anchorBBoxSE[0], options.socketSE[0]);
         curSocketXYSE[1] = getSocketXY(anchorBBoxSE[1], options.socketSE[1]);
 
-      } else if (!options.socketSE[0] && !options.socketSE[1]) {
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[1], socketId); });
-        SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[0], socketId); })
-          .forEach(function(socketXY0) {
-            socketXYsWk.forEach(function(socketXY1) {
-              var len = getPointsLength(socketXY0, socketXY1);
-              if (len < socketsLenMin || socketsLenMin === -1) {
-                curSocketXYSE[0] = socketXY0;
-                curSocketXYSE[1] = socketXY1;
-                socketsLenMin = len;
-              }
-            });
-          });
-
       } else {
-        if (options.socketSE[0]) {
-          iFix = 0;
-          iAuto = 1;
+        if (!options.socketSE[0] && !options.socketSE[1]) {
+          socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[1], socketId); });
+          SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[0], socketId); })
+            .forEach(function(socketXY0) {
+              socketXYsWk.forEach(function(socketXY1) {
+                var len = getPointsLength(socketXY0, socketXY1);
+                if (len < socketsLenMin || socketsLenMin === -1) {
+                  curSocketXYSE[0] = socketXY0;
+                  curSocketXYSE[1] = socketXY1;
+                  socketsLenMin = len;
+                }
+              });
+            });
+
         } else {
-          iFix = 1;
-          iAuto = 0;
+          if (options.socketSE[0]) {
+            iFix = 0;
+            iAuto = 1;
+          } else {
+            iFix = 1;
+            iAuto = 0;
+          }
+          curSocketXYSE[iFix] = getSocketXY(anchorBBoxSE[iFix], options.socketSE[iFix]);
+          socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[iAuto], socketId); });
+          socketXYsWk.forEach(function(socketXY) {
+            var len = getPointsLength(socketXY, curSocketXYSE[iFix]);
+            if (len < socketsLenMin || socketsLenMin === -1) {
+              curSocketXYSE[iAuto] = socketXY;
+              socketsLenMin = len;
+            }
+          });
         }
-        curSocketXYSE[iFix] = getSocketXY(anchorBBoxSE[iFix], options.socketSE[iFix]);
-        socketXYsWk = SOCKET_IDS.map(function(socketId) { return getSocketXY(anchorBBoxSE[iAuto], socketId); });
-        socketXYsWk.forEach(function(socketXY) {
-          var len = getPointsLength(socketXY, curSocketXYSE[iFix]);
-          if (len < socketsLenMin || socketsLenMin === -1) {
-            curSocketXYSE[iAuto] = socketXY;
-            socketsLenMin = len;
+
+        // Adjust auto-socket when no width/height
+        [0, 1].forEach(function(i) {
+          var distanceX, distanceY;
+          if (!options.socketSE[i]) {
+            if (!anchorBBoxSE[i].width && !anchorBBoxSE[i].height) {
+              distanceX = curSocketXYSE[i ? 0 : 1].x - anchorBBoxSE[i].left;
+              distanceY = curSocketXYSE[i ? 0 : 1].y - anchorBBoxSE[i].top;
+              curSocketXYSE[i].socketId = Math.abs(distanceX) >= Math.abs(distanceY) ?
+                (distanceX >= 0 ? SOCKET_RIGHT : SOCKET_LEFT) :
+                (distanceY >= 0 ? SOCKET_BOTTOM : SOCKET_TOP);
+            } else if (!anchorBBoxSE[i].width &&
+                (curSocketXYSE[i].socketId === SOCKET_LEFT || curSocketXYSE[i].socketId === SOCKET_RIGHT)) {
+              curSocketXYSE[i].socketId = curSocketXYSE[i ? 0 : 1].x - anchorBBoxSE[i].left >= 0 ?
+                SOCKET_RIGHT : SOCKET_LEFT;
+            } else if (!anchorBBoxSE[i].height &&
+                (curSocketXYSE[i].socketId === SOCKET_TOP || curSocketXYSE[i].socketId === SOCKET_BOTTOM)) {
+              curSocketXYSE[i].socketId = curSocketXYSE[i ? 0 : 1].y - anchorBBoxSE[i].top >= 0 ?
+                SOCKET_BOTTOM : SOCKET_TOP;
+            }
           }
         });
       }
