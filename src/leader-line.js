@@ -849,7 +849,8 @@
     });
 
     if (props.curStats.show_inAnim) {
-      SHOW_EFFECTS[aplStats.show_effect].stop(props, true); // svg.style.visibility is set
+      props.isShown = true;
+      SHOW_EFFECTS[aplStats.show_effect].stop(props, true); // svgShow() is called
     } else if (!props.isShown) {
       props.svg.style.visibility = 'hidden';
     }
@@ -1981,6 +1982,15 @@
     return updated;
   }
 
+  function svgShow(props, on) {
+    traceLog.add('<svgShow>'); // [DEBUG/]
+    if (on !== props.isShown) {
+      traceLog.add('on=' + on); // [DEBUG/]
+      props.svg.style.visibility = (props.isShown = on) ? '' : 'hidden';
+    }
+    traceLog.add('</svgShow>'); // [DEBUG/]
+  }
+
   /**
    * Apply all of `effect`.
    * @param {props} props - `props` of `LeaderLine` instance.
@@ -2820,7 +2830,7 @@
    * @property {AnimOptions} defaultAnimOptions
    */
 
-  /** @type {{effectId: string, EffectConf}} */
+  /** @type {{effectId: string, ShowEffectConf}} */
   SHOW_EFFECTS = {
     none: {
       defaultAnimOptions: {},
@@ -2855,9 +2865,7 @@
         on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
         traceLog.add(dbgLog + '=' + on); // [DEBUG/]
         curStats.show_inAnim = false;
-        if (finish) {
-          props.svg.style.visibility = (props.isShown = on) ? '' : 'hidden';
-        }
+        if (finish) { svgShow(props, on); }
         traceLog.add('</SHOW_EFFECTS.none.stop>'); // [DEBUG/]
         return on ? 1 : 0;
       }
@@ -2892,10 +2900,7 @@
         if (curStats.show_inAnim) {
           prevTimeRatio = anim.stop(curStats.show_animId);
         }
-        if (!props.isShown) {
-          props.svg.style.visibility = '';
-          props.isShown = true;
-        }
+        svgShow(props, true);
         // [DEBUG]
         traceLog.add('timeRatio=' +
           // eslint-disable-next-line eqeqeq
@@ -2919,13 +2924,8 @@
         timeRatio = curStats.show_inAnim ? anim.stop(curStats.show_animId) : on ? 1 : 0;
         curStats.show_inAnim = false;
         if (finish) {
-          if ((props.isShown = on)) {
-            props.svg.style.opacity = 1;
-            props.svg.style.visibility = '';
-          } else {
-            props.svg.style.opacity = 0;
-            props.svg.style.visibility = 'hidden';
-          }
+          props.svg.style.opacity = on ? 1 : 0;
+          svgShow(props, on);
         }
         traceLog.add('</SHOW_EFFECTS.fade.stop>'); // [DEBUG/]
         return timeRatio;
@@ -2999,10 +2999,7 @@
         if (curStats.show_inAnim) {
           prevTimeRatio = anim.stop(curStats.show_animId);
         }
-        if (!props.isShown) {
-          props.svg.style.visibility = '';
-          props.isShown = true;
-        }
+        svgShow(props, true);
         // [DEBUG]
         traceLog.add('timeRatio=' +
           // eslint-disable-next-line eqeqeq
@@ -3027,18 +3024,17 @@
         timeRatio = curStats.show_inAnim ? anim.stop(curStats.show_animId) : on ? 1 : 0;
         curStats.show_inAnim = false;
         if (finish) {
-          if ((props.isShown = on)) {
+          if (on) {
             props.pathList.animVal = null;
             update(props, {path: true});
-            props.svg.style.visibility = '';
           } else {
             // This path might show incorrect angle of plug because it can't get the angle.
             // But this is hidden. This path is for updatePath.
             props.pathList.animVal =
               [[props.pathList.baseVal[0][0], props.pathList.baseVal[0][0]]]; // line from start to start
             update(props, {path: true});
-            props.svg.style.visibility = 'hidden';
           }
+          svgShow(props, on);
         }
         traceLog.add('</SHOW_EFFECTS.draw.stop>'); // [DEBUG/]
         return timeRatio;
@@ -3086,7 +3082,20 @@
     }
   };
 
+
+  /**
+   * @typedef {Object} AttachmentConf
+   * @property {string} type
+   * @property {{statName: string, StatConf}} stats - Additional stats.
+   * @property {Function} init - function(props, propsAtc, options)
+   * @property {Function} bind - function(props, propsAtc, options) returns `true` when binding succeeded.
+   * @property {Function} unbind - function(props, propsAtc)
+   * @property {Function} remove - function(props, propsAtc)
+   */
+
+  /** @type {{effectId: string, AttachmentConf}} */
   ATTACHMENTS = {};
+  window.ATTACHMENTS = ATTACHMENTS; // [DEBUG/]
 
   return LeaderLine;
 })();

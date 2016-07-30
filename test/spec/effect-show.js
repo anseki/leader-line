@@ -94,7 +94,7 @@ describe('effect-show', function() {
 
         pageDone();
         done();
-      }, 10);
+      }, 100);
     });
 
     it(registerTitle('flow - CHANGE: options:NO, show_on:NO, show_inAnim:YES'), function(done) {
@@ -125,13 +125,15 @@ describe('effect-show', function() {
         traceLog.clear();
         ll.show();
         expect(traceLog.log).toEqual([
-          '<SHOW_EFFECTS.fade.start>', 'timeRatio=NONE', '</SHOW_EFFECTS.fade.start>', // restart
+          '<SHOW_EFFECTS.fade.start>', // restart
+          '<svgShow>', 'on=true', '</svgShow>', 'timeRatio=NONE',
+          '</SHOW_EFFECTS.fade.start>',
           '<show>', 'update.show_on', '</show>'
         ]);
 
         pageDone();
         done();
-      }, 10);
+      }, 100);
     });
 
     it(registerTitle('flow - CHANGE: options:NO, show_on:YES, show_inAnim:YES'), function(done) {
@@ -144,7 +146,9 @@ describe('effect-show', function() {
         traceLog.clear();
         ll.show();
         expect(traceLog.log).toEqual([
-          '<SHOW_EFFECTS.fade.start>', 'timeRatio=prevTimeRatio', '</SHOW_EFFECTS.fade.start>', // restart
+          '<SHOW_EFFECTS.fade.start>', // restart
+          '<svgShow>', '</svgShow>', 'timeRatio=prevTimeRatio',
+          '</SHOW_EFFECTS.fade.start>',
           '<show>', 'update.show_on', '</show>'
         ]);
 
@@ -184,7 +188,9 @@ describe('effect-show', function() {
           // reset with timeRatio
           '<SHOW_EFFECTS.fade.stop>', 'finish=undefined', 'on=aplStats.show_on=false', '</SHOW_EFFECTS.fade.stop>',
           '<SHOW_EFFECTS.fade.init>',
-          '<SHOW_EFFECTS.fade.start>', 'timeRatio=timeRatio', '</SHOW_EFFECTS.fade.start>',
+          '<SHOW_EFFECTS.fade.start>',
+          '<svgShow>', '</svgShow>', 'timeRatio=timeRatio',
+          '</SHOW_EFFECTS.fade.start>',
           '</SHOW_EFFECTS.fade.init>',
           '<show>', 'update.show_animOptions', '</show>'
         ]);
@@ -212,9 +218,12 @@ describe('effect-show', function() {
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', 'updated.path', 'updated.viewBox', '</update>',
           // ==== /update()
+          '<svgShow>', '</svgShow>',
           '</SHOW_EFFECTS.draw.stop>',
           '<SHOW_EFFECTS.fade.init>',
-          '<SHOW_EFFECTS.fade.start>', 'timeRatio=timeRatio', '</SHOW_EFFECTS.fade.start>',
+          '<SHOW_EFFECTS.fade.start>',
+          '<svgShow>', '</svgShow>', 'timeRatio=timeRatio',
+          '</SHOW_EFFECTS.fade.start>',
           '</SHOW_EFFECTS.fade.init>',
           '<show>', 'update.show_effect', 'update.show_animOptions', '</show>'
         ]);
@@ -236,14 +245,16 @@ describe('effect-show', function() {
         expect(traceLog.log).toEqual([
           // reset
           '<SHOW_EFFECTS.fade.init>',
-          '<SHOW_EFFECTS.fade.start>', 'timeRatio=NONE', '</SHOW_EFFECTS.fade.start>',
+          '<SHOW_EFFECTS.fade.start>',
+          '<svgShow>', 'on=true', '</svgShow>', 'timeRatio=NONE',
+          '</SHOW_EFFECTS.fade.start>',
           '</SHOW_EFFECTS.fade.init>',
           '<show>', 'update.show_on', 'update.show_animOptions', '</show>'
         ]);
 
         pageDone();
         done();
-      }, 10);
+      }, 100);
     });
 
     it(registerTitle('flow - CHANGE: options(effectName):YES, show_on:YES, show_inAnim:NO'), function(done) {
@@ -264,16 +275,19 @@ describe('effect-show', function() {
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', 'updated.path', 'updated.viewBox', '</update>',
           // ==== /update()
+          '<svgShow>', 'on=true', '</svgShow>',
           '</SHOW_EFFECTS.draw.stop>',
           '<SHOW_EFFECTS.fade.init>',
-          '<SHOW_EFFECTS.fade.start>', 'timeRatio=NONE', '</SHOW_EFFECTS.fade.start>',
+          '<SHOW_EFFECTS.fade.start>',
+          '<svgShow>', '</svgShow>', 'timeRatio=NONE',
+          '</SHOW_EFFECTS.fade.start>',
           '</SHOW_EFFECTS.fade.init>',
           '<show>', 'update.show_on', 'update.show_effect', 'update.show_animOptions', '</show>'
         ]);
 
         pageDone();
         done();
-      }, 10);
+      }, 100);
     });
 
     it(registerTitle('flow - CHANGE: options:YES, show_on:YES, show_inAnim:YES'), function(done) {
@@ -289,7 +303,9 @@ describe('effect-show', function() {
           // reset with timeRatio
           '<SHOW_EFFECTS.fade.stop>', 'finish=undefined', 'on=aplStats.show_on=false', '</SHOW_EFFECTS.fade.stop>',
           '<SHOW_EFFECTS.fade.init>',
-          '<SHOW_EFFECTS.fade.start>', 'timeRatio=timeRatio', '</SHOW_EFFECTS.fade.start>',
+          '<SHOW_EFFECTS.fade.start>',
+          '<svgShow>', '</svgShow>', 'timeRatio=timeRatio',
+          '</SHOW_EFFECTS.fade.start>',
           '</SHOW_EFFECTS.fade.init>',
           '<show>', 'update.show_on', 'update.show_animOptions', '</show>'
         ]);
@@ -317,9 +333,12 @@ describe('effect-show', function() {
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', 'updated.path', 'updated.viewBox', '</update>',
           // ==== /update()
+          '<svgShow>', '</svgShow>',
           '</SHOW_EFFECTS.draw.stop>',
           '<SHOW_EFFECTS.fade.init>',
-          '<SHOW_EFFECTS.fade.start>', 'timeRatio=timeRatio', '</SHOW_EFFECTS.fade.start>',
+          '<SHOW_EFFECTS.fade.start>',
+          '<svgShow>', '</svgShow>', 'timeRatio=timeRatio',
+          '</SHOW_EFFECTS.fade.start>',
           '</SHOW_EFFECTS.fade.init>',
           '<show>', 'update.show_on', 'update.show_effect', 'update.show_animOptions', '</show>'
         ]);
@@ -353,7 +372,7 @@ describe('effect-show', function() {
 
         pageDone();
         done();
-      }, 10);
+      }, 100);
     });
 
     it(registerTitle('show_inAnim:YES'), function(done) {
