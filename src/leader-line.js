@@ -169,6 +169,7 @@
     },
     DEFAULT_SHOW_EFFECT = 'fade',
     EFFECTS, SHOW_EFFECTS, ATTACHMENTS,
+    isAttachment,
 
     /** @type {Object.<_id: number, props>} */
     insProps = {},
@@ -178,6 +179,7 @@
 
   // [DEBUG]
   window.insProps = insProps;
+  window.insPropsAtc = insPropsAtc;
   window.isObject = isObject;
   window.IS_TRIDENT = IS_TRIDENT;
   window.IS_BLINK = IS_BLINK;
@@ -2111,7 +2113,7 @@
     };
   }
 
-  function show(props, on, effectName, animOptions) {
+  function show(props, on, showEffectName, animOptions) {
     var curStats = props.curStats, aplStats = props.aplStats, update = {}, timeRatio;
 
     function applyStats() {
@@ -2121,10 +2123,10 @@
     }
 
     curStats.show_on = on;
-    if (effectName && SHOW_EFFECTS[effectName]) {
-      curStats.show_effect = effectName;
+    if (showEffectName && SHOW_EFFECTS[showEffectName]) {
+      curStats.show_effect = showEffectName;
       curStats.show_animOptions = getValidAnimOptions(
-        isObject(animOptions) ? animOptions : {}, SHOW_EFFECTS[effectName].defaultAnimOptions);
+        isObject(animOptions) ? animOptions : {}, SHOW_EFFECTS[showEffectName].defaultAnimOptions);
     }
 
     update.show_on = curStats.show_on !== aplStats.show_on;
@@ -2222,7 +2224,7 @@
     props.curStats.show_effect = DEFAULT_SHOW_EFFECT;
     props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
 
-    Object.defineProperty(this, '_id', {value: insId++});
+    Object.defineProperty(this, '_id', {value: ++insId});
     insProps[this._id] = props;
 
     prefix = APP_ID + '-' + this._id;
@@ -2427,7 +2429,8 @@
 
     // anchorSE
     [newOptions.start, newOptions.end].forEach(function(newOption, i) {
-      if (newOption && newOption.nodeType != null && // eslint-disable-line eqeqeq
+      if (newOption &&
+          (newOption.nodeType != null || isAttachment(newOption, 'anchor')) && // eslint-disable-line eqeqeq
           newOption !== options.anchorSE[i]) {
         options.anchorSE[i] = newOption;
         needsWindow = needs.position = true;
@@ -2617,13 +2620,13 @@
     delete insProps[this._id];
   };
 
-  LeaderLine.prototype.show = function(effectName, animOptions) {
-    show(insProps[this._id], true, effectName, animOptions);
+  LeaderLine.prototype.show = function(showEffectName, animOptions) {
+    show(insProps[this._id], true, showEffectName, animOptions);
     return this;
   };
 
-  LeaderLine.prototype.hide = function(effectName, animOptions) {
-    show(insProps[this._id], false, effectName, animOptions);
+  LeaderLine.prototype.hide = function(showEffectName, animOptions) {
+    show(insProps[this._id], false, showEffectName, animOptions);
     return this;
   };
 
@@ -2647,7 +2650,7 @@
    * @property {boolean} [defaultAnimEnabled]
    */
 
-  /** @type {{effectId: string, EffectConf}} */
+  /** @type {{effectName: string, EffectConf}} */
   EFFECTS = {
     dash: {
       stats: {dash_len: {}, dash_gap: {}, dash_maxOffset: {}},
@@ -2857,7 +2860,7 @@
    * @property {AnimOptions} defaultAnimOptions
    */
 
-  /** @type {{effectId: string, ShowEffectConf}} */
+  /** @type {{showEffectName: string, ShowEffectConf}} */
   SHOW_EFFECTS = {
     none: {
       defaultAnimOptions: {},
@@ -3085,21 +3088,24 @@
    * @param {Object} options - Initial options.
    */
   function LeaderLineAttachment(conf, options) {
-    var propsAtc = {conf: conf};
+    var propsAtc = {conf: conf, curStats: {}, aplStats: {}, lls: [], isShown: false};
 
-    initStats(propsAtc.curStats, conf.stats);
-    initStats(propsAtc.aplStats, conf.stats);
+    if (conf.stats) {
+      initStats(propsAtc.curStats, conf.stats);
+      initStats(propsAtc.aplStats, conf.stats);
+    }
 
-    Object.defineProperty(this, '_id', {value: insIdAtc++});
-    insPropsAtc[this._id] = propsAtc;
-
-    propsAtc.isShown = !options.hide; // isShown is applied in bind
-    this.setOptions(options);
-
+    Object.defineProperty(this, '_id', {value: ++insIdAtc});
     Object.defineProperty(this, 'isRemoved', {
-      get: function() { return !!insPropsAtc[this._id]; }
+      get: function() { return !insPropsAtc[this._id]; }
     });
+
+    // isRemoved has to be set before this because init() might throw.
+    if (conf.init(propsAtc, isObject(options) ? options : {})) {
+      insPropsAtc[this._id] = propsAtc;
+    }
   }
+  window.LeaderLineAttachment = LeaderLineAttachment;
 
   LeaderLineAttachment.prototype.remove = function() {
     var propsAtc = insPropsAtc[this._id];
@@ -3109,20 +3115,53 @@
     }
   };
 
+  /**
+   * @param {any} obj - An object to be checked.
+   * @param {string} [type] - A required type of LeaderLineAttachment.
+   * @returns {(boolean|null)} - true: Enabled LeaderLineAttachment, false: Not it, null: Disabled it
+   */
+  isAttachment = function(obj, type) {
+    return !(obj instanceof LeaderLineAttachment) ? false :
+      (!type || obj.type === type) && !obj.isRemoved ? true : null;
+  };
 
   /**
    * @typedef {Object} AttachmentConf
    * @property {string} type
    * @property {{statName: string, StatConf}} stats - Additional stats.
-   * @property {Function} init - function(props, propsAtc, options)
-   * @property {Function} bind - function(props, propsAtc, options) returns `true` when binding succeeded.
+   * @property {Function} init - function(propsAtc, options) returns `true` when succeeded.
+   * @property {Function} bind - function(props, propsAtc) returns `true` when succeeded.
    * @property {Function} unbind - function(props, propsAtc)
-   * @property {Function} remove - function(props, propsAtc)
+   * @property {Function} remove - function(propsAtc)
    */
 
-  /** @type {{effectId: string, AttachmentConf}} */
-  ATTACHMENTS = {};
+  /** @type {{attachmentName: string, AttachmentConf}} */
+  ATTACHMENTS = {
+    point: {
+      type: 'anchor',
+      // options: element, x, y
+      init: function(propsAtc, options) {
+        if (options.element == null) { // eslint-disable-line eqeqeq
+          propsAtc.element = document.body;
+        } else if (options.element.nodeType != null) { // eslint-disable-line eqeqeq
+          propsAtc.element = options.element;
+        } else {
+          throw new Error('`element` must be DOM');
+        }
+        propsAtc.x = typeof options.x === 'number' ? options.x : 0;
+        propsAtc.y = typeof options.y === 'number' ? options.y : 0;
+        return true;
+      },
+      remove: function(propsAtc) {}
+    }
+  };
   window.ATTACHMENTS = ATTACHMENTS; // [DEBUG/]
+
+  Object.keys(ATTACHMENTS).forEach(function(attachmentName) {
+    LeaderLine[attachmentName] = function(options) {
+      return new LeaderLineAttachment(ATTACHMENTS[attachmentName], options);
+    };
+  });
 
   return LeaderLine;
 })();
