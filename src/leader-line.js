@@ -169,7 +169,7 @@
     },
     DEFAULT_SHOW_EFFECT = 'fade',
     EFFECTS, SHOW_EFFECTS, ATTACHMENTS,
-    isAttachment,
+    isAttachment, removeAttachment,
 
     /** @type {Object.<_id: number, props>} */
     insProps = {},
@@ -1251,7 +1251,9 @@
     curStats.position_socketGravitySE = curSocketGravitySE = copyTree(options.socketGravitySE);
 
     anchorBBoxSE = [0, 1].map(function(i) {
-      var anchorBBox = getBBoxNest(options.anchorSE[i], props.baseWindow),
+      var anchorBBox = props.optionsAtc.anchorSE[i] !== false ?
+          insPropsAtc[options.anchorSE[i]._id].conf.getBBoxNest(props, insPropsAtc[options.anchorSE[i]._id]) :
+          getBBoxNest(options.anchorSE[i], props.baseWindow),
         curCapsMaskAnchorBBox = curStats.capsMaskAnchor_bBoxSE[i];
       ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
         curCapsMaskAnchorBBox[boxKey] = anchorBBox[BBOX_PROP[boxKey]];
@@ -2167,8 +2169,10 @@
    * @returns {boolean} - `true` when binding succeeded.
    */
   function atcBind(props, propsAtc) {
-    if (props.atcs.indexOf(propsAtc) < 0 && propsAtc.conf.bind(props, propsAtc)) {
+    if (props.atcs.indexOf(propsAtc) < 0 &&
+        (!propsAtc.conf.bind || propsAtc.conf.bind(props, propsAtc))) {
       props.atcs.push(propsAtc);
+      propsAtc.lls.push(props);
       return true;
     }
     return false;
@@ -2177,13 +2181,20 @@
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {propsAtc} propsAtc - `propsAtc` of `LeaderLineAttachment` instance.
+   * @param {boolean} [dontRemove] - Don't call `removeAttachment()`.
    * @returns {void}
    */
-  function atcUnbind(props, propsAtc) {
+  function atcUnbind(props, propsAtc, dontRemove) {
     var i;
     if ((i = props.atcs.indexOf(propsAtc)) > -1) {
-      propsAtc.conf.unbind(props, propsAtc);
+      if (propsAtc.conf.unbind) { propsAtc.conf.unbind(props, propsAtc); }
       props.atcs.splice(i, 1);
+    }
+    if ((i = propsAtc.lls.indexOf(props)) > -1) {
+      propsAtc.lls.splice(i, 1);
+      if (!dontRemove && !propsAtc.lls.length) {
+        removeAttachment(propsAtc);
+      }
     }
   }
 
@@ -2199,6 +2210,7 @@
         // Initialize properties as array.
         options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
           plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []},
+        optionsAtc: {anchorSE: [false, false]},
         curStats: {}, aplStats: {}, atcs: [], events: {}, reflowTargets: []
       },
       prefix;
@@ -2429,10 +2441,19 @@
 
     // anchorSE
     [newOptions.start, newOptions.end].forEach(function(newOption, i) {
+      var newIsAttachment = false;
       if (newOption &&
-          (newOption.nodeType != null || isAttachment(newOption, 'anchor')) && // eslint-disable-line eqeqeq
+          (newOption.nodeType != null || // eslint-disable-line eqeqeq
+            (newIsAttachment = isAttachment(newOption, 'anchor'))) &&
           newOption !== options.anchorSE[i]) {
+        if (props.optionsAtc.anchorSE[i] !== false) {
+          atcUnbind(props, insPropsAtc[options.anchorSE[i]._id]); // Unbind old
+        }
+        if (newIsAttachment && !atcBind(props, insPropsAtc[newOption._id])) { // Bind new
+          throw new Error('Can\'t bind attachment');
+        }
         options.anchorSE[i] = newOption;
+        props.optionsAtc.anchorSE[i] = newIsAttachment;
         needsWindow = needs.position = true;
       }
     });
@@ -2442,7 +2463,12 @@
 
     // Check window.
     if (needsWindow &&
-        (newWindow = getCommonWindow(options.anchorSE[0], options.anchorSE[1])) !== props.baseWindow) {
+        (newWindow = getCommonWindow(
+          props.optionsAtc.anchorSE[0] !== false ?
+            insPropsAtc[options.anchorSE[0]._id].element : options.anchorSE[0],
+          props.optionsAtc.anchorSE[1] !== false ?
+            insPropsAtc[options.anchorSE[1]._id].element : options.anchorSE[1]
+        )) !== props.baseWindow) {
       bindWindow(props, newWindow);
       needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.faces = needs.effect = true;
     }
@@ -3101,19 +3127,11 @@
     });
 
     // isRemoved has to be set before this because init() might throw.
-    if (conf.init(propsAtc, isObject(options) ? options : {})) {
+    if (!conf.init || conf.init(propsAtc, isObject(options) ? options : {})) {
       insPropsAtc[this._id] = propsAtc;
     }
   }
   window.LeaderLineAttachment = LeaderLineAttachment;
-
-  LeaderLineAttachment.prototype.remove = function() {
-    var propsAtc = insPropsAtc[this._id];
-    if (propsAtc) {
-      propsAtc.conf.remove(propsAtc);
-      delete insPropsAtc[this._id];
-    }
-  };
 
   /**
    * @param {any} obj - An object to be checked.
@@ -3122,8 +3140,32 @@
    */
   isAttachment = function(obj, type) {
     return !(obj instanceof LeaderLineAttachment) ? false :
-      (!type || obj.type === type) && !obj.isRemoved ? true : null;
+      (!type || insPropsAtc[obj._id].conf.type === type) && !obj.isRemoved ? true : null;
   };
+
+  /**
+   * propsAtc or id must be specified.
+   * @param {propsAtc|null} propsAtc - `propsAtc` of `LeaderLineAttachment` instance.
+   * @param {number} [id] - `_id` of `LeaderLineAttachment` instance..
+   * @returns {void}
+   */
+  removeAttachment = function(propsAtc, id) {
+    if (!propsAtc && !(propsAtc = insPropsAtc[id])) { return; }
+    propsAtc.lls.forEach(function(props) { atcUnbind(props, propsAtc, true); });
+    if (propsAtc.conf.remove) { propsAtc.conf.remove(propsAtc); }
+    if (!id && !Object.keys(insPropsAtc).some(function(atcId) {
+      if (insPropsAtc[atcId] === propsAtc) {
+        id = atcId;
+        return true;
+      }
+      return false;
+    })) {
+      return;
+    }
+    delete insPropsAtc[id];
+  };
+
+  LeaderLineAttachment.prototype.remove = function() { removeAttachment(null, this._id); };
 
   /**
    * @typedef {Object} AttachmentConf
@@ -3139,6 +3181,7 @@
   ATTACHMENTS = {
     point: {
       type: 'anchor',
+
       // options: element, x, y
       init: function(propsAtc, options) {
         if (options.element == null) { // eslint-disable-line eqeqeq
@@ -3152,7 +3195,14 @@
         propsAtc.y = typeof options.y === 'number' ? options.y : 0;
         return true;
       },
-      remove: function(propsAtc) {}
+
+      getBBoxNest: function(props, propsAtc) {
+        var bBox = getBBoxNest(propsAtc.element, props.baseWindow);
+        bBox.width = bBox.height = 0;
+        bBox.left = bBox.right = bBox.left + propsAtc.x;
+        bBox.top = bBox.bottom = bBox.top + propsAtc.y;
+        return bBox;
+      }
     }
   };
   window.ATTACHMENTS = ATTACHMENTS; // [DEBUG/]
