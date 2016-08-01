@@ -2199,164 +2199,11 @@
   }
 
   /**
-   * @class
-   * @param {Element} [start] - Alternative to `options.start`.
-   * @param {Element} [end] - Alternative to `options.end`.
-   * @param {Object} [options] - Initial options.
-   */
-  function LeaderLine(start, end, options) {
-    var that = this,
-      props = {
-        // Initialize properties as array.
-        options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
-          plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []},
-        optionsAtc: {anchorSE: [false, false]},
-        curStats: {}, aplStats: {}, atcs: [], events: {}, reflowTargets: []
-      },
-      prefix;
-
-    function createSetter(propName) {
-      return function(value) {
-        var options = {};
-        options[propName] = value;
-        that.setOptions(options);
-      };
-    }
-
-    initStats(props.curStats, STATS);
-    initStats(props.aplStats, STATS);
-    Object.keys(EFFECTS).forEach(function(effectName) {
-      var effectStats = EFFECTS[effectName].stats;
-      initStats(props.curStats, effectStats);
-      initStats(props.aplStats, effectStats);
-      props.options[effectName] = false;
-    });
-    initStats(props.curStats, SHOW_STATS);
-    initStats(props.aplStats, SHOW_STATS);
-    props.curStats.show_effect = DEFAULT_SHOW_EFFECT;
-    props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
-
-    Object.defineProperty(this, '_id', {value: ++insId});
-    insProps[this._id] = props;
-
-    prefix = APP_ID + '-' + this._id;
-    props.linePathId = prefix + '-line-path';
-    props.lineShapeId = prefix + '-line-shape';
-    props.lineMaskId = prefix + '-line-mask';
-    props.lineMaskMarkerIdSE = [prefix + '-caps-mask-marker-0', prefix + '-caps-mask-marker-1'];
-    props.capsId = prefix + '-caps';
-    props.maskBGRectId = prefix + '-mask-bg-rect';
-    props.lineOutlineMaskId = prefix + '-line-outline-mask';
-    props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
-    props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
-    props.plugOutlineMaskIdSE = [prefix + '-plug-outline-mask-0', prefix + '-plug-outline-mask-1'];
-    // reserve for future version
-    // props.lineFGId = prefix + '-line-fg';
-    props.lineGradientId = prefix + '-line-gradient';
-
-    if (arguments.length === 1) {
-      options = start;
-      start = null;
-    }
-    options = options || {};
-    if (start) { options.start = start; }
-    if (end) { options.end = end; }
-    props.isShown = props.aplStats.show_on = !options.hide; // isShown is applied in setOptions -> bindWindow
-    this.setOptions(options);
-
-    // Setup option accessor methods (direct)
-    [['start', 'anchorSE', 0], ['end', 'anchorSE', 1], ['color', 'lineColor'], ['size', 'lineSize'],
-        ['startSocketGravity', 'socketGravitySE', 0], ['endSocketGravity', 'socketGravitySE', 1],
-        ['startPlugColor', 'plugColorSE', 0], ['endPlugColor', 'plugColorSE', 1],
-        ['startPlugSize', 'plugSizeSE', 0], ['endPlugSize', 'plugSizeSE', 1],
-        ['outline', 'lineOutlineEnabled'],
-          ['outlineColor', 'lineOutlineColor'], ['outlineSize', 'lineOutlineSize'],
-        ['startPlugOutline', 'plugOutlineEnabledSE', 0], ['endPlugOutline', 'plugOutlineEnabledSE', 1],
-          ['startPlugOutlineColor', 'plugOutlineColorSE', 0], ['endPlugOutlineColor', 'plugOutlineColorSE', 1],
-          ['startPlugOutlineSize', 'plugOutlineSizeSE', 0], ['endPlugOutlineSize', 'plugOutlineSizeSE', 1]]
-      .forEach(function(conf) {
-        var propName = conf[0], optionName = conf[1], i = conf[2];
-        Object.defineProperty(that, propName, {
-          get: function() {
-            var value = // Don't use closure.
-              i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
-              optionName ? insProps[that._id].options[optionName] :
-              insProps[that._id].options[propName];
-            return value == null ? KEYWORD_AUTO : copyTree(value); // eslint-disable-line eqeqeq
-          },
-          set: createSetter(propName),
-          enumerable: true
-        });
-      });
-    // Setup option accessor methods (key-to-id)
-    [['path', PATH_KEY_2_ID],
-        ['startSocket', SOCKET_KEY_2_ID, 'socketSE', 0], ['endSocket', SOCKET_KEY_2_ID, 'socketSE', 1],
-        ['startPlug', PLUG_KEY_2_ID, 'plugSE', 0], ['endPlug', PLUG_KEY_2_ID, 'plugSE', 1]]
-      .forEach(function(conf) {
-        var propName = conf[0], key2Id = conf[1], optionName = conf[2], i = conf[3];
-        Object.defineProperty(that, propName, {
-          get: function() {
-            var value = // Don't use closure.
-                i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
-                optionName ? insProps[that._id].options[optionName] :
-                insProps[that._id].options[propName],
-              key;
-            return !value ? KEYWORD_AUTO :
-              Object.keys(key2Id).some(function(optKey) {
-                if (key2Id[optKey] === value) { key = optKey; return true; }
-                return false;
-              }) ? key : new Error('It\'s broken');
-          },
-          set: createSetter(propName),
-          enumerable: true
-        });
-      });
-    // Setup option accessor methods (effect)
-    Object.keys(EFFECTS).forEach(function(effectName) {
-      var effectConf = EFFECTS[effectName];
-
-      function getOptions(optEffect) {
-        var effectOptions = effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
-          var optionClass = optionConf[0], propName = optionConf[1], key2Id = optionConf[2],
-            optionName = optionConf[3], i = optionConf[4],
-            value =
-              i != null ? optEffect[optionName][i] : // eslint-disable-line eqeqeq
-              optionName ? optEffect[optionName] :
-              optEffect[propName],
-            key;
-          effectOptions[propName] = optionClass === 'id' ? (
-              !value ? KEYWORD_AUTO :
-              Object.keys(key2Id).some(function(optKey) {
-                if (key2Id[optKey] === value) { key = optKey; return true; }
-                return false;
-              }) ? key : new Error('It\'s broken')
-            ) : (
-              value == null ? KEYWORD_AUTO : copyTree(value) // eslint-disable-line eqeqeq
-            );
-          return effectOptions;
-        }, {});
-        if (effectConf.anim) {
-          effectOptions.animation = copyTree(optEffect.animation);
-        }
-        return effectOptions;
-      }
-
-      Object.defineProperty(that, effectName, {
-        get: function() {
-          var value = insProps[that._id].options[effectName];
-          return isObject(value) ? getOptions(value) : value;
-        },
-        set: createSetter(effectName),
-        enumerable: true
-      });
-    });
-  }
-
-  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Object} newOptions - New options.
    * @returns {void}
    */
-  LeaderLine.prototype.setOptions = function(newOptions) {
+  function setOptions(props, newOptions) {
     /*
       Names of `options`      Keys of API (properties of `newOptions`)
       ----------------------------------------
@@ -2375,7 +2222,7 @@
       plugOutlineColorSE      startPlugOutlineColor, endPlugOutlineColor
       plugOutlineSizeSE       startPlugOutlineSize, endPlugOutlineSize
     */
-    var props = insProps[this._id], options = props.options,
+    var options = props.options,
       newWindow, needsWindow, needs = {};
 
     function getCurOption(root, propName, optionName, index, defaultValue) {
@@ -2620,6 +2467,164 @@
     // [/DEBUG]
 
     update(props, needs);
+  }
+
+  /**
+   * @class
+   * @param {Element} [start] - Alternative to `options.start`.
+   * @param {Element} [end] - Alternative to `options.end`.
+   * @param {Object} [options] - Initial options.
+   */
+  function LeaderLine(start, end, options) {
+    var that = this,
+      props = {
+        // Initialize properties as array.
+        options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
+          plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []},
+        optionsAtc: {anchorSE: [false, false]},
+        curStats: {}, aplStats: {}, atcs: [], events: {}, reflowTargets: []
+      },
+      prefix;
+
+    function createSetter(propName) {
+      return function(value) {
+        var options = {};
+        options[propName] = value;
+        that.setOptions(options);
+      };
+    }
+
+    initStats(props.curStats, STATS);
+    initStats(props.aplStats, STATS);
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var effectStats = EFFECTS[effectName].stats;
+      initStats(props.curStats, effectStats);
+      initStats(props.aplStats, effectStats);
+      props.options[effectName] = false;
+    });
+    initStats(props.curStats, SHOW_STATS);
+    initStats(props.aplStats, SHOW_STATS);
+    props.curStats.show_effect = DEFAULT_SHOW_EFFECT;
+    props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
+
+    Object.defineProperty(this, '_id', {value: ++insId});
+    insProps[this._id] = props;
+
+    prefix = APP_ID + '-' + this._id;
+    props.linePathId = prefix + '-line-path';
+    props.lineShapeId = prefix + '-line-shape';
+    props.lineMaskId = prefix + '-line-mask';
+    props.lineMaskMarkerIdSE = [prefix + '-caps-mask-marker-0', prefix + '-caps-mask-marker-1'];
+    props.capsId = prefix + '-caps';
+    props.maskBGRectId = prefix + '-mask-bg-rect';
+    props.lineOutlineMaskId = prefix + '-line-outline-mask';
+    props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
+    props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
+    props.plugOutlineMaskIdSE = [prefix + '-plug-outline-mask-0', prefix + '-plug-outline-mask-1'];
+    // reserve for future version
+    // props.lineFGId = prefix + '-line-fg';
+    props.lineGradientId = prefix + '-line-gradient';
+
+    if (arguments.length === 1) {
+      options = start;
+      start = null;
+    }
+    options = options || {};
+    if (start) { options.start = start; }
+    if (end) { options.end = end; }
+    props.isShown = props.aplStats.show_on = !options.hide; // isShown is applied in setOptions -> bindWindow
+    this.setOptions(options);
+
+    // Setup option accessor methods (direct)
+    [['start', 'anchorSE', 0], ['end', 'anchorSE', 1], ['color', 'lineColor'], ['size', 'lineSize'],
+        ['startSocketGravity', 'socketGravitySE', 0], ['endSocketGravity', 'socketGravitySE', 1],
+        ['startPlugColor', 'plugColorSE', 0], ['endPlugColor', 'plugColorSE', 1],
+        ['startPlugSize', 'plugSizeSE', 0], ['endPlugSize', 'plugSizeSE', 1],
+        ['outline', 'lineOutlineEnabled'],
+          ['outlineColor', 'lineOutlineColor'], ['outlineSize', 'lineOutlineSize'],
+        ['startPlugOutline', 'plugOutlineEnabledSE', 0], ['endPlugOutline', 'plugOutlineEnabledSE', 1],
+          ['startPlugOutlineColor', 'plugOutlineColorSE', 0], ['endPlugOutlineColor', 'plugOutlineColorSE', 1],
+          ['startPlugOutlineSize', 'plugOutlineSizeSE', 0], ['endPlugOutlineSize', 'plugOutlineSizeSE', 1]]
+      .forEach(function(conf) {
+        var propName = conf[0], optionName = conf[1], i = conf[2];
+        Object.defineProperty(that, propName, {
+          get: function() {
+            var value = // Don't use closure.
+              i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
+              optionName ? insProps[that._id].options[optionName] :
+              insProps[that._id].options[propName];
+            return value == null ? KEYWORD_AUTO : copyTree(value); // eslint-disable-line eqeqeq
+          },
+          set: createSetter(propName),
+          enumerable: true
+        });
+      });
+    // Setup option accessor methods (key-to-id)
+    [['path', PATH_KEY_2_ID],
+        ['startSocket', SOCKET_KEY_2_ID, 'socketSE', 0], ['endSocket', SOCKET_KEY_2_ID, 'socketSE', 1],
+        ['startPlug', PLUG_KEY_2_ID, 'plugSE', 0], ['endPlug', PLUG_KEY_2_ID, 'plugSE', 1]]
+      .forEach(function(conf) {
+        var propName = conf[0], key2Id = conf[1], optionName = conf[2], i = conf[3];
+        Object.defineProperty(that, propName, {
+          get: function() {
+            var value = // Don't use closure.
+                i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
+                optionName ? insProps[that._id].options[optionName] :
+                insProps[that._id].options[propName],
+              key;
+            return !value ? KEYWORD_AUTO :
+              Object.keys(key2Id).some(function(optKey) {
+                if (key2Id[optKey] === value) { key = optKey; return true; }
+                return false;
+              }) ? key : new Error('It\'s broken');
+          },
+          set: createSetter(propName),
+          enumerable: true
+        });
+      });
+    // Setup option accessor methods (effect)
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var effectConf = EFFECTS[effectName];
+
+      function getOptions(optEffect) {
+        var effectOptions = effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
+          var optionClass = optionConf[0], propName = optionConf[1], key2Id = optionConf[2],
+            optionName = optionConf[3], i = optionConf[4],
+            value =
+              i != null ? optEffect[optionName][i] : // eslint-disable-line eqeqeq
+              optionName ? optEffect[optionName] :
+              optEffect[propName],
+            key;
+          effectOptions[propName] = optionClass === 'id' ? (
+              !value ? KEYWORD_AUTO :
+              Object.keys(key2Id).some(function(optKey) {
+                if (key2Id[optKey] === value) { key = optKey; return true; }
+                return false;
+              }) ? key : new Error('It\'s broken')
+            ) : (
+              value == null ? KEYWORD_AUTO : copyTree(value) // eslint-disable-line eqeqeq
+            );
+          return effectOptions;
+        }, {});
+        if (effectConf.anim) {
+          effectOptions.animation = copyTree(optEffect.animation);
+        }
+        return effectOptions;
+      }
+
+      Object.defineProperty(that, effectName, {
+        get: function() {
+          var value = insProps[that._id].options[effectName];
+          return isObject(value) ? getOptions(value) : value;
+        },
+        set: createSetter(effectName),
+        enumerable: true
+      });
+    });
+  }
+
+  LeaderLine.prototype.setOptions = function(newOptions) {
+    setOptions(insProps[this._id], newOptions);
     return this;
   };
 
@@ -2637,7 +2642,8 @@
     if (curStats.show_animId) { anim.remove(curStats.show_animId); }
 
     props.atcs.forEach(function(propsAtc) {
-      propsAtc.conf.unbind(props, propsAtc); // Don't use atcUnbind that changes props.atcs
+      // Don't use atcUnbind that changes props.atcs
+      if (propsAtc.conf.unbind) { propsAtc.conf.unbind(props, propsAtc); }
     });
 
     if (props.baseWindow && props.svg) {
@@ -3111,9 +3117,9 @@
   /**
    * @class
    * @param {AttachmentConf} conf - Target AttachmentConf.
-   * @param {Object} options - Initial options.
+   * @param {Object} atcOptions - Initial options.
    */
-  function LeaderLineAttachment(conf, options) {
+  function LeaderLineAttachment(conf, atcOptions) {
     var propsAtc = {conf: conf, curStats: {}, aplStats: {}, lls: [], isShown: false};
 
     if (conf.stats) {
@@ -3127,7 +3133,7 @@
     });
 
     // isRemoved has to be set before this because init() might throw.
-    if (!conf.init || conf.init(propsAtc, isObject(options) ? options : {})) {
+    if (!conf.init || conf.init(propsAtc, isObject(atcOptions) ? atcOptions : {})) {
       insPropsAtc[this._id] = propsAtc;
     }
   }
@@ -3165,15 +3171,25 @@
     delete insPropsAtc[id];
   };
 
-  LeaderLineAttachment.prototype.remove = function() { removeAttachment(null, this._id); };
+  LeaderLineAttachment.prototype.remove = function() {
+    var propsAtc = insPropsAtc[this._id];
+    if (propsAtc) {
+      propsAtc.lls.forEach(function(props) { propsAtc.conf.removeOption(props, propsAtc); });
+      if (insPropsAtc[this._id]) { // it should be removed by unbinding all
+        console.error('LeaderLineAttachment was not removed by removeOption');
+        removeAttachment(null, this._id);
+      }
+    }
+  };
 
   /**
    * @typedef {Object} AttachmentConf
    * @property {string} type
    * @property {{statName: string, StatConf}} stats - Additional stats.
-   * @property {Function} init - function(propsAtc, options) returns `true` when succeeded.
+   * @property {Function} init - function(propsAtc, atcOptions) returns `true` when succeeded.
    * @property {Function} bind - function(props, propsAtc) returns `true` when succeeded.
    * @property {Function} unbind - function(props, propsAtc)
+   * @property {Function} removeOption - function(props, propsAtc)
    * @property {Function} remove - function(propsAtc)
    */
 
@@ -3182,18 +3198,38 @@
     point: {
       type: 'anchor',
 
-      // options: element, x, y
-      init: function(propsAtc, options) {
-        if (options.element == null) { // eslint-disable-line eqeqeq
+      // atcOptions: element, x, y
+      init: function(propsAtc, atcOptions) {
+        if (atcOptions.element == null) { // eslint-disable-line eqeqeq
           propsAtc.element = document.body;
-        } else if (options.element.nodeType != null) { // eslint-disable-line eqeqeq
-          propsAtc.element = options.element;
+        } else if (atcOptions.element.nodeType != null) { // eslint-disable-line eqeqeq
+          propsAtc.element = atcOptions.element;
         } else {
           throw new Error('`element` must be DOM');
         }
-        propsAtc.x = typeof options.x === 'number' ? options.x : 0;
-        propsAtc.y = typeof options.y === 'number' ? options.y : 0;
+        propsAtc.x = typeof atcOptions.x === 'number' ? atcOptions.x : 0;
+        propsAtc.y = typeof atcOptions.y === 'number' ? atcOptions.y : 0;
         return true;
+      },
+
+      removeOption: function(props, propsAtc) {
+        var options = props.options;
+        ['start', 'end'].forEach(function(optionName, i) {
+          var element, another, newOptions;
+          if (props.optionsAtc.anchorSE[i] !== false &&
+              insPropsAtc[options.anchorSE[i]._id] === propsAtc) {
+            element = propsAtc.element;
+            if (element === (another = options.anchorSE[i ? 0 : 1])) { // must be not another
+              element = document.body;
+              if (element === another) { // propsAtc.element is body, or another is body
+                element = new LeaderLineAttachment(ATTACHMENTS.point, {element: element});
+              }
+            }
+            newOptions = {};
+            newOptions[optionName] = element;
+            setOptions(props, newOptions);
+          }
+        });
       },
 
       getBBoxNest: function(props, propsAtc) {
@@ -3208,8 +3244,8 @@
   window.ATTACHMENTS = ATTACHMENTS; // [DEBUG/]
 
   Object.keys(ATTACHMENTS).forEach(function(attachmentName) {
-    LeaderLine[attachmentName] = function(options) {
-      return new LeaderLineAttachment(ATTACHMENTS[attachmentName], options);
+    LeaderLine[attachmentName] = function(atcOptions) {
+      return new LeaderLineAttachment(ATTACHMENTS[attachmentName], atcOptions);
     };
   });
 
