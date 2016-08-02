@@ -27,6 +27,11 @@ $app_id: leader-line;
   fill: black;
 }
 
+.#{$app_id}-caps-mask-anchor {
+  // for attachment
+  stroke: black;
+}
+
 .#{$app_id}-caps-mask-line,
 .#{$app_id}-plugs-face {
   // Show only markers.

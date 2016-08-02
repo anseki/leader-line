@@ -158,7 +158,8 @@
       lineOutlineMask_x: {}, lineOutlineMask_y: {},
       maskBGRect_x: {}, maskBGRect_y: {},
       capsMaskAnchor_enabledSE: {hasSE: true, iniValue: false},
-      capsMaskAnchor_bBoxSE: {hasSE: true, hasProps: true},
+      capsMaskAnchor_pathDataSE: {hasSE: true},
+      capsMaskAnchor_strokeWidthSE: {hasSE: true},
       capsMaskMarker_enabled: {iniValue: false}, capsMaskMarker_enabledSE: {hasSE: true, iniValue: false},
       capsMaskMarker_plugSE: {hasSE: true, iniValue: PLUG_BEHIND},
       capsMaskMarker_markerWidthSE: {hasSE: true}, capsMaskMarker_markerHeightSE: {hasSE: true},
@@ -493,6 +494,38 @@
   }
   window.getCubicT = getCubicT; // [DEBUG/]
 
+  function pathList2PathData(pathList, cbPoint) {
+    var pathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
+    pathList.forEach(function(points) {
+      pathData.push(
+        !points.length ? {type: 'Z', values: []} :
+        points.length === 2 ? {type: 'L', values: [points[1].x, points[1].y]} :
+          {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
+      if (cbPoint) { points.forEach(cbPoint); }
+    });
+    return pathData;
+  }
+
+  function pathDataHasChanged(a, b) {
+    return a == null || b == null || // eslint-disable-line eqeqeq
+      a.length !== b.length || a.some(function(aSeg, i) {
+        var bSeg = b[i];
+        return aSeg.type !== bSeg.type ||
+          aSeg.values.some(function(aSegValue, i) { return aSegValue !== bSeg.values[i]; });
+      });
+  }
+
+  function bBox2PathList(bBox) {
+    var pathList;
+    pathList = [
+      [{x: bBox.left, y: bBox.top}, {x: bBox.right, y: bBox.top}],
+      [{x: bBox.right, y: bBox.top}, {x: bBox.right, y: bBox.bottom}],
+      [{x: bBox.right, y: bBox.bottom}, {x: bBox.left, y: bBox.bottom}],
+      []
+    ];
+    return pathList;
+  }
+
   function addEventHandler(props, type, handler) {
     if (!props.events[type]) {
       props.events[type] = [handler];
@@ -713,7 +746,7 @@
     maskCaps.id = props.capsId;
 
     props.capsMaskAnchorSE = [0, 1].map(function() {
-      var element = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'rect'));
+      var element = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
       element.className.baseVal = APP_ID + '-caps-mask-anchor';
       return element;
     });
@@ -1251,13 +1284,19 @@
     curStats.position_socketGravitySE = curSocketGravitySE = copyTree(options.socketGravitySE);
 
     anchorBBoxSE = [0, 1].map(function(i) {
-      var anchorBBox = props.optionsAtc.anchorSE[i] !== false ?
-          insPropsAtc[options.anchorSE[i]._id].conf.getBBoxNest(props, insPropsAtc[options.anchorSE[i]._id]) :
-          getBBoxNest(options.anchorSE[i], props.baseWindow),
-        curCapsMaskAnchorBBox = curStats.capsMaskAnchor_bBoxSE[i];
-      ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-        curCapsMaskAnchorBBox[boxKey] = anchorBBox[BBOX_PROP[boxKey]];
-      });
+      var anchor = options.anchorSE[i], isAtc = props.optionsAtc.anchorSE[i],
+        propsAtc = isAtc !== false ? insPropsAtc[anchor._id] : null,
+
+        strokeWidth = isAtc !== false && propsAtc.conf.getStrokeWidth ?
+          propsAtc.conf.getStrokeWidth(props, propsAtc) : 0,
+        anchorBBox = isAtc !== false && propsAtc.conf.getBBoxNest ?
+          propsAtc.conf.getBBoxNest(props, propsAtc, strokeWidth) :
+          getBBoxNest(anchor, props.baseWindow);
+
+      curStats.capsMaskAnchor_pathDataSE[i] = pathList2PathData(
+        isAtc !== false && propsAtc.conf.getPathList ?
+          propsAtc.conf.getPathList(props, propsAtc) : bBox2PathList(anchorBBox));
+      curStats.capsMaskAnchor_strokeWidthSE[i] = strokeWidth;
       return anchorBBox;
     });
 
@@ -1734,35 +1773,19 @@
       pathList = props.pathList.animVal || props.pathList.baseVal,
       updated = false;
 
-    function pathDataHasChanged(a, b) {
-      return a == null || b == null || // eslint-disable-line eqeqeq
-        a.length !== b.length || a.some(function(aSeg, i) {
-          var bSeg = b[i];
-          return aSeg.type !== bSeg.type ||
-            aSeg.values.some(function(aSegValue, i) { return aSegValue !== bSeg.values[i]; });
-        });
-    }
-
     if (pathList) {
-      // Convert to `pathData`.
-      curStats.path_pathData = curPathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
       curPathEdge.x1 = curPathEdge.x2 = pathList[0][0].x;
       curPathEdge.y1 = curPathEdge.y2 = pathList[0][0].y;
-      pathList.forEach(function(points) {
-        curPathData.push(points.length === 2 ?
-          {type: 'L', values: [points[1].x, points[1].y]} :
-          {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
-        points.forEach(function(point) {
-          if (point.x < curPathEdge.x1) { curPathEdge.x1 = point.x; }
-          if (point.x > curPathEdge.x2) { curPathEdge.x2 = point.x; }
-          if (point.y < curPathEdge.y1) { curPathEdge.y1 = point.y; }
-          if (point.y > curPathEdge.y2) { curPathEdge.y2 = point.y; }
-        });
+      curStats.path_pathData = curPathData = pathList2PathData(pathList, function(point) {
+        if (point.x < curPathEdge.x1) { curPathEdge.x1 = point.x; }
+        if (point.x > curPathEdge.x2) { curPathEdge.x2 = point.x; }
+        if (point.y < curPathEdge.y1) { curPathEdge.y1 = point.y; }
+        if (point.y > curPathEdge.y2) { curPathEdge.y2 = point.y; }
       });
 
       // Apply `pathData`
       if (pathDataHasChanged(curPathData, aplStats.path_pathData)) {
-        traceLog.add('setPathData'); // [DEBUG/]
+        traceLog.add('path_pathData'); // [DEBUG/]
         props.linePath.setPathData(curPathData);
         aplStats.path_pathData = curPathData; // Since curPathData is new anytime, it doesn't need copy.
         updated = true;
@@ -1917,7 +1940,7 @@
 
         // capsMaskAnchor
         [0, 1].forEach(function(i) {
-          var curBBox, aplBBox;
+          var curPathData;
 
           if (setStat(props, aplStats.capsMaskAnchor_enabledSE, i, (value = curStats.capsMaskAnchor_enabledSE[i])
               /* [DEBUG] */, null, 'capsMaskAnchor_enabledSE[' + i + ']=%s'/* [/DEBUG] */)) {
@@ -1929,16 +1952,22 @@
           }
 
           if (curStats.capsMaskAnchor_enabledSE[i]) {
-            // capsMaskAnchor_bBoxSE
-            curBBox = curStats.capsMaskAnchor_bBoxSE[i];
-            aplBBox = aplStats.capsMaskAnchor_bBoxSE[i];
-            ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-              if (setStat(props, aplBBox, boxKey, (value = curBBox[boxKey])
-                  /* [DEBUG] */, null, 'capsMaskAnchor_bBoxSE[' + i + '].' + boxKey + '%_'/* [/DEBUG] */)) {
-                props.capsMaskAnchorSE[i][boxKey].baseVal.value = value;
-                updated = true;
-              }
-            });
+            // capsMaskAnchor_pathDataSE
+            if (pathDataHasChanged((curPathData = curStats.capsMaskAnchor_pathDataSE[i]),
+                aplStats.capsMaskAnchor_pathDataSE[i])) {
+              traceLog.add('capsMaskAnchor_pathDataSE[' + i + ']'); // [DEBUG/]
+              props.capsMaskAnchorSE[i].setPathData(curPathData);
+              aplStats.capsMaskAnchor_pathDataSE[i] = curPathData;
+              updated = true;
+            }
+
+            // capsMaskAnchor_strokeWidthSE
+            if (setStat(props, aplStats.capsMaskAnchor_strokeWidthSE, i,
+                (value = curStats.capsMaskAnchor_strokeWidthSE[i])
+                /* [DEBUG] */, null, 'capsMaskAnchor_strokeWidthSE[' + i + ']=%s'/* [/DEBUG] */)) {
+              props.capsMaskAnchorSE[i].style.strokeWidth = value;
+              updated = true;
+            }
           }
         });
 
