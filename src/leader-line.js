@@ -2637,7 +2637,8 @@
     var props = insProps[this._id], curStats = props.curStats;
 
     Object.keys(EFFECTS).forEach(function(effectName) {
-      if (curStats[effectName + '_animId']) { anim.remove(curStats[effectName + '_animId']); }
+      var keyAnimId = effectName + '_animId';
+      if (curStats[keyAnimId]) { anim.remove(curStats[keyAnimId]); }
     });
     if (curStats.show_animId) { anim.remove(curStats.show_animId); }
 
@@ -3174,10 +3175,11 @@
   LeaderLineAttachment.prototype.remove = function() {
     var propsAtc = insPropsAtc[this._id];
     if (propsAtc) {
-      propsAtc.lls.forEach(function(props) { propsAtc.conf.removeOption(props, propsAtc); });
-      if (insPropsAtc[this._id]) { // it should be removed by unbinding all
+      propsAtc.lls.slice().forEach(function(props) { propsAtc.conf.removeOption(props, propsAtc); });
+
+      if ((propsAtc = insPropsAtc[this._id])) { // it should be removed by unbinding all
         console.error('LeaderLineAttachment was not removed by removeOption');
-        removeAttachment(null, this._id);
+        removeAttachment(propsAtc, this._id); // force
       }
     }
   };
@@ -3221,7 +3223,53 @@
             element = propsAtc.element;
             if (element === (another = options.anchorSE[i ? 0 : 1])) { // must be not another
               element = document.body;
-              if (element === another) { // propsAtc.element is body, or another is body
+              if (element === another) { // propsAtc.element is body, and another is body
+                element = new LeaderLineAttachment(ATTACHMENTS.point, {element: element});
+              }
+            }
+            newOptions = {};
+            newOptions[optionName] = element;
+            setOptions(props, newOptions);
+          }
+        });
+      },
+
+      getBBoxNest: function(props, propsAtc) {
+        var bBox = getBBoxNest(propsAtc.element, props.baseWindow);
+        bBox.width = bBox.height = 0;
+        bBox.left = bBox.right = bBox.left + propsAtc.x;
+        bBox.top = bBox.bottom = bBox.top + propsAtc.y;
+        return bBox;
+      }
+    },
+
+    area: {
+      type: 'anchor',
+
+      // atcOptions: element, x, y, radius
+      init: function(propsAtc, atcOptions) {
+        if (atcOptions.element == null) { // eslint-disable-line eqeqeq
+          propsAtc.element = document.body;
+        } else if (atcOptions.element.nodeType != null) { // eslint-disable-line eqeqeq
+          propsAtc.element = atcOptions.element;
+        } else {
+          throw new Error('`element` must be DOM');
+        }
+        propsAtc.x = typeof atcOptions.x === 'number' ? atcOptions.x : 0;
+        propsAtc.y = typeof atcOptions.y === 'number' ? atcOptions.y : 0;
+        return true;
+      },
+
+      removeOption: function(props, propsAtc) {
+        var options = props.options;
+        ['start', 'end'].forEach(function(optionName, i) {
+          var element, another, newOptions;
+          if (props.optionsAtc.anchorSE[i] !== false &&
+              insPropsAtc[options.anchorSE[i]._id] === propsAtc) {
+            element = propsAtc.element;
+            if (element === (another = options.anchorSE[i ? 0 : 1])) { // must be not another
+              element = document.body;
+              if (element === another) { // propsAtc.element is body, and another is body
                 element = new LeaderLineAttachment(ATTACHMENTS.point, {element: element});
               }
             }
