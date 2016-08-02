@@ -1,5 +1,6 @@
 /* global forceReflow:false */
 /* exported guideView */
+/* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
 var guideView = (function() {
   'use strict';
@@ -109,15 +110,20 @@ var guideView = (function() {
       (function() {
         var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
           pathSegs = [];
-        curStats.capsMaskAnchor_bBoxSE.forEach(function(bBox) {
-          var left = bBox.x, right = bBox.x + bBox.width;
-          if (left < edgeLeft) { edgeLeft = left; }
-          if (right > edgeRight) { edgeRight = right; }
+        [0, 1].forEach(function(i) {
+          var anchor = props.options.anchorSE[i], isAtc = props.optionsAtc.anchorSE[i],
+            propsAtc = isAtc !== false ? window.insPropsAtc[anchor._id] : null,
+            bBox = isAtc !== false && propsAtc.conf.getBBoxNest ?
+              propsAtc.conf.getBBoxNest(props, propsAtc,
+                propsAtc.conf.getStrokeWidth ? propsAtc.conf.getStrokeWidth(props, propsAtc) : 0) :
+              window.getBBoxNest(anchor, props.baseWindow);
+          if (bBox.left < edgeLeft) { edgeLeft = bBox.left; }
+          if (bBox.right > edgeRight) { edgeRight = bBox.right; }
           [
-            {x: bBox.x + bBox.width / 2, y: bBox.y}, // TOP
-            {x: right, y: bBox.y + bBox.height / 2}, // RIGHT
-            {x: bBox.x + bBox.width / 2, y: bBox.y + bBox.height}, // BOTTOM
-            {x: left, y: bBox.y + bBox.height / 2} // LEFT
+            {x: bBox.left + bBox.width / 2, y: bBox.top}, // TOP
+            {x: bBox.right, y: bBox.top + bBox.height / 2}, // RIGHT
+            {x: bBox.left + bBox.width / 2, y: bBox.bottom}, // BOTTOM
+            {x: bBox.left, y: bBox.top + bBox.height / 2} // LEFT
           ].forEach(function(point) { addXMarker(point, pathSegs); });
         });
         path.className.baseVal = 'guide-socket';
