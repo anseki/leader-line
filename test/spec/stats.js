@@ -1028,8 +1028,7 @@ describe('stats', function() {
     expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
     ll.setOptions({end: document.getElementById('elm2'), endPlug: 'behind'});
     expect(traceLog.getTaggedLog('updateMask')).toContainAll([
-      'capsMaskAnchor_enabledSE[1]=true',
-      'capsMaskAnchor_bBoxSE[1].x', 'capsMaskAnchor_bBoxSE[1].y'
+      'capsMaskAnchor_enabledSE[1]=true', 'capsMaskAnchor_pathDataSE[1]'
     ]);
     expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(true);
 
@@ -1053,7 +1052,7 @@ describe('stats', function() {
     // capsMaskAnchor_bBoxSE when caps_enabled false
     ll.end = document.getElementById('elm3');
     expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
-      'capsMaskAnchor_bBoxSE[1].x', 'capsMaskAnchor_bBoxSE[1].y'
+      'capsMaskAnchor_pathDataSE[1]'
     ]);
 
     // caps_enabled true
@@ -1061,8 +1060,7 @@ describe('stats', function() {
     ll.endPlug = 'behind';
     log = traceLog.getTaggedLog('updateMask');
     expect(log).toContainAll([
-      'caps_enabled=true',
-      'capsMaskAnchor_bBoxSE[1].x', 'capsMaskAnchor_bBoxSE[1].y'
+      'caps_enabled=true', 'capsMaskAnchor_pathDataSE[1]'
     ]);
     expect(log).toNotContainAny([
       'capsMaskAnchor_enabledSE[1]=true' // apl* was not disabled
@@ -1076,7 +1074,7 @@ describe('stats', function() {
     // capsMaskAnchor_bBoxSE when capsMaskAnchor_enabledSE false
     ll.start = document.getElementById('elm2');
     expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
-      'capsMaskAnchor_bBoxSE[0].x', 'capsMaskAnchor_bBoxSE[0].y'
+      'capsMaskAnchor_pathDataSE[0]'
     ]);
 
     // capsMaskAnchor_enabledSE true
@@ -1084,7 +1082,7 @@ describe('stats', function() {
     ll.startPlug = 'behind';
     expect(traceLog.getTaggedLog('updateMask')).toContainAll([
       'capsMaskAnchor_enabledSE[0]=true',
-      'capsMaskAnchor_bBoxSE[0].x', 'capsMaskAnchor_bBoxSE[0].y'
+      'capsMaskAnchor_pathDataSE[0]'
     ]);
     expect(props.curStats.capsMaskAnchor_enabledSE[0]).toBe(true);
 
@@ -1232,9 +1230,7 @@ describe('stats', function() {
         'maskBGRect_x', 'maskBGRect_y',
         'lineMask_enabled=true', 'lineMask_x', 'lineMask_y',
         'caps_enabled=true',
-        'capsMaskAnchor_enabledSE[0]=true',
-        'capsMaskAnchor_bBoxSE[0].x', 'capsMaskAnchor_bBoxSE[0].y',
-        'capsMaskAnchor_bBoxSE[0].width', 'capsMaskAnchor_bBoxSE[0].height',
+        'capsMaskAnchor_enabledSE[0]=true', 'capsMaskAnchor_pathDataSE[0]',
       '</updateMask>',
 
       '<setEffect>', '</setEffect>',
@@ -1286,9 +1282,7 @@ describe('stats', function() {
         'maskBGRect_x', 'maskBGRect_y',
         'lineMask_enabled=true', 'lineMask_x', 'lineMask_y',
         'caps_enabled=true',
-        'capsMaskAnchor_enabledSE[0]=true',
-        'capsMaskAnchor_bBoxSE[0].x', 'capsMaskAnchor_bBoxSE[0].y',
-        'capsMaskAnchor_bBoxSE[0].width', 'capsMaskAnchor_bBoxSE[0].height',
+        'capsMaskAnchor_enabledSE[0]=true', 'capsMaskAnchor_pathDataSE[0]',
       '</updateMask>',
 
       '<setEffect>', '</setEffect>',

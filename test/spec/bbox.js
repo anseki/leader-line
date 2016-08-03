@@ -140,14 +140,8 @@ describe('BBox', function() {
           props = window.insProps[ll._id];
 
           ['static', 'absolute'].forEach(function(div, i) {
-            var actual = createBBox({
-                left: props.aplStats.capsMaskAnchor_bBoxSE[i].x,
-                top: props.aplStats.capsMaskAnchor_bBoxSE[i].y,
-                width: props.aplStats.capsMaskAnchor_bBoxSE[i].width,
-                height: props.aplStats.capsMaskAnchor_bBoxSE[i].height
-              }),
-              len = condition.expected[div].reduce(function(sum, prop) { return (sum += DOC_LEN[prop]); }, 0);
-            expect(actual)
+            var len = condition.expected[div].reduce(function(sum, prop) { return (sum += DOC_LEN[prop]); }, 0);
+            expect(window.pathData2BBox(props.aplStats.capsMaskAnchor_pathDataSE[i]))
               .toEqual(createBBox({left: len, top: len, width: DIV_WIDTH[div], height: DIV_HEIGHT[div]}));
           });
 
@@ -367,12 +361,7 @@ describe('BBox', function() {
                   {left: 0, top: 0,
                     width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]})),
 
-                expected = createBBox({
-                  left: props.aplStats.capsMaskAnchor_bBoxSE[i].x,
-                  top: props.aplStats.capsMaskAnchor_bBoxSE[i].y,
-                  width: props.aplStats.capsMaskAnchor_bBoxSE[i].width,
-                  height: props.aplStats.capsMaskAnchor_bBoxSE[i].height
-                });
+                expected = window.pathData2BBox(props.aplStats.capsMaskAnchor_pathDataSE[i]);
 
               expected.index = bBox.index = iCase; // for error information
               expected.key = bBox.key = key; // for error information
@@ -591,12 +580,7 @@ describe('BBox', function() {
                   {left: 0, top: 0,
                     width: DIV_WIDTH[item[key + 'Div']], height: DIV_HEIGHT[item[key + 'Div']]})),
 
-                expected = createBBox({
-                  left: props.aplStats.capsMaskAnchor_bBoxSE[i].x,
-                  top: props.aplStats.capsMaskAnchor_bBoxSE[i].y,
-                  width: props.aplStats.capsMaskAnchor_bBoxSE[i].width,
-                  height: props.aplStats.capsMaskAnchor_bBoxSE[i].height
-                });
+                expected = window.pathData2BBox(props.aplStats.capsMaskAnchor_pathDataSE[i]);
 
               expected.index = bBox.index = iCase; // for error information
               expected.key = bBox.key = key; // for error information

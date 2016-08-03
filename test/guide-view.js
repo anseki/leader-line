@@ -1,6 +1,36 @@
 /* global forceReflow:false */
-/* exported guideView */
+/* exported guideView, pathData2BBox */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
+
+var pathData2BBox;
+(function() {
+  'use strict';
+
+  // corners: {{x1, y1, x2, y2}}
+  function createBBox(corners) {
+    return {left: corners.x1, top: corners.y1, right: corners.x2, bottom: corners.y2,
+      width: corners.x2 - corners.x1, height: corners.y2 - corners.y1};
+  }
+
+  // relative commands (e.g. `c`, `h`) are not supported.
+  pathData2BBox = function(pathData) {
+    return createBBox(pathData.reduce(function(corners, pathSeg) {
+      var values = pathSeg.values, x, y, i, iLen = values.length;
+      for (i = 0; i < iLen; i += 2) {
+        if (values[i + 1] == null) { break; } // eslint-disable-line eqeqeq
+        x = values[i];
+        y = values[i + 1];
+        /* eslint-disable eqeqeq */
+        if (corners.x1 == null || x < corners.x1) { corners.x1 = x; }
+        if (corners.x2 == null || x > corners.x2) { corners.x2 = x; }
+        if (corners.y1 == null || y < corners.y1) { corners.y1 = y; }
+        if (corners.y2 == null || y > corners.y2) { corners.y2 = y; }
+        /* eslint-enable eqeqeq */
+      }
+      return corners;
+    }, {}));
+  };
+})();
 
 var guideView = (function() {
   'use strict';
@@ -75,28 +105,15 @@ var guideView = (function() {
         var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
           padding = Math.max(curStats.line_strokeWidth / 2,
             curStats.viewBox_plugBCircleSE[0] || 0, curStats.viewBox_plugBCircleSE[1] || 0),
-          pathSegs = [], corners = {};
-        props.linePath.getPathData().forEach(function(pathSeg) {
-          var values = pathSeg.values, point, i, iLen = values.length;
-          for (i = 0; i < iLen; i += 2) {
-            // relative commands (e.g. `h`) are not supported.
-            if (values[i + 1] == null) { break; } // eslint-disable-line eqeqeq
-            point = {x: values[i], y: values[i + 1]};
-            /* eslint-disable eqeqeq */
-            if (corners.x1 == null || point.x < corners.x1) { corners.x1 = point.x; }
-            if (corners.x2 == null || point.x > corners.x2) { corners.x2 = point.x; }
-            if (corners.y1 == null || point.y < corners.y1) { corners.y1 = point.y; }
-            if (corners.y2 == null || point.y > corners.y2) { corners.y2 = point.y; }
-            /* eslint-enable eqeqeq */
-          }
-        });
-        [['x1', 'y1', -1, -1], ['x2', 'y1', 1, -1], ['x1', 'y2', -1, 1], ['x2', 'y2', 1, 1]]
+          pathSegs = [],
+          bBox = pathData2BBox(props.linePath.getPathData());
+        [['left', 'top', -1, -1], ['right', 'top', 1, -1], ['left', 'bottom', -1, 1], ['right', 'bottom', 1, 1]]
           .forEach(function(corner) {
             var xKey = corner[0], yKey = corner[1], xDir = corner[2], yDir = corner[3];
             pathSegs.push(
-              {type: 'M', values: [corners[xKey] + padding * xDir, corners[yKey]]},
-              {type: 'L', values: [corners[xKey], corners[yKey]]},
-              {type: 'L', values: [corners[xKey], corners[yKey] + padding * yDir]}
+              {type: 'M', values: [bBox[xKey] + padding * xDir, bBox[yKey]]},
+              {type: 'L', values: [bBox[xKey], bBox[yKey]]},
+              {type: 'L', values: [bBox[xKey], bBox[yKey] + padding * yDir]}
             );
           });
         path.className.baseVal = 'guide-bbox';
