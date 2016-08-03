@@ -798,7 +798,7 @@ describe('effect', function() {
       ll.end = document.getElementById('elm2');
       point1 = {x: props.aplStats.position_socketXYSE[1].x, y: props.aplStats.position_socketXYSE[1].y};
       expect(traceLog.log).toNotContainAny(['<EFFECTS.gradient.init>', '<EFFECTS.gradient.remove>']);
-      expect(traceLog.getTaggedLog('updatePath')).toContain('setPathData');
+      expect(traceLog.getTaggedLog('updatePath')).toContain('path_pathData');
       expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
         'aplStats.gradient_pointSE[1].x', 'aplStats.gradient_pointSE[1].y'
       ]);

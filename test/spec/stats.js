@@ -818,7 +818,7 @@ describe('stats', function() {
     ll.endPlug = 'behind'; // to avoid changing padding by symbol
     traceLog.clear();
     ll.path = 'straight';
-    expect(traceLog.getTaggedLog('updatePath')).toEqual(['setPathData']);
+    expect(traceLog.getTaggedLog('updatePath')).toEqual(['path_pathData']);
 
     traceLog.clear();
     ll.startSocketGravity = 0; // `straight` ignores `gravity`
@@ -1024,7 +1024,7 @@ describe('stats', function() {
     expect(props.aplStats.lineMask_x).toBe(props.curStats.viewBox_bBox.x);
     expect(props.aplStats.lineMask_y).toBe(props.curStats.viewBox_bBox.y);
 
-    // capsMaskAnchor_enabledSE, capsMaskAnchor_bBoxSE
+    // capsMaskAnchor_enabledSE, capsMaskAnchor_pathDataSE
     expect(props.curStats.capsMaskAnchor_enabledSE[1]).toBe(false);
     ll.setOptions({end: document.getElementById('elm2'), endPlug: 'behind'});
     expect(traceLog.getTaggedLog('updateMask')).toContainAll([
@@ -1049,7 +1049,7 @@ describe('stats', function() {
     expect(props.curStats.lineMask_enabled).toBe(true);
     expect(props.aplStats.lineMask_outlineMode).toBe(true);
 
-    // capsMaskAnchor_bBoxSE when caps_enabled false
+    // capsMaskAnchor_pathDataSE when caps_enabled false
     ll.end = document.getElementById('elm3');
     expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
       'capsMaskAnchor_pathDataSE[1]'
@@ -1071,7 +1071,7 @@ describe('stats', function() {
     expect(props.curStats.caps_enabled).toBe(true);
 
 
-    // capsMaskAnchor_bBoxSE when capsMaskAnchor_enabledSE false
+    // capsMaskAnchor_pathDataSE when capsMaskAnchor_enabledSE false
     ll.start = document.getElementById('elm2');
     expect(traceLog.getTaggedLog('updateMask')).toNotContainAny([
       'capsMaskAnchor_pathDataSE[0]'
@@ -1222,7 +1222,7 @@ describe('stats', function() {
         'new-position',
       '</updatePosition>',
 
-      '<updatePath>', 'setPathData', '</updatePath>',
+      '<updatePath>', 'path_pathData', '</updatePath>',
       '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
 
       '<updateMask>',
@@ -1230,7 +1230,7 @@ describe('stats', function() {
         'maskBGRect_x', 'maskBGRect_y',
         'lineMask_enabled=true', 'lineMask_x', 'lineMask_y',
         'caps_enabled=true',
-        'capsMaskAnchor_enabledSE[0]=true', 'capsMaskAnchor_pathDataSE[0]',
+        'capsMaskAnchor_enabledSE[0]=true', 'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
       '</updateMask>',
 
       '<setEffect>', '</setEffect>',
@@ -1274,7 +1274,7 @@ describe('stats', function() {
         'new-position',
       '</updatePosition>',
 
-      '<updatePath>', 'setPathData', '</updatePath>',
+      '<updatePath>', 'path_pathData', '</updatePath>',
       '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
 
       '<updateMask>',
@@ -1282,7 +1282,7 @@ describe('stats', function() {
         'maskBGRect_x', 'maskBGRect_y',
         'lineMask_enabled=true', 'lineMask_x', 'lineMask_y',
         'caps_enabled=true',
-        'capsMaskAnchor_enabledSE[0]=true', 'capsMaskAnchor_pathDataSE[0]',
+        'capsMaskAnchor_enabledSE[0]=true', 'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
       '</updateMask>',
 
       '<setEffect>', '</setEffect>',

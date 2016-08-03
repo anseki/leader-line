@@ -213,7 +213,7 @@ describe('effect-show', function() {
           // remove and init with timeRatio
           '<SHOW_EFFECTS.draw.stop>', 'finish=true', 'on=on=true',
           // ==== update()
-          '<updatePath>', 'setPathData', '</updatePath>',
+          '<updatePath>', 'path_pathData', '</updatePath>',
           '<updateViewBox>', 'width', 'height', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', 'updated.path', 'updated.viewBox', '</update>',
@@ -270,7 +270,7 @@ describe('effect-show', function() {
           // remove and init
           '<SHOW_EFFECTS.draw.stop>', 'finish=true', 'on=on=true',
           // ==== update()
-          '<updatePath>', 'setPathData', '</updatePath>',
+          '<updatePath>', 'path_pathData', '</updatePath>',
           '<updateViewBox>', 'width', 'height', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', 'updated.path', 'updated.viewBox', '</update>',
@@ -328,7 +328,7 @@ describe('effect-show', function() {
           // remove and init with timeRatio
           '<SHOW_EFFECTS.draw.stop>', 'finish=true', 'on=on=true',
           // ==== update()
-          '<updatePath>', 'setPathData', '</updatePath>',
+          '<updatePath>', 'path_pathData', '</updatePath>',
           '<updateViewBox>', 'width', 'height', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', 'updated.path', 'updated.viewBox', '</update>',
