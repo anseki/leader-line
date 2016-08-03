@@ -89,6 +89,7 @@
     MIN_ADJUST_LEN = 10, MIN_GRID_LEN = 30,
 
     CIRCLE_CP = 0.5522847, CIRCLE_8_RAD = 1 / 4 * Math.PI,
+    RE_PERCENT = /^\s*([\d\.]+)\s*(\%)?\s*$/,
 
     IS_TRIDENT = !!document.uniqueID,
     IS_BLINK = !!(window.chrome && window.chrome.webstore),
@@ -224,7 +225,7 @@
     var matches, func, args, alpha = 1, baseColor = (color = (color + '').trim());
 
     function parseAlpha(value) {
-      var alpha = 1, matches = /^([\d\.]+)\s*(\%)?$/.exec(value);
+      var alpha = 1, matches = RE_PERCENT.exec(value);
       if (matches) {
         alpha = parseFloat(matches[1]);
         if (matches[2]) {
@@ -3231,13 +3232,7 @@
 
       // atcOptions: element, x, y
       init: function(propsAtc, atcOptions) {
-        if (atcOptions.element == null) { // eslint-disable-line eqeqeq
-          propsAtc.element = document.body;
-        } else if (atcOptions.element.nodeType != null) { // eslint-disable-line eqeqeq
-          propsAtc.element = atcOptions.element;
-        } else {
-          throw new Error('`element` must be DOM');
-        }
+        propsAtc.element = ATTACHMENTS.point.checkElement(atcOptions.element);
         propsAtc.x = typeof atcOptions.x === 'number' ? atcOptions.x : 0;
         propsAtc.y = typeof atcOptions.y === 'number' ? atcOptions.y : 0;
         return true;
@@ -3269,45 +3264,50 @@
         bBox.left = bBox.right = bBox.left + propsAtc.x;
         bBox.top = bBox.bottom = bBox.top + propsAtc.y;
         return bBox;
+      },
+
+      checkElement: function(element) {
+        if (element == null) { // eslint-disable-line eqeqeq
+          element = document.body;
+        } else if (element.nodeType == null) { // eslint-disable-line eqeqeq
+          throw new Error('`element` must be DOM');
+        }
+        return element;
       }
     },
 
     area: {
       type: 'anchor',
 
-      // atcOptions: element, x, y, radius
+      // atcOptions: element, x, y, width, height, color(A), size(A), radius
       init: function(propsAtc, atcOptions) {
-        if (atcOptions.element == null) { // eslint-disable-line eqeqeq
-          propsAtc.element = document.body;
-        } else if (atcOptions.element.nodeType != null) { // eslint-disable-line eqeqeq
-          propsAtc.element = atcOptions.element;
-        } else {
-          throw new Error('`element` must be DOM');
-        }
-        propsAtc.x = typeof atcOptions.x === 'number' ? atcOptions.x : 0;
-        propsAtc.y = typeof atcOptions.y === 'number' ? atcOptions.y : 0;
+        propsAtc.element = ATTACHMENTS.point.checkElement(atcOptions.element);
+
+        [['x', [0]], ['y', [0]], ['width', [100, '%']], ['height', [100, '%']]].forEach(function(option) {
+          var optionName = option[0], defaultValue = option[1],
+            type = typeof atcOptions[optionName], matches, num;
+          if (type === 'number') {
+            if (atcOptions[optionName] >= 0) { propsAtc[optionName] = [atcOptions[optionName]]; }
+          } else if (type === 'string' && (matches = RE_PERCENT.exec(atcOptions[optionName])) &&
+              matches[2] && (num = parseFloat(matches[1])) >= 0) {
+            propsAtc[optionName] = [num, '%'];
+          }
+          if (!propsAtc[optionName]) { propsAtc[optionName] = defaultValue; }
+        });
+
+        [['size'], ['radius', 0]].forEach(function(option) {
+          var optionName = option[0], defaultValue = option[1];
+          if (typeof atcOptions[optionName] === 'number' && atcOptions[optionName] >= 0) {
+            propsAtc[optionName] = [atcOptions[optionName]];
+          }
+          if (!propsAtc[optionName]) { propsAtc[optionName] = defaultValue; }
+        });
+
+        if (typeof atcOptions.color === 'string') { propsAtc.color = atcOptions.color.trim(); }
         return true;
       },
 
-      removeOption: function(props, propsAtc) {
-        var options = props.options;
-        ['start', 'end'].forEach(function(optionName, i) {
-          var element, another, newOptions;
-          if (props.optionsAtc.anchorSE[i] !== false &&
-              insPropsAtc[options.anchorSE[i]._id] === propsAtc) {
-            element = propsAtc.element;
-            if (element === (another = options.anchorSE[i ? 0 : 1])) { // must be not another
-              element = document.body;
-              if (element === another) { // propsAtc.element is body, and another is body
-                element = new LeaderLineAttachment(ATTACHMENTS.point, {element: element});
-              }
-            }
-            newOptions = {};
-            newOptions[optionName] = element;
-            setOptions(props, newOptions);
-          }
-        });
-      },
+      removeOption: function(props, propsAtc) { ATTACHMENTS.point.removeOption(props, propsAtc); },
 
       getBBoxNest: function(props, propsAtc) {
         var bBox = getBBoxNest(propsAtc.element, props.baseWindow);
