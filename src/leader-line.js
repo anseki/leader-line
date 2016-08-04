@@ -518,15 +518,16 @@
       });
   }
 
-  function bBox2PathList(bBox) {
-    var pathList;
-    pathList = [
-      [{x: bBox.left, y: bBox.top}, {x: bBox.right, y: bBox.top}],
-      [{x: bBox.right, y: bBox.top}, {x: bBox.right, y: bBox.bottom}],
-      [{x: bBox.right, y: bBox.bottom}, {x: bBox.left, y: bBox.bottom}],
-      []
+  function bBox2PathData(bBox) {
+    var right = bBox.right != null ? bBox.right : bBox.left + bBox.width, // eslint-disable-line eqeqeq
+      bottom = bBox.bottom != null ? bBox.bottom : bBox.top + bBox.height; // eslint-disable-line eqeqeq
+    return [
+      {type: 'M', values: [bBox.left, bBox.top]},
+      {type: 'L', values: [right, bBox.top]},
+      {type: 'L', values: [right, bottom]},
+      {type: 'L', values: [bBox.left, bottom]},
+      {type: 'Z', values: []}
     ];
-    return pathList;
   }
 
   function addEventHandler(props, type, handler) {
@@ -662,7 +663,7 @@
     traceLog.add('<bindWindow>'); // [DEBUG/]
     var baseDocument = newWindow.document,
       defs, stylesHtml, stylesBody, bodyOffset = {x: 0, y: 0},
-      elmDefs, maskCaps, element, aplStats = props.aplStats;
+      svg, elmDefs, maskCaps, element, aplStats = props.aplStats;
 
     function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
 
@@ -727,22 +728,22 @@
     props.bodyOffset = bodyOffset;
 
     // Main SVG
-    props.svg = baseDocument.createElementNS(SVG_NS, 'svg');
-    props.svg.className.baseVal = APP_ID;
-    if (!props.svg.viewBox.baseVal) { props.svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
-    elmDefs = props.svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
+    props.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
+    svg.className.baseVal = APP_ID;
+    if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
+    elmDefs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
 
-    props.linePath = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-    props.linePath.id = props.linePathId;
-    props.linePath.className.baseVal = APP_ID + '-line-path';
+    props.linePath = element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+    element.id = props.linePathId;
+    element.className.baseVal = APP_ID + '-line-path';
     if (IS_WEBKIT) {
       // [WEBKIT] style in `use` is not updated
-      props.linePath.style.fill = 'none';
+      element.style.fill = 'none';
     }
 
-    props.lineShape = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineShape.id = props.lineShapeId;
-    props.lineShape.href.baseVal = '#' + props.linePathId;
+    props.lineShape = element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.id = props.lineShapeId;
+    element.href.baseVal = '#' + props.linePathId;
 
     maskCaps = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
     maskCaps.id = props.capsId;
@@ -760,38 +761,40 @@
       return element;
     });
 
-    props.capsMaskLine = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.capsMaskLine.className.baseVal = APP_ID + '-caps-mask-line';
-    props.capsMaskLine.href.baseVal = '#' + props.lineShapeId;
+    props.capsMaskLine = element = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.className.baseVal = APP_ID + '-caps-mask-line';
+    element.href.baseVal = '#' + props.lineShapeId;
 
-    props.maskBGRect = setWH100(elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
-    props.maskBGRect.id = props.maskBGRectId;
-    props.maskBGRect.className.baseVal = APP_ID + '-mask-bg-rect';
+    props.maskBGRect = element = setWH100(elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
+    element.id = props.maskBGRectId;
+    element.className.baseVal = APP_ID + '-mask-bg-rect';
     if (IS_WEBKIT) {
       // [WEBKIT] style in `use` is not updated
-      props.maskBGRect.style.fill = 'white';
+      element.style.fill = 'white';
     }
 
     // lineMask
     props.lineMask = setWH100(setupMask(props.lineMaskId));
-    props.lineMaskBG = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineMaskBG.href.baseVal = '#' + props.maskBGRectId;
-    props.lineMaskShape = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineMaskShape.className.baseVal = APP_ID + '-line-mask-shape';
-    props.lineMaskShape.href.baseVal = '#' + props.linePathId;
-    props.lineMaskShape.style.display = 'none';
-    props.lineMaskCaps = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineMaskCaps.href.baseVal = '#' + props.capsId;
+    props.lineMaskBG = element = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.href.baseVal = '#' + props.maskBGRectId;
+    props.lineMaskShape = element = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.className.baseVal = APP_ID + '-line-mask-shape';
+    element.href.baseVal = '#' + props.linePathId;
+    element.style.display = 'none';
+    props.lineMaskCaps = element = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.href.baseVal = '#' + props.capsId;
 
     // lineOutlineMask
     props.lineOutlineMask = setWH100(setupMask(props.lineOutlineMaskId));
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.href.baseVal = '#' + props.maskBGRectId;
-    props.lineOutlineMaskShape = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineOutlineMaskShape.className.baseVal = APP_ID + '-line-outline-mask-shape';
-    props.lineOutlineMaskShape.href.baseVal = '#' + props.linePathId;
-    props.lineOutlineMaskCaps = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineOutlineMaskCaps.href.baseVal = '#' + props.capsId;
+    props.lineOutlineMaskShape = element =
+      props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.className.baseVal = APP_ID + '-line-outline-mask-shape';
+    element.href.baseVal = '#' + props.linePathId;
+    props.lineOutlineMaskCaps = element =
+      props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.href.baseVal = '#' + props.capsId;
 
     /* reserve for future version
     props.lineFG = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
@@ -800,11 +803,11 @@
     */
 
     // lineGradient
-    props.lineGradient = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
-    props.lineGradient.id = props.lineGradientId;
-    props.lineGradient.gradientUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
+    props.lineGradient = element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
+    element.id = props.lineGradientId;
+    element.gradientUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
     ['x1', 'y1', 'x2', 'y2'].forEach(function(prop) {
-      props.lineGradient[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+      element[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
     });
     props.lineGradientStopSE = [0, 1].map(function(i) {
       var element = props.lineGradient.appendChild(baseDocument.createElementNS(SVG_NS, 'stop'));
@@ -821,15 +824,15 @@
       return element;
     });
 
-    props.face = props.svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
+    props.face = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
 
-    props.lineFace = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineFace.href.baseVal = '#' + props.lineShapeId;
+    props.lineFace = element = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.href.baseVal = '#' + props.lineShapeId;
 
-    props.lineOutlineFace = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.lineOutlineFace.href.baseVal = '#' + props.lineShapeId;
-    props.lineOutlineFace.style.mask = 'url(#' + props.lineOutlineMaskId + ')';
-    props.lineOutlineFace.style.display = 'none';
+    props.lineOutlineFace = element = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.href.baseVal = '#' + props.lineShapeId;
+    element.style.mask = 'url(#' + props.lineOutlineMaskId + ')';
+    element.style.display = 'none';
 
     // plugMaskSE
     props.plugMaskSE = [0, 1].map(function(i) { return setupMask(props.plugMaskIdSE[i]); });
@@ -869,10 +872,10 @@
       return element;
     });
 
-    props.plugsFace = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    props.plugsFace.className.baseVal = APP_ID + '-plugs-face';
-    props.plugsFace.href.baseVal = '#' + props.lineShapeId;
-    props.plugsFace.style.display = 'none';
+    props.plugsFace = element = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    element.className.baseVal = APP_ID + '-plugs-face';
+    element.href.baseVal = '#' + props.lineShapeId;
+    element.style.display = 'none';
 
     props.pathList = {};
     // Init stats
@@ -889,9 +892,9 @@
       props.isShown = true;
       SHOW_EFFECTS[aplStats.show_effect].stop(props, true); // svgShow() is called
     } else if (!props.isShown) {
-      props.svg.style.visibility = 'hidden';
+      svg.style.visibility = 'hidden';
     }
-    baseDocument.body.appendChild(props.svg);
+    baseDocument.body.appendChild(svg);
 
     traceLog.add('</bindWindow>'); // [DEBUG/]
   }
@@ -1295,9 +1298,8 @@
           attachProps.conf.getBBoxNest(props, attachProps, strokeWidth) :
           getBBoxNest(anchor, props.baseWindow);
 
-      curStats.capsMaskAnchor_pathDataSE[i] = pathList2PathData(
-        isAttach !== false && attachProps.conf.getPathList ?
-          attachProps.conf.getPathList(props, attachProps) : bBox2PathList(anchorBBox));
+      curStats.capsMaskAnchor_pathDataSE[i] = isAttach !== false && attachProps.conf.getPathData ?
+        attachProps.conf.getPathData(props, attachProps) : bBox2PathData(anchorBBox);
       curStats.capsMaskAnchor_strokeWidthSE[i] = strokeWidth;
       return anchorBBox;
     });
@@ -3152,7 +3154,7 @@
    * @param {Object} attachOptions - Initial options.
    */
   function LeaderLineAttachment(conf, attachOptions) {
-    var attachProps = {conf: conf, curStats: {}, aplStats: {}, lls: [], isShown: false};
+    var attachProps = {conf: conf, curStats: {}, aplStats: {}, lls: []};
 
     if (conf.stats) {
       initStats(attachProps.curStats, conf.stats);
@@ -3234,8 +3236,8 @@
       // attachOptions: element, x, y
       init: function(attachProps, attachOptions) {
         attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
-        attachProps.x = typeof attachOptions.x === 'number' ? attachOptions.x : 0;
-        attachProps.y = typeof attachOptions.y === 'number' ? attachOptions.y : 0;
+        attachProps.x = ATTACHMENTS.point.parsePercent(attachOptions.x, true) || [0];
+        attachProps.y = ATTACHMENTS.point.parsePercent(attachOptions.y, true) || [0];
         return true;
       },
 
@@ -3260,11 +3262,23 @@
       },
 
       getBBoxNest: function(props, attachProps) {
-        var bBox = getBBoxNest(attachProps.element, props.baseWindow);
+        var bBox = getBBoxNest(attachProps.element, props.baseWindow),
+          width = bBox.width, height = bBox.height;
         bBox.width = bBox.height = 0;
-        bBox.left = bBox.right = bBox.left + attachProps.x;
-        bBox.top = bBox.bottom = bBox.top + attachProps.y;
+        bBox.left = bBox.right = bBox.left + attachProps.x[0] * (attachProps.x[1] ? width : 1);
+        bBox.top = bBox.bottom = bBox.top + attachProps.y[0] * (attachProps.y[1] ? height : 1);
         return bBox;
+      },
+
+      parsePercent: function(value, allowNegative) {
+        var type = typeof value, matches, num, ratio;
+        if (type === 'number') {
+          num = value;
+        } else if (type === 'string' && (matches = RE_PERCENT.exec(value)) && matches[2]) {
+          num = parseFloat(matches[1]) / 100;
+          ratio = true;
+        }
+        return num != null && (allowNegative || num >= 0) ? [num, ratio] : null; // eslint-disable-line eqeqeq
       },
 
       checkElement: function(element) {
@@ -3279,13 +3293,18 @@
 
     area: {
       type: 'anchor',
+      stats: {color: {}, strokeWidth: {},
+        elementX: {}, elementY: {}, elementWidth: {}, elementHeight: {}, pathData: {}},
 
-      // attachOptions: element, color(A), size(A), shape, x, y, width, height, radius, points
+      // attachOptions: element, color(A), fillColor, size(A), shape, x, y, width, height, radius, points
       init: function(attachProps, attachOptions) {
-        var points, baseDocument;
+        var points = [], baseDocument, svg;
         attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
         if (typeof attachOptions.color === 'string') {
           attachProps.color = attachOptions.color.trim();
+        }
+        if (typeof attachOptions.fillColor === 'string') {
+          attachProps.fill = attachOptions.fillColor.trim();
         }
         if (typeof attachOptions.size === 'number' && attachOptions.size >= 0) {
           attachProps.size = attachOptions.size;
@@ -3293,24 +3312,19 @@
 
         if (attachOptions.shape === 'circle') {
           attachProps.shape = attachOptions.shape;
-        } else if (attachOptions.shape === 'polygon') {
-          if (Array.isArray(attachOptions.points)) {
-            points = [];
-            if (!attachOptions.points.every(function(point) {
-              if (typeof point[0] === 'number' && typeof point[1] === 'number') {
-                points.push([point[0], point[1]]);
+        } else if (attachOptions.shape === 'polygon' &&
+            Array.isArray(attachOptions.points) && attachOptions.points.every(function(point) {
+              var validPoint = [];
+              if ((validPoint[0] = ATTACHMENTS.point.parsePercent(point[0], true)) &&
+                  (validPoint[1] = ATTACHMENTS.point.parsePercent(point[1], true))) {
+                points.push(validPoint);
+                if (validPoint[0][1] || validPoint[1][1]) { attachProps.hasRatio = true; }
                 return true;
               }
               return false;
-            })) { points = null; }
-          }
-          if (points) {
-            attachProps.shape = attachOptions.shape;
-            attachProps.points = points;
-          } else { // invalid `points`
-            attachProps.shape = 'rectangle';
-            attachProps.radius = 0;
-          }
+            })) {
+          attachProps.shape = attachOptions.shape;
+          attachProps.points = points;
         } else {
           attachProps.shape = 'rectangle';
           attachProps.radius =
@@ -3318,40 +3332,38 @@
         }
 
         if (attachProps.shape === 'rectangle' || attachProps.shape === 'circle') {
-          [['x', [0]], ['y', [0]], ['width', [100, '%']], ['height', [100, '%']]].forEach(function(option) {
-            var optionName = option[0], defaultValue = option[1],
-              type = typeof attachOptions[optionName], matches, num;
-            if (type === 'number') {
-              if (attachOptions[optionName] >= 0) { attachProps[optionName] = [attachOptions[optionName]]; }
-            } else if (type === 'string' && (matches = RE_PERCENT.exec(attachOptions[optionName])) &&
-                matches[2] && (num = parseFloat(matches[1])) >= 0) {
-              attachProps[optionName] = [num, '%'];
-            }
-            if (!attachProps[optionName]) { attachProps[optionName] = defaultValue; }
-          });
+          attachProps.x = ATTACHMENTS.point.parsePercent(attachOptions.x, true) || [-0.05, true];
+          attachProps.y = ATTACHMENTS.point.parsePercent(attachOptions.y, true) || [-0.05, true];
+          attachProps.width = ATTACHMENTS.point.parsePercent(attachOptions.width) || [1.1, true];
+          attachProps.height = ATTACHMENTS.point.parsePercent(attachOptions.height) || [1.1, true];
+          if (attachProps.x[1] || attachProps.y[1] ||
+            attachProps.width[1] || attachProps.height[1]) { attachProps.hasRatio = true; }
         }
 
         // SVG
         baseDocument = attachProps.element.ownerDocument;
-        attachProps.svg = baseDocument.createElementNS(SVG_NS, 'svg');
-        attachProps.svg.className.baseVal = APP_ID + '-attach-area';
-        if (!attachProps.svg.viewBox.baseVal) { attachProps.svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
-        attachProps.linePath = attachProps.svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+        attachProps.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
+        svg.className.baseVal = APP_ID + '-attach-area';
+        if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
+        attachProps.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+        attachProps.path.style.fill = attachProps.fill || 'none';
         attachProps.isShown = false;
-        attachProps.svg.style.visibility = 'hidden';
-        baseDocument.body.appendChild(attachProps.svg);
+        svg.style.visibility = 'hidden';
+        baseDocument.body.appendChild(svg);
 
         return true;
       },
 
       removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },
 
-      remove: function(attachProps) {},
+      remove: function(attachProps) {
+        attachProps.svg.parentNode.removeChild(attachProps.svg);
+      },
 
       getStrokeWidth: function(props, attachProps) {
       },
 
-      getPathList: function(props, attachProps) {
+      getPathData: function(props, attachProps) {
       },
 
       getBBoxNest: function(props, attachProps) {
@@ -3360,6 +3372,66 @@
         bBox.left = bBox.right = bBox.left + attachProps.x;
         bBox.top = bBox.bottom = bBox.top + attachProps.y;
         return bBox;
+      },
+
+      update: function(attachProps) {
+        traceLog.add('<ATTACHMENTS.area.update>'); // [DEBUG/]
+        var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+          llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
+          bBox, padding, curPathData, value, updated = {};
+
+        checkCurStats(attachProps, 'color', null, attachProps.color || (llStats ? llStats.line_color : '')); // [DEBUG/]
+        curStats.color = attachProps.color || (llStats ? llStats.line_color : '');
+
+        updated.strokeWidth = setStat(attachProps, curStats, 'strokeWidth',
+          attachProps.size || (llStats ? llStats.line_strokeWidth : DEFAULT_OPTIONS.lineSize)
+          /* [DEBUG] */, null, 'curStats.strokeWidth=%s'/* [/DEBUG] */);
+
+        bBox = getBBox(attachProps.element);
+        updated.elementX = setStat(attachProps, curStats, 'elementX', bBox.left
+          /* [DEBUG] */, null, 'curStats.elementX=%s'/* [/DEBUG] */);
+        updated.elementY = setStat(attachProps, curStats, 'elementY', bBox.top
+          /* [DEBUG] */, null, 'curStats.elementY=%s'/* [/DEBUG] */);
+        updated.elementWidth = setStat(attachProps, curStats, 'elementWidth', bBox.width
+          /* [DEBUG] */, null, 'curStats.elementWidth=%s'/* [/DEBUG] */);
+        updated.elementHeight = setStat(attachProps, curStats, 'elementHeight', bBox.height
+          /* [DEBUG] */, null, 'curStats.elementHeight=%s'/* [/DEBUG] */);
+
+        if (updated.strokeWidth || updated.elementX || updated.elementY ||
+            attachProps.hasRatio && (updated.elementWidth || updated.elementHeight)) { // generate path
+          traceLog.add('generate-path'); // [DEBUG/]
+          switch (attachProps.shape) {
+            case 'rectangle':
+              padding = curStats.strokeWidth / 2;
+              curStats.pathData = bBox2PathData({
+                left: bBox.left + attachProps.x[0] * (attachProps.x[1] ? bBox.width : 1) - padding,
+                top: bBox.top + attachProps.y[0] * (attachProps.y[1] ? bBox.height : 1) - padding,
+                width: attachProps.width[0] * (attachProps.width[1] ? bBox.width : 1) + padding,
+                height: attachProps.height[0] * (attachProps.height[1] ? bBox.width : 1) + padding
+              });
+              break;
+            // no default
+          }
+        }
+
+        if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
+            /* [DEBUG] */, null, 'aplStats.color=%s'/* [/DEBUG] */)) {
+          attachProps.path.style.color = value;
+        }
+
+        if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth)
+            /* [DEBUG] */, null, 'aplStats.strokeWidth=%s'/* [/DEBUG] */)) {
+          attachProps.path.style.strokeWidth = value;
+        }
+
+        // Apply `pathData`
+        if (pathDataHasChanged((curPathData = curStats.pathData), aplStats.pathData)) {
+          traceLog.add('aplStats.pathData'); // [DEBUG/]
+          attachProps.path.setPathData(curPathData);
+          aplStats.pathData = curPathData;
+        }
+
+        traceLog.add('</ATTACHMENTS.area.update>'); // [DEBUG/]
       }
     }
   };
