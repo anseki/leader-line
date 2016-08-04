@@ -90,6 +90,7 @@
 
     CIRCLE_CP = 0.5522847, CIRCLE_8_RAD = 1 / 4 * Math.PI,
     RE_PERCENT = /^\s*([\d\.]+)\s*(\%)?\s*$/,
+    SVG_NS = 'http://www.w3.org/2000/svg',
 
     IS_TRIDENT = !!document.uniqueID,
     IS_BLINK = !!(window.chrome && window.chrome.webstore),
@@ -169,19 +170,20 @@
     SHOW_STATS = {
       show_on: {}, show_effect: {}, show_animOptions: {}, show_animId: {}, show_inAnim: {}
     },
-    DEFAULT_SHOW_EFFECT = 'fade',
+
     EFFECTS, SHOW_EFFECTS, ATTACHMENTS,
+    DEFAULT_SHOW_EFFECT = 'fade',
     isAttachment, removeAttachment,
 
     /** @type {Object.<_id: number, props>} */
     insProps = {},
     /** @type {Object.<_id: number, props>} */
-    insPropsAtc = {},
-    insId = 0, insIdAtc = 0, svg2Supported;
+    insAttachProps = {},
+    insId = 0, insAttachId = 0, svg2Supported;
 
   // [DEBUG]
   window.insProps = insProps;
-  window.insPropsAtc = insPropsAtc;
+  window.insAttachProps = insAttachProps;
   window.isObject = isObject;
   window.IS_TRIDENT = IS_TRIDENT;
   window.IS_BLINK = IS_BLINK;
@@ -658,8 +660,7 @@
    */
   function bindWindow(props, newWindow) {
     traceLog.add('<bindWindow>'); // [DEBUG/]
-    var SVG_NS = 'http://www.w3.org/2000/svg',
-      baseDocument = newWindow.document,
+    var baseDocument = newWindow.document,
       defs, stylesHtml, stylesBody, bodyOffset = {x: 0, y: 0},
       elmDefs, maskCaps, element, aplStats = props.aplStats;
 
@@ -1285,18 +1286,18 @@
     curStats.position_socketGravitySE = curSocketGravitySE = copyTree(options.socketGravitySE);
 
     anchorBBoxSE = [0, 1].map(function(i) {
-      var anchor = options.anchorSE[i], isAtc = props.optionsAtc.anchorSE[i],
-        propsAtc = isAtc !== false ? insPropsAtc[anchor._id] : null,
+      var anchor = options.anchorSE[i], isAttach = props.optionIsAttach.anchorSE[i],
+        attachProps = isAttach !== false ? insAttachProps[anchor._id] : null,
 
-        strokeWidth = isAtc !== false && propsAtc.conf.getStrokeWidth ?
-          propsAtc.conf.getStrokeWidth(props, propsAtc) : 0,
-        anchorBBox = isAtc !== false && propsAtc.conf.getBBoxNest ?
-          propsAtc.conf.getBBoxNest(props, propsAtc, strokeWidth) :
+        strokeWidth = isAttach !== false && attachProps.conf.getStrokeWidth ?
+          attachProps.conf.getStrokeWidth(props, attachProps) : 0,
+        anchorBBox = isAttach !== false && attachProps.conf.getBBoxNest ?
+          attachProps.conf.getBBoxNest(props, attachProps, strokeWidth) :
           getBBoxNest(anchor, props.baseWindow);
 
       curStats.capsMaskAnchor_pathDataSE[i] = pathList2PathData(
-        isAtc !== false && propsAtc.conf.getPathList ?
-          propsAtc.conf.getPathList(props, propsAtc) : bBox2PathList(anchorBBox));
+        isAttach !== false && attachProps.conf.getPathList ?
+          attachProps.conf.getPathList(props, attachProps) : bBox2PathList(anchorBBox));
       curStats.capsMaskAnchor_strokeWidthSE[i] = strokeWidth;
       return anchorBBox;
     });
@@ -2195,14 +2196,14 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {propsAtc} propsAtc - `propsAtc` of `LeaderLineAttachment` instance.
+   * @param {attachProps} attachProps - `attachProps` of `LeaderLineAttachment` instance.
    * @returns {boolean} - `true` when binding succeeded.
    */
-  function atcBind(props, propsAtc) {
-    if (props.atcs.indexOf(propsAtc) < 0 &&
-        (!propsAtc.conf.bind || propsAtc.conf.bind(props, propsAtc))) {
-      props.atcs.push(propsAtc);
-      propsAtc.lls.push(props);
+  function bindAttachment(props, attachProps) {
+    if (props.attachments.indexOf(attachProps) < 0 &&
+        (!attachProps.conf.bind || attachProps.conf.bind(props, attachProps))) {
+      props.attachments.push(attachProps);
+      attachProps.lls.push(props);
       return true;
     }
     return false;
@@ -2210,20 +2211,20 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @param {propsAtc} propsAtc - `propsAtc` of `LeaderLineAttachment` instance.
+   * @param {attachProps} attachProps - `attachProps` of `LeaderLineAttachment` instance.
    * @param {boolean} [dontRemove] - Don't call `removeAttachment()`.
    * @returns {void}
    */
-  function atcUnbind(props, propsAtc, dontRemove) {
+  function unbindAttachment(props, attachProps, dontRemove) {
     var i;
-    if ((i = props.atcs.indexOf(propsAtc)) > -1) {
-      if (propsAtc.conf.unbind) { propsAtc.conf.unbind(props, propsAtc); }
-      props.atcs.splice(i, 1);
+    if ((i = props.attachments.indexOf(attachProps)) > -1) {
+      if (attachProps.conf.unbind) { attachProps.conf.unbind(props, attachProps); }
+      props.attachments.splice(i, 1);
     }
-    if ((i = propsAtc.lls.indexOf(props)) > -1) {
-      propsAtc.lls.splice(i, 1);
-      if (!dontRemove && !propsAtc.lls.length) {
-        removeAttachment(propsAtc);
+    if ((i = attachProps.lls.indexOf(props)) > -1) {
+      attachProps.lls.splice(i, 1);
+      if (!dontRemove && !attachProps.lls.length) {
+        removeAttachment(attachProps);
       }
     }
   }
@@ -2323,14 +2324,14 @@
           (newOption.nodeType != null || // eslint-disable-line eqeqeq
             (newIsAttachment = isAttachment(newOption, 'anchor'))) &&
           newOption !== options.anchorSE[i]) {
-        if (props.optionsAtc.anchorSE[i] !== false) {
-          atcUnbind(props, insPropsAtc[options.anchorSE[i]._id]); // Unbind old
+        if (props.optionIsAttach.anchorSE[i] !== false) {
+          unbindAttachment(props, insAttachProps[options.anchorSE[i]._id]); // Unbind old
         }
-        if (newIsAttachment && !atcBind(props, insPropsAtc[newOption._id])) { // Bind new
+        if (newIsAttachment && !bindAttachment(props, insAttachProps[newOption._id])) { // Bind new
           throw new Error('Can\'t bind attachment');
         }
         options.anchorSE[i] = newOption;
-        props.optionsAtc.anchorSE[i] = newIsAttachment;
+        props.optionIsAttach.anchorSE[i] = newIsAttachment;
         needsWindow = needs.position = true;
       }
     });
@@ -2341,10 +2342,10 @@
     // Check window.
     if (needsWindow &&
         (newWindow = getCommonWindow(
-          props.optionsAtc.anchorSE[0] !== false ?
-            insPropsAtc[options.anchorSE[0]._id].element : options.anchorSE[0],
-          props.optionsAtc.anchorSE[1] !== false ?
-            insPropsAtc[options.anchorSE[1]._id].element : options.anchorSE[1]
+          props.optionIsAttach.anchorSE[0] !== false ?
+            insAttachProps[options.anchorSE[0]._id].element : options.anchorSE[0],
+          props.optionIsAttach.anchorSE[1] !== false ?
+            insAttachProps[options.anchorSE[1]._id].element : options.anchorSE[1]
         )) !== props.baseWindow) {
       bindWindow(props, newWindow);
       needs.line = needs.plug = needs.lineOutline = needs.plugOutline = needs.faces = needs.effect = true;
@@ -2431,7 +2432,7 @@
     Object.keys(EFFECTS).forEach(function(effectName) {
       var effectConf = EFFECTS[effectName],
         keyEnabled = effectName + '_enabled', keyOptions = effectName + '_options',
-        newOption, optEffect;
+        newOption, optionValue;
 
       function getValidOptions(newEffectOptions) {
         var effectOptions = {};
@@ -2447,21 +2448,21 @@
       }
 
       function parseAnimOptions(newEffectOptions) {
-        var optAnimation, keyAnimOptions = effectName + '_animOptions';
+        var optionValue, keyAnimOptions = effectName + '_animOptions';
 
         if (!newEffectOptions.hasOwnProperty('animation')) {
-          optAnimation = !!effectConf.defaultEnabled;
+          optionValue = !!effectConf.defaultEnabled;
           props.curStats[keyAnimOptions] =
-            optAnimation ? getValidAnimOptions({}, effectConf.defaultAnimOptions) : null;
+            optionValue ? getValidAnimOptions({}, effectConf.defaultAnimOptions) : null;
         } else if (isObject(newEffectOptions.animation)) {
-          optAnimation = props.curStats[keyAnimOptions] =
+          optionValue = props.curStats[keyAnimOptions] =
             getValidAnimOptions(newEffectOptions.animation, effectConf.defaultAnimOptions);
         } else { // boolean
-          optAnimation = !!newEffectOptions.animation;
+          optionValue = !!newEffectOptions.animation;
           props.curStats[keyAnimOptions] =
-            optAnimation ? getValidAnimOptions({}, effectConf.defaultAnimOptions) : null;
+            optionValue ? getValidAnimOptions({}, effectConf.defaultAnimOptions) : null;
         }
-        return optAnimation;
+        return optionValue;
       }
 
       if (newOptions.hasOwnProperty(effectName)) {
@@ -2469,13 +2470,13 @@
 
         if (isObject(newOption)) {
           props.curStats[keyEnabled] = true;
-          optEffect = props.curStats[keyOptions] = getValidOptions(newOption);
+          optionValue = props.curStats[keyOptions] = getValidOptions(newOption);
           if (effectConf.anim) {
             props.curStats[keyOptions].animation = parseAnimOptions(newOption);
           }
         } else { // boolean
-          optEffect = props.curStats[keyEnabled] = !!newOption;
-          if (optEffect) {
+          optionValue = props.curStats[keyEnabled] = !!newOption;
+          if (optionValue) {
             props.curStats[keyOptions] = getValidOptions({});
             if (effectConf.anim) {
               props.curStats[keyOptions].animation = parseAnimOptions({});
@@ -2483,8 +2484,8 @@
           }
         }
 
-        if (hasChanged(optEffect, options[effectName])) {
-          options[effectName] = optEffect;
+        if (hasChanged(optionValue, options[effectName])) {
+          options[effectName] = optionValue;
           needs.effect = true;
         }
       }
@@ -2511,8 +2512,8 @@
         // Initialize properties as array.
         options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
           plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []},
-        optionsAtc: {anchorSE: [false, false]},
-        curStats: {}, aplStats: {}, atcs: [], events: {}, reflowTargets: []
+        optionIsAttach: {anchorSE: [false, false]},
+        curStats: {}, aplStats: {}, attachments: [], events: {}, reflowTargets: []
       },
       prefix;
 
@@ -2616,14 +2617,14 @@
     Object.keys(EFFECTS).forEach(function(effectName) {
       var effectConf = EFFECTS[effectName];
 
-      function getOptions(optEffect) {
+      function getOptions(optionValue) {
         var effectOptions = effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
           var optionClass = optionConf[0], propName = optionConf[1], key2Id = optionConf[2],
             optionName = optionConf[3], i = optionConf[4],
             value =
-              i != null ? optEffect[optionName][i] : // eslint-disable-line eqeqeq
-              optionName ? optEffect[optionName] :
-              optEffect[propName],
+              i != null ? optionValue[optionName][i] : // eslint-disable-line eqeqeq
+              optionName ? optionValue[optionName] :
+              optionValue[propName],
             key;
           effectOptions[propName] = optionClass === 'id' ? (
               !value ? KEYWORD_AUTO :
@@ -2637,7 +2638,7 @@
           return effectOptions;
         }, {});
         if (effectConf.anim) {
-          effectOptions.animation = copyTree(optEffect.animation);
+          effectOptions.animation = copyTree(optionValue.animation);
         }
         return effectOptions;
       }
@@ -2672,9 +2673,9 @@
     });
     if (curStats.show_animId) { anim.remove(curStats.show_animId); }
 
-    props.atcs.forEach(function(propsAtc) {
-      // Don't use atcUnbind that changes props.atcs
-      if (propsAtc.conf.unbind) { propsAtc.conf.unbind(props, propsAtc); }
+    props.attachments.forEach(function(attachProps) {
+      // Don't use `unbindAttachment()` that changes props.attachments
+      if (attachProps.conf.unbind) { attachProps.conf.unbind(props, attachProps); }
     });
 
     if (props.baseWindow && props.svg) {
@@ -3147,25 +3148,25 @@
 
   /**
    * @class
-   * @param {AttachmentConf} conf - Target AttachmentConf.
-   * @param {Object} atcOptions - Initial options.
+   * @param {AttachConf} conf - Target AttachConf.
+   * @param {Object} attachOptions - Initial options.
    */
-  function LeaderLineAttachment(conf, atcOptions) {
-    var propsAtc = {conf: conf, curStats: {}, aplStats: {}, lls: [], isShown: false};
+  function LeaderLineAttachment(conf, attachOptions) {
+    var attachProps = {conf: conf, curStats: {}, aplStats: {}, lls: [], isShown: false};
 
     if (conf.stats) {
-      initStats(propsAtc.curStats, conf.stats);
-      initStats(propsAtc.aplStats, conf.stats);
+      initStats(attachProps.curStats, conf.stats);
+      initStats(attachProps.aplStats, conf.stats);
     }
 
-    Object.defineProperty(this, '_id', {value: ++insIdAtc});
+    Object.defineProperty(this, '_id', {value: ++insAttachId});
     Object.defineProperty(this, 'isRemoved', {
-      get: function() { return !insPropsAtc[this._id]; }
+      get: function() { return !insAttachProps[this._id]; }
     });
 
     // isRemoved has to be set before this because init() might throw.
-    if (!conf.init || conf.init(propsAtc, isObject(atcOptions) ? atcOptions : {})) {
-      insPropsAtc[this._id] = propsAtc;
+    if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {})) {
+      insAttachProps[this._id] = attachProps;
     }
   }
   window.LeaderLineAttachment = LeaderLineAttachment;
@@ -3177,77 +3178,77 @@
    */
   isAttachment = function(obj, type) {
     return !(obj instanceof LeaderLineAttachment) ? false :
-      (!type || insPropsAtc[obj._id].conf.type === type) && !obj.isRemoved ? true : null;
+      (!type || insAttachProps[obj._id].conf.type === type) && !obj.isRemoved ? true : null;
   };
 
   /**
-   * propsAtc or id must be specified.
-   * @param {propsAtc|null} propsAtc - `propsAtc` of `LeaderLineAttachment` instance.
+   * attachProps or id must be specified.
+   * @param {attachProps|null} attachProps - `attachProps` of `LeaderLineAttachment` instance.
    * @param {number} [id] - `_id` of `LeaderLineAttachment` instance..
    * @returns {void}
    */
-  removeAttachment = function(propsAtc, id) {
-    if (!propsAtc && !(propsAtc = insPropsAtc[id])) { return; }
-    propsAtc.lls.forEach(function(props) { atcUnbind(props, propsAtc, true); });
-    if (propsAtc.conf.remove) { propsAtc.conf.remove(propsAtc); }
-    if (!id && !Object.keys(insPropsAtc).some(function(atcId) {
-      if (insPropsAtc[atcId] === propsAtc) {
-        id = atcId;
+  removeAttachment = function(attachProps, id) {
+    if (!attachProps && !(attachProps = insAttachProps[id])) { return; }
+    attachProps.lls.forEach(function(props) { unbindAttachment(props, attachProps, true); });
+    if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
+    if (!id && !Object.keys(insAttachProps).some(function(attachId) {
+      if (insAttachProps[attachId] === attachProps) {
+        id = attachId;
         return true;
       }
       return false;
     })) {
       return;
     }
-    delete insPropsAtc[id];
+    delete insAttachProps[id];
   };
 
   LeaderLineAttachment.prototype.remove = function() {
-    var propsAtc = insPropsAtc[this._id];
-    if (propsAtc) {
-      propsAtc.lls.slice().forEach(function(props) { propsAtc.conf.removeOption(props, propsAtc); });
+    var attachProps = insAttachProps[this._id];
+    if (attachProps) {
+      attachProps.lls.slice().forEach(function(props) { attachProps.conf.removeOption(props, attachProps); });
 
-      if ((propsAtc = insPropsAtc[this._id])) { // it should be removed by unbinding all
+      if ((attachProps = insAttachProps[this._id])) { // it should be removed by unbinding all
         console.error('LeaderLineAttachment was not removed by removeOption');
-        removeAttachment(propsAtc, this._id); // force
+        removeAttachment(attachProps, this._id); // force
       }
     }
   };
 
   /**
-   * @typedef {Object} AttachmentConf
+   * @typedef {Object} AttachConf
    * @property {string} type
    * @property {{statName: string, StatConf}} stats - Additional stats.
-   * @property {Function} init - function(propsAtc, atcOptions) returns `true` when succeeded.
-   * @property {Function} bind - function(props, propsAtc) returns `true` when succeeded.
-   * @property {Function} unbind - function(props, propsAtc)
-   * @property {Function} removeOption - function(props, propsAtc)
-   * @property {Function} remove - function(propsAtc)
+   * @property {Function} init - function(attachProps, attachOptions) returns `true` when succeeded.
+   * @property {Function} bind - function(props, attachProps) returns `true` when succeeded.
+   * @property {Function} unbind - function(props, attachProps)
+   * @property {Function} removeOption - function(props, attachProps)
+   * @property {Function} remove - function(attachProps)
    */
 
-  /** @type {{attachmentName: string, AttachmentConf}} */
+  /** @type {{attachmentName: string, AttachConf}} */
   ATTACHMENTS = {
     point: {
       type: 'anchor',
 
-      // atcOptions: element, x, y
-      init: function(propsAtc, atcOptions) {
-        propsAtc.element = ATTACHMENTS.point.checkElement(atcOptions.element);
-        propsAtc.x = typeof atcOptions.x === 'number' ? atcOptions.x : 0;
-        propsAtc.y = typeof atcOptions.y === 'number' ? atcOptions.y : 0;
+      // attachOptions: element, x, y
+      init: function(attachProps, attachOptions) {
+        attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
+        attachProps.x = typeof attachOptions.x === 'number' ? attachOptions.x : 0;
+        attachProps.y = typeof attachOptions.y === 'number' ? attachOptions.y : 0;
         return true;
       },
 
-      removeOption: function(props, propsAtc) {
+      removeOption: function(props, attachProps) {
         var options = props.options;
         ['start', 'end'].forEach(function(optionName, i) {
           var element, another, newOptions;
-          if (props.optionsAtc.anchorSE[i] !== false &&
-              insPropsAtc[options.anchorSE[i]._id] === propsAtc) {
-            element = propsAtc.element;
+          if (props.optionIsAttach.anchorSE[i] !== false &&
+              insAttachProps[options.anchorSE[i]._id] === attachProps) {
+            element = attachProps.element;
             if (element === (another = options.anchorSE[i ? 0 : 1])) { // must be not another
               element = document.body;
-              if (element === another) { // propsAtc.element is body, and another is body
+              if (element === another) { // attachProps.element is body, and another is body
                 element = new LeaderLineAttachment(ATTACHMENTS.point, {element: element});
               }
             }
@@ -3258,11 +3259,11 @@
         });
       },
 
-      getBBoxNest: function(props, propsAtc) {
-        var bBox = getBBoxNest(propsAtc.element, props.baseWindow);
+      getBBoxNest: function(props, attachProps) {
+        var bBox = getBBoxNest(attachProps.element, props.baseWindow);
         bBox.width = bBox.height = 0;
-        bBox.left = bBox.right = bBox.left + propsAtc.x;
-        bBox.top = bBox.bottom = bBox.top + propsAtc.y;
+        bBox.left = bBox.right = bBox.left + attachProps.x;
+        bBox.top = bBox.bottom = bBox.top + attachProps.y;
         return bBox;
       },
 
@@ -3279,41 +3280,85 @@
     area: {
       type: 'anchor',
 
-      // atcOptions: element, x, y, width, height, color(A), size(A), radius
-      init: function(propsAtc, atcOptions) {
-        propsAtc.element = ATTACHMENTS.point.checkElement(atcOptions.element);
+      // attachOptions: element, color(A), size(A), shape, x, y, width, height, radius, points
+      init: function(attachProps, attachOptions) {
+        var points, baseDocument;
+        attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
+        if (typeof attachOptions.color === 'string') {
+          attachProps.color = attachOptions.color.trim();
+        }
+        if (typeof attachOptions.size === 'number' && attachOptions.size >= 0) {
+          attachProps.size = attachOptions.size;
+        }
 
-        [['x', [0]], ['y', [0]], ['width', [100, '%']], ['height', [100, '%']]].forEach(function(option) {
-          var optionName = option[0], defaultValue = option[1],
-            type = typeof atcOptions[optionName], matches, num;
-          if (type === 'number') {
-            if (atcOptions[optionName] >= 0) { propsAtc[optionName] = [atcOptions[optionName]]; }
-          } else if (type === 'string' && (matches = RE_PERCENT.exec(atcOptions[optionName])) &&
-              matches[2] && (num = parseFloat(matches[1])) >= 0) {
-            propsAtc[optionName] = [num, '%'];
+        if (attachOptions.shape === 'circle') {
+          attachProps.shape = attachOptions.shape;
+        } else if (attachOptions.shape === 'polygon') {
+          if (Array.isArray(attachOptions.points)) {
+            points = [];
+            if (!attachOptions.points.every(function(point) {
+              if (typeof point[0] === 'number' && typeof point[1] === 'number') {
+                points.push([point[0], point[1]]);
+                return true;
+              }
+              return false;
+            })) { points = null; }
           }
-          if (!propsAtc[optionName]) { propsAtc[optionName] = defaultValue; }
-        });
-
-        [['size'], ['radius', 0]].forEach(function(option) {
-          var optionName = option[0], defaultValue = option[1];
-          if (typeof atcOptions[optionName] === 'number' && atcOptions[optionName] >= 0) {
-            propsAtc[optionName] = [atcOptions[optionName]];
+          if (points) {
+            attachProps.shape = attachOptions.shape;
+            attachProps.points = points;
+          } else { // invalid `points`
+            attachProps.shape = 'rectangle';
+            attachProps.radius = 0;
           }
-          if (!propsAtc[optionName]) { propsAtc[optionName] = defaultValue; }
-        });
+        } else {
+          attachProps.shape = 'rectangle';
+          attachProps.radius =
+            typeof attachOptions.radius === 'number' && attachOptions.radius >= 0 ? attachOptions.radius : 0;
+        }
 
-        if (typeof atcOptions.color === 'string') { propsAtc.color = atcOptions.color.trim(); }
+        if (attachProps.shape === 'rectangle' || attachProps.shape === 'circle') {
+          [['x', [0]], ['y', [0]], ['width', [100, '%']], ['height', [100, '%']]].forEach(function(option) {
+            var optionName = option[0], defaultValue = option[1],
+              type = typeof attachOptions[optionName], matches, num;
+            if (type === 'number') {
+              if (attachOptions[optionName] >= 0) { attachProps[optionName] = [attachOptions[optionName]]; }
+            } else if (type === 'string' && (matches = RE_PERCENT.exec(attachOptions[optionName])) &&
+                matches[2] && (num = parseFloat(matches[1])) >= 0) {
+              attachProps[optionName] = [num, '%'];
+            }
+            if (!attachProps[optionName]) { attachProps[optionName] = defaultValue; }
+          });
+        }
+
+        // SVG
+        baseDocument = attachProps.element.ownerDocument;
+        attachProps.svg = baseDocument.createElementNS(SVG_NS, 'svg');
+        attachProps.svg.className.baseVal = APP_ID + '-attach-area';
+        if (!attachProps.svg.viewBox.baseVal) { attachProps.svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
+        attachProps.linePath = attachProps.svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+        attachProps.isShown = false;
+        attachProps.svg.style.visibility = 'hidden';
+        baseDocument.body.appendChild(attachProps.svg);
+
         return true;
       },
 
-      removeOption: function(props, propsAtc) { ATTACHMENTS.point.removeOption(props, propsAtc); },
+      removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },
 
-      getBBoxNest: function(props, propsAtc) {
-        var bBox = getBBoxNest(propsAtc.element, props.baseWindow);
+      remove: function(attachProps) {},
+
+      getStrokeWidth: function(props, attachProps) {
+      },
+
+      getPathList: function(props, attachProps) {
+      },
+
+      getBBoxNest: function(props, attachProps) {
+        var bBox = getBBoxNest(attachProps.element, props.baseWindow);
         bBox.width = bBox.height = 0;
-        bBox.left = bBox.right = bBox.left + propsAtc.x;
-        bBox.top = bBox.bottom = bBox.top + propsAtc.y;
+        bBox.left = bBox.right = bBox.left + attachProps.x;
+        bBox.top = bBox.bottom = bBox.top + attachProps.y;
         return bBox;
       }
     }
@@ -3321,8 +3366,8 @@
   window.ATTACHMENTS = ATTACHMENTS; // [DEBUG/]
 
   Object.keys(ATTACHMENTS).forEach(function(attachmentName) {
-    LeaderLine[attachmentName] = function(atcOptions) {
-      return new LeaderLineAttachment(ATTACHMENTS[attachmentName], atcOptions);
+    LeaderLine[attachmentName] = function(attachOptions) {
+      return new LeaderLineAttachment(ATTACHMENTS[attachmentName], attachOptions);
     };
   });
 
