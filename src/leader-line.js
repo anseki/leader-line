@@ -3326,12 +3326,12 @@
           attachProps.shape = attachOptions.shape;
           attachProps.points = points;
         } else {
-          attachProps.shape = 'rectangle';
+          attachProps.shape = 'rect';
           attachProps.radius =
             typeof attachOptions.radius === 'number' && attachOptions.radius >= 0 ? attachOptions.radius : 0;
         }
 
-        if (attachProps.shape === 'rectangle' || attachProps.shape === 'circle') {
+        if (attachProps.shape === 'rect' || attachProps.shape === 'circle') {
           attachProps.x = ATTACHMENTS.point.parsePercent(attachOptions.x, true) || [-0.05, true];
           attachProps.y = ATTACHMENTS.point.parsePercent(attachOptions.y, true) || [-0.05, true];
           attachProps.width = ATTACHMENTS.point.parsePercent(attachOptions.width) || [1.1, true];
@@ -3401,7 +3401,7 @@
             attachProps.hasRatio && (updated.elementWidth || updated.elementHeight)) { // generate path
           traceLog.add('generate-path'); // [DEBUG/]
           switch (attachProps.shape) {
-            case 'rectangle':
+            case 'rect':
               padding = curStats.strokeWidth / 2;
               curStats.pathData = bBox2PathData({
                 left: bBox.left + attachProps.x[0] * (attachProps.x[1] ? bBox.width : 1) - padding,
