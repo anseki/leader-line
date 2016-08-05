@@ -1298,8 +1298,9 @@
           attachProps.conf.getBBoxNest(props, attachProps, strokeWidth) :
           getBBoxNest(anchor, props.baseWindow);
 
-      curStats.capsMaskAnchor_pathDataSE[i] = isAttach !== false && attachProps.conf.getPathData ?
-        attachProps.conf.getPathData(props, attachProps) : bBox2PathData(anchorBBox);
+      curStats.capsMaskAnchor_pathDataSE[i] = isAttach !== false && attachProps.conf.getPathList ?
+        pathList2PathData(attachProps.conf.getPathList(props, attachProps, strokeWidth)) :
+        bBox2PathData(anchorBBox);
       curStats.capsMaskAnchor_strokeWidthSE[i] = strokeWidth;
       return anchorBBox;
     });
@@ -3294,7 +3295,7 @@
     area: {
       type: 'anchor',
       stats: {color: {}, strokeWidth: {},
-        elementX: {}, elementY: {}, elementWidth: {}, elementHeight: {}, pathData: {}},
+        elementWidth: {}, elementHeight: {}, pathList: {}},
 
       // attachOptions: element, color(A), fillColor, size(A), shape, x, y, width, height, radius, points
       init: function(attachProps, attachOptions) {
@@ -3351,19 +3352,43 @@
         svg.style.visibility = 'hidden';
         baseDocument.body.appendChild(svg);
 
+        // event handler to update color (each instance has it)
+        attachProps.updateColor = function() {
+          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+            llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
+            value;
+
+          checkCurStats(attachProps, 'color', null, attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor)); // [DEBUG/]
+          curStats.color = attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor);
+
+          if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
+              /* [DEBUG] */, null, 'ATTACHMENTS.area.aplStats.color=%s'/* [/DEBUG] */)) {
+            attachProps.path.style.color = value;
+          }
+        };
+
         return true;
+      },
+
+      bind: function(props, attachProps) {
+        addEventHandler(props, 'cur_line_color', attachProps.updateColor);
+      },
+      unbind: function(props, attachProps) {
+        removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
       },
 
       removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },
 
       remove: function(attachProps) {
+        attachProps.lls.forEach(
+          function(props) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); });
         attachProps.svg.parentNode.removeChild(attachProps.svg);
       },
 
       getStrokeWidth: function(props, attachProps) {
       },
 
-      getPathData: function(props, attachProps) {
+      getPathList: function(props, attachProps) {
       },
 
       getBBoxNest: function(props, attachProps) {
@@ -3378,46 +3403,42 @@
         traceLog.add('<ATTACHMENTS.area.update>'); // [DEBUG/]
         var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
           llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
-          bBox, padding, curPathData, value, updated = {};
-
-        checkCurStats(attachProps, 'color', null, attachProps.color || (llStats ? llStats.line_color : '')); // [DEBUG/]
-        curStats.color = attachProps.color || (llStats ? llStats.line_color : '');
+          bBox, padding, left, top, width, height,
+          curPathList, value, updated = {};
 
         updated.strokeWidth = setStat(attachProps, curStats, 'strokeWidth',
           attachProps.size || (llStats ? llStats.line_strokeWidth : DEFAULT_OPTIONS.lineSize)
           /* [DEBUG] */, null, 'curStats.strokeWidth=%s'/* [/DEBUG] */);
 
         bBox = getBBox(attachProps.element);
-        updated.elementX = setStat(attachProps, curStats, 'elementX', bBox.left
-          /* [DEBUG] */, null, 'curStats.elementX=%s'/* [/DEBUG] */);
-        updated.elementY = setStat(attachProps, curStats, 'elementY', bBox.top
-          /* [DEBUG] */, null, 'curStats.elementY=%s'/* [/DEBUG] */);
         updated.elementWidth = setStat(attachProps, curStats, 'elementWidth', bBox.width
           /* [DEBUG] */, null, 'curStats.elementWidth=%s'/* [/DEBUG] */);
         updated.elementHeight = setStat(attachProps, curStats, 'elementHeight', bBox.height
           /* [DEBUG] */, null, 'curStats.elementHeight=%s'/* [/DEBUG] */);
 
-        if (updated.strokeWidth || updated.elementX || updated.elementY ||
+        if (updated.strokeWidth ||
             attachProps.hasRatio && (updated.elementWidth || updated.elementHeight)) { // generate path
           traceLog.add('generate-path'); // [DEBUG/]
           switch (attachProps.shape) {
             case 'rect':
               padding = curStats.strokeWidth / 2;
-              curStats.pathData = bBox2PathData({
-                left: bBox.left + attachProps.x[0] * (attachProps.x[1] ? bBox.width : 1) - padding,
-                top: bBox.top + attachProps.y[0] * (attachProps.y[1] ? bBox.height : 1) - padding,
-                width: attachProps.width[0] * (attachProps.width[1] ? bBox.width : 1) + padding,
-                height: attachProps.height[0] * (attachProps.height[1] ? bBox.width : 1) + padding
-              });
+              left = attachProps.x[0] * (attachProps.x[1] ? bBox.width : 1) - padding;
+              top = attachProps.y[0] * (attachProps.y[1] ? bBox.height : 1) - padding;
+              width = attachProps.width[0] * (attachProps.width[1] ? bBox.width : 1) + padding;
+              height = attachProps.height[0] * (attachProps.height[1] ? bBox.width : 1) + padding;
+              curStats.pathList = [
+                [{x: left, y: top}, {x: left + width, y: top}],
+                [{x: left + width, y: top}, {x: left + width, y: top + height}],
+                [{x: left + width, y: top + height}, {x: left, y: top + height}],
+                []
+              ];
               break;
             // no default
           }
         }
 
-        if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
-            /* [DEBUG] */, null, 'aplStats.color=%s'/* [/DEBUG] */)) {
-          attachProps.path.style.color = value;
-        }
+
+
 
         if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth)
             /* [DEBUG] */, null, 'aplStats.strokeWidth=%s'/* [/DEBUG] */)) {
@@ -3425,10 +3446,10 @@
         }
 
         // Apply `pathData`
-        if (pathDataHasChanged((curPathData = curStats.pathData), aplStats.pathData)) {
-          traceLog.add('aplStats.pathData'); // [DEBUG/]
-          attachProps.path.setPathData(curPathData);
-          aplStats.pathData = curPathData;
+        if (pathDataHasChanged((curPathList = curStats.pathList), aplStats.pathList)) {
+          traceLog.add('aplStats.pathList'); // [DEBUG/]
+          attachProps.path.setPathData(curPathList);
+          aplStats.pathList = curPathList;
         }
 
         traceLog.add('</ATTACHMENTS.area.update>'); // [DEBUG/]
