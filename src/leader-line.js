@@ -498,13 +498,20 @@
   window.getCubicT = getCubicT; // [DEBUG/]
 
   function pathList2PathData(pathList, cbPoint) {
-    var pathData = [{type: 'M', values: [pathList[0][0].x, pathList[0][0].y]}];
-    pathList.forEach(function(points) {
+    var pathData, point0 = {x: pathList[0][0].x, y: pathList[0][0].y};
+    if (cbPoint) { cbPoint(point0); }
+    pathData = [{type: 'M', values: [point0.x, point0.y]}];
+
+    pathList.forEach(function(pointsOrg) {
+      var points = cbPoint ? pointsOrg.map(function(pointOrg) {
+        var point = {x: pointOrg.x, y: pointOrg.y};
+        cbPoint(point);
+        return point;
+      }) : pointsOrg;
       pathData.push(
         !points.length ? {type: 'Z', values: []} :
         points.length === 2 ? {type: 'L', values: [points[1].x, points[1].y]} :
           {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
-      if (cbPoint) { points.forEach(cbPoint); }
     });
     return pathData;
   }
@@ -654,6 +661,39 @@
   // [/DEBUG]
 
   /**
+   * Get distance between `window` and its `<body>`.
+   * @param {Window} window - Target `window`.
+   * @returns {{x: number, y: number}} - Length.
+   */
+  function getBodyOffset(window) {
+    function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
+
+    var baseDocument = window.document,
+      stylesHtml = window.getComputedStyle(baseDocument.documentElement),
+      stylesBody = window.getComputedStyle(baseDocument.body),
+      bodyOffset = {x: 0, y: 0};
+
+    if (stylesBody.position !== 'static') {
+      // When `<body>` has `position:(non-static)`,
+      // `element{position:absolute}` is positioned relative to border-box of `<body>`.
+      bodyOffset.x -=
+        [stylesHtml.marginLeft, stylesHtml.borderLeftWidth, stylesHtml.paddingLeft,
+          stylesBody.marginLeft, stylesBody.borderLeftWidth].reduce(sumProps, 0);
+      bodyOffset.y -=
+        [stylesHtml.marginTop, stylesHtml.borderTopWidth, stylesHtml.paddingTop,
+          stylesBody.marginTop, stylesBody.borderTopWidth].reduce(sumProps, 0);
+    } else if (stylesHtml.position !== 'static') {
+      // When `<body>` has `position:static` and `<html>` has `position:(non-static)`
+      // `element{position:absolute}` is positioned relative to border-box of `<html>`.
+      bodyOffset.x -=
+        [stylesHtml.marginLeft, stylesHtml.borderLeftWidth].reduce(sumProps, 0);
+      bodyOffset.y -=
+        [stylesHtml.marginTop, stylesHtml.borderTopWidth].reduce(sumProps, 0);
+    }
+    return bodyOffset;
+  }
+
+  /**
    * Setup `baseWindow`, stats (`cur*` and `apl*`), SVG elements, etc.
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {Window} newWindow - A common ancestor `window`.
@@ -662,10 +702,7 @@
   function bindWindow(props, newWindow) {
     traceLog.add('<bindWindow>'); // [DEBUG/]
     var baseDocument = newWindow.document,
-      defs, stylesHtml, stylesBody, bodyOffset = {x: 0, y: 0},
-      svg, elmDefs, maskCaps, element, aplStats = props.aplStats;
-
-    function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
+      defs, svg, elmDefs, maskCaps, element, aplStats = props.aplStats;
 
     function setupMask(id) {
       var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'mask'));
@@ -704,28 +741,7 @@
       baseDocument.body.appendChild(defs.documentElement);
       pathDataPolyfill(newWindow);
     }
-
-    // Get `bodyOffset`.
-    stylesHtml = newWindow.getComputedStyle(baseDocument.documentElement);
-    stylesBody = newWindow.getComputedStyle(baseDocument.body);
-    if (stylesBody.position !== 'static') {
-      // When `<body>` has `position:(non-static)`,
-      // `element{position:absolute}` is positioned relative to border-box of `<body>`.
-      bodyOffset.x -=
-        [stylesHtml.marginLeft, stylesHtml.borderLeftWidth, stylesHtml.paddingLeft,
-          stylesBody.marginLeft, stylesBody.borderLeftWidth].reduce(sumProps, 0);
-      bodyOffset.y -=
-        [stylesHtml.marginTop, stylesHtml.borderTopWidth, stylesHtml.paddingTop,
-          stylesBody.marginTop, stylesBody.borderTopWidth].reduce(sumProps, 0);
-    } else if (stylesHtml.position !== 'static') {
-      // When `<body>` has `position:static` and `<html>` has `position:(non-static)`
-      // `element{position:absolute}` is positioned relative to border-box of `<html>`.
-      bodyOffset.x -=
-        [stylesHtml.marginLeft, stylesHtml.borderLeftWidth].reduce(sumProps, 0);
-      bodyOffset.y -=
-        [stylesHtml.marginTop, stylesHtml.borderTopWidth].reduce(sumProps, 0);
-    }
-    props.bodyOffset = bodyOffset;
+    props.bodyOffset = getBodyOffset(newWindow); // Get `bodyOffset`
 
     // Main SVG
     props.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
@@ -1298,9 +1314,8 @@
           attachProps.conf.getBBoxNest(props, attachProps, strokeWidth) :
           getBBoxNest(anchor, props.baseWindow);
 
-      curStats.capsMaskAnchor_pathDataSE[i] = isAttach !== false && attachProps.conf.getPathList ?
-        pathList2PathData(attachProps.conf.getPathList(props, attachProps, strokeWidth)) :
-        bBox2PathData(anchorBBox);
+      curStats.capsMaskAnchor_pathDataSE[i] = isAttach !== false && attachProps.conf.getPathData ?
+        attachProps.conf.getPathData(props, attachProps, strokeWidth) : bBox2PathData(anchorBBox);
       curStats.capsMaskAnchor_strokeWidthSE[i] = strokeWidth;
       return anchorBBox;
     });
@@ -2049,7 +2064,7 @@
     if (on !== props.isShown) {
       traceLog.add('on=' + on); // [DEBUG/]
       props.svg.style.visibility = (props.isShown = on) ? '' : 'hidden';
-      if (props.events.svgShow) {
+      if (props.events && props.events.svgShow) {
         props.events.svgShow.forEach(function(handler) { handler(props, on); });
       }
     }
@@ -3227,6 +3242,9 @@
    * @property {Function} unbind - function(props, attachProps)
    * @property {Function} removeOption - function(props, attachProps)
    * @property {Function} remove - function(attachProps)
+   * @property {Function} [getStrokeWidth] - function(props, attachProps) type:anchro (update trigger)
+   * @property {Function} [getPathData] - function(props, attachProps, strokeWidth) type:anchro
+   * @property {Function} [getBBoxNest] - function(props, attachProps, strokeWidth) type:anchro
    */
 
   /** @type {{attachmentName: string, AttachConf}} */
@@ -3294,8 +3312,8 @@
 
     area: {
       type: 'anchor',
-      stats: {color: {}, strokeWidth: {},
-        elementWidth: {}, elementHeight: {}, pathList: {}},
+      stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {},
+        pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}},
 
       // attachOptions: element, color(A), fillColor, size(A), shape, x, y, width, height, radius, points
       init: function(attachProps, attachOptions) {
@@ -3351,8 +3369,9 @@
         attachProps.isShown = false;
         svg.style.visibility = 'hidden';
         baseDocument.body.appendChild(svg);
+        attachProps.bodyOffset = getBodyOffset(baseDocument.defaultView); // Get `bodyOffset`
 
-        // event handler to update color (each instance has it)
+        // event handler for each instance
         attachProps.updateColor = function() {
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
@@ -3363,18 +3382,30 @@
 
           if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
               /* [DEBUG] */, null, 'ATTACHMENTS.area.aplStats.color=%s'/* [/DEBUG] */)) {
-            attachProps.path.style.color = value;
+            attachProps.path.style.stroke = value;
           }
         };
+        attachProps.updateShow = function() {
+          svgShow(attachProps, attachProps.lls.some(function(props) { return props.isShown; }));
+        };
+        // event handler to update `strokeWidth` is unnecessary
+        // because `getStrokeWidth` is triggered by `updateLine` and `updatePosition`
 
         return true;
       },
 
       bind: function(props, attachProps) {
         addEventHandler(props, 'cur_line_color', attachProps.updateColor);
+        addEventHandler(props, 'svgShow', attachProps.updateShow);
+        setTimeout(function() { // after bind (`attachProps.lls` is used)
+          attachProps.updateColor();
+          attachProps.updateShow();
+        }, 0);
+        return true;
       },
       unbind: function(props, attachProps) {
         removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
+        removeEventHandler(props, 'svgShow', attachProps.updateShow);
       },
 
       removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },
@@ -3386,34 +3417,49 @@
       },
 
       getStrokeWidth: function(props, attachProps) {
+        ATTACHMENTS.area.update(attachProps);
+        return attachProps.curStats.strokeWidth;
       },
 
-      getPathList: function(props, attachProps) {
+      getPathData: function(props, attachProps) {
+        var bBox = getBBoxNest(attachProps.element, props.baseWindow);
+        return pathList2PathData(attachProps.curStats.pathListRel, function(point) {
+          point.x += bBox.left;
+          point.y += bBox.top;
+        });
       },
 
       getBBoxNest: function(props, attachProps) {
-        var bBox = getBBoxNest(attachProps.element, props.baseWindow);
-        bBox.width = bBox.height = 0;
-        bBox.left = bBox.right = bBox.left + attachProps.x;
-        bBox.top = bBox.bottom = bBox.top + attachProps.y;
-        return bBox;
+        var bBox = getBBoxNest(attachProps.element, props.baseWindow),
+          bBoxRel = attachProps.curStats.bBoxRel;
+        return {
+          left: bBoxRel.left + bBox.left,
+          top: bBoxRel.top + bBox.top,
+          right: bBoxRel.right + bBox.left,
+          bottom: bBoxRel.bottom + bBox.top,
+          width: bBoxRel.width,
+          height: bBoxRel.height
+        };
       },
 
       update: function(attachProps) {
         traceLog.add('<ATTACHMENTS.area.update>'); // [DEBUG/]
         var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+          curVBBBox = curStats.viewBoxBBox, aplVBBBox = aplStats.viewBoxBBox,
           llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
-          bBox, padding, left, top, width, height,
-          curPathList, value, updated = {};
+          elementBBox, areaBBox, padding, left, top, right, bottom,
+          viewBox = attachProps.svg.viewBox.baseVal, styles = attachProps.svg.style,
+          value, updated = {};
 
         updated.strokeWidth = setStat(attachProps, curStats, 'strokeWidth',
-          attachProps.size || (llStats ? llStats.line_strokeWidth : DEFAULT_OPTIONS.lineSize)
+          attachProps.size != null ? attachProps.size : // eslint-disable-line eqeqeq
+            (llStats ? llStats.line_strokeWidth : DEFAULT_OPTIONS.lineSize)
           /* [DEBUG] */, null, 'curStats.strokeWidth=%s'/* [/DEBUG] */);
 
-        bBox = getBBox(attachProps.element);
-        updated.elementWidth = setStat(attachProps, curStats, 'elementWidth', bBox.width
+        elementBBox = getBBox(attachProps.element);
+        updated.elementWidth = setStat(attachProps, curStats, 'elementWidth', elementBBox.width
           /* [DEBUG] */, null, 'curStats.elementWidth=%s'/* [/DEBUG] */);
-        updated.elementHeight = setStat(attachProps, curStats, 'elementHeight', bBox.height
+        updated.elementHeight = setStat(attachProps, curStats, 'elementHeight', elementBBox.height
           /* [DEBUG] */, null, 'curStats.elementHeight=%s'/* [/DEBUG] */);
 
         if (updated.strokeWidth ||
@@ -3421,24 +3467,44 @@
           traceLog.add('generate-path'); // [DEBUG/]
           switch (attachProps.shape) {
             case 'rect':
+              areaBBox = {
+                left: attachProps.x[0] * (attachProps.x[1] ? elementBBox.width : 1),
+                top: attachProps.y[0] * (attachProps.y[1] ? elementBBox.height : 1),
+                width: attachProps.width[0] * (attachProps.width[1] ? elementBBox.width : 1),
+                height: attachProps.height[0] * (attachProps.height[1] ? elementBBox.width : 1)
+              };
+              areaBBox.right = areaBBox.left + areaBBox.width;
+              areaBBox.bottom = areaBBox.top + areaBBox.height;
+
               padding = curStats.strokeWidth / 2;
-              left = attachProps.x[0] * (attachProps.x[1] ? bBox.width : 1) - padding;
-              top = attachProps.y[0] * (attachProps.y[1] ? bBox.height : 1) - padding;
-              width = attachProps.width[0] * (attachProps.width[1] ? bBox.width : 1) + padding;
-              height = attachProps.height[0] * (attachProps.height[1] ? bBox.width : 1) + padding;
-              curStats.pathList = [
-                [{x: left, y: top}, {x: left + width, y: top}],
-                [{x: left + width, y: top}, {x: left + width, y: top + height}],
-                [{x: left + width, y: top + height}, {x: left, y: top + height}],
+              left = areaBBox.left - padding;
+              top = areaBBox.top - padding;
+              right = areaBBox.right + padding;
+              bottom = areaBBox.bottom + padding;
+              curStats.pathListRel = [
+                [{x: left, y: top}, {x: right, y: top}],
+                [{x: right, y: top}, {x: right, y: bottom}],
+                [{x: right, y: bottom}, {x: left, y: bottom}],
                 []
               ];
+
+              left = areaBBox.left - curStats.strokeWidth;
+              top = areaBBox.top - curStats.strokeWidth;
+              right = areaBBox.right + curStats.strokeWidth;
+              bottom = areaBBox.bottom + curStats.strokeWidth;
+              curStats.bBoxRel = {
+                left: left, top: top, right: right, bottom: bottom,
+                width: right - left, height: bottom - top
+              };
+
+              curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
+                point.x += elementBBox.left;
+                point.y += elementBBox.top;
+              });
               break;
             // no default
           }
         }
-
-
-
 
         if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth)
             /* [DEBUG] */, null, 'aplStats.strokeWidth=%s'/* [/DEBUG] */)) {
@@ -3446,11 +3512,25 @@
         }
 
         // Apply `pathData`
-        if (pathDataHasChanged((curPathList = curStats.pathList), aplStats.pathList)) {
-          traceLog.add('aplStats.pathList'); // [DEBUG/]
-          attachProps.path.setPathData(curPathList);
-          aplStats.pathList = curPathList;
+        if (pathDataHasChanged((value = curStats.pathData), aplStats.pathData)) {
+          traceLog.add('aplStats.pathData'); // [DEBUG/]
+          attachProps.path.setPathData(value);
+          aplStats.pathData = value;
         }
+
+        // ViewBox
+        curVBBBox.x = curStats.bBoxRel.left + elementBBox.left;
+        curVBBBox.y = curStats.bBoxRel.top + elementBBox.top;
+        curVBBBox.width = curStats.bBoxRel.width;
+        curVBBBox.height = curStats.bBoxRel.height;
+        ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+          if ((value = curVBBBox[boxKey]) !== aplVBBBox[boxKey]) {
+            traceLog.add(boxKey); // [DEBUG/]
+            viewBox[boxKey] = aplVBBBox[boxKey] = value;
+            styles[BBOX_PROP[boxKey]] = value +
+              (boxKey === 'x' || boxKey === 'y' ? attachProps.bodyOffset[boxKey] : 0) + 'px';
+          }
+        });
 
         traceLog.add('</ATTACHMENTS.area.update>'); // [DEBUG/]
       }

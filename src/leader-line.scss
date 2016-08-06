@@ -55,3 +55,8 @@ $app_id: leader-line;
   fill: black;
   stroke: white;
 }
+
+.#{$app_id}-attach-area {
+  position: absolute;
+  overflow: visible;
+}
