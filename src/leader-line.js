@@ -498,16 +498,15 @@
   window.getCubicT = getCubicT; // [DEBUG/]
 
   function pathList2PathData(pathList, cbPoint) {
-    var pathData, point0 = {x: pathList[0][0].x, y: pathList[0][0].y};
-    if (cbPoint) { cbPoint(point0); }
-    pathData = [{type: 'M', values: [point0.x, point0.y]}];
-
+    var pathData;
     pathList.forEach(function(pointsOrg) {
       var points = cbPoint ? pointsOrg.map(function(pointOrg) {
         var point = {x: pointOrg.x, y: pointOrg.y};
         cbPoint(point);
         return point;
       }) : pointsOrg;
+      // error is thrown if `points` has no data
+      if (!pathData) { pathData = [{type: 'M', values: [points[0].x, points[0].y]}]; }
       pathData.push(
         !points.length ? {type: 'Z', values: []} :
         points.length === 2 ? {type: 'L', values: [points[1].x, points[1].y]} :
@@ -515,6 +514,7 @@
     });
     return pathData;
   }
+  window.pathList2PathData = pathList2PathData; // [DEBUG/]
 
   function pathDataHasChanged(a, b) {
     return a == null || b == null || // eslint-disable-line eqeqeq

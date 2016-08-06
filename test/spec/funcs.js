@@ -344,4 +344,101 @@ describe('funcs', function() {
     });
   });
 
+  describe('pathList2PathData()', function() {
+    var pathList2PathData, pageDone;
+
+    beforeAll(function(beforeDone) {
+      loadPage('spec/funcs/funcs.html', function(window, document, body, done) {
+        pathList2PathData = window.pathList2PathData;
+        pageDone = done;
+        beforeDone();
+      });
+    });
+
+    afterAll(function() {
+      pageDone();
+    });
+
+    it('convert', function() {
+      expect(pathList2PathData([
+        [{x: 10, y: 11}, {x: 12, y: 13}],
+        [{x: 12, y: 13}, {x: 22, y: 23}],
+        [{x: 22, y: 23}, {x: 32, y: 33}, {x: 34, y: 35}, {x: 36, y: 37}],
+        [{x: 36, y: 37}, {x: 42, y: 43}, {x: 44, y: 45}, {x: 46, y: 47}],
+        [{x: 46, y: 47}, {x: 52, y: 53}]
+      ])).toEqual([
+        {type: 'M', values: [10, 11]},
+        {type: 'L', values: [12, 13]},
+        {type: 'L', values: [22, 23]},
+        {type: 'C', values: [32, 33, 34, 35, 36, 37]},
+        {type: 'C', values: [42, 43, 44, 45, 46, 47]},
+        {type: 'L', values: [52, 53]}
+      ]);
+    });
+
+    it('convert with Z', function() {
+      expect(pathList2PathData([
+        [{x: 10, y: 11}, {x: 12, y: 13}],
+        [{x: 12, y: 13}, {x: 22, y: 23}],
+        [{x: 22, y: 23}, {x: 32, y: 33}, {x: 34, y: 35}, {x: 36, y: 37}],
+        [{x: 36, y: 37}, {x: 42, y: 43}, {x: 44, y: 45}, {x: 46, y: 47}],
+        [{x: 46, y: 47}, {x: 52, y: 53}],
+        []
+      ])).toEqual([
+        {type: 'M', values: [10, 11]},
+        {type: 'L', values: [12, 13]},
+        {type: 'L', values: [22, 23]},
+        {type: 'C', values: [32, 33, 34, 35, 36, 37]},
+        {type: 'C', values: [42, 43, 44, 45, 46, 47]},
+        {type: 'L', values: [52, 53]},
+        {type: 'Z', values: []}
+      ]);
+    });
+
+    it('cbPoint', function() {
+      var pathList = [
+          [{x: 10, y: 11}, {x: 12, y: 13}],
+          [{x: 12, y: 13}, {x: 22, y: 23}],
+          [{x: 22, y: 23}, {x: 32, y: 33}, {x: 34, y: 35}, {x: 36, y: 37}],
+          [{x: 36, y: 37}, {x: 42, y: 43}, {x: 44, y: 45}, {x: 46, y: 47}],
+          [{x: 46, y: 47}, {x: 52, y: 53}],
+          []
+        ],
+        points = [],
+        pathData = pathList2PathData(pathList, function(point) {
+          points.push('{x: ' + point.x + ', y: ' + point.y + '}');
+          point.x++;
+          point.y += 2;
+        });
+
+      expect(pathData).toEqual([ // changed
+        {type: 'M', values: [11, 13]},
+        {type: 'L', values: [13, 15]},
+        {type: 'L', values: [23, 25]},
+        {type: 'C', values: [33, 35, 35, 37, 37, 39]},
+        {type: 'C', values: [43, 45, 45, 47, 47, 49]},
+        {type: 'L', values: [53, 55]},
+        {type: 'Z', values: []}
+      ]);
+
+      expect(pathList).toEqual([ // not changed
+        [{x: 10, y: 11}, {x: 12, y: 13}],
+        [{x: 12, y: 13}, {x: 22, y: 23}],
+        [{x: 22, y: 23}, {x: 32, y: 33}, {x: 34, y: 35}, {x: 36, y: 37}],
+        [{x: 36, y: 37}, {x: 42, y: 43}, {x: 44, y: 45}, {x: 46, y: 47}],
+        [{x: 46, y: 47}, {x: 52, y: 53}],
+        []
+      ]);
+
+      expect(points).toEqual([ // all points
+        '{x: 10, y: 11}', '{x: 12, y: 13}',
+        '{x: 12, y: 13}', '{x: 22, y: 23}',
+        '{x: 22, y: 23}', '{x: 32, y: 33}', '{x: 34, y: 35}', '{x: 36, y: 37}',
+        '{x: 36, y: 37}', '{x: 42, y: 43}', '{x: 44, y: 45}', '{x: 46, y: 47}',
+        '{x: 46, y: 47}', '{x: 52, y: 53}'
+      ]);
+    });
+
+  });
+
 });
