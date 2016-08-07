@@ -3470,7 +3470,7 @@
                   left: attachProps.x[0] * (attachProps.x[1] ? elementBBox.width : 1),
                   top: attachProps.y[0] * (attachProps.y[1] ? elementBBox.height : 1),
                   width: attachProps.width[0] * (attachProps.width[1] ? elementBBox.width : 1),
-                  height: attachProps.height[0] * (attachProps.height[1] ? elementBBox.width : 1)
+                  height: attachProps.height[0] * (attachProps.height[1] ? elementBBox.height : 1)
                 };
                 areaBBox.right = areaBBox.left + areaBBox.width;
                 areaBBox.bottom = areaBBox.top + areaBBox.height;
@@ -3478,10 +3478,8 @@
                 strokePadding = curStats.strokeWidth / 2;
                 maxRadius = (side = Math.min(areaBBox.width, areaBBox.height)) ?
                   side / 2 * Math.SQRT2 + strokePadding : 0;
-                console.log('maxRadius: ' + maxRadius);
                 radius = !attachProps.radius ? 0 :
                   attachProps.radius <= maxRadius ? attachProps.radius : maxRadius;
-                console.log('radius: ' + radius);
                 if (radius) {
                   offsetC = (radius - strokePadding) / Math.SQRT2;
                   padding = radius - offsetC;
@@ -3540,6 +3538,72 @@
                     width: points[1].x - points[0].x, height: points[1].y - points[0].y
                   };
                 }
+
+                curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
+                  point.x += elementBBox.left;
+                  point.y += elementBBox.top;
+                });
+              })();
+              break;
+
+            case 'circle':
+              (function() {
+                var areaBBox, cx, cy, radiusX, radiusY, strokePadding, offsetCX, offsetCY, paddingX, paddingY, points, cpRX, cpRY;
+                areaBBox = {
+                  left: attachProps.x[0] * (attachProps.x[1] ? elementBBox.width : 1),
+                  top: attachProps.y[0] * (attachProps.y[1] ? elementBBox.height : 1),
+                  width: attachProps.width[0] * (attachProps.width[1] ? elementBBox.width : 1),
+                  height: attachProps.height[0] * (attachProps.height[1] ? elementBBox.height : 1)
+                };
+                if (!areaBBox.width && !areaBBox.height) {
+                  areaBBox.width = areaBBox.height = 10; // values are required
+                } if (!areaBBox.width) {
+                  areaBBox.width = areaBBox.height;
+                } if (!areaBBox.height) {
+                  areaBBox.height = areaBBox.width;
+                }
+                areaBBox.right = areaBBox.left + areaBBox.width;
+                areaBBox.bottom = areaBBox.top + areaBBox.height;
+
+                cx = areaBBox.left + areaBBox.width / 2;
+                cy = areaBBox.top + areaBBox.height / 2;
+                strokePadding = curStats.strokeWidth / 2;
+                offsetCX = areaBBox.width / 2;
+                offsetCY = areaBBox.height / 2;
+                radiusX = offsetCX * Math.SQRT2 + strokePadding;
+                radiusY = offsetCY * Math.SQRT2 + strokePadding;
+                paddingX = radiusX - offsetCX;
+                paddingY = radiusY - offsetCY;
+                cpRX = radiusX * CIRCLE_CP;
+                cpRY = radiusY * CIRCLE_CP;
+
+                points = [
+                  {x: cx - radiusX, y: cy}, // 0 left
+                  {x: cx, y: cy - radiusY}, // 1 top
+                  {x: cx + radiusX, y: cy}, // 2 right
+                  {x: cx, y: cy + radiusY} // 3 bottom
+                ];
+
+                curStats.pathListRel = [
+                  [points[0], {x: points[0].x, y: points[0].y - cpRY},
+                    {x: points[1].x - cpRX, y: points[1].y}, points[1]],
+                  [points[1], {x: points[1].x + cpRX, y: points[1].y},
+                    {x: points[2].x, y: points[2].y - cpRY}, points[2]],
+                  [points[2], {x: points[2].x, y: points[2].y + cpRY},
+                    {x: points[3].x + cpRX, y: points[3].y}, points[3]],
+                  [points[3], {x: points[3].x - cpRX, y: points[3].y},
+                    {x: points[0].x, y: points[0].y + cpRY}, points[0]],
+                  []
+                ];
+
+                paddingX = radiusX - offsetCX + curStats.strokeWidth / 2;
+                paddingY = radiusY - offsetCY + curStats.strokeWidth / 2;
+                points = [{x: areaBBox.left - paddingX, y: areaBBox.top - paddingY}, // left-top
+                  {x: areaBBox.right + paddingX, y: areaBBox.bottom + paddingY}]; // right-bottom
+                curStats.bBoxRel = {
+                  left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
+                  width: points[1].x - points[0].x, height: points[1].y - points[0].y
+                };
 
                 curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
                   point.x += elementBBox.left;
