@@ -3445,11 +3445,8 @@
       update: function(attachProps) {
         traceLog.add('<ATTACHMENTS.area.update>'); // [DEBUG/]
         var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-          curVBBBox = curStats.viewBoxBBox, aplVBBBox = aplStats.viewBoxBBox,
           llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
-          elementBBox, areaBBox, padding, left, top, right, bottom,
-          viewBox = attachProps.svg.viewBox.baseVal, styles = attachProps.svg.style,
-          value, updated = {};
+          elementBBox, value, updated = {};
 
         updated.strokeWidth = setStat(attachProps, curStats, 'strokeWidth',
           attachProps.size != null ? attachProps.size : // eslint-disable-line eqeqeq
@@ -3467,40 +3464,88 @@
           traceLog.add('generate-path'); // [DEBUG/]
           switch (attachProps.shape) {
             case 'rect':
-              areaBBox = {
-                left: attachProps.x[0] * (attachProps.x[1] ? elementBBox.width : 1),
-                top: attachProps.y[0] * (attachProps.y[1] ? elementBBox.height : 1),
-                width: attachProps.width[0] * (attachProps.width[1] ? elementBBox.width : 1),
-                height: attachProps.height[0] * (attachProps.height[1] ? elementBBox.width : 1)
-              };
-              areaBBox.right = areaBBox.left + areaBBox.width;
-              areaBBox.bottom = areaBBox.top + areaBBox.height;
+              (function() {
+                var areaBBox, radius, maxRadius, side, strokePadding, offsetC, padding, points, cpR;
+                areaBBox = {
+                  left: attachProps.x[0] * (attachProps.x[1] ? elementBBox.width : 1),
+                  top: attachProps.y[0] * (attachProps.y[1] ? elementBBox.height : 1),
+                  width: attachProps.width[0] * (attachProps.width[1] ? elementBBox.width : 1),
+                  height: attachProps.height[0] * (attachProps.height[1] ? elementBBox.width : 1)
+                };
+                areaBBox.right = areaBBox.left + areaBBox.width;
+                areaBBox.bottom = areaBBox.top + areaBBox.height;
 
-              padding = curStats.strokeWidth / 2;
-              left = areaBBox.left - padding;
-              top = areaBBox.top - padding;
-              right = areaBBox.right + padding;
-              bottom = areaBBox.bottom + padding;
-              curStats.pathListRel = [
-                [{x: left, y: top}, {x: right, y: top}],
-                [{x: right, y: top}, {x: right, y: bottom}],
-                [{x: right, y: bottom}, {x: left, y: bottom}],
-                []
-              ];
+                strokePadding = curStats.strokeWidth / 2;
+                maxRadius = (side = Math.min(areaBBox.width, areaBBox.height)) ?
+                  side / 2 * Math.SQRT2 + strokePadding : 0;
+                console.log('maxRadius: ' + maxRadius);
+                radius = !attachProps.radius ? 0 :
+                  attachProps.radius <= maxRadius ? attachProps.radius : maxRadius;
+                console.log('radius: ' + radius);
+                if (radius) {
+                  offsetC = (radius - strokePadding) / Math.SQRT2;
+                  padding = radius - offsetC;
+                  cpR = radius * CIRCLE_CP;
 
-              left = areaBBox.left - curStats.strokeWidth;
-              top = areaBBox.top - curStats.strokeWidth;
-              right = areaBBox.right + curStats.strokeWidth;
-              bottom = areaBBox.bottom + curStats.strokeWidth;
-              curStats.bBoxRel = {
-                left: left, top: top, right: right, bottom: bottom,
-                width: right - left, height: bottom - top
-              };
+                  points = [
+                    {x: areaBBox.left - padding, y: areaBBox.top + offsetC}, // 0 left-top-start
+                    {x: areaBBox.left + offsetC, y: areaBBox.top - padding}, // 1 left-top-end
+                    {x: areaBBox.right - offsetC, y: areaBBox.top - padding}, // 2 right-top-start
+                    {x: areaBBox.right + padding, y: areaBBox.top + offsetC}, // 3 right-top-end
+                    {x: areaBBox.right + padding, y: areaBBox.bottom - offsetC}, // 4 right-bottom-start
+                    {x: areaBBox.right - offsetC, y: areaBBox.bottom + padding}, // 5 right-bottom-end
+                    {x: areaBBox.left + offsetC, y: areaBBox.bottom + padding}, // 6 left-bottom-start
+                    {x: areaBBox.left - padding, y: areaBBox.bottom - offsetC} // 7 left-bottom-end
+                  ];
 
-              curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
-                point.x += elementBBox.left;
-                point.y += elementBBox.top;
-              });
+                  curStats.pathListRel = [[points[0], {x: points[0].x, y: points[0].y - cpR},
+                    {x: points[1].x - cpR, y: points[1].y}, points[1]]];
+                  if (points[1].x !== points[2].x) { curStats.pathListRel.push([points[1], points[2]]); }
+                  curStats.pathListRel.push([points[2], {x: points[2].x + cpR, y: points[2].y},
+                    {x: points[3].x, y: points[3].y - cpR}, points[3]]);
+                  if (points[3].y !== points[4].y) { curStats.pathListRel.push([points[3], points[4]]); }
+                  curStats.pathListRel.push([points[4], {x: points[4].x, y: points[4].y + cpR},
+                    {x: points[5].x + cpR, y: points[5].y}, points[5]]);
+                  if (points[5].x !== points[6].x) { curStats.pathListRel.push([points[5], points[6]]); }
+                  curStats.pathListRel.push([points[6], {x: points[6].x - cpR, y: points[6].y},
+                    {x: points[7].x, y: points[7].y + cpR}, points[7]]);
+                  if (points[7].y !== points[0].y) { curStats.pathListRel.push([points[7], points[0]]); }
+                  curStats.pathListRel.push([]);
+
+                  padding = radius - offsetC + curStats.strokeWidth / 2;
+                  points = [{x: areaBBox.left - padding, y: areaBBox.top - padding}, // left-top
+                    {x: areaBBox.right + padding, y: areaBBox.bottom + padding}]; // right-bottom
+                  curStats.bBoxRel = {
+                    left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
+                    width: points[1].x - points[0].x, height: points[1].y - points[0].y
+                  };
+
+                } else {
+                  padding = curStats.strokeWidth / 2;
+                  points = [{x: areaBBox.left - padding, y: areaBBox.top - padding}, // left-top
+                    {x: areaBBox.right + padding, y: areaBBox.bottom + padding}]; // right-bottom
+                  curStats.pathListRel = [
+                    [points[0], {x: points[1].x, y: points[0].y}],
+                    [{x: points[1].x, y: points[0].y}, points[1]],
+                    [points[1], {x: points[0].x, y: points[1].y}],
+                    []
+                  ];
+
+                  points = [{x: areaBBox.left - curStats.strokeWidth,
+                      y: areaBBox.top - curStats.strokeWidth}, // left-top
+                    {x: areaBBox.right + curStats.strokeWidth,
+                      y: areaBBox.bottom + curStats.strokeWidth}]; // right-bottom
+                  curStats.bBoxRel = {
+                    left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
+                    width: points[1].x - points[0].x, height: points[1].y - points[0].y
+                  };
+                }
+
+                curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
+                  point.x += elementBBox.left;
+                  point.y += elementBBox.top;
+                });
+              })();
               break;
             // no default
           }
@@ -3519,18 +3564,22 @@
         }
 
         // ViewBox
-        curVBBBox.x = curStats.bBoxRel.left + elementBBox.left;
-        curVBBBox.y = curStats.bBoxRel.top + elementBBox.top;
-        curVBBBox.width = curStats.bBoxRel.width;
-        curVBBBox.height = curStats.bBoxRel.height;
-        ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-          if ((value = curVBBBox[boxKey]) !== aplVBBBox[boxKey]) {
-            traceLog.add(boxKey); // [DEBUG/]
-            viewBox[boxKey] = aplVBBBox[boxKey] = value;
-            styles[BBOX_PROP[boxKey]] = value +
-              (boxKey === 'x' || boxKey === 'y' ? attachProps.bodyOffset[boxKey] : 0) + 'px';
-          }
-        });
+        (function() {
+          var curVBBBox = curStats.viewBoxBBox, aplVBBBox = aplStats.viewBoxBBox,
+            viewBox = attachProps.svg.viewBox.baseVal, styles = attachProps.svg.style;
+          curVBBBox.x = curStats.bBoxRel.left + elementBBox.left;
+          curVBBBox.y = curStats.bBoxRel.top + elementBBox.top;
+          curVBBBox.width = curStats.bBoxRel.width;
+          curVBBBox.height = curStats.bBoxRel.height;
+          ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
+            if ((value = curVBBBox[boxKey]) !== aplVBBBox[boxKey]) {
+              traceLog.add(boxKey); // [DEBUG/]
+              viewBox[boxKey] = aplVBBBox[boxKey] = value;
+              styles[BBOX_PROP[boxKey]] = value +
+                (boxKey === 'x' || boxKey === 'y' ? attachProps.bodyOffset[boxKey] : 0) + 'px';
+            }
+          });
+        })();
 
         traceLog.add('</ATTACHMENTS.area.update>'); // [DEBUG/]
       }
