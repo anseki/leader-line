@@ -2690,11 +2690,7 @@
       if (curStats[keyAnimId]) { anim.remove(curStats[keyAnimId]); }
     });
     if (curStats.show_animId) { anim.remove(curStats.show_animId); }
-
-    props.attachments.forEach(function(attachProps) {
-      // Don't use `unbindAttachment()` that changes props.attachments
-      if (attachProps.conf.unbind) { attachProps.conf.unbind(props, attachProps); }
-    });
+    props.attachments.slice().forEach(function(attachProps) { unbindAttachment(props, attachProps); });
 
     if (props.baseWindow && props.svg) {
       props.baseWindow.document.body.removeChild(props.svg);
@@ -3206,6 +3202,7 @@
    * @returns {void}
    */
   removeAttachment = function(attachProps, id) {
+    traceLog.add('<removeAttachment>'); // [DEBUG/]
     if (!attachProps && !(attachProps = insAttachProps[id])) { return; }
     attachProps.lls.forEach(function(props) { unbindAttachment(props, attachProps, true); });
     if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
@@ -3216,21 +3213,27 @@
       }
       return false;
     })) {
+      traceLog.add('not-found'); // [DEBUG/]
+      traceLog.add('</removeAttachment>'); // [DEBUG/]
       return;
     }
     delete insAttachProps[id];
+    traceLog.add('</removeAttachment>'); // [DEBUG/]
   };
 
   LeaderLineAttachment.prototype.remove = function() {
+    traceLog.add('<LeaderLineAttachment.remove>'); // [DEBUG/]
     var attachProps = insAttachProps[this._id];
     if (attachProps) {
       attachProps.lls.slice().forEach(function(props) { attachProps.conf.removeOption(props, attachProps); });
 
       if ((attachProps = insAttachProps[this._id])) { // it should be removed by unbinding all
+        traceLog.add('error-not-removed'); // [DEBUG/]
         console.error('LeaderLineAttachment was not removed by removeOption');
         removeAttachment(attachProps, this._id); // force
       }
     }
+    traceLog.add('</LeaderLineAttachment.remove>'); // [DEBUG/]
   };
 
   /**
