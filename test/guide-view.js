@@ -2,8 +2,7 @@
 /* exported guideView, pathData2BBox */
 /* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
 
-var pathData2BBox;
-(function() {
+var pathData2BBox = (function() {
   'use strict';
 
   // corners: {{x1, y1, x2, y2}}
@@ -13,7 +12,7 @@ var pathData2BBox;
   }
 
   // relative commands (e.g. `c`, `h`) are not supported.
-  pathData2BBox = function(pathData) {
+  function pathData2BBox(pathData) {
     return createBBox(pathData.reduce(function(corners, pathSeg) {
       var values = pathSeg.values, x, y, i, iLen = values.length;
       for (i = 0; i < iLen; i += 2) {
@@ -29,7 +28,9 @@ var pathData2BBox;
       }
       return corners;
     }, {}));
-  };
+  }
+
+  return pathData2BBox;
 })();
 
 var guideView = (function() {
@@ -128,11 +129,11 @@ var guideView = (function() {
         var path = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'path')),
           pathSegs = [];
         [0, 1].forEach(function(i) {
-          var anchor = props.options.anchorSE[i], isAtc = props.optionsAtc.anchorSE[i],
-            propsAtc = isAtc !== false ? window.insPropsAtc[anchor._id] : null,
-            bBox = isAtc !== false && propsAtc.conf.getBBoxNest ?
-              propsAtc.conf.getBBoxNest(props, propsAtc,
-                propsAtc.conf.getStrokeWidth ? propsAtc.conf.getStrokeWidth(props, propsAtc) : 0) :
+          var anchor = props.options.anchorSE[i], isAttach = props.optionIsAttach.anchorSE[i],
+            attachProps = isAttach !== false ? window.insAttachProps[anchor._id] : null,
+            bBox = isAttach !== false && attachProps.conf.getBBoxNest ?
+              attachProps.conf.getBBoxNest(props, attachProps,
+                attachProps.conf.getStrokeWidth ? attachProps.conf.getStrokeWidth(props, attachProps) : 0) :
               window.getBBoxNest(anchor, props.baseWindow);
           if (bBox.left < edgeLeft) { edgeLeft = bBox.left; }
           if (bBox.right > edgeRight) { edgeRight = bBox.right; }
@@ -207,6 +208,7 @@ var guideView = (function() {
           border.y.baseVal.value = viewBox.y - 0.5;
           border.width.baseVal.value = viewBox.width + 1;
           border.height.baseVal.value = viewBox.height + 1;
+          guideElements.push(border);
         });
 
         guideElements.push(maskSvg, select);
