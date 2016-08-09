@@ -218,6 +218,96 @@ describe('attachment', function() {
       pageDone();
     });
 
+    it(registerTitle('area-attachOptions'), function() {
+      var props = window.insProps[ll._id],
+        atc;
+
+      // elm1 left: 1px; top: 2px;
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+        x: 5, y: 6, width: 7, height: 8, size: 0});
+      ll.start = atc;
+      expect(props.curStats.position_socketXYSE[0].x).toBe(9.5);
+      expect(props.curStats.position_socketXYSE[0].y).toBe(16);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [6, 8]},
+        {type: 'L', values: [13, 8]},
+        {type: 'L', values: [13, 16]},
+        {type: 'L', values: [6, 16]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+
+      document.getElementById('iframe1').style.borderWidth = '0';
+      // iframe1 left: 500px; top: 50px; > elm2 left: 104px; top: 108px;
+      atc = window.LeaderLine.area({
+        element: document.getElementById('iframe1').contentDocument.getElementById('elm2'),
+        x: 5, y: 6, width: 7, height: 8, size: 0});
+      ll.start = atc;
+      expect(props.curStats.position_socketXYSE[0].x).toBe(609);
+      expect(props.curStats.position_socketXYSE[0].y).toBe(168);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [609, 164]},
+        {type: 'L', values: [616, 164]},
+        {type: 'L', values: [616, 172]},
+        {type: 'L', values: [609, 172]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+
+      // Percent
+      // elm1 left: 1px; top: 2px;
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+        x: '10%', y: '80%', width: '20%', height: '50%', size: 0});
+      ll.start = atc;
+      expect(props.curStats.position_socketXYSE[0].x).toBe(31);
+      expect(props.curStats.position_socketXYSE[0].y).toBe(33.5);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [11, 26]},
+        {type: 'L', values: [31, 26]},
+        {type: 'L', values: [31, 41]},
+        {type: 'L', values: [11, 41]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+
+      pageDone();
+    });
+
+    it(registerTitle('area-auto'), function() {
+      var props = window.insProps[ll._id],
+        atc, attachProps;
+
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+        x: 5, y: 5, width: 10, height: 10}); // (6, 7)-(16, 17)
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      setTimeout(function() { // `bind` calls setTimeout
+        expect(attachProps.curStats.color).toBe('coral');
+        expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(4); // strokeWidth
+        expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+          {type: 'M', values: [4, 5]},
+          {type: 'L', values: [18, 5]},
+          {type: 'L', values: [18, 19]},
+          {type: 'L', values: [4, 19]},
+          {type: 'Z', values: []}
+        ]);
+
+        ll.color = 'red';
+        ll.size = 8;
+        expect(attachProps.curStats.color).toBe('red');
+        expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(8); // strokeWidth
+        expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+          {type: 'M', values: [2, 3]},
+          {type: 'L', values: [20, 3]},
+          {type: 'L', values: [20, 21]},
+          {type: 'L', values: [2, 21]},
+          {type: 'Z', values: []}
+        ]);
+
+        pageDone();
+      }, 1);
+    });
+
   });
 
 });

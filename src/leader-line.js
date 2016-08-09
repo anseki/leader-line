@@ -693,6 +693,15 @@
     return bodyOffset;
   }
 
+  function setupWindow(window) {
+    var baseDocument = window.document, defs;
+    if (!baseDocument.getElementById(DEFS_ID)) { // Add svg defs
+      defs = (new window.DOMParser()).parseFromString(DEFS_HTML, 'image/svg+xml');
+      baseDocument.body.appendChild(defs.documentElement);
+      pathDataPolyfill(window);
+    }
+  }
+
   /**
    * Setup `baseWindow`, stats (`cur*` and `apl*`), SVG elements, etc.
    * @param {props} props - `props` of `LeaderLine` instance.
@@ -702,7 +711,7 @@
   function bindWindow(props, newWindow) {
     traceLog.add('<bindWindow>'); // [DEBUG/]
     var baseDocument = newWindow.document,
-      defs, svg, elmDefs, maskCaps, element, aplStats = props.aplStats;
+      svg, elmDefs, maskCaps, element, aplStats = props.aplStats;
 
     function setupMask(id) {
       var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'mask'));
@@ -735,12 +744,7 @@
       props.baseWindow.document.body.removeChild(props.svg);
     }
     props.baseWindow = newWindow;
-
-    if (!baseDocument.getElementById(DEFS_ID)) { // Add svg defs
-      defs = (new newWindow.DOMParser()).parseFromString(DEFS_HTML, 'image/svg+xml');
-      baseDocument.body.appendChild(defs.documentElement);
-      pathDataPolyfill(newWindow);
-    }
+    setupWindow(newWindow);
     props.bodyOffset = getBodyOffset(newWindow); // Get `bodyOffset`
 
     // Main SVG
@@ -3326,7 +3330,7 @@
 
       // attachOptions: element, color(A), fillColor, size(A), shape, x, y, width, height, radius, points
       init: function(attachProps, attachOptions) {
-        var points = [], baseDocument, svg;
+        var points = [], baseDocument, svg, window;
         attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
         if (typeof attachOptions.color === 'string') {
           attachProps.color = attachOptions.color.trim();
@@ -3379,7 +3383,8 @@
         attachProps.isShown = false;
         svg.style.visibility = 'hidden';
         baseDocument.body.appendChild(svg);
-        attachProps.bodyOffset = getBodyOffset(baseDocument.defaultView); // Get `bodyOffset`
+        setupWindow((window = baseDocument.defaultView));
+        attachProps.bodyOffset = getBodyOffset(window); // Get `bodyOffset`
 
         // event handler for each instance
         attachProps.updateColor = function() {
@@ -3396,7 +3401,7 @@
           }
         };
         attachProps.updateShow = function() {
-          svgShow(attachProps, attachProps.lls.some(function(props) { return props.isShown; }));
+          svgShow(attachProps, attachProps.lls.some(function(props) { return props.isShown === true; }));
         };
         // event handler to update `strokeWidth` is unnecessary
         // because `getStrokeWidth` is triggered by `updateLine` and `updatePosition`
