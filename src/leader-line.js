@@ -905,7 +905,7 @@
     });
 
     if (props.curStats.show_inAnim) {
-      props.isShown = true;
+      props.isShown = 1;
       SHOW_EFFECTS[aplStats.show_effect].stop(props, true); // svgShow() is called
     } else if (!props.isShown) {
       svg.style.visibility = 'hidden';
@@ -2059,11 +2059,17 @@
     return updated;
   }
 
+  /**
+   * @param {props} props - `props` of `LeaderLine` instance.
+   * @param {(boolean|number)} on - true:show | false:hide | 1:show(in anim)
+   * @returns {void}
+   */
   function svgShow(props, on) {
     traceLog.add('<svgShow>'); // [DEBUG/]
     if (on !== props.isShown) {
       traceLog.add('on=' + on); // [DEBUG/]
-      props.svg.style.visibility = (props.isShown = on) ? '' : 'hidden';
+      if (!!on !== !!props.isShown) { props.svg.style.visibility = on ? '' : 'hidden'; }
+      props.isShown = on;
       if (props.events && props.events.svgShow) {
         props.events.svgShow.forEach(function(handler) { handler(props, on); });
       }
@@ -3008,7 +3014,7 @@
         if (curStats.show_inAnim) {
           prevTimeRatio = anim.stop(curStats.show_animId);
         }
-        svgShow(props, true);
+        svgShow(props, 1);
         // [DEBUG]
         traceLog.add('timeRatio=' +
           // eslint-disable-next-line eqeqeq
@@ -3107,7 +3113,7 @@
         if (curStats.show_inAnim) {
           prevTimeRatio = anim.stop(curStats.show_animId);
         }
-        svgShow(props, true);
+        svgShow(props, 1);
         // [DEBUG]
         traceLog.add('timeRatio=' +
           // eslint-disable-next-line eqeqeq
