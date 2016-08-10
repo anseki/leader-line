@@ -3267,13 +3267,16 @@
 
       // attachOptions: element, x, y
       init: function(attachProps, attachOptions) {
+        traceLog.add('<ATTACHMENTS.point.init>'); // [DEBUG/]
         attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
         attachProps.x = ATTACHMENTS.point.parsePercent(attachOptions.x, true) || [0];
         attachProps.y = ATTACHMENTS.point.parsePercent(attachOptions.y, true) || [0];
+        traceLog.add('</ATTACHMENTS.point.init>'); // [DEBUG/]
         return true;
       },
 
       removeOption: function(props, attachProps) {
+        traceLog.add('<ATTACHMENTS.point.removeOption>'); // [DEBUG/]
         var options = props.options;
         ['start', 'end'].forEach(function(optionName, i) {
           var element, another, newOptions;
@@ -3291,6 +3294,7 @@
             setOptions(props, newOptions);
           }
         });
+        traceLog.add('</ATTACHMENTS.point.removeOption>'); // [DEBUG/]
       },
 
       getBBoxNest: function(props, attachProps) {
@@ -3330,6 +3334,7 @@
 
       // attachOptions: element, color(A), fillColor, size(A), shape, x, y, width, height, radius, points
       init: function(attachProps, attachOptions) {
+        traceLog.add('<ATTACHMENTS.area.init>'); // [DEBUG/]
         var points = [], baseDocument, svg, window;
         attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
         if (typeof attachOptions.color === 'string') {
@@ -3406,19 +3411,23 @@
         // event handler to update `strokeWidth` is unnecessary
         // because `getStrokeWidth` is triggered by `updateLine` and `updatePosition`
 
+        traceLog.add('</ATTACHMENTS.area.init>'); // [DEBUG/]
         return true;
       },
 
       bind: function(props, attachProps) {
+        traceLog.add('<ATTACHMENTS.area.bind>'); // [DEBUG/]
         addEventHandler(props, 'cur_line_color', attachProps.updateColor);
         addEventHandler(props, 'svgShow', attachProps.updateShow);
         setTimeout(function() { // after updating `attachProps.lls`
           attachProps.updateColor();
           attachProps.updateShow();
         }, 0);
+        traceLog.add('</ATTACHMENTS.area.bind>'); // [DEBUG/]
         return true;
       },
       unbind: function(props, attachProps) {
+        traceLog.add('<ATTACHMENTS.area.unbind>'); // [DEBUG/]
         removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
         setTimeout(function() { // after updating `attachProps.lls`
@@ -3426,14 +3435,20 @@
           attachProps.updateShow();
           ATTACHMENTS.area.update(attachProps); // it's not called by unbinded ll
         }, 0);
+        traceLog.add('</ATTACHMENTS.area.unbind>'); // [DEBUG/]
       },
 
       removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },
 
       remove: function(attachProps) {
-        attachProps.lls.forEach(
-          function(props) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); });
+        traceLog.add('<ATTACHMENTS.area.remove>'); // [DEBUG/]
+        if (attachProps.lls.length) { // it should be unbinded by LeaderLineAttachment.remove
+          traceLog.add('error-not-unbinded'); // [DEBUG/]
+          console.error('LeaderLineAttachment was not unbinded by remove');
+          attachProps.lls.forEach(function(props) { ATTACHMENTS.area.unbind(props, attachProps); });
+        }
         attachProps.svg.parentNode.removeChild(attachProps.svg);
+        traceLog.add('</ATTACHMENTS.area.remove>'); // [DEBUG/]
       },
 
       getStrokeWidth: function(props, attachProps) {

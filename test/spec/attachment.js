@@ -138,6 +138,200 @@ describe('attachment', function() {
       pageDone();
     });
 
+    it(registerTitle('flow'), function() {
+      var props1 = window.insProps[ll._id],
+        atc1, atc2, attachProps1, attachProps2, ll2, props2;
+
+      traceLog.clear();
+      atc1 = window.LeaderLine.area({element: document.getElementById('elm1')});
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.area.init>', '</ATTACHMENTS.area.init>'
+      ]);
+      atc2 = window.LeaderLine.area({element: document.getElementById('elm2')});
+      attachProps1 = window.insAttachProps[atc1._id];
+      attachProps2 = window.insAttachProps[atc2._id];
+
+      // bind
+      traceLog.clear();
+      ll.start = atc1;
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.area.bind>', '</ATTACHMENTS.area.bind>',
+        '<setOptions>', 'needs.position', '</setOptions>',
+        '<updatePosition>',
+        '<ATTACHMENTS.area.update>',
+        'curStats.strokeWidth=4', 'curStats.elementWidth=100', 'curStats.elementHeight=30',
+        'generate-path', 'aplStats.strokeWidth=4', 'aplStats.pathData',
+        'x', 'y', 'width', 'height',
+        '</ATTACHMENTS.area.update>',
+        'position_socketXYSE[0]', 'new-position',
+        '</updatePosition>',
+        '<updatePath>', 'path_pathData', '</updatePath>',
+        '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
+        '<updateMask>',
+        'maskBGRect_x', 'lineMask_x',
+        'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=4',
+        '</updateMask>',
+        '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>'
+      ]);
+      expect(props1.events.cur_line_color.length).toBe(1); // addEventHandler
+      expect(props1.events.svgShow.length).toBe(1); // addEventHandler
+
+      // unbind -> remove
+      traceLog.clear();
+      ll.start = document.getElementById('elm1');
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+        '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
+        '<setOptions>', 'needs.position', '</setOptions>',
+        '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
+        '<updatePath>', 'path_pathData', '</updatePath>',
+        '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
+        '<updateMask>',
+        'maskBGRect_x', 'lineMask_x',
+        'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+        '</updateMask>',
+        '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>'
+      ]);
+      expect(props1.attachments.length).toBe(0);
+      expect(atc1.isRemoved).toBe(true);
+      expect(props1.events.cur_line_color.length).toBe(0); // removeEventHandler
+      expect(props1.events.svgShow.length).toBe(0); // removeEventHandler
+
+      // 2 ll - 1 atc
+      ll.start = atc2;
+      ll2 = new window.LeaderLine(atc2, document.getElementById('elm4'));
+      props2 = window.insProps[ll2._id];
+      expect(props1.attachments.length).toBe(1);
+      expect(props2.attachments.length).toBe(1);
+      expect(attachProps2.lls.length).toBe(2);
+      expect(props1.events.cur_line_color.length).toBe(1); // addEventHandler
+      expect(props1.events.svgShow.length).toBe(1); // addEventHandler
+      expect(props2.events.cur_line_color.length).toBe(1); // addEventHandler
+      expect(props2.events.svgShow.length).toBe(1); // addEventHandler
+
+      // unbind 1
+      traceLog.clear();
+      ll.start = document.getElementById('elm1');
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+        '<setOptions>', 'needs.position', '</setOptions>',
+        '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
+        '<updatePath>', 'path_pathData', '</updatePath>',
+        '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
+        '<updateMask>',
+        'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y',
+        'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+        '</updateMask>',
+        '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>'
+      ]);
+      expect(props1.attachments.length).toBe(0);
+      expect(props2.attachments.length).toBe(1);
+      expect(attachProps2.lls.length).toBe(1);
+      expect(props1.events.cur_line_color.length).toBe(0); // removeEventHandler
+      expect(props1.events.svgShow.length).toBe(0); // removeEventHandler
+      expect(props2.events.cur_line_color.length).toBe(1);
+      expect(props2.events.svgShow.length).toBe(1);
+
+      // unbind 2 -> remove
+      traceLog.clear();
+      ll2.start = document.getElementById('elm1');
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+        '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
+        '<setOptions>', 'needs.position', '</setOptions>',
+        '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
+        '<updatePath>', 'path_pathData', '</updatePath>',
+        '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
+        '<updateMask>',
+        'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y',
+        'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+        '</updateMask>',
+        '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>'
+      ]);
+      expect(props1.attachments.length).toBe(0);
+      expect(props2.attachments.length).toBe(0);
+      expect(atc2.isRemoved).toBe(true);
+      expect(props1.events.cur_line_color.length).toBe(0); // removeEventHandler
+      expect(props1.events.svgShow.length).toBe(0); // removeEventHandler
+      expect(props2.events.cur_line_color.length).toBe(0); // removeEventHandler
+      expect(props2.events.svgShow.length).toBe(0); // removeEventHandler
+
+      // remove atc -> unbind
+      atc1 = window.LeaderLine.area({element: document.getElementById('elm1')});
+      attachProps1 = window.insAttachProps[atc1._id];
+      ll.start = atc1;
+      ll2.start = atc1;
+      expect(props1.attachments.length).toBe(1);
+      expect(props2.attachments.length).toBe(1);
+      expect(attachProps1.lls.length).toBe(2);
+      expect(props1.events.cur_line_color.length).toBe(1);
+      expect(props1.events.svgShow.length).toBe(1);
+      expect(props2.events.cur_line_color.length).toBe(1);
+      expect(props2.events.svgShow.length).toBe(1);
+      traceLog.clear();
+      atc1.remove();
+      expect(traceLog.log).toEqual([
+        '<LeaderLineAttachment.remove>',
+        '<ATTACHMENTS.point.removeOption>',
+        '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+        '<setOptions>', 'needs.position', '</setOptions>',
+        '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
+        '<updatePath>', 'path_pathData', '</updatePath>',
+        '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
+        '<updateMask>',
+        'maskBGRect_x', 'lineMask_x', 'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+        '</updateMask>',
+        '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
+        '</ATTACHMENTS.point.removeOption>',
+        '<ATTACHMENTS.point.removeOption>',
+        '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+        '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
+        '<setOptions>', 'needs.position', '</setOptions>',
+        '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
+        '<updatePath>', 'path_pathData', '</updatePath>',
+        '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
+        '<updateMask>',
+        'maskBGRect_x', 'lineMask_x', 'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+        '</updateMask>',
+        '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
+        '</ATTACHMENTS.point.removeOption>',
+        '</LeaderLineAttachment.remove>'
+      ]);
+      expect(props1.attachments.length).toBe(0);
+      expect(props2.attachments.length).toBe(0);
+      expect(atc1.isRemoved).toBe(true);
+      expect(props1.events.cur_line_color.length).toBe(0);
+      expect(props1.events.svgShow.length).toBe(0);
+      expect(props2.events.cur_line_color.length).toBe(0);
+      expect(props2.events.svgShow.length).toBe(0);
+
+      // remove ll -> unbind -> remove atc
+      atc1 = window.LeaderLine.area({element: document.getElementById('elm1')});
+      atc2 = window.LeaderLine.area({element: document.getElementById('elm2')});
+      attachProps1 = window.insAttachProps[atc1._id];
+      attachProps2 = window.insAttachProps[atc2._id];
+      ll.setOptions({start: atc1, end: atc2});
+      expect(props1.attachments.length).toBe(2);
+      expect(attachProps1.lls.length).toBe(1);
+      expect(attachProps2.lls.length).toBe(1);
+      expect(props1.events.cur_line_color.length).toBe(2);
+      expect(props1.events.svgShow.length).toBe(2);
+      traceLog.clear();
+      ll.remove();
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+        '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
+        '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+        '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>'
+      ]);
+      expect(atc1.isRemoved).toBe(true);
+      expect(atc2.isRemoved).toBe(true);
+      expect(props1.events.cur_line_color.length).toBe(0);
+      expect(props1.events.svgShow.length).toBe(0);
+
+      pageDone();
+    });
+
   });
 
   describe('ATTACHMENTS', function() {
