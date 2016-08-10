@@ -3412,7 +3412,7 @@
       bind: function(props, attachProps) {
         addEventHandler(props, 'cur_line_color', attachProps.updateColor);
         addEventHandler(props, 'svgShow', attachProps.updateShow);
-        setTimeout(function() { // after bind (`attachProps.lls` is used)
+        setTimeout(function() { // after updating `attachProps.lls`
           attachProps.updateColor();
           attachProps.updateShow();
         }, 0);
@@ -3421,6 +3421,11 @@
       unbind: function(props, attachProps) {
         removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
+        setTimeout(function() { // after updating `attachProps.lls`
+          attachProps.updateColor();
+          attachProps.updateShow();
+          ATTACHMENTS.area.update(attachProps); // it's not called by unbinded ll
+        }, 0);
       },
 
       removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },

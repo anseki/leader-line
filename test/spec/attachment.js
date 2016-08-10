@@ -273,7 +273,7 @@ describe('attachment', function() {
       pageDone();
     });
 
-    it(registerTitle('area-auto'), function() {
+    it(registerTitle('area-event auto 1 ll'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps;
 
@@ -305,7 +305,128 @@ describe('attachment', function() {
         ]);
 
         pageDone();
-      }, 1);
+        done();
+      }, 10);
+    });
+
+    it(registerTitle('area-event auto 2 ll'), function(done) {
+      var props = window.insProps[ll._id],
+        ll2, props2, atc, attachProps;
+
+      atc = window.LeaderLine.area({element: document.getElementById('elm1')});
+      attachProps = window.insAttachProps[atc._id];
+      ll2 = new window.LeaderLine(atc, document.getElementById('elm2'), {color: 'red', size: 8}); // #1
+      props2 = window.insProps[ll2._id];
+      ll.start = atc; // #2
+      setTimeout(function() { // `bind` calls setTimeout
+        expect(props.curStats.line_color).toBe('coral'); // check
+        expect(props.curStats.line_strokeWidth).toBe(4);
+        expect(props2.curStats.line_color).toBe('red');
+        expect(props2.curStats.line_strokeWidth).toBe(8);
+
+        expect(attachProps.curStats.color).toBe('red');
+        expect(attachProps.curStats.strokeWidth).toBe(8);
+
+        ll.color = 'green';
+        ll.size = 10;
+        expect(props.curStats.line_color).toBe('green'); // check
+        expect(props.curStats.line_strokeWidth).toBe(10);
+        // not affected
+        expect(attachProps.curStats.color).toBe('red');
+        expect(attachProps.curStats.strokeWidth).toBe(8);
+
+        ll2.color = 'yellow';
+        ll2.size = 11;
+        expect(props2.curStats.line_color).toBe('yellow'); // check
+        expect(props2.curStats.line_strokeWidth).toBe(11);
+        // affected
+        expect(attachProps.curStats.color).toBe('yellow');
+        expect(attachProps.curStats.strokeWidth).toBe(11);
+
+        ll2.start = document.getElementById('elm1');
+        setTimeout(function() { // `bind` calls setTimeout
+          // affected by ll
+          expect(attachProps.curStats.color).toBe('green');
+          expect(attachProps.curStats.strokeWidth).toBe(10);
+
+          pageDone();
+          done();
+        }, 10);
+      }, 10);
+    });
+
+    it(registerTitle('area-event svgShow 1 ll'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps;
+
+      atc = window.LeaderLine.area({element: document.getElementById('elm1')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.hide('none');
+      setTimeout(function() {
+        expect(props.isShown).toBe(false); // check
+
+        ll.start = atc;
+        setTimeout(function() { // `bind` calls setTimeout
+          expect(attachProps.isShown).toBe(false);
+          expect(attachProps.svg.style.visibility).toBe('hidden');
+
+          ll.show();
+          setTimeout(function() {
+            expect(props.isShown).toBe(true); // check
+
+            expect(attachProps.isShown).toBe(true);
+            expect(attachProps.svg.style.visibility).toBe('');
+
+            pageDone();
+            done();
+          }, 100);
+        }, 10);
+      }, 100);
+    });
+
+    it(registerTitle('area-event svgShow 2 ll'), function(done) {
+      var props = window.insProps[ll._id],
+        ll2, props2, atc, attachProps;
+
+      atc = window.LeaderLine.area({element: document.getElementById('elm1')});
+      attachProps = window.insAttachProps[atc._id];
+      ll2 = new window.LeaderLine(atc, document.getElementById('elm2'), {hide: true});
+      props2 = window.insProps[ll2._id];
+      ll.start = atc;
+      setTimeout(function() { // `bind` calls setTimeout
+        expect(props.isShown).toBe(true); // check
+        expect(props2.isShown).toBe(false);
+
+        expect(attachProps.isShown).toBe(true);
+        expect(attachProps.svg.style.visibility).toBe('');
+
+        ll.hide('none');
+        setTimeout(function() {
+          expect(props.isShown).toBe(false); // check
+          expect(props2.isShown).toBe(false);
+
+          expect(attachProps.isShown).toBe(false);
+          expect(attachProps.svg.style.visibility).toBe('hidden');
+
+          ll2.show('none');
+          setTimeout(function() {
+            expect(props.isShown).toBe(false); // check
+            expect(props2.isShown).toBe(true);
+
+            expect(attachProps.isShown).toBe(true);
+            expect(attachProps.svg.style.visibility).toBe('');
+
+            ll2.start = document.getElementById('elm1');
+            setTimeout(function() { // `bind` calls setTimeout
+              expect(attachProps.lls.length).toBe(1);
+              expect(attachProps.isShown).toBe(false);
+              expect(attachProps.svg.style.visibility).toBe('hidden');
+              pageDone();
+              done();
+            }, 10);
+          }, 100);
+        }, 100);
+      }, 10);
     });
 
   });
