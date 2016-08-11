@@ -43,6 +43,10 @@ describe('attachment', function() {
       });
   }
 
+  function getRect(x, y, width, height) {
+    return {left: x, top: y, width: width, height: height, right: x + width, bottom: y + height};
+  }
+
   describe('life cycle', function() {
 
     beforeEach(loadBefore);
@@ -652,10 +656,6 @@ describe('attachment', function() {
         elmX = 1, elmY = 2, elmWidth = 100, elmHeight = 30, // elm1
         rect, r, offset, padding;
 
-      function getRect(x, y, width, height) {
-        return {left: x, top: y, width: width, height: height, right: x + width, bottom: y + height};
-      }
-
       // size: 0, radius: 0
       atc = window.LeaderLine.area({element: document.getElementById('elm1'),
         x: 5, y: 6, width: 7, height: 8, size: 0});
@@ -776,6 +776,147 @@ describe('attachment', function() {
       expect(props.curStats.position_socketXYSE[0].x).toBe(rect.right + padding + 2); // right
       expect(Math.abs(props.curStats.position_socketXYSE[0].y -
         (rect.top + rect.height / 2))).toBeLessThan(TOLERANCE);
+
+      pageDone();
+      done();
+    });
+
+    it(registerTitle('area-circle'), function(done) {
+      var props = window.insProps[ll._id], atc,
+        elmX = 1, elmY = 2, // elm1
+        rect, r, offset, padding,
+        rx, ry, offsetX, offsetY, paddingX, paddingY;
+
+      // size: 0, width: 10, height: 10
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+        x: 5, y: 6, width: 10, height: 10, size: 0});
+      ll.start = atc;
+      r = 5 * Math.SQRT2;
+      offset = 5;
+      padding = r - offset;
+      rect = getRect(elmX + 5, elmY + 6, 10, 10);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [rect.left - padding, rect.top + offset]},
+        {type: 'C', values: [
+          rect.left - padding, (rect.top + offset) - r * CIRCLE_CP,
+          (rect.left + offset) - r * CIRCLE_CP, rect.top - padding,
+          rect.left + offset, rect.top - padding]},
+        {type: 'C', values: [
+          rect.right - offset + r * CIRCLE_CP, rect.top - padding,
+          rect.right + padding, (rect.top + offset) - r * CIRCLE_CP,
+          rect.right + padding, rect.top + offset]},
+        {type: 'C', values: [
+          rect.right + padding, (rect.bottom - offset) + r * CIRCLE_CP,
+          (rect.right - offset) + r * CIRCLE_CP, rect.bottom + padding,
+          rect.right - offset, rect.bottom + padding]},
+        {type: 'C', values: [
+          (rect.left + offset) - r * CIRCLE_CP, rect.bottom + padding,
+          rect.left - padding, (rect.bottom - offset) + r * CIRCLE_CP,
+          rect.left - padding, rect.bottom - offset]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+      expect(props.curStats.position_socketXYSE[0].x).toBe(rect.left + rect.width / 2); // bottom
+      expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding);
+
+      // size: 0, width: 20, height: 10
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+        x: 5, y: 6, width: 20, height: 10, size: 0});
+      ll.start = atc;
+      rx = 10 * Math.SQRT2;
+      ry = 5 * Math.SQRT2;
+      offsetX = 10;
+      offsetY = 5;
+      paddingX = rx - offsetX;
+      paddingY = ry - offsetY;
+      rect = getRect(elmX + 5, elmY + 6, 20, 10);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [rect.left - paddingX, rect.top + offsetY]},
+        {type: 'C', values: [
+          rect.left - paddingX, (rect.top + offsetY) - ry * CIRCLE_CP,
+          (rect.left + offsetX) - rx * CIRCLE_CP, rect.top - paddingY,
+          rect.left + offsetX, rect.top - paddingY]},
+        {type: 'C', values: [
+          rect.right - offsetX + rx * CIRCLE_CP, rect.top - paddingY,
+          rect.right + paddingX, (rect.top + offsetY) - ry * CIRCLE_CP,
+          rect.right + paddingX, rect.top + offsetY]},
+        {type: 'C', values: [
+          rect.right + paddingX, (rect.bottom - offsetY) + ry * CIRCLE_CP,
+          (rect.right - offsetX) + rx * CIRCLE_CP, rect.bottom + paddingY,
+          rect.right - offsetX, rect.bottom + paddingY]},
+        {type: 'C', values: [
+          (rect.left + offsetX) - rx * CIRCLE_CP, rect.bottom + paddingY,
+          rect.left - paddingX, (rect.bottom - offsetY) + ry * CIRCLE_CP,
+          rect.left - paddingX, rect.bottom - offsetY]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+      expect(props.curStats.position_socketXYSE[0].x).toBe(rect.right + paddingX); // right
+      expect(props.curStats.position_socketXYSE[0].y).toBe(rect.top + rect.height / 2);
+
+      // size: 0, width: 0, height: 0 -> 10
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+        x: 5, y: 6, width: 10, height: 10, size: 0});
+      ll.start = atc;
+      r = 5 * Math.SQRT2;
+      offset = 5;
+      padding = r - offset;
+      rect = getRect(elmX + 5, elmY + 6, 10, 10);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [rect.left - padding, rect.top + offset]},
+        {type: 'C', values: [
+          rect.left - padding, (rect.top + offset) - r * CIRCLE_CP,
+          (rect.left + offset) - r * CIRCLE_CP, rect.top - padding,
+          rect.left + offset, rect.top - padding]},
+        {type: 'C', values: [
+          rect.right - offset + r * CIRCLE_CP, rect.top - padding,
+          rect.right + padding, (rect.top + offset) - r * CIRCLE_CP,
+          rect.right + padding, rect.top + offset]},
+        {type: 'C', values: [
+          rect.right + padding, (rect.bottom - offset) + r * CIRCLE_CP,
+          (rect.right - offset) + r * CIRCLE_CP, rect.bottom + padding,
+          rect.right - offset, rect.bottom + padding]},
+        {type: 'C', values: [
+          (rect.left + offset) - r * CIRCLE_CP, rect.bottom + padding,
+          rect.left - padding, (rect.bottom - offset) + r * CIRCLE_CP,
+          rect.left - padding, rect.bottom - offset]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+      expect(props.curStats.position_socketXYSE[0].x).toBe(rect.left + rect.width / 2); // bottom
+      expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding);
+
+      // size: 4, width: 10, height: 10
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+        x: 5, y: 6, width: 10, height: 10, size: 4});
+      ll.start = atc;
+      r = 5 * Math.SQRT2 + 2;
+      offset = 5;
+      padding = r - offset;
+      rect = getRect(elmX + 5, elmY + 6, 10, 10);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [rect.left - padding, rect.top + offset]},
+        {type: 'C', values: [
+          rect.left - padding, (rect.top + offset) - r * CIRCLE_CP,
+          (rect.left + offset) - r * CIRCLE_CP, rect.top - padding,
+          rect.left + offset, rect.top - padding]},
+        {type: 'C', values: [
+          rect.right - offset + r * CIRCLE_CP, rect.top - padding,
+          rect.right + padding, (rect.top + offset) - r * CIRCLE_CP,
+          rect.right + padding, rect.top + offset]},
+        {type: 'C', values: [
+          rect.right + padding, (rect.bottom - offset) + r * CIRCLE_CP,
+          (rect.right - offset) + r * CIRCLE_CP, rect.bottom + padding,
+          rect.right - offset, rect.bottom + padding]},
+        {type: 'C', values: [
+          (rect.left + offset) - r * CIRCLE_CP, rect.bottom + padding,
+          rect.left - padding, (rect.bottom - offset) + r * CIRCLE_CP,
+          rect.left - padding, rect.bottom - offset]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(4);
+      expect(props.curStats.position_socketXYSE[0].x).toBe(rect.left + rect.width / 2); // bottom
+      expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding + 2);
 
       pageDone();
       done();
