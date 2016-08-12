@@ -98,6 +98,36 @@ describe('attachment', function() {
       pageDone();
       done();
     });
+
+    it(registerTitle('point.parsePercent'), function(done) {
+      // -, num, false
+      expect(window.ATTACHMENTS.point.parsePercent(-5) == null).toBe(true); // eslint-disable-line eqeqeq
+      // -, num, true
+      expect(window.ATTACHMENTS.point.parsePercent(-5, true)).toEqual([-5, false]);
+      // -, per, false
+      expect(window.ATTACHMENTS.point.parsePercent('-5%') == null).toBe(true); // eslint-disable-line eqeqeq
+      // -, per, true
+      expect(window.ATTACHMENTS.point.parsePercent('-5%', true)).toEqual([-0.05, true]);
+      // +, num, false
+      expect(window.ATTACHMENTS.point.parsePercent(5)).toEqual([5, false]);
+      // +, num, true
+      expect(window.ATTACHMENTS.point.parsePercent(5, true)).toEqual([5, false]);
+      // +, per, false
+      expect(window.ATTACHMENTS.point.parsePercent('5%')).toEqual([0.05, true]);
+      // +, per, true
+      expect(window.ATTACHMENTS.point.parsePercent('5%', true)).toEqual([0.05, true]);
+      // zero, num, false
+      expect(window.ATTACHMENTS.point.parsePercent(0)).toEqual([0, false]);
+      // zero, num, true
+      expect(window.ATTACHMENTS.point.parsePercent(0, true)).toEqual([0, false]);
+      // zero, per, false
+      expect(window.ATTACHMENTS.point.parsePercent('0%')).toEqual([0, false]);
+      // zero, per, true
+      expect(window.ATTACHMENTS.point.parsePercent('0%', true)).toEqual([0, false]);
+
+      pageDone();
+      done();
+    });
   });
 
   describe('life cycle', function() {
@@ -1031,6 +1061,22 @@ describe('attachment', function() {
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
       rect = getRectByXYRB(elmX + 0, elmY + 10, elmX + 80, elmY + 80);
       padding = 0;
+      expect(props.curStats.position_socketXYSE[0].x).toBe(rect.left + rect.width / 2); // bottom
+      expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding);
+
+      // size: 4
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'polygon',
+        points: [[0, 60], [80, 10], [80, 80]], size: 4, fillColor: 'rgba(0, 0, 255, 0.5)'});
+      ll.start = atc;
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [elmX + 0, elmY + 60]},
+        {type: 'L', values: [elmX + 80, elmY + 10]},
+        {type: 'L', values: [elmX + 80, elmY + 80]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(4);
+      rect = getRectByXYRB(elmX + 0, elmY + 10, elmX + 80, elmY + 80);
+      padding = 2;
       expect(props.curStats.position_socketXYSE[0].x).toBe(rect.left + rect.width / 2); // bottom
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding);
 

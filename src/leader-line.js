@@ -89,7 +89,7 @@
     MIN_ADJUST_LEN = 10, MIN_GRID_LEN = 30,
 
     CIRCLE_CP = 0.5522847, CIRCLE_8_RAD = 1 / 4 * Math.PI,
-    RE_PERCENT = /^\s*([\d\.]+)\s*(\%)?\s*$/,
+    RE_PERCENT = /^\s*(\-?[\d\.]+)\s*(\%)?\s*$/,
     SVG_NS = 'http://www.w3.org/2000/svg',
 
     IS_TRIDENT = !!document.uniqueID,
@@ -3308,12 +3308,12 @@
       },
 
       parsePercent: function(value, allowNegative) {
-        var type = typeof value, matches, num, ratio;
+        var type = typeof value, matches, num, ratio = false;
         if (type === 'number') {
           num = value;
         } else if (type === 'string' && (matches = RE_PERCENT.exec(value)) && matches[2]) {
           num = parseFloat(matches[1]) / 100;
-          ratio = true;
+          ratio = num !== 0;
         }
         return num != null && (allowNegative || num >= 0) ? [num, ratio] : null; // eslint-disable-line eqeqeq
       },
