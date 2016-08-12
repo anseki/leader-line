@@ -3282,6 +3282,7 @@
           var element, another, newOptions;
           if (props.optionIsAttach.anchorSE[i] !== false &&
               insAttachProps[options.anchorSE[i]._id] === attachProps) {
+            traceLog.add('anchorSE[' + i + ']'); // [DEBUG/]
             element = attachProps.element;
             if (element === (another = options.anchorSE[i ? 0 : 1])) { // must be not another
               element = document.body;
@@ -3573,11 +3574,6 @@
                     width: points[1].x - points[0].x, height: points[1].y - points[0].y
                   };
                 }
-
-                curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
-                  point.x += elementBBox.left;
-                  point.y += elementBBox.top;
-                });
               })();
               break;
 
@@ -3637,11 +3633,6 @@
                   left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
                   width: points[1].x - points[0].x, height: points[1].y - points[0].y
                 };
-
-                curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
-                  point.x += elementBBox.left;
-                  point.y += elementBBox.top;
-                });
               })();
               break;
 
@@ -3676,16 +3667,15 @@
                   left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
                   width: points[1].x - points[0].x, height: points[1].y - points[0].y
                 };
-
-                curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
-                  point.x += elementBBox.left;
-                  point.y += elementBBox.top;
-                });
               })();
               break;
 
             // no default
           }
+          curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
+            point.x += elementBBox.left;
+            point.y += elementBBox.top;
+          });
         }
 
         if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth)

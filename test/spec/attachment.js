@@ -43,9 +43,62 @@ describe('attachment', function() {
       });
   }
 
-  function getRect(x, y, width, height) {
+  function getRectByXYWH(x, y, width, height) {
     return {left: x, top: y, width: width, height: height, right: x + width, bottom: y + height};
   }
+
+  function getRectByXYRB(x, y, right, bottom) {
+    return {left: x, top: y, right: right, bottom: bottom, width: right - x, height: bottom - y};
+  }
+
+  describe('functions', function() {
+
+    beforeEach(loadBefore);
+
+    it(registerTitle('point.removeOption'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps;
+
+      // replace to attachProps.element
+      atc = window.LeaderLine.point({element: document.getElementById('elm1')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(props.attachments.length).toBe(1);
+      expect(attachProps.lls.length).toBe(1);
+      atc.remove();
+      expect(ll.start).toBe(document.getElementById('elm1'));
+      expect(ll.end).toBe(document.getElementById('elm3'));
+      expect(props.attachments.length).toBe(0);
+
+      // replace to document.body
+      atc = window.LeaderLine.point({element: document.getElementById('elm3')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(props.attachments.length).toBe(1);
+      expect(attachProps.lls.length).toBe(1);
+      atc.remove();
+      expect(ll.start).toBe(document.body);
+      expect(ll.end).toBe(document.getElementById('elm3'));
+      expect(props.attachments.length).toBe(0);
+
+      // replace to LeaderLineAttachment
+      atc = window.LeaderLine.point({element: document.body});
+      attachProps = window.insAttachProps[atc._id];
+      ll.setOptions({start: atc, end: document.body});
+      expect(props.attachments.length).toBe(1);
+      expect(attachProps.lls.length).toBe(1);
+      atc.remove();
+      expect(ll.start).not.toBe(document.body);
+      expect(ll.start instanceof window.LeaderLineAttachment).toBe(true);
+      expect(ll.start.isRemoved).toBe(false);
+      expect(window.insAttachProps[ll.start._id].element).toBe(document.body);
+      expect(ll.end).toBe(document.body);
+      expect(props.attachments.length).toBe(1);
+
+      pageDone();
+      done();
+    });
+  });
 
   describe('life cycle', function() {
 
@@ -129,6 +182,7 @@ describe('attachment', function() {
       log = traceLog.getTaggedLog('LeaderLineAttachment.remove');
       expect(log != null).toBe(true); // eslint-disable-line eqeqeq
       expect(log.length).toBe(0);
+      expect(traceLog.getTaggedLog('ATTACHMENTS.point.removeOption')).toEqual(['anchorSE[0]', 'anchorSE[0]']);
       log = traceLog.getTaggedLog('removeAttachment');
       expect(log != null).toBe(true); // eslint-disable-line eqeqeq
       expect(log.length).toBe(0);
@@ -137,6 +191,8 @@ describe('attachment', function() {
       expect(atc1.isRemoved).toBe(true);
       expect(ll.start).toBe(document.getElementById('elm1'));
       expect(ll2.start).toBe(document.getElementById('elm1'));
+      expect(ll.end).toBe(document.getElementById('elm3')); // not changed
+      expect(ll2.end).toBe(document.getElementById('elm4')); // not changed
 
       // remove ll -> unbind -> remove atc
       atc1 = window.LeaderLine.point({element: document.getElementById('elm1')});
@@ -295,7 +351,7 @@ describe('attachment', function() {
       atc1.remove();
       expect(traceLog.log).toEqual([
         '<LeaderLineAttachment.remove>',
-        '<ATTACHMENTS.point.removeOption>',
+        '<ATTACHMENTS.point.removeOption>', 'anchorSE[0]',
         '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
         '<setOptions>', 'needs.position', '</setOptions>',
         '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
@@ -306,7 +362,7 @@ describe('attachment', function() {
         '</updateMask>',
         '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
         '</ATTACHMENTS.point.removeOption>',
-        '<ATTACHMENTS.point.removeOption>',
+        '<ATTACHMENTS.point.removeOption>', 'anchorSE[0]',
         '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
         '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
         '<setOptions>', 'needs.position', '</setOptions>',
@@ -660,7 +716,7 @@ describe('attachment', function() {
       atc = window.LeaderLine.area({element: document.getElementById('elm1'),
         x: 5, y: 6, width: 7, height: 8, size: 0});
       ll.start = atc;
-      rect = getRect(elmX + 5, elmY + 6, 7, 8);
+      rect = getRectByXYWH(elmX + 5, elmY + 6, 7, 8);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
         {type: 'M', values: [rect.left, rect.top]},
         {type: 'L', values: [rect.right, rect.top]},
@@ -676,7 +732,7 @@ describe('attachment', function() {
       atc = window.LeaderLine.area({element: document.getElementById('elm1'),
         x: 5, y: 6, width: 7, height: 8, size: 2});
       ll.start = atc;
-      rect = getRect(elmX + 5, elmY + 6, 7, 8);
+      rect = getRectByXYWH(elmX + 5, elmY + 6, 7, 8);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
         {type: 'M', values: [rect.left - 1, rect.top - 1]},
         {type: 'L', values: [rect.right + 1, rect.top - 1]},
@@ -692,7 +748,7 @@ describe('attachment', function() {
       atc = window.LeaderLine.area({element: document.getElementById('elm1'),
         x: '10%', y: '80%', width: '20%', height: '50%', size: 5});
       ll.start = atc;
-      rect = getRect(elmX + elmWidth * 0.1, elmY + elmHeight * 0.8, elmWidth * 0.2, elmHeight * 0.5);
+      rect = getRectByXYWH(elmX + elmWidth * 0.1, elmY + elmHeight * 0.8, elmWidth * 0.2, elmHeight * 0.5);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
         {type: 'M', values: [rect.left - 2.5, rect.top - 2.5]},
         {type: 'L', values: [rect.right + 2.5, rect.top - 2.5]},
@@ -711,7 +767,7 @@ describe('attachment', function() {
       ll.start = atc;
       offset = r / Math.SQRT2;
       padding = r - offset;
-      rect = getRect(elmX, elmY, elmWidth, elmHeight);
+      rect = getRectByXYWH(elmX, elmY, elmWidth, elmHeight);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
         {type: 'M', values: [rect.left - padding, rect.top + offset]},
         {type: 'C', values: [
@@ -747,7 +803,7 @@ describe('attachment', function() {
       ll.start = atc;
       offset = (r - 2) / Math.SQRT2;
       padding = r - offset;
-      rect = getRect(elmX, elmY, elmWidth, elmHeight);
+      rect = getRectByXYWH(elmX, elmY, elmWidth, elmHeight);
       expect(matchPathData(props.curStats.capsMaskAnchor_pathDataSE[0], [
         {type: 'M', values: [rect.left - padding, rect.top + offset]},
         {type: 'C', values: [
@@ -794,7 +850,7 @@ describe('attachment', function() {
       r = 5 * Math.SQRT2;
       offset = 5;
       padding = r - offset;
-      rect = getRect(elmX + 5, elmY + 6, 10, 10);
+      rect = getRectByXYWH(elmX + 5, elmY + 6, 10, 10);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
         {type: 'M', values: [rect.left - padding, rect.top + offset]},
         {type: 'C', values: [
@@ -829,7 +885,7 @@ describe('attachment', function() {
       offsetY = 5;
       paddingX = rx - offsetX;
       paddingY = ry - offsetY;
-      rect = getRect(elmX + 5, elmY + 6, 20, 10);
+      rect = getRectByXYWH(elmX + 5, elmY + 6, 20, 10);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
         {type: 'M', values: [rect.left - paddingX, rect.top + offsetY]},
         {type: 'C', values: [
@@ -861,7 +917,7 @@ describe('attachment', function() {
       r = 5 * Math.SQRT2;
       offset = 5;
       padding = r - offset;
-      rect = getRect(elmX + 5, elmY + 6, 10, 10);
+      rect = getRectByXYWH(elmX + 5, elmY + 6, 10, 10);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
         {type: 'M', values: [rect.left - padding, rect.top + offset]},
         {type: 'C', values: [
@@ -893,7 +949,7 @@ describe('attachment', function() {
       r = 5 * Math.SQRT2 + 2;
       offset = 5;
       padding = r - offset;
-      rect = getRect(elmX + 5, elmY + 6, 10, 10);
+      rect = getRectByXYWH(elmX + 5, elmY + 6, 10, 10);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
         {type: 'M', values: [rect.left - padding, rect.top + offset]},
         {type: 'C', values: [
@@ -917,6 +973,66 @@ describe('attachment', function() {
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(4);
       expect(props.curStats.position_socketXYSE[0].x).toBe(rect.left + rect.width / 2); // bottom
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding + 2);
+
+      // size: 4, width: 20, height: 10
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+        x: 5, y: 6, width: 20, height: 10, size: 4});
+      ll.start = atc;
+      rx = 10 * Math.SQRT2 + 2;
+      ry = 5 * Math.SQRT2 + 2;
+      offsetX = 10;
+      offsetY = 5;
+      paddingX = rx - offsetX;
+      paddingY = ry - offsetY;
+      rect = getRectByXYWH(elmX + 5, elmY + 6, 20, 10);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [rect.left - paddingX, rect.top + offsetY]},
+        {type: 'C', values: [
+          rect.left - paddingX, (rect.top + offsetY) - ry * CIRCLE_CP,
+          (rect.left + offsetX) - rx * CIRCLE_CP, rect.top - paddingY,
+          rect.left + offsetX, rect.top - paddingY]},
+        {type: 'C', values: [
+          rect.right - offsetX + rx * CIRCLE_CP, rect.top - paddingY,
+          rect.right + paddingX, (rect.top + offsetY) - ry * CIRCLE_CP,
+          rect.right + paddingX, rect.top + offsetY]},
+        {type: 'C', values: [
+          rect.right + paddingX, (rect.bottom - offsetY) + ry * CIRCLE_CP,
+          (rect.right - offsetX) + rx * CIRCLE_CP, rect.bottom + paddingY,
+          rect.right - offsetX, rect.bottom + paddingY]},
+        {type: 'C', values: [
+          (rect.left + offsetX) - rx * CIRCLE_CP, rect.bottom + paddingY,
+          rect.left - paddingX, (rect.bottom - offsetY) + ry * CIRCLE_CP,
+          rect.left - paddingX, rect.bottom - offsetY]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(4);
+      expect(props.curStats.position_socketXYSE[0].x).toBe(rect.right + paddingX + 2); // right
+      expect(props.curStats.position_socketXYSE[0].y).toBe(rect.top + rect.height / 2);
+
+      pageDone();
+      done();
+    });
+
+    it(registerTitle('area-polygon'), function(done) {
+      var props = window.insProps[ll._id], atc,
+        elmX = 1, elmY = 2, // elm1
+        rect, padding;
+
+      // size: 0
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'polygon',
+        points: [[0, 60], [80, 10], [80, 80]], size: 0, fillColor: 'rgba(0, 0, 255, 0.5)'});
+      ll.start = atc;
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [elmX + 0, elmY + 60]},
+        {type: 'L', values: [elmX + 80, elmY + 10]},
+        {type: 'L', values: [elmX + 80, elmY + 80]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+      rect = getRectByXYRB(elmX + 0, elmY + 10, elmX + 80, elmY + 80);
+      padding = 0;
+      expect(props.curStats.position_socketXYSE[0].x).toBe(rect.left + rect.width / 2); // bottom
+      expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding);
 
       pageDone();
       done();
