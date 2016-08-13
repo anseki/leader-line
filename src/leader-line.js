@@ -3198,7 +3198,7 @@
   /**
    * @param {any} obj - An object to be checked.
    * @param {string} [type] - A required type of LeaderLineAttachment.
-   * @returns {(boolean|null)} - true: Enabled LeaderLineAttachment, false: Not it, null: Disabled it
+   * @returns {(boolean|null)} - true: Enabled LeaderLineAttachment, false: Not instance, null: Disabled it
    */
   isAttachment = function(obj, type) {
     return !(obj instanceof LeaderLineAttachment) ? false :
@@ -3710,6 +3710,73 @@
 
         traceLog.add('</ATTACHMENTS.area.update>'); // [DEBUG/]
       }
+    },
+
+    caption: {
+      type: 'label',
+      stats: {x: {}, y: {}, color: {}, anchorX: {}, anchorY: {}},
+
+      // attachOptions: text, color(A), bgColor, offset
+      init: function(attachProps, attachOptions) {
+        traceLog.add('<ATTACHMENTS.caption.init>'); // [DEBUG/]
+        if (typeof attachOptions.text === 'string') {
+          attachProps.text = attachOptions.text.trim();
+        }
+        if (!attachProps.text) { return false; }
+        if (typeof attachOptions.color === 'string') {
+          attachProps.color = attachOptions.color.trim();
+        }
+        if (typeof attachOptions.bgColor === 'string') {
+          attachProps.bgColor = attachOptions.bgColor.trim();
+        }
+
+        // event handler for each instance
+        attachProps.updateColor = function() {
+          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+            llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
+            value;
+
+          checkCurStats(attachProps, 'color', null, attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor)); // [DEBUG/]
+          curStats.color = attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor);
+
+          if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
+              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.color=%s'/* [/DEBUG] */)) {
+            attachProps.elmText.style.fill = value;
+          }
+        };
+        attachProps.updateShow = function() {
+          svgShow(attachProps, attachProps.lls.some(function(props) { return props.isShown === true; }));
+        };
+
+        traceLog.add('</ATTACHMENTS.caption.init>'); // [DEBUG/]
+        return true;
+      },
+
+      bind: function(props, attachProps) {
+        traceLog.add('<ATTACHMENTS.caption.bind>'); // [DEBUG/]
+        addEventHandler(props, 'cur_line_color', attachProps.updateColor);
+        addEventHandler(props, 'svgShow', attachProps.updateShow);
+        setTimeout(function() { // after updating `attachProps.lls`
+          attachProps.updateColor();
+          attachProps.updateShow();
+        }, 0);
+        traceLog.add('</ATTACHMENTS.caption.bind>'); // [DEBUG/]
+        return true;
+      },
+      unbind: function(props, attachProps) {
+        traceLog.add('<ATTACHMENTS.caption.unbind>'); // [DEBUG/]
+        removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
+        removeEventHandler(props, 'svgShow', attachProps.updateShow);
+        setTimeout(function() { // after updating `attachProps.lls`
+          attachProps.updateColor();
+          attachProps.updateShow();
+          ATTACHMENTS.caption.update(attachProps); // it's not called by unbinded ll
+        }, 0);
+        traceLog.add('</ATTACHMENTS.caption.unbind>'); // [DEBUG/]
+      },
+
+      // removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },
+
     }
   };
   window.ATTACHMENTS = ATTACHMENTS; // [DEBUG/]
