@@ -179,7 +179,7 @@
     insProps = {},
     /** @type {Object.<_id: number, props>} */
     insAttachProps = {},
-    insId = 0, insAttachId = 0, svg2Supported;
+    insId = 0, insAttachId = 0, svg2SupportedReverse, svg2SupportedPaintOrder;
 
   // [DEBUG]
   window.insProps = insProps;
@@ -587,11 +587,11 @@
     // `setOrientToAuto()`, `setOrientToAngle()`, `orientType` and `orientAngle` of
     // `SVGMarkerElement` don't work in browsers other than Chrome.
     if (orient === 'auto-start-reverse') {
-      if (typeof svg2Supported !== 'boolean') {
+      if (typeof svg2SupportedReverse !== 'boolean') {
         marker.setAttribute('orient', 'auto-start-reverse');
-        svg2Supported = marker.orientType.baseVal === SVGMarkerElement.SVG_MARKER_ORIENT_UNKNOWN;
+        svg2SupportedReverse = marker.orientType.baseVal === SVGMarkerElement.SVG_MARKER_ORIENT_UNKNOWN;
       }
-      if (svg2Supported) {
+      if (svg2SupportedReverse) {
         marker.setAttribute('orient', orient);
       } else {
         transform = svg.createSVGTransform();
@@ -602,7 +602,7 @@
       }
     } else {
       marker.setAttribute('orient', orient);
-      if (svg2Supported === false) { shape.transform.baseVal.clear(); }
+      if (svg2SupportedReverse === false) { shape.transform.baseVal.clear(); }
     }
 
     viewBox = marker.viewBox.baseVal;
@@ -626,6 +626,72 @@
       orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
     };
   }
+
+  /**
+   * @param {string} text - Content of `<text>` element.
+   * @param {Document} baseDocument - Document that contains `<svg>`.
+   * @param {string} id - ID of `<text>` element.
+   * @param {string} fill - Color as `style.fill`.
+   * @param {(string|null)} stroke - Color as `style.stroke`.
+   * @param {(number|null)} strokeWidth - Pixels as `style.strokeWidth`.
+   * @param {(Object|null)} styles - Style properties other than `fill`, `stroke` and `strokeWidth`.
+   * @returns {SVGElement[]} - `[<text>]` or `[<text>, <defs>, <g>]`.
+   */
+  function setText(text, baseDocument, id, fill, stroke, strokeWidth, styles) {
+    var elmText, elmG, elmDefs, elmUse;
+
+    function setStyles(element, styles) {
+      var style = element.style;
+      Object.keys(styles).forEach(function(key) { style[key] = styles[key]; });
+      return element;
+    }
+
+    function setOutlineStyles(element) {
+      return setStyles(element, {
+        stroke: stroke,
+        strokeWidth: strokeWidth + 'px',
+        strokeLinejoin: 'round'
+      });
+    }
+
+    elmText = baseDocument.createElementNS(SVG_NS, 'text');
+    elmText.textContent = text;
+    if (styles) { setStyles(elmText, styles); }
+    if (typeof svg2SupportedPaintOrder !== 'boolean') {
+      svg2SupportedPaintOrder = 'paintOrder' in elmText.style;
+    }
+
+    if (stroke) {
+      if (svg2SupportedPaintOrder) {
+        return [setOutlineStyles(setStyles(elmText, {
+          paintOrder: 'stroke',
+          fill: fill
+        }))];
+
+      } else {
+        elmDefs = baseDocument.createElementNS(SVG_NS, 'defs');
+        elmText.id = id;
+        elmDefs.appendChild(elmText);
+        elmG = baseDocument.createElementNS(SVG_NS, 'g');
+        elmUse = setOutlineStyles(elmG.appendChild(baseDocument.createElementNS(SVG_NS, 'use')));
+        elmUse.href.baseVal = '#' + id;
+        elmUse = setStyles(elmG.appendChild(baseDocument.createElementNS(SVG_NS, 'use')), {fill: fill});
+        elmUse.href.baseVal = '#' + id;
+        return [elmText, elmDefs, elmG];
+      }
+
+    } else {
+      return [setStyles(elmText, {fill: fill})];
+    }
+  }
+  window.setText = setText; // [DEBUG/]
+
+  function newSVGLength(svg, type, value) {
+    var len = svg.createSVGLength();
+    len.newValueSpecifiedUnits(type, value);
+    return len;
+  }
+  window.newSVGLength = newSVGLength; // [DEBUG/]
 
   function initStats(container, statsConf) {
     Object.keys(statsConf).forEach(function(statName) {
@@ -1096,7 +1162,7 @@
 
     if (setStat(props, aplStats, 'line_strokeWidth', (value = curStats.line_strokeWidth),
         events.apl_line_strokeWidth)) {
-      props.lineShape.style.strokeWidth = value;
+      props.lineShape.style.strokeWidth = value + 'px';
       updated = true;
       if (IS_GECKO || IS_TRIDENT) {
         // [TRIDENT] plugsFace is not updated when lineSize is changed
@@ -1127,7 +1193,7 @@
 
       if (setStat(props, aplStats, 'lineOutline_strokeWidth', (value = curStats.lineOutline_strokeWidth),
           events.apl_lineOutline_strokeWidth/* [DEBUG] */, 'lineOutline_strokeWidth%_'/* [/DEBUG] */)) {
-        props.lineOutlineMaskShape.style.strokeWidth = value;
+        props.lineOutlineMaskShape.style.strokeWidth = value + 'px';
         updated = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
@@ -1139,7 +1205,7 @@
 
       if (setStat(props, aplStats, 'lineOutline_inStrokeWidth', (value = curStats.lineOutline_inStrokeWidth),
           events.apl_lineOutline_inStrokeWidth/* [DEBUG] */, 'lineOutline_inStrokeWidth%_'/* [/DEBUG] */)) {
-        props.lineMaskShape.style.strokeWidth = value;
+        props.lineMaskShape.style.strokeWidth = value + 'px';
         updated = true;
         if (IS_TRIDENT) {
           // [TRIDENT] lineOutlineMaskCaps is ignored when lineSize is changed
@@ -1249,7 +1315,7 @@
                 (value = curStats.plugOutline_strokeWidthSE[i]),
                 events.apl_plugOutline_strokeWidthSE
                 /* [DEBUG] */, 'plugOutline_strokeWidthSE[' + i + ']%_'/* [/DEBUG] */)) {
-              props.plugOutlineMaskShapeSE[i].style.strokeWidth = value;
+              props.plugOutlineMaskShapeSE[i].style.strokeWidth = value + 'px';
               updated = true;
             }
 
@@ -1257,7 +1323,7 @@
                 (value = curStats.plugOutline_inStrokeWidthSE[i]),
                 events.apl_plugOutline_inStrokeWidthSE
                 /* [DEBUG] */, 'plugOutline_inStrokeWidthSE[' + i + ']%_'/* [/DEBUG] */)) {
-              props.plugMaskShapeSE[i].style.strokeWidth = value;
+              props.plugMaskShapeSE[i].style.strokeWidth = value + 'px';
               updated = true;
             }
           }
@@ -1989,7 +2055,7 @@
             if (setStat(props, aplStats.capsMaskAnchor_strokeWidthSE, i,
                 (value = curStats.capsMaskAnchor_strokeWidthSE[i])
                 /* [DEBUG] */, null, 'capsMaskAnchor_strokeWidthSE[' + i + ']=%s'/* [/DEBUG] */)) {
-              props.capsMaskAnchorSE[i].style.strokeWidth = value;
+              props.capsMaskAnchorSE[i].style.strokeWidth = value + 'px';
               updated = true;
             }
           }
@@ -3680,7 +3746,7 @@
 
         if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth)
             /* [DEBUG] */, null, 'aplStats.strokeWidth=%s'/* [/DEBUG] */)) {
-          attachProps.path.style.strokeWidth = value;
+          attachProps.path.style.strokeWidth = value + 'px';
         }
 
         // Apply `pathData`
