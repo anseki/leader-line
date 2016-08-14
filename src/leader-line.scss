@@ -4,6 +4,7 @@ $app_id: leader-line;
 .#{$app_id} {
   position: absolute;
   overflow: visible;
+  font-size: 16px; // for label
 }
 
 ##{$app_id}-defs {
