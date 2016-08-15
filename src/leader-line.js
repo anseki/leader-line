@@ -630,6 +630,7 @@
   /**
    * @param {string} text - Content of `<text>` element.
    * @param {Document} baseDocument - Document that contains `<svg>`.
+   * @param {SVGSVGElement} svg - Parent `<svg>` element.
    * @param {string} id - ID of `<text>` element.
    * @param {string} fill - Color as `style.fill`.
    * @param {(string|null)} stroke - Color as `style.stroke`.
@@ -637,7 +638,7 @@
    * @param {(Object|null)} styles - Style properties other than `fill`, `stroke` and `strokeWidth`.
    * @returns {SVGElement[]} - `[<text>]` or `[<text>, <defs>, <g>]`.
    */
-  function setText(text, baseDocument, id, fill, stroke, strokeWidth, styles) {
+  function setText(text, baseDocument, svg, id, fill, stroke, strokeWidth, styles) {
     var elmText, elmG, elmDefs, elmUse;
 
     function setStyles(element, styles) {
@@ -656,6 +657,11 @@
 
     elmText = baseDocument.createElementNS(SVG_NS, 'text');
     elmText.textContent = text;
+    [elmText.x, elmText.y].forEach(function(list) {
+      var len = svg.createSVGLength();
+      len.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+      list.baseVal.initialize(len);
+    });
     if (styles) { setStyles(elmText, styles); }
     if (typeof svg2SupportedPaintOrder !== 'boolean') {
       svg2SupportedPaintOrder = 'paintOrder' in elmText.style;
@@ -685,13 +691,6 @@
     }
   }
   window.setText = setText; // [DEBUG/]
-
-  function newSVGLength(svg, type, value) {
-    var len = svg.createSVGLength();
-    len.newValueSpecifiedUnits(type, value);
-    return len;
-  }
-  window.newSVGLength = newSVGLength; // [DEBUG/]
 
   function initStats(container, statsConf) {
     Object.keys(statsConf).forEach(function(statName) {
@@ -783,8 +782,8 @@
       var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'mask'));
       element.id = id;
       element.maskUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
-      ['x', 'y', 'width', 'height'].forEach(function(prop) {
-        element[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+      [element.x, element.y, element.width, element.height].forEach(function(len) {
+        len.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
       });
       return element;
     }
@@ -800,8 +799,8 @@
     }
 
     function setWH100(element) {
-      ['width', 'height'].forEach(function(prop) {
-        element[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
+      [element.width, element.height].forEach(function(len) {
+        len.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
       });
       return element;
     }
@@ -892,8 +891,8 @@
     props.lineGradient = element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
     element.id = props.lineGradientId;
     element.gradientUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
-    ['x1', 'y1', 'x2', 'y2'].forEach(function(prop) {
-      element[prop].baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+    [element.x1, element.y1, element.x2, element.y2].forEach(function(len) {
+      len.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
     });
     props.lineGradientStopSE = [0, 1].map(function(i) {
       var element = props.lineGradient.appendChild(baseDocument.createElementNS(SVG_NS, 'stop'));
@@ -3780,9 +3779,9 @@
 
     caption: {
       type: 'label',
-      stats: {x: {}, y: {}, color: {}, anchorX: {}, anchorY: {}},
+      stats: {color: {}, x: {}, y: {}, anchorX: {}, anchorY: {}},
 
-      // attachOptions: text, color(A), bgColor, offset
+      // attachOptions: text, color(A), outlineColor, offset(A)
       init: function(attachProps, attachOptions) {
         traceLog.add('<ATTACHMENTS.caption.init>'); // [DEBUG/]
         if (typeof attachOptions.text === 'string') {
@@ -3792,8 +3791,8 @@
         if (typeof attachOptions.color === 'string') {
           attachProps.color = attachOptions.color.trim();
         }
-        if (typeof attachOptions.bgColor === 'string') {
-          attachProps.bgColor = attachOptions.bgColor.trim();
+        if (typeof attachOptions.outlineColor === 'string') {
+          attachProps.outlineColor = attachOptions.outlineColor.trim();
         }
 
         // event handler for each instance
@@ -3820,6 +3819,7 @@
 
       bind: function(props, attachProps) {
         traceLog.add('<ATTACHMENTS.caption.bind>'); // [DEBUG/]
+
         addEventHandler(props, 'cur_line_color', attachProps.updateColor);
         addEventHandler(props, 'svgShow', attachProps.updateShow);
         setTimeout(function() { // after updating `attachProps.lls`
