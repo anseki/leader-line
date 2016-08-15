@@ -627,70 +627,11 @@
     };
   }
 
-  /**
-   * @param {string} text - Content of `<text>` element.
-   * @param {Document} baseDocument - Document that contains `<svg>`.
-   * @param {SVGSVGElement} svg - Parent `<svg>` element.
-   * @param {string} id - ID of `<text>` element.
-   * @param {string} fill - Color as `style.fill`.
-   * @param {(string|null)} stroke - Color as `style.stroke`.
-   * @param {(number|null)} strokeWidth - Pixels as `style.strokeWidth`.
-   * @param {(Object|null)} styles - Style properties other than `fill`, `stroke` and `strokeWidth`.
-   * @returns {SVGElement[]} - `[<text>]` or `[<text>, <defs>, <g>]`.
-   */
-  function setText(text, baseDocument, svg, id, fill, stroke, strokeWidth, styles) {
-    var elmText, elmG, elmDefs, elmUse;
-
-    function setStyles(element, styles) {
-      var style = element.style;
-      Object.keys(styles).forEach(function(key) { style[key] = styles[key]; });
-      return element;
-    }
-
-    function setOutlineStyles(element) {
-      return setStyles(element, {
-        stroke: stroke,
-        strokeWidth: strokeWidth + 'px',
-        strokeLinejoin: 'round'
-      });
-    }
-
-    elmText = baseDocument.createElementNS(SVG_NS, 'text');
-    elmText.textContent = text;
-    [elmText.x, elmText.y].forEach(function(list) {
-      var len = svg.createSVGLength();
-      len.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
-      list.baseVal.initialize(len);
-    });
-    if (styles) { setStyles(elmText, styles); }
-    if (typeof svg2SupportedPaintOrder !== 'boolean') {
-      svg2SupportedPaintOrder = 'paintOrder' in elmText.style;
-    }
-
-    if (stroke) {
-      if (svg2SupportedPaintOrder) {
-        return [setOutlineStyles(setStyles(elmText, {
-          paintOrder: 'stroke',
-          fill: fill
-        }))];
-
-      } else {
-        elmDefs = baseDocument.createElementNS(SVG_NS, 'defs');
-        elmText.id = id;
-        elmDefs.appendChild(elmText);
-        elmG = baseDocument.createElementNS(SVG_NS, 'g');
-        elmUse = setOutlineStyles(elmG.appendChild(baseDocument.createElementNS(SVG_NS, 'use')));
-        elmUse.href.baseVal = '#' + id;
-        elmUse = setStyles(elmG.appendChild(baseDocument.createElementNS(SVG_NS, 'use')), {fill: fill});
-        elmUse.href.baseVal = '#' + id;
-        return [elmText, elmDefs, elmG];
-      }
-
-    } else {
-      return [setStyles(elmText, {fill: fill})];
-    }
+  function setStyles(element, styles) {
+    var style = element.style;
+    Object.keys(styles).forEach(function(key) { style[key] = styles[key]; });
+    return element;
   }
-  window.setText = setText; // [DEBUG/]
 
   function initStats(container, statsConf) {
     Object.keys(statsConf).forEach(function(statName) {
@@ -3254,7 +3195,7 @@
     });
 
     // isRemoved has to be set before this because init() might throw.
-    if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {})) {
+    if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {}, this._id)) {
       insAttachProps[this._id] = attachProps;
     }
   }
@@ -3315,7 +3256,7 @@
    * @typedef {Object} AttachConf
    * @property {string} type
    * @property {{statName: string, StatConf}} stats - Additional stats.
-   * @property {Function} init - function(attachProps, attachOptions) returns `true` when succeeded.
+   * @property {Function} init - function(attachProps, attachOptions, id) returns `true` when succeeded.
    * @property {Function} bind - function(props, attachProps) returns `true` when succeeded.
    * @property {Function} unbind - function(props, attachProps)
    * @property {Function} removeOption - function(props, attachProps)
@@ -3780,9 +3721,10 @@
     caption: {
       type: 'label',
       stats: {color: {}, x: {}, y: {}, anchorX: {}, anchorY: {}},
+      styleProps: ['fontSize'],
 
       // attachOptions: text, color(A), outlineColor, offset(A)
-      init: function(attachProps, attachOptions) {
+      init: function(attachProps, attachOptions, id) {
         traceLog.add('<ATTACHMENTS.caption.init>'); // [DEBUG/]
         if (typeof attachOptions.text === 'string') {
           attachProps.text = attachOptions.text.trim();
@@ -3791,9 +3733,11 @@
         if (typeof attachOptions.color === 'string') {
           attachProps.color = attachOptions.color.trim();
         }
+        attachProps.outlineColor = '#fff'; // default
         if (typeof attachOptions.outlineColor === 'string') {
           attachProps.outlineColor = attachOptions.outlineColor.trim();
         }
+        attachProps.id = id;
 
         // event handler for each instance
         attachProps.updateColor = function() {
@@ -3817,8 +3761,81 @@
         return true;
       },
 
+      /**
+       * @param {string} text - Content of `<text>` element.
+       * @param {Document} document - Document that contains `<svg>`.
+       * @param {SVGSVGElement} svg - Parent `<svg>` element.
+       * @param {string} id - ID of `<text>` element.
+       * @param {boolean} [stroke] - Setup for `stroke`.
+       * @returns {Object} - {elmPosition, styleText, styleFill, styleStroke, elmsAppend}
+       */
+      newText: function(text, document, svg, id, stroke) {
+        var elmText, elmG, elmDefs, elmUseFill, elmUseStroke, style;
+
+        elmText = document.createElementNS(SVG_NS, 'text');
+        elmText.textContent = text;
+        [elmText.x, elmText.y].forEach(function(list) {
+          var len = svg.createSVGLength();
+          len.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+          list.baseVal.initialize(len);
+        });
+        if (typeof svg2SupportedPaintOrder !== 'boolean') {
+          svg2SupportedPaintOrder = 'paintOrder' in elmText.style;
+        }
+
+        if (stroke && !svg2SupportedPaintOrder) {
+          elmDefs = document.createElementNS(SVG_NS, 'defs');
+          elmText.id = id;
+          elmDefs.appendChild(elmText);
+          elmG = document.createElementNS(SVG_NS, 'g');
+          elmUseStroke = elmG.appendChild(document.createElementNS(SVG_NS, 'use'));
+          elmUseStroke.href.baseVal = '#' + id;
+          elmUseFill = elmG.appendChild(document.createElementNS(SVG_NS, 'use'));
+          elmUseFill.href.baseVal = '#' + id;
+          style = elmUseStroke.style;
+          style.strokeLinejoin = 'round';
+          return {
+            elmPosition: elmText,
+            styleText: elmText.style,
+            styleFill: elmUseFill.style,
+            styleStroke: style,
+            elmsAppend: [elmDefs, elmG]
+          };
+
+        } else {
+          style = elmText.style;
+          if (stroke) {
+            style.strokeLinejoin = 'round';
+            style.paintOrder = 'stroke';
+          }
+          return {
+            elmPosition: elmText,
+            styleText: style,
+            styleFill: style,
+            styleStroke: stroke ? style : null,
+            elmsAppend: [elmText]
+          };
+        }
+      },
+
       bind: function(props, attachProps) {
         traceLog.add('<ATTACHMENTS.caption.bind>'); // [DEBUG/]
+        var text = ATTACHMENTS.caption.newText(attachProps.text, props.baseWindow.document,
+          props.svg, APP_ID + '-attach-caption-' + attachProps.id, attachProps.outlineColor),
+          strokeWidth;
+
+        // text.elmPosition.x.baseVal.getItem(0).value = 10;
+        // text.elmPosition.y.baseVal.getItem(0).value = 140;
+        // text.styleText.fontSize = '180px';
+        // text.styleFill.fill = 'blue';
+        if (attachProps.outlineColor) {
+          strokeWidth = text.elmPosition.getBBox().height / 9;
+          strokeWidth = strokeWidth > 10 ? 10 : strokeWidth < 2 ? 2 : strokeWidth;
+          text.styleStroke.strokeWidth = strokeWidth + 'px';
+          text.styleStroke.stroke = attachProps.outlineColor;
+        }
+        text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
+        attachProps.elmsAppend = text.elmsAppend;
 
         addEventHandler(props, 'cur_line_color', attachProps.updateColor);
         addEventHandler(props, 'svgShow', attachProps.updateShow);
@@ -3833,6 +3850,11 @@
         traceLog.add('<ATTACHMENTS.caption.unbind>'); // [DEBUG/]
         removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
+
+        if (attachProps.elmsAppend) {
+          attachProps.elmsAppend.forEach(function(elm) { props.svg.removeChild(elm); });
+        }
+
         setTimeout(function() { // after updating `attachProps.lls`
           attachProps.updateColor();
           attachProps.updateShow();
