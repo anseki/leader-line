@@ -2471,6 +2471,10 @@
         function(value) { return value >= 1; }) || needs.plugOutline;
     });
 
+    ///
+    var xxxLabel = LeaderLine.caption({text: 'LABL YY'});
+    bindAttachment(props, insAttachProps[xxxLabel._id], 'endLabel');
+
     // effect
     Object.keys(EFFECTS).forEach(function(effectName) {
       var effectConf = EFFECTS[effectName],
@@ -3402,6 +3406,7 @@
 
         // event handler for each instance
         attachProps.updateColor = function() {
+          traceLog.add('<ATTACHMENTS.area.updateColor>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
             value;
@@ -3413,7 +3418,9 @@
               /* [DEBUG] */, null, 'ATTACHMENTS.area.aplStats.color=%s'/* [/DEBUG] */)) {
             attachProps.path.style.stroke = value;
           }
+          traceLog.add('</ATTACHMENTS.area.updateColor>'); // [DEBUG/]
         };
+
         attachProps.updateShow = function() {
           svgShow(attachProps, attachProps.bindTargets.some(
             function(bindTarget) { return bindTarget.props.isShown === true; }));
@@ -3754,6 +3761,7 @@
 
         // event handler for each instance
         attachProps.updateColor = function() {
+          traceLog.add('<ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
             value;
@@ -3763,9 +3771,46 @@
 
           if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
               /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.color=%s'/* [/DEBUG] */)) {
-            attachProps.elmText.style.fill = value;
+            attachProps.styleFill.fill = value;
           }
+          traceLog.add('</ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
         };
+
+        attachProps.updateSocketXY = function() {
+          traceLog.add('<ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
+          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+            llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
+            socketXY, value, updated = {};
+          if (!llStats) { throw new Error('attachProps is broken'); }
+          socketXY = llStats.position_socketXYSE[attachProps.socketIndex];
+
+          updated.anchorX = setStat(attachProps, curStats, 'anchorX', socketXY.x
+            /* [DEBUG] */, null, 'curStats.anchorX=%s'/* [/DEBUG] */);
+          updated.anchorY = setStat(attachProps, curStats, 'anchorY', socketXY.y
+            /* [DEBUG] */, null, 'curStats.anchorY=%s'/* [/DEBUG] */);
+
+          if (updated.anchorX || updated.anchorY) {
+            ///
+            curStats.x = curStats.anchorX - 200;
+            curStats.y = curStats.anchorY - 50;
+            if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
+                /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.x=%s'/* [/DEBUG] */)) {
+              attachProps.elmPosition.x.baseVal.getItem(0).value = value;
+            }
+            if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
+                /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.y=%s'/* [/DEBUG] */)) {
+              attachProps.elmPosition.y.baseVal.getItem(0).value = value;
+            }
+          }
+          traceLog.add('</ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
+        };
+
+        attachProps.updatePath = function() {
+          traceLog.add('<ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
+          ///
+          traceLog.add('</ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
+        };
+
         attachProps.updateShow = function() {
           svgShow(attachProps, attachProps.bindTargets.some(
             function(bindTarget) { return bindTarget.props.isShown === true; }));
@@ -3837,33 +3882,45 @@
         var props = bindTarget.props,
           text = ATTACHMENTS.caption.newText(attachProps.text, props.baseWindow.document,
             props.svg, APP_ID + '-attach-caption-' + attachProps.id, attachProps.outlineColor),
-          strokeWidth;
+          bBox, strokeWidth;
 
         ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
           if (attachProps[propName]) { text.styleText[propName] = attachProps[propName]; }
         });
 
-        // text.elmPosition.x.baseVal.getItem(0).value = 10;
-        // text.elmPosition.y.baseVal.getItem(0).value = 140;
-        // text.styleFill.fill = 'blue';
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
+        bBox = text.elmPosition.getBBox();
         if (attachProps.outlineColor) {
-          strokeWidth = text.elmPosition.getBBox().height / 9;
+          strokeWidth = bBox.height / 9;
           strokeWidth = strokeWidth > 10 ? 10 : strokeWidth < 2 ? 2 : strokeWidth;
           text.styleStroke.strokeWidth = strokeWidth + 'px';
           text.styleStroke.stroke = attachProps.outlineColor;
         }
 
-        addEventHandler(props, 'cur_line_color', attachProps.updateColor);
+        if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
+        if ((attachProps.refSocketXY =
+            bindTarget.optionName === 'startLabel' || bindTarget.optionName === 'endLabel')) {
+          attachProps.socketIndex = bindTarget.optionName === 'startLabel' ? 0 : 1;
+          addEventHandler(props, 'apl_position', attachProps.updateSocketXY);
+        } else {
+          addEventHandler(props, 'apl_path', attachProps.updatePath);
+        }
         addEventHandler(props, 'svgShow', attachProps.updateShow);
         setTimeout(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
+          if (attachProps.refSocketXY) {
+            attachProps.updateSocketXY();
+          } else {
+            attachProps.updatePath();
+          }
           attachProps.updateShow();
         }, 0);
 
         attachProps.elmPosition = text.elmPosition;
         attachProps.styleFill = text.styleFill;
         attachProps.elmsAppend = text.elmsAppend;
+        attachProps.width = bBox.width;
+        attachProps.height = bBox.height;
         traceLog.add('</ATTACHMENTS.caption.bind>'); // [DEBUG/]
         return true;
       },
@@ -3871,7 +3928,12 @@
       unbind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.caption.unbind>'); // [DEBUG/]
         var props = bindTarget.props;
-        removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
+        if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
+        if (attachProps.refSocketXY) {
+          removeEventHandler(props, 'apl_position', attachProps.updateSocketXY);
+        } else {
+          removeEventHandler(props, 'apl_path', attachProps.updatePath);
+        }
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
 
         if (attachProps.elmsAppend) {
@@ -3881,7 +3943,6 @@
         setTimeout(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           attachProps.updateShow();
-          ATTACHMENTS.caption.update(attachProps); // it's not called by unbound ll
         }, 0);
         traceLog.add('</ATTACHMENTS.caption.unbind>'); // [DEBUG/]
       },

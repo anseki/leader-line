@@ -597,7 +597,9 @@ describe('attachment', function() {
         expect(traceLog.log).toEqual([
           '<setOptions>', 'needs.line', '</setOptions>',
           '<updateLine>', 'line_color=red',
-          'curStats.color=red', 'ATTACHMENTS.area.aplStats.color=red', // attachProps.updateColor
+          '<ATTACHMENTS.area.updateColor>',
+          'curStats.color=red', 'ATTACHMENTS.area.aplStats.color=red',
+          '</ATTACHMENTS.area.updateColor>',
           '</updateLine>',
           '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
           '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
@@ -637,7 +639,7 @@ describe('attachment', function() {
         expect(traceLog.log).toEqual([
           '<setOptions>', 'needs.line', '</setOptions>',
           '<updateLine>', 'line_color=red',
-          // attachProps.updateColor is not called
+          // ATTACHMENTS.area.updateColor is not called
           '</updateLine>',
           '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
           '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
