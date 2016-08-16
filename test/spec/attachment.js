@@ -64,7 +64,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
       expect(props.attachments.length).toBe(1);
-      expect(attachProps.lls.length).toBe(1);
+      expect(attachProps.bindTargets.length).toBe(1);
       atc.remove();
       expect(ll.start).toBe(document.getElementById('elm1'));
       expect(ll.end).toBe(document.getElementById('elm3'));
@@ -75,7 +75,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
       expect(props.attachments.length).toBe(1);
-      expect(attachProps.lls.length).toBe(1);
+      expect(attachProps.bindTargets.length).toBe(1);
       atc.remove();
       expect(ll.start).toBe(document.body);
       expect(ll.end).toBe(document.getElementById('elm3'));
@@ -86,7 +86,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       ll.setOptions({start: atc, end: document.body});
       expect(props.attachments.length).toBe(1);
-      expect(attachProps.lls.length).toBe(1);
+      expect(attachProps.bindTargets.length).toBe(1);
       atc.remove();
       expect(ll.start).not.toBe(document.body);
       expect(ll.start instanceof window.LeaderLineAttachment).toBe(true);
@@ -149,10 +149,10 @@ describe('attachment', function() {
 
       // bind
       expect(props1.attachments.length).toBe(0);
-      expect(attachProps1.lls.length).toBe(0);
+      expect(attachProps1.bindTargets.length).toBe(0);
       ll.start = atc1;
       expect(props1.attachments.length).toBe(1);
-      expect(attachProps1.lls.length).toBe(1);
+      expect(attachProps1.bindTargets.length).toBe(1);
       expect(atc1.isRemoved).toBe(false);
       expect(window.insAttachProps[atc1._id] != null).toBe(true); // eslint-disable-line eqeqeq
 
@@ -172,7 +172,7 @@ describe('attachment', function() {
       props2 = window.insProps[ll2._id];
       expect(props1.attachments.length).toBe(1);
       expect(props2.attachments.length).toBe(1);
-      expect(attachProps2.lls.length).toBe(2);
+      expect(attachProps2.bindTargets.length).toBe(2);
       expect(atc2.isRemoved).toBe(false);
       expect(window.insAttachProps[atc2._id] != null).toBe(true); // eslint-disable-line eqeqeq
 
@@ -183,7 +183,7 @@ describe('attachment', function() {
       expect(log != null).toBe(false); // eslint-disable-line eqeqeq
       expect(props1.attachments.length).toBe(0);
       expect(props2.attachments.length).toBe(1);
-      expect(attachProps2.lls.length).toBe(1);
+      expect(attachProps2.bindTargets.length).toBe(1);
       expect(atc2.isRemoved).toBe(false);
       expect(window.insAttachProps[atc2._id] != null).toBe(true); // eslint-disable-line eqeqeq
 
@@ -205,14 +205,14 @@ describe('attachment', function() {
       ll2.start = atc1;
       expect(props1.attachments.length).toBe(1);
       expect(props2.attachments.length).toBe(1);
-      expect(attachProps1.lls.length).toBe(2);
+      expect(attachProps1.bindTargets.length).toBe(2);
       expect(atc1.isRemoved).toBe(false);
       traceLog.clear();
       atc1.remove();
       log = traceLog.getTaggedLog('LeaderLineAttachment.remove');
       expect(log != null).toBe(true); // eslint-disable-line eqeqeq
       expect(log.length).toBe(0);
-      expect(traceLog.getTaggedLog('ATTACHMENTS.point.removeOption')).toEqual(['anchorSE[0]', 'anchorSE[0]']);
+      expect(traceLog.getTaggedLog('ATTACHMENTS.point.removeOption')).toEqual(['start', 'start']);
       log = traceLog.getTaggedLog('removeAttachment');
       expect(log != null).toBe(true); // eslint-disable-line eqeqeq
       expect(log.length).toBe(0);
@@ -231,8 +231,8 @@ describe('attachment', function() {
       attachProps2 = window.insAttachProps[atc2._id];
       ll.setOptions({start: atc1, end: atc2});
       expect(props1.attachments.length).toBe(2);
-      expect(attachProps1.lls.length).toBe(1);
-      expect(attachProps2.lls.length).toBe(1);
+      expect(attachProps1.bindTargets.length).toBe(1);
+      expect(attachProps2.bindTargets.length).toBe(1);
       expect(atc1.isRemoved).toBe(false);
       expect(atc2.isRemoved).toBe(false);
       traceLog.clear();
@@ -312,7 +312,7 @@ describe('attachment', function() {
       props2 = window.insProps[ll2._id];
       expect(props1.attachments.length).toBe(1);
       expect(props2.attachments.length).toBe(1);
-      expect(attachProps2.lls.length).toBe(2);
+      expect(attachProps2.bindTargets.length).toBe(2);
       expect(props1.events.cur_line_color.length).toBe(1); // addEventHandler
       expect(props1.events.svgShow.length).toBe(1); // addEventHandler
       expect(props2.events.cur_line_color.length).toBe(1); // addEventHandler
@@ -335,7 +335,7 @@ describe('attachment', function() {
       ]);
       expect(props1.attachments.length).toBe(0);
       expect(props2.attachments.length).toBe(1);
-      expect(attachProps2.lls.length).toBe(1);
+      expect(attachProps2.bindTargets.length).toBe(1);
       expect(props1.events.cur_line_color.length).toBe(0); // removeEventHandler
       expect(props1.events.svgShow.length).toBe(0); // removeEventHandler
       expect(props2.events.cur_line_color.length).toBe(1);
@@ -372,7 +372,7 @@ describe('attachment', function() {
       ll2.start = atc1;
       expect(props1.attachments.length).toBe(1);
       expect(props2.attachments.length).toBe(1);
-      expect(attachProps1.lls.length).toBe(2);
+      expect(attachProps1.bindTargets.length).toBe(2);
       expect(props1.events.cur_line_color.length).toBe(1);
       expect(props1.events.svgShow.length).toBe(1);
       expect(props2.events.cur_line_color.length).toBe(1);
@@ -381,7 +381,7 @@ describe('attachment', function() {
       atc1.remove();
       expect(traceLog.log).toEqual([
         '<LeaderLineAttachment.remove>',
-        '<ATTACHMENTS.point.removeOption>', 'anchorSE[0]',
+        '<ATTACHMENTS.point.removeOption>', 'start',
         '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
         '<setOptions>', 'needs.position', '</setOptions>',
         '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
@@ -392,7 +392,7 @@ describe('attachment', function() {
         '</updateMask>',
         '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
         '</ATTACHMENTS.point.removeOption>',
-        '<ATTACHMENTS.point.removeOption>', 'anchorSE[0]',
+        '<ATTACHMENTS.point.removeOption>', 'start',
         '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
         '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
         '<setOptions>', 'needs.position', '</setOptions>',
@@ -421,8 +421,8 @@ describe('attachment', function() {
       attachProps2 = window.insAttachProps[atc2._id];
       ll.setOptions({start: atc1, end: atc2});
       expect(props1.attachments.length).toBe(2);
-      expect(attachProps1.lls.length).toBe(1);
-      expect(attachProps2.lls.length).toBe(1);
+      expect(attachProps1.bindTargets.length).toBe(1);
+      expect(attachProps2.bindTargets.length).toBe(1);
       expect(props1.events.cur_line_color.length).toBe(2);
       expect(props1.events.svgShow.length).toBe(2);
       traceLog.clear();
@@ -581,6 +581,86 @@ describe('attachment', function() {
       done();
     });
 
+    it(registerTitle('area-event auto color'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps;
+
+      atc = window.LeaderLine.area({element: document.getElementById('elm1')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      setTimeout(function() { // `bind` calls setTimeout
+        expect(attachProps.curStats.color).toBe('coral');
+        expect(props.events.cur_line_color.length).toBe(1); // addEventHandler
+
+        traceLog.clear();
+        ll.color = 'red';
+        expect(traceLog.log).toEqual([
+          '<setOptions>', 'needs.line', '</setOptions>',
+          '<updateLine>', 'line_color=red',
+          'curStats.color=red', 'ATTACHMENTS.area.aplStats.color=red', // attachProps.updateColor
+          '</updateLine>',
+          '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
+          '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
+          '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
+          '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
+          '<updatePosition>',
+          '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
+          'not-updated',
+          '</updatePosition>',
+          '<updateViewBox>', 'not-updated', '</updateViewBox>',
+          '<updateMask>', 'not-updated', '</updateMask>',
+          '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
+        ]);
+        expect(attachProps.curStats.color).toBe('red');
+
+        ll.start = document.getElementById('elm1');
+        expect(props.events.cur_line_color.length).toBe(0); // removeEventHandler
+
+        pageDone();
+        done();
+      }, 10);
+    });
+
+    it(registerTitle('area-event static color'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps;
+
+      atc = window.LeaderLine.area({element: document.getElementById('elm1'), color: 'blue'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      setTimeout(function() { // `bind` calls setTimeout
+        expect(attachProps.curStats.color).toBe('blue');
+        expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+
+        traceLog.clear();
+        ll.color = 'red';
+        expect(traceLog.log).toEqual([
+          '<setOptions>', 'needs.line', '</setOptions>',
+          '<updateLine>', 'line_color=red',
+          // attachProps.updateColor is not called
+          '</updateLine>',
+          '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
+          '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
+          '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
+          '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
+          '<updatePosition>',
+          '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
+          'not-updated',
+          '</updatePosition>',
+          '<updateViewBox>', 'not-updated', '</updateViewBox>',
+          '<updateMask>', 'not-updated', '</updateMask>',
+          '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
+        ]);
+        expect(attachProps.curStats.color).toBe('blue');
+
+        ll.start = document.getElementById('elm1');
+        expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+
+        pageDone();
+        done();
+      }, 10);
+    });
+
     it(registerTitle('area-event auto 1 ll'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps;
@@ -726,7 +806,7 @@ describe('attachment', function() {
 
             ll2.start = document.getElementById('elm1');
             setTimeout(function() { // `bind` calls setTimeout
-              expect(attachProps.lls.length).toBe(1);
+              expect(attachProps.bindTargets.length).toBe(1);
               expect(attachProps.isShown).toBe(false);
               expect(attachProps.svg.style.visibility).toBe('hidden');
               pageDone();

@@ -1319,13 +1319,13 @@
         attachProps = isAttach !== false ? insAttachProps[anchor._id] : null,
 
         strokeWidth = isAttach !== false && attachProps.conf.getStrokeWidth ?
-          attachProps.conf.getStrokeWidth(props, attachProps) : 0,
+          attachProps.conf.getStrokeWidth(attachProps, props) : 0,
         anchorBBox = isAttach !== false && attachProps.conf.getBBoxNest ?
-          attachProps.conf.getBBoxNest(props, attachProps, strokeWidth) :
+          attachProps.conf.getBBoxNest(attachProps, props, strokeWidth) :
           getBBoxNest(anchor, props.baseWindow);
 
       curStats.capsMaskAnchor_pathDataSE[i] = isAttach !== false && attachProps.conf.getPathData ?
-        attachProps.conf.getPathData(props, attachProps, strokeWidth) : bBox2PathData(anchorBBox);
+        attachProps.conf.getPathData(attachProps, props, strokeWidth) : bBox2PathData(anchorBBox);
       curStats.capsMaskAnchor_strokeWidthSE[i] = strokeWidth;
       return anchorBBox;
     });
@@ -2231,13 +2231,15 @@
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {attachProps} attachProps - `attachProps` of `LeaderLineAttachment` instance.
+   * @param {string} optionName - Name of bound option.
    * @returns {boolean} - `true` when binding succeeded.
    */
-  function bindAttachment(props, attachProps) {
+  function bindAttachment(props, attachProps, optionName) {
+    var bindTarget = {props: props, optionName: optionName};
     if (props.attachments.indexOf(attachProps) < 0 &&
-        (!attachProps.conf.bind || attachProps.conf.bind(props, attachProps))) {
+        (!attachProps.conf.bind || attachProps.conf.bind(attachProps, bindTarget))) {
       props.attachments.push(attachProps);
-      attachProps.lls.push(props);
+      attachProps.bindTargets.push(bindTarget);
       return true;
     }
     return false;
@@ -2252,12 +2254,19 @@
   function unbindAttachment(props, attachProps, dontRemove) {
     var i;
     if ((i = props.attachments.indexOf(attachProps)) > -1) {
-      if (attachProps.conf.unbind) { attachProps.conf.unbind(props, attachProps); }
       props.attachments.splice(i, 1);
     }
-    if ((i = attachProps.lls.indexOf(props)) > -1) {
-      attachProps.lls.splice(i, 1);
-      if (!dontRemove && !attachProps.lls.length) {
+
+    if (attachProps.bindTargets.some(function(bindTarget, iTarget) {
+      if (bindTarget.props === props) {
+        if (attachProps.conf.unbind) { attachProps.conf.unbind(attachProps, bindTarget); }
+        i = iTarget;
+        return true;
+      }
+      return false;
+    })) {
+      attachProps.bindTargets.splice(i, 1);
+      if (!dontRemove && !attachProps.bindTargets.length) {
         removeAttachment(attachProps);
       }
     }
@@ -2352,8 +2361,8 @@
     newOptions = newOptions || {};
 
     // anchorSE
-    [newOptions.start, newOptions.end].forEach(function(newOption, i) {
-      var newIsAttachment = false;
+    ['start', 'end'].forEach(function(optionName, i) {
+      var newOption = newOptions[optionName], newIsAttachment = false;
       if (newOption &&
           (newOption.nodeType != null || // eslint-disable-line eqeqeq
             (newIsAttachment = isAttachment(newOption, 'anchor'))) &&
@@ -2361,7 +2370,7 @@
         if (props.optionIsAttach.anchorSE[i] !== false) {
           unbindAttachment(props, insAttachProps[options.anchorSE[i]._id]); // Unbind old
         }
-        if (newIsAttachment && !bindAttachment(props, insAttachProps[newOption._id])) { // Bind new
+        if (newIsAttachment && !bindAttachment(props, insAttachProps[newOption._id], optionName)) { // Bind new
           throw new Error('Can\'t bind attachment');
         }
         options.anchorSE[i] = newOption;
@@ -3182,7 +3191,7 @@
    * @param {Object} attachOptions - Initial options.
    */
   function LeaderLineAttachment(conf, attachOptions) {
-    var attachProps = {conf: conf, curStats: {}, aplStats: {}, lls: []};
+    var attachProps = {conf: conf, curStats: {}, aplStats: {}, bindTargets: []};
 
     if (conf.stats) {
       initStats(attachProps.curStats, conf.stats);
@@ -3220,7 +3229,8 @@
   removeAttachment = function(attachProps, id) {
     traceLog.add('<removeAttachment>'); // [DEBUG/]
     if (!attachProps && !(attachProps = insAttachProps[id])) { return; }
-    attachProps.lls.forEach(function(props) { unbindAttachment(props, attachProps, true); });
+    attachProps.bindTargets.forEach(
+      function(bindTarget) { unbindAttachment(bindTarget.props, attachProps, true); });
     if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
     if (!id && !Object.keys(insAttachProps).some(function(attachId) {
       if (insAttachProps[attachId] === attachProps) {
@@ -3241,7 +3251,8 @@
     traceLog.add('<LeaderLineAttachment.remove>'); // [DEBUG/]
     var attachProps = insAttachProps[this._id];
     if (attachProps) {
-      attachProps.lls.slice().forEach(function(props) { attachProps.conf.removeOption(props, attachProps); });
+      attachProps.bindTargets.slice().forEach( // Copy bindTargets because removeOption may change array.
+        function(bindTarget) { attachProps.conf.removeOption(attachProps, bindTarget); });
 
       if ((attachProps = insAttachProps[this._id])) { // it should be removed by unbinding all
         traceLog.add('error-not-removed'); // [DEBUG/]
@@ -3257,13 +3268,13 @@
    * @property {string} type
    * @property {{statName: string, StatConf}} stats - Additional stats.
    * @property {Function} init - function(attachProps, attachOptions, id) returns `true` when succeeded.
-   * @property {Function} bind - function(props, attachProps) returns `true` when succeeded.
-   * @property {Function} unbind - function(props, attachProps)
-   * @property {Function} removeOption - function(props, attachProps)
+   * @property {Function} bind - function(attachProps, bindTarget) returns `true` when succeeded.
+   * @property {Function} unbind - function(attachProps, bindTarget)
+   * @property {Function} removeOption - function(attachProps, bindTarget)
    * @property {Function} remove - function(attachProps)
-   * @property {Function} [getStrokeWidth] - function(props, attachProps) type:anchro (update trigger)
-   * @property {Function} [getPathData] - function(props, attachProps, strokeWidth) type:anchro
-   * @property {Function} [getBBoxNest] - function(props, attachProps, strokeWidth) type:anchro
+   * @property {Function} [getStrokeWidth] - function(attachProps, props) type:anchro (update trigger)
+   * @property {Function} [getPathData] - function(attachProps, props, strokeWidth) type:anchro
+   * @property {Function} [getBBoxNest] - function(attachProps, props, strokeWidth) type:anchro
    */
 
   /** @type {{attachmentName: string, AttachConf}} */
@@ -3281,30 +3292,21 @@
         return true;
       },
 
-      removeOption: function(props, attachProps) {
+      removeOption: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.point.removeOption>'); // [DEBUG/]
-        var options = props.options;
-        ['start', 'end'].forEach(function(optionName, i) {
-          var element, another, newOptions;
-          if (props.optionIsAttach.anchorSE[i] !== false &&
-              insAttachProps[options.anchorSE[i]._id] === attachProps) {
-            traceLog.add('anchorSE[' + i + ']'); // [DEBUG/]
-            element = attachProps.element;
-            if (element === (another = options.anchorSE[i ? 0 : 1])) { // must be not another
-              element = document.body;
-              if (element === another) { // attachProps.element is body, and another is body
-                element = new LeaderLineAttachment(ATTACHMENTS.point, {element: element});
-              }
-            }
-            newOptions = {};
-            newOptions[optionName] = element;
-            setOptions(props, newOptions);
-          }
-        });
+        traceLog.add(bindTarget.optionName); // [DEBUG/]
+        var props = bindTarget.props, newOptions = {}, element = attachProps.element,
+          another = props.options.anchorSE[bindTarget.optionName === 'start' ? 1 : 0];
+        if (element === another) { // must be not another
+          element = another === document.body ?
+            new LeaderLineAttachment(ATTACHMENTS.point, {element: element}) : document.body;
+        }
+        newOptions[bindTarget.optionName] = element;
+        setOptions(props, newOptions);
         traceLog.add('</ATTACHMENTS.point.removeOption>'); // [DEBUG/]
       },
 
-      getBBoxNest: function(props, attachProps) {
+      getBBoxNest: function(attachProps, props) {
         var bBox = getBBoxNest(attachProps.element, props.baseWindow),
           width = bBox.width, height = bBox.height;
         bBox.width = bBox.height = 0;
@@ -3401,7 +3403,7 @@
         // event handler for each instance
         attachProps.updateColor = function() {
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
+            llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
             value;
 
           checkCurStats(attachProps, 'color', null, attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor)); // [DEBUG/]
@@ -3413,7 +3415,8 @@
           }
         };
         attachProps.updateShow = function() {
-          svgShow(attachProps, attachProps.lls.some(function(props) { return props.isShown === true; }));
+          svgShow(attachProps, attachProps.bindTargets.some(
+            function(bindTarget) { return bindTarget.props.isShown === true; }));
         };
         // event handler to update `strokeWidth` is unnecessary
         // because `getStrokeWidth` is triggered by `updateLine` and `updatePosition`
@@ -3422,48 +3425,52 @@
         return true;
       },
 
-      bind: function(props, attachProps) {
+      bind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.area.bind>'); // [DEBUG/]
-        addEventHandler(props, 'cur_line_color', attachProps.updateColor);
+        var props = bindTarget.props;
+        if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         addEventHandler(props, 'svgShow', attachProps.updateShow);
-        setTimeout(function() { // after updating `attachProps.lls`
+        setTimeout(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           attachProps.updateShow();
         }, 0);
         traceLog.add('</ATTACHMENTS.area.bind>'); // [DEBUG/]
         return true;
       },
-      unbind: function(props, attachProps) {
+
+      unbind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.area.unbind>'); // [DEBUG/]
-        removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
+        var props = bindTarget.props;
+        if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
-        setTimeout(function() { // after updating `attachProps.lls`
+        setTimeout(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           attachProps.updateShow();
-          ATTACHMENTS.area.update(attachProps); // it's not called by unbinded ll
+          ATTACHMENTS.area.update(attachProps); // it's not called by unbound ll
         }, 0);
         traceLog.add('</ATTACHMENTS.area.unbind>'); // [DEBUG/]
       },
 
-      removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },
+      removeOption: function(attachProps, bindTarget) { ATTACHMENTS.point.removeOption(attachProps, bindTarget); },
 
       remove: function(attachProps) {
         traceLog.add('<ATTACHMENTS.area.remove>'); // [DEBUG/]
-        if (attachProps.lls.length) { // it should be unbinded by LeaderLineAttachment.remove
-          traceLog.add('error-not-unbinded'); // [DEBUG/]
-          console.error('LeaderLineAttachment was not unbinded by remove');
-          attachProps.lls.forEach(function(props) { ATTACHMENTS.area.unbind(props, attachProps); });
+        if (attachProps.bindTargets.length) { // it should be unbound by LeaderLineAttachment.remove
+          traceLog.add('error-not-unbound'); // [DEBUG/]
+          console.error('LeaderLineAttachment was not unbound by remove');
+          attachProps.bindTargets.forEach(
+            function(bindTarget) { ATTACHMENTS.area.unbind(attachProps, bindTarget); });
         }
         attachProps.svg.parentNode.removeChild(attachProps.svg);
         traceLog.add('</ATTACHMENTS.area.remove>'); // [DEBUG/]
       },
 
-      getStrokeWidth: function(props, attachProps) {
+      getStrokeWidth: function(attachProps) {
         ATTACHMENTS.area.update(attachProps);
         return attachProps.curStats.strokeWidth;
       },
 
-      getPathData: function(props, attachProps) {
+      getPathData: function(attachProps, props) {
         var bBox = getBBoxNest(attachProps.element, props.baseWindow);
         return pathList2PathData(attachProps.curStats.pathListRel, function(point) {
           point.x += bBox.left;
@@ -3471,7 +3478,7 @@
         });
       },
 
-      getBBoxNest: function(props, attachProps) {
+      getBBoxNest: function(attachProps, props) {
         var bBox = getBBoxNest(attachProps.element, props.baseWindow),
           bBoxRel = attachProps.curStats.bBoxRel;
         return {
@@ -3487,7 +3494,7 @@
       update: function(attachProps) {
         traceLog.add('<ATTACHMENTS.area.update>'); // [DEBUG/]
         var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-          llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
+          llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
           elementBBox, value, updated = {};
 
         updated.strokeWidth = setStat(attachProps, curStats, 'strokeWidth',
@@ -3721,9 +3728,9 @@
     caption: {
       type: 'label',
       stats: {color: {}, x: {}, y: {}, anchorX: {}, anchorY: {}},
-      styleProps: ['fontSize'],
+      textStyleProps: ['fontSize'],
 
-      // attachOptions: text, color(A), outlineColor, offset(A)
+      // attachOptions: text, color(A), outlineColor, offset(A), <textStyleProps>
       init: function(attachProps, attachOptions, id) {
         traceLog.add('<ATTACHMENTS.caption.init>'); // [DEBUG/]
         if (typeof attachOptions.text === 'string') {
@@ -3739,10 +3746,16 @@
         }
         attachProps.id = id;
 
+        ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
+          if (typeof attachOptions[propName] === 'string') {
+            attachProps[propName] = attachOptions[propName].trim();
+          }
+        });
+
         // event handler for each instance
         attachProps.updateColor = function() {
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            llStats = attachProps.lls.length ? attachProps.lls[0].curStats : null,
+            llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
             value;
 
           checkCurStats(attachProps, 'color', null, attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor)); // [DEBUG/]
@@ -3754,7 +3767,8 @@
           }
         };
         attachProps.updateShow = function() {
-          svgShow(attachProps, attachProps.lls.some(function(props) { return props.isShown === true; }));
+          svgShow(attachProps, attachProps.bindTargets.some(
+            function(bindTarget) { return bindTarget.props.isShown === true; }));
         };
 
         traceLog.add('</ATTACHMENTS.caption.init>'); // [DEBUG/]
@@ -3818,36 +3832,45 @@
         }
       },
 
-      bind: function(props, attachProps) {
+      bind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.caption.bind>'); // [DEBUG/]
-        var text = ATTACHMENTS.caption.newText(attachProps.text, props.baseWindow.document,
-          props.svg, APP_ID + '-attach-caption-' + attachProps.id, attachProps.outlineColor),
+        var props = bindTarget.props,
+          text = ATTACHMENTS.caption.newText(attachProps.text, props.baseWindow.document,
+            props.svg, APP_ID + '-attach-caption-' + attachProps.id, attachProps.outlineColor),
           strokeWidth;
+
+        ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
+          if (attachProps[propName]) { text.styleText[propName] = attachProps[propName]; }
+        });
 
         // text.elmPosition.x.baseVal.getItem(0).value = 10;
         // text.elmPosition.y.baseVal.getItem(0).value = 140;
-        // text.styleText.fontSize = '180px';
         // text.styleFill.fill = 'blue';
+        text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
         if (attachProps.outlineColor) {
           strokeWidth = text.elmPosition.getBBox().height / 9;
           strokeWidth = strokeWidth > 10 ? 10 : strokeWidth < 2 ? 2 : strokeWidth;
           text.styleStroke.strokeWidth = strokeWidth + 'px';
           text.styleStroke.stroke = attachProps.outlineColor;
         }
-        text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
-        attachProps.elmsAppend = text.elmsAppend;
 
         addEventHandler(props, 'cur_line_color', attachProps.updateColor);
         addEventHandler(props, 'svgShow', attachProps.updateShow);
-        setTimeout(function() { // after updating `attachProps.lls`
+        setTimeout(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           attachProps.updateShow();
         }, 0);
+
+        attachProps.elmPosition = text.elmPosition;
+        attachProps.styleFill = text.styleFill;
+        attachProps.elmsAppend = text.elmsAppend;
         traceLog.add('</ATTACHMENTS.caption.bind>'); // [DEBUG/]
         return true;
       },
-      unbind: function(props, attachProps) {
+
+      unbind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.caption.unbind>'); // [DEBUG/]
+        var props = bindTarget.props;
         removeEventHandler(props, 'cur_line_color', attachProps.updateColor);
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
 
@@ -3855,15 +3878,15 @@
           attachProps.elmsAppend.forEach(function(elm) { props.svg.removeChild(elm); });
         }
 
-        setTimeout(function() { // after updating `attachProps.lls`
+        setTimeout(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           attachProps.updateShow();
-          ATTACHMENTS.caption.update(attachProps); // it's not called by unbinded ll
+          ATTACHMENTS.caption.update(attachProps); // it's not called by unbound ll
         }, 0);
         traceLog.add('</ATTACHMENTS.caption.unbind>'); // [DEBUG/]
       },
 
-      // removeOption: function(props, attachProps) { ATTACHMENTS.point.removeOption(props, attachProps); },
+      // removeOption: function(attachProps, bindTarget) { ATTACHMENTS.point.removeOption(attachProps, bindTarget); },
 
     }
   };
