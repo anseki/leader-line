@@ -171,15 +171,15 @@
       show_on: {}, show_effect: {}, show_animOptions: {}, show_animId: {}, show_inAnim: {}
     },
 
-    EFFECTS, SHOW_EFFECTS, ATTACHMENTS,
+    EFFECTS, SHOW_EFFECTS, ATTACHMENTS, LeaderLineAttachment,
     DEFAULT_SHOW_EFFECT = 'fade',
     isAttachment, removeAttachment,
 
     /** @type {Object.<_id: number, props>} */
-    insProps = {},
+    insProps = {}, insId = 0,
     /** @type {Object.<_id: number, props>} */
-    insAttachProps = {},
-    insId = 0, insAttachId = 0, svg2SupportedReverse, svg2SupportedPaintOrder;
+    insAttachProps = {}, insAttachId = 0,
+    svg2SupportedReverse, svg2SupportedPaintOrder; // Supported SVG 2 features
 
   // [DEBUG]
   window.insProps = insProps;
@@ -2295,6 +2295,7 @@
       plugOutlineEnabledSE    startPlugOutline, endPlugOutline
       plugOutlineColorSE      startPlugOutlineColor, endPlugOutlineColor
       plugOutlineSizeSE       startPlugOutlineSize, endPlugOutlineSize
+      labelSEM                startLabel, endLabel, middleLabel
     */
     var options = props.options,
       newWindow, needsWindow, needs = {};
@@ -2471,9 +2472,30 @@
         function(value) { return value >= 1; }) || needs.plugOutline;
     });
 
-    ///
-    var xxxLabel = LeaderLine.caption({text: 'LABL YY'});
-    bindAttachment(props, insAttachProps[xxxLabel._id], 'endLabel');
+    // label
+    ['startLabel', 'endLabel', 'middleLabel'].forEach(function(optionName, i) {
+      var newOption = newOptions[optionName],
+        oldOption = options.labelSEM[i] && !props.optionIsAttach.labelSEM[i] ?
+          insAttachProps[options.labelSEM[i]._id].text : options.labelSEM[i],
+        newIsAttachment = false, plain, label;
+
+      if ((plain = typeof newOption === 'string')) { newOption = newOption.trim(); }
+      if ((plain || newOption && (newIsAttachment = isAttachment(newOption, 'label'))) &&
+          newOption !== oldOption) {
+        if (options.labelSEM[i]) {
+          unbindAttachment(props, insAttachProps[options.labelSEM[i]._id]); // Unbind old
+          options.labelSEM[i] = '';
+        }
+        if (newOption) {
+          label = newIsAttachment ? newOption : new LeaderLineAttachment(ATTACHMENTS.caption, {text: newOption});
+          if (!bindAttachment(props, insAttachProps[label._id], optionName)) {
+            throw new Error('Can\'t bind attachment');
+          }
+          options.labelSEM[i] = label;
+        }
+        props.optionIsAttach.labelSEM[i] = newIsAttachment;
+      }
+    });
 
     // effect
     Object.keys(EFFECTS).forEach(function(effectName) {
@@ -2558,8 +2580,8 @@
       props = {
         // Initialize properties as array.
         options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
-          plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: []},
-        optionIsAttach: {anchorSE: [false, false]},
+          plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: [], labelSEM: ['', '', '']},
+        optionIsAttach: {anchorSE: [false, false], labelSEM: [false, false, false]},
         curStats: {}, aplStats: {}, attachments: [], events: {}, reflowTargets: []
       },
       prefix;
@@ -2585,10 +2607,10 @@
     props.curStats.show_effect = DEFAULT_SHOW_EFFECT;
     props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
 
-    Object.defineProperty(this, '_id', {value: ++insId});
-    insProps[this._id] = props;
+    Object.defineProperty(that, '_id', {value: ++insId});
+    insProps[that._id] = props;
 
-    prefix = APP_ID + '-' + this._id;
+    prefix = APP_ID + '-' + that._id;
     props.linePathId = prefix + '-line-path';
     props.lineShapeId = prefix + '-line-shape';
     props.lineMaskId = prefix + '-line-mask';
@@ -2611,7 +2633,7 @@
     if (start) { options.start = start; }
     if (end) { options.end = end; }
     props.isShown = props.aplStats.show_on = !options.hide; // isShown is applied in setOptions -> bindWindow
-    this.setOptions(options);
+    that.setOptions(options);
 
     // Setup option accessor methods (direct)
     [['start', 'anchorSE', 0], ['end', 'anchorSE', 1], ['color', 'lineColor'], ['size', 'lineSize'],
@@ -2696,6 +2718,18 @@
           return isObject(value) ? getOptions(value) : value;
         },
         set: createSetter(effectName),
+        enumerable: true
+      });
+    });
+    // Setup option accessor methods (label)
+    ['startLabel', 'endLabel', 'middleLabel'].forEach(function(propName, i) {
+      Object.defineProperty(that, propName, {
+        get: function() {
+          var props = insProps[that._id], options = props.options; // Don't use closure.
+          return options.labelSEM[i] && !props.optionIsAttach.labelSEM[i] ?
+            insAttachProps[options.labelSEM[i]._id].text : options.labelSEM[i] || '';
+        },
+        set: createSetter(propName),
         enumerable: true
       });
     });
@@ -3194,7 +3228,7 @@
    * @param {AttachConf} conf - Target AttachConf.
    * @param {Object} attachOptions - Initial options.
    */
-  function LeaderLineAttachment(conf, attachOptions) {
+  LeaderLineAttachment = function(conf, attachOptions) {
     var attachProps = {conf: conf, curStats: {}, aplStats: {}, bindTargets: []};
 
     if (conf.stats) {
@@ -3211,7 +3245,7 @@
     if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {}, this._id)) {
       insAttachProps[this._id] = attachProps;
     }
-  }
+  };
   window.LeaderLineAttachment = LeaderLineAttachment;
 
   /**
@@ -3751,13 +3785,17 @@
         if (typeof attachOptions.outlineColor === 'string') {
           attachProps.outlineColor = attachOptions.outlineColor.trim();
         }
-        attachProps.id = id;
+        if (Array.isArray(attachOptions.offset) &&
+            typeof attachOptions.offset[0] === 'number' && typeof attachOptions.offset[1] === 'number') {
+          attachProps.offset = {x: attachOptions.offset[0], y: attachOptions.offset[1]};
+        }
 
         ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
           if (typeof attachOptions[propName] === 'string') {
             attachProps[propName] = attachOptions[propName].trim();
           }
         });
+        attachProps.id = id;
 
         // event handler for each instance
         attachProps.updateColor = function() {
@@ -3790,9 +3828,12 @@
             /* [DEBUG] */, null, 'curStats.anchorY=%s'/* [/DEBUG] */);
 
           if (updated.anchorX || updated.anchorY) {
+            if (attachProps.offset) {
+              curStats.x = curStats.anchorX + attachProps.offset.x;
+              curStats.y = curStats.anchorY + attachProps.offset.y + attachProps.height;
+            }
             ///
-            curStats.x = curStats.anchorX - 200;
-            curStats.y = curStats.anchorY - 50;
+
             if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
                 /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.x=%s'/* [/DEBUG] */)) {
               attachProps.elmPosition.x.baseVal.getItem(0).value = value;
@@ -3812,8 +3853,8 @@
         };
 
         attachProps.updateShow = function() {
-          svgShow(attachProps, attachProps.bindTargets.some(
-            function(bindTarget) { return bindTarget.props.isShown === true; }));
+          // svgShow(attachProps, attachProps.bindTargets.some(
+          //   function(bindTarget) { return bindTarget.props.isShown === true; }));
         };
 
         traceLog.add('</ATTACHMENTS.caption.init>'); // [DEBUG/]
@@ -3884,12 +3925,18 @@
             props.svg, APP_ID + '-attach-caption-' + attachProps.id, attachProps.outlineColor),
           bBox, strokeWidth;
 
+        attachProps.elmPosition = text.elmPosition;
+        attachProps.styleFill = text.styleFill;
+        attachProps.elmsAppend = text.elmsAppend;
+
         ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
           if (attachProps[propName]) { text.styleText[propName] = attachProps[propName]; }
         });
 
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
         bBox = text.elmPosition.getBBox();
+        attachProps.width = bBox.width;
+        attachProps.height = bBox.height;
         if (attachProps.outlineColor) {
           strokeWidth = bBox.height / 9;
           strokeWidth = strokeWidth > 10 ? 10 : strokeWidth < 2 ? 2 : strokeWidth;
@@ -3915,12 +3962,6 @@
           }
           attachProps.updateShow();
         }, 0);
-
-        attachProps.elmPosition = text.elmPosition;
-        attachProps.styleFill = text.styleFill;
-        attachProps.elmsAppend = text.elmsAppend;
-        attachProps.width = bBox.width;
-        attachProps.height = bBox.height;
         traceLog.add('</ATTACHMENTS.caption.bind>'); // [DEBUG/]
         return true;
       },
