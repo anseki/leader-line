@@ -3246,7 +3246,11 @@
    */
   removeAttachment = function(attachProps, id) {
     traceLog.add('<removeAttachment>'); // [DEBUG/]
-    if (!attachProps && !(attachProps = insAttachProps[id])) { return; }
+    if (!attachProps && !(attachProps = insAttachProps[id])) {
+      traceLog.add('not-found'); // [DEBUG/]
+      traceLog.add('</removeAttachment>'); // [DEBUG/]
+      return;
+    }
     if (!id && !Object.keys(insAttachProps).some(function(attachId) {
       if (insAttachProps[attachId] === attachProps) {
         id = attachId;
