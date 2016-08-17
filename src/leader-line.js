@@ -174,6 +174,7 @@
     EFFECTS, SHOW_EFFECTS, ATTACHMENTS, LeaderLineAttachment,
     DEFAULT_SHOW_EFFECT = 'fade',
     isAttachment, removeAttachment,
+    delayedProcs = [], timerDelayedProc,
 
     /** @type {Object.<_id: number, props>} */
     insProps = {}, insId = 0,
@@ -550,6 +551,18 @@
     if (props.events[type] && (i = props.events[type].indexOf(handler)) > -1) {
       props.events[type].splice(i, 1);
     }
+  }
+
+  function addDelayedProc(proc) {
+    function execDelayedProcs() {
+      traceLog.add('<execDelayedProcs>'); // [DEBUG/]
+      delayedProcs.forEach(function(proc) { proc(); });
+      delayedProcs = [];
+      traceLog.add('</execDelayedProcs>'); // [DEBUG/]
+    }
+    if (timerDelayedProc) { clearTimeout(timerDelayedProc); }
+    delayedProcs.push(proc);
+    timerDelayedProc = setTimeout(execDelayedProcs, 0);
   }
 
   function forceReflow(target) {
@@ -2266,8 +2279,10 @@
       return false;
     })) {
       attachProps.bindTargets.splice(i, 1);
-      if (!dontRemove && !attachProps.bindTargets.length) {
-        removeAttachment(attachProps);
+      if (!dontRemove) {
+        addDelayedProc(function() { // Do it after all binding and unbinding.
+          if (!attachProps.bindTargets.length) { removeAttachment(attachProps); }
+        });
       }
     }
   }
@@ -3224,41 +3239,6 @@
   window.SHOW_EFFECTS = SHOW_EFFECTS; // [DEBUG/]
 
   /**
-   * @class
-   * @param {AttachConf} conf - Target AttachConf.
-   * @param {Object} attachOptions - Initial options.
-   */
-  LeaderLineAttachment = function(conf, attachOptions) {
-    var attachProps = {conf: conf, curStats: {}, aplStats: {}, bindTargets: []};
-
-    if (conf.stats) {
-      initStats(attachProps.curStats, conf.stats);
-      initStats(attachProps.aplStats, conf.stats);
-    }
-
-    Object.defineProperty(this, '_id', {value: ++insAttachId});
-    Object.defineProperty(this, 'isRemoved', {
-      get: function() { return !insAttachProps[this._id]; }
-    });
-
-    // isRemoved has to be set before this because init() might throw.
-    if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {}, this._id)) {
-      insAttachProps[this._id] = attachProps;
-    }
-  };
-  window.LeaderLineAttachment = LeaderLineAttachment;
-
-  /**
-   * @param {any} obj - An object to be checked.
-   * @param {string} [type] - A required type of LeaderLineAttachment.
-   * @returns {(boolean|null)} - true: Enabled LeaderLineAttachment, false: Not instance, null: Disabled it
-   */
-  isAttachment = function(obj, type) {
-    return !(obj instanceof LeaderLineAttachment) ? false :
-      (!type || insAttachProps[obj._id].conf.type === type) && !obj.isRemoved ? true : null;
-  };
-
-  /**
    * attachProps or id must be specified.
    * @param {attachProps|null} attachProps - `attachProps` of `LeaderLineAttachment` instance.
    * @param {number} [id] - `_id` of `LeaderLineAttachment` instance..
@@ -3267,9 +3247,6 @@
   removeAttachment = function(attachProps, id) {
     traceLog.add('<removeAttachment>'); // [DEBUG/]
     if (!attachProps && !(attachProps = insAttachProps[id])) { return; }
-    attachProps.bindTargets.forEach(
-      function(bindTarget) { unbindAttachment(bindTarget.props, attachProps, true); });
-    if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
     if (!id && !Object.keys(insAttachProps).some(function(attachId) {
       if (insAttachProps[attachId] === attachProps) {
         id = attachId;
@@ -3281,24 +3258,72 @@
       traceLog.add('</removeAttachment>'); // [DEBUG/]
       return;
     }
+
+    attachProps.bindTargets.forEach(
+      function(bindTarget) { unbindAttachment(bindTarget.props, attachProps, true); });
+    if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
     delete insAttachProps[id];
     traceLog.add('</removeAttachment>'); // [DEBUG/]
   };
 
-  LeaderLineAttachment.prototype.remove = function() {
-    traceLog.add('<LeaderLineAttachment.remove>'); // [DEBUG/]
-    var attachProps = insAttachProps[this._id];
-    if (attachProps) {
-      attachProps.bindTargets.slice().forEach( // Copy bindTargets because removeOption may change array.
-        function(bindTarget) { attachProps.conf.removeOption(attachProps, bindTarget); });
+  LeaderLineAttachment = (function() {
+    /**
+     * @class
+     * @param {AttachConf} conf - Target AttachConf.
+     * @param {Object} attachOptions - Initial options.
+     */
+    function LeaderLineAttachment(conf, attachOptions) {
+      var attachProps = {conf: conf, curStats: {}, aplStats: {}, bindTargets: []};
 
-      if ((attachProps = insAttachProps[this._id])) { // it should be removed by unbinding all
-        traceLog.add('error-not-removed'); // [DEBUG/]
-        console.error('LeaderLineAttachment was not removed by removeOption');
-        removeAttachment(attachProps, this._id); // force
+      if (conf.stats) {
+        initStats(attachProps.curStats, conf.stats);
+        initStats(attachProps.aplStats, conf.stats);
+      }
+
+      Object.defineProperty(this, '_id', {value: ++insAttachId});
+      Object.defineProperty(this, 'isRemoved', {
+        get: function() { return !insAttachProps[this._id]; }
+      });
+
+      // isRemoved has to be set before this because init() might throw.
+      if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {}, this._id)) {
+        insAttachProps[this._id] = attachProps;
       }
     }
-    traceLog.add('</LeaderLineAttachment.remove>'); // [DEBUG/]
+
+    LeaderLineAttachment.prototype.remove = function() {
+      traceLog.add('<LeaderLineAttachment.remove>'); // [DEBUG/]
+      var that = this, attachProps = insAttachProps[that._id];
+      if (attachProps) {
+        attachProps.bindTargets.slice().forEach( // Copy bindTargets because removeOption may change array.
+          function(bindTarget) { attachProps.conf.removeOption(attachProps, bindTarget); });
+
+        addDelayedProc(function() {
+          var attachProps = insAttachProps[that._id];
+          traceLog.add('<LeaderLineAttachment.remove.delayedProc>'); // [DEBUG/]
+          if (attachProps) { // it should be removed by unbinding all
+            traceLog.add('error-not-removed'); // [DEBUG/]
+            console.error('LeaderLineAttachment was not removed by removeOption');
+            removeAttachment(attachProps, that._id); // force
+          }
+          traceLog.add('</LeaderLineAttachment.remove.delayedProc>'); // [DEBUG/]
+        });
+      }
+      traceLog.add('</LeaderLineAttachment.remove>'); // [DEBUG/]
+    };
+
+    return LeaderLineAttachment;
+  })();
+  window.LeaderLineAttachment = LeaderLineAttachment;
+
+  /**
+   * @param {any} obj - An object to be checked.
+   * @param {string} [type] - A required type of LeaderLineAttachment.
+   * @returns {(boolean|null)} - true: Enabled LeaderLineAttachment, false: Not instance, null: Disabled it
+   */
+  isAttachment = function(obj, type) {
+    return !(obj instanceof LeaderLineAttachment) ? false :
+      (!type || insAttachProps[obj._id].conf.type === type) && !obj.isRemoved ? true : null;
   };
 
   /**
@@ -3471,10 +3496,10 @@
         var props = bindTarget.props;
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         addEventHandler(props, 'svgShow', attachProps.updateShow);
-        setTimeout(function() { // after updating `attachProps.bindTargets`
+        addDelayedProc(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           attachProps.updateShow();
-        }, 0);
+        });
         traceLog.add('</ATTACHMENTS.area.bind>'); // [DEBUG/]
         return true;
       },
@@ -3484,11 +3509,11 @@
         var props = bindTarget.props;
         if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
-        setTimeout(function() { // after updating `attachProps.bindTargets`
+        addDelayedProc(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           attachProps.updateShow();
           ATTACHMENTS.area.update(attachProps); // it's not called by unbound ll
-        }, 0);
+        });
         traceLog.add('</ATTACHMENTS.area.unbind>'); // [DEBUG/]
       },
 
@@ -3953,7 +3978,7 @@
           addEventHandler(props, 'apl_path', attachProps.updatePath);
         }
         addEventHandler(props, 'svgShow', attachProps.updateShow);
-        setTimeout(function() { // after updating `attachProps.bindTargets`
+        addDelayedProc(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           if (attachProps.refSocketXY) {
             attachProps.updateSocketXY();
@@ -3961,7 +3986,7 @@
             attachProps.updatePath();
           }
           attachProps.updateShow();
-        }, 0);
+        });
         traceLog.add('</ATTACHMENTS.caption.bind>'); // [DEBUG/]
         return true;
       },
@@ -3981,10 +4006,10 @@
           attachProps.elmsAppend.forEach(function(elm) { props.svg.removeChild(elm); });
         }
 
-        setTimeout(function() { // after updating `attachProps.bindTargets`
+        addDelayedProc(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           attachProps.updateShow();
-        }, 0);
+        });
         traceLog.add('</ATTACHMENTS.caption.unbind>'); // [DEBUG/]
       },
 
