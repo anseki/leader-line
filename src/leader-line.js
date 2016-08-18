@@ -3818,6 +3818,9 @@
             typeof attachOptions.offset[0] === 'number' && typeof attachOptions.offset[1] === 'number') {
           attachProps.offset = {x: attachOptions.offset[0], y: attachOptions.offset[1]};
         }
+        if (typeof attachOptions.lineOffset === 'number') {
+          attachProps.lineOffset = attachOptions.lineOffset;
+        }
 
         ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
           if (typeof attachOptions[propName] === 'string') {
@@ -3843,13 +3846,11 @@
           traceLog.add('</ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
         };
 
-        attachProps.updateSocketXY = function() {
+        attachProps.updateSocketXY = function(props) {
           traceLog.add('<ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
-            socketXY, value, updated = {};
-          if (!llStats) { throw new Error('attachProps is broken'); }
-          socketXY = llStats.position_socketXYSE[attachProps.socketIndex];
+            llStats = props.curStats, socketXY = llStats.position_socketXYSE[attachProps.socketIndex],
+            margin, plugBCircle, anotherSocketXY, value, updated = {};
 
           updated.anchorX = setStat(attachProps, curStats, 'anchorX', socketXY.x
             /* [DEBUG] */, null, 'curStats.anchorX=%s'/* [/DEBUG] */);
@@ -3859,9 +3860,24 @@
           if (updated.anchorX || updated.anchorY) {
             if (attachProps.offset) {
               curStats.x = curStats.anchorX + attachProps.offset.x;
-              curStats.y = curStats.anchorY + attachProps.offset.y + attachProps.height;
+              curStats.y = curStats.anchorY + attachProps.offset.y;
+            } else {
+              margin = attachProps.height / 2; // Half of line height
+              plugBCircle = llStats.viewBox_plugBCircleSE[attachProps.socketIndex] || 0;
+              if (plugBCircle < margin) { plugBCircle = margin; }
+              anotherSocketXY = llStats.position_socketXYSE[attachProps.socketIndex ? 0 : 1];
+              if (socketXY.socketId === SOCKET_LEFT || socketXY.socketId === SOCKET_RIGHT) {
+                curStats.x = socketXY.socketId === SOCKET_LEFT ?
+                  curStats.anchorX - attachProps.width - margin : curStats.anchorX + margin;
+                curStats.y = anotherSocketXY.y < socketXY.y ?
+                  curStats.anchorY + plugBCircle : curStats.anchorY - attachProps.height - plugBCircle;
+              } else {
+                curStats.x = anotherSocketXY.x < socketXY.x ?
+                  curStats.anchorX + plugBCircle : curStats.anchorX - attachProps.width - plugBCircle;
+                curStats.y = socketXY.socketId === SOCKET_TOP ?
+                  curStats.anchorY - attachProps.height - margin : curStats.anchorY + margin;
+              }
             }
-            ///
 
             if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
                 /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.x=%s'/* [/DEBUG] */)) {
@@ -3869,7 +3885,7 @@
             }
             if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
                 /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.y=%s'/* [/DEBUG] */)) {
-              attachProps.elmPosition.y.baseVal.getItem(0).value = value;
+              attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
             }
           }
           traceLog.add('</ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
@@ -3877,7 +3893,9 @@
 
         attachProps.updatePath = function() {
           traceLog.add('<ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
-          ///
+          // var
+          //   point = ATTACHMENTS.caption.getMidPoint(
+          //     props.pathList.animVal || props.pathList.baseVal, attachProps.lineOffset);
           traceLog.add('</ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
         };
 
@@ -3947,6 +3965,36 @@
         }
       },
 
+      getMidPoint: function(pathList, offset) {
+        var pathSegsLen = [], pathLenAll = 0, pointLen, points, i = -1, newPathList;
+        pathList.forEach(function(points) {
+          var pathLen = (points.length === 2 ? getPointsLength : getCubicLength).apply(null, points);
+          pathSegsLen.push(pathLen);
+          pathLenAll += pathLen;
+        });
+
+        pointLen = pathLenAll / 2 + (offset || 0);
+        if (pointLen <= 0) {
+          points = pathList[0];
+          return points.length === 2 ? getPointOnLine(points[0], points[1], 0) :
+            getPointOnCubic(points[0], points[1], points[2], points[3], 0);
+        } else if (pointLen >= pathLenAll) {
+          points = pathList[pathList.length - 1];
+          return points.length === 2 ? getPointOnLine(points[0], points[1], 1) :
+            getPointOnCubic(points[0], points[1], points[2], points[3], 1);
+        } else {
+          newPathList = [];
+          while (pointLen > pathSegsLen[++i]) {
+            newPathList.push(pathList[i]);
+            pointLen -= pathSegsLen[i];
+          }
+          points = pathList[i];
+          return points.length === 2 ? getPointOnLine(points[0], points[1], pointLen / pathSegsLen[i]) :
+            getPointOnCubic(points[0], points[1], points[2], points[3],
+              getCubicT(points[0], points[1], points[2], points[3], pointLen));
+        }
+      },
+
       bind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.caption.bind>'); // [DEBUG/]
         var props = bindTarget.props,
@@ -3985,7 +4033,7 @@
         addDelayedProc(function() { // after updating `attachProps.bindTargets`
           attachProps.updateColor();
           if (attachProps.refSocketXY) {
-            attachProps.updateSocketXY();
+            attachProps.updateSocketXY(props);
           } else {
             attachProps.updatePath();
           }
