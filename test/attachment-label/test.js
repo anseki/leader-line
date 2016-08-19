@@ -8,10 +8,12 @@ window.addEventListener('load', function() {
     anchor1 = document.getElementById('anchor-1'),
     style = anchor1.style,
     ll = new LeaderLine(document.getElementById('anchor-0'), anchor1, {
-      color: 'rgba(255, 0, 0, 0.5)', size: 16,
-      startLabel: 'startLabel',
-      endLabel: 'endLabel',
-      middleLabel: 'middleLabel'
+      color: 'rgba(255, 0, 0, 0.5)', endPlug: 'disc', endPlugSize: 4,
+      startLabel: '[startLabel]',
+      endLabel: '[endLabel]',
+      // startLabel: LeaderLine.caption({text: '[startLabel]', offset: [0, 0]}),
+      // endLabel: LeaderLine.caption({text: '[endLabel]', offset: [0, 0]}),
+      middleLabel: '[middleLabel]'
     }),
 
     body = document.body,

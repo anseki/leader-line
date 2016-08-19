@@ -3850,43 +3850,43 @@
           traceLog.add('<ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats, socketXY = llStats.position_socketXYSE[attachProps.socketIndex],
-            margin, plugBCircle, anotherSocketXY, value, updated = {};
+            margin, socketBCircle, anotherSocketXY, value, updated = {};
 
           updated.anchorX = setStat(attachProps, curStats, 'anchorX', socketXY.x
             /* [DEBUG] */, null, 'curStats.anchorX=%s'/* [/DEBUG] */);
           updated.anchorY = setStat(attachProps, curStats, 'anchorY', socketXY.y
             /* [DEBUG] */, null, 'curStats.anchorY=%s'/* [/DEBUG] */);
 
-          if (updated.anchorX || updated.anchorY) {
-            if (attachProps.offset) {
-              curStats.x = curStats.anchorX + attachProps.offset.x;
-              curStats.y = curStats.anchorY + attachProps.offset.y;
+          if (attachProps.offset) {
+            curStats.x = curStats.anchorX + attachProps.offset.x;
+            curStats.y = curStats.anchorY + attachProps.offset.y;
+          } else {
+            margin = attachProps.height / 2; // Half of line height
+            socketBCircle = Math.max(llStats.viewBox_plugBCircleSE[attachProps.socketIndex] || 0,
+              llStats.line_strokeWidth / 2);
+            anotherSocketXY = llStats.position_socketXYSE[attachProps.socketIndex ? 0 : 1];
+            if (socketXY.socketId === SOCKET_LEFT || socketXY.socketId === SOCKET_RIGHT) {
+              curStats.x = socketXY.socketId === SOCKET_LEFT ?
+                curStats.anchorX - margin - attachProps.width : curStats.anchorX + margin;
+              curStats.y = anotherSocketXY.y < socketXY.y ?
+                curStats.anchorY + socketBCircle + margin :
+                curStats.anchorY - socketBCircle - margin - attachProps.height;
             } else {
-              margin = attachProps.height / 2; // Half of line height
-              plugBCircle = llStats.viewBox_plugBCircleSE[attachProps.socketIndex] || 0;
-              if (plugBCircle < margin) { plugBCircle = margin; }
-              anotherSocketXY = llStats.position_socketXYSE[attachProps.socketIndex ? 0 : 1];
-              if (socketXY.socketId === SOCKET_LEFT || socketXY.socketId === SOCKET_RIGHT) {
-                curStats.x = socketXY.socketId === SOCKET_LEFT ?
-                  curStats.anchorX - attachProps.width - margin : curStats.anchorX + margin;
-                curStats.y = anotherSocketXY.y < socketXY.y ?
-                  curStats.anchorY + plugBCircle : curStats.anchorY - attachProps.height - plugBCircle;
-              } else {
-                curStats.x = anotherSocketXY.x < socketXY.x ?
-                  curStats.anchorX + plugBCircle : curStats.anchorX - attachProps.width - plugBCircle;
-                curStats.y = socketXY.socketId === SOCKET_TOP ?
-                  curStats.anchorY - attachProps.height - margin : curStats.anchorY + margin;
-              }
+              curStats.x = anotherSocketXY.x < socketXY.x ?
+                curStats.anchorX + socketBCircle + margin :
+                curStats.anchorX - socketBCircle - margin - attachProps.width;
+              curStats.y = socketXY.socketId === SOCKET_TOP ?
+                curStats.anchorY - margin - attachProps.height : curStats.anchorY + margin;
             }
+          }
 
-            if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
-                /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.x=%s'/* [/DEBUG] */)) {
-              attachProps.elmPosition.x.baseVal.getItem(0).value = value;
-            }
-            if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
-                /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.y=%s'/* [/DEBUG] */)) {
-              attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
-            }
+          if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
+              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.x=%s'/* [/DEBUG] */)) {
+            attachProps.elmPosition.x.baseVal.getItem(0).value = value;
+          }
+          if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
+              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.y=%s'/* [/DEBUG] */)) {
+            attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
           }
           traceLog.add('</ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
         };
