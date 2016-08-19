@@ -1,0 +1,58 @@
+
+#view {
+  position: relative;
+  width: 800px;
+  height: 800px;
+  background-color: #ddd;
+}
+
+.anchor {
+  width: 80px;
+  height: 80px;
+  position: absolute;
+}
+
+#anchor-0 {
+  left: 360px;
+  top: 360px;
+  background-color: rgba(127, 205, 255, 0.8);
+}
+
+#anchor-1 {
+  left: 0;
+  top: 0;
+  background-color: rgba(255, 127, 205, 0.8);
+}
+
+/* draggable */
+
+body * {
+  /* stylelint-disable property-no-vendor-prefix */
+  -moz-user-select: -moz-none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* stylelint-enable property-no-vendor-prefix */
+}
+
+.draggable,
+.draggable * {
+  /* stylelint-disable value-no-vendor-prefix */
+  cursor: move;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+  /* cursor: -o-grab;
+  cursor: -ms-grab; */
+  /* stylelint-enable value-no-vendor-prefix */
+}
+
+.dragging,
+.dragging * {
+  /* stylelint-disable value-no-vendor-prefix */
+  cursor: crosshair;
+  cursor: -moz-grabbing;
+  cursor: -webkit-grabbing;
+  /* cursor: -o-grabbing;
+  cursor: -ms-grabbing; */
+  /* stylelint-enable value-no-vendor-prefix */
+}

@@ -11,6 +11,7 @@
     "url": "https://github.com/anseki"
   },
   "devDependencies": {
+    "anim-event": "0.0.1",
     "cheerio": "^0.20.0",
     "clean-css": "^3.4.17",
     "grunt": "^1.0.1",

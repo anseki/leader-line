@@ -37,6 +37,11 @@ http.createServer((request, response) => {
           allowOutside: true
         },
         {
+          match: '/anim-event.min.js',
+          serve: '../node_modules/anim-event/anim-event.min.js',
+          allowOutside: true
+        },
+        {
           match: /^\/src/,
           serve: '..<% reqPath %>',
           allowOutside: true
