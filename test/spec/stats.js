@@ -1186,8 +1186,10 @@ describe('stats', function() {
       '<updatePlug>',
         // default stats: plug_enabledSE[0], plug_plugSE[0], plug_colorTraSE
         'plug_colorSE[0]=coral',
+        'attach_plugSideLenSE[0]', 'attach_plugBackLenSE[0]',
         'plug_enabledSE[1]=true', 'plug_plugSE[1]=arrow1', 'plug_colorSE[1]=coral',
         'plug_markerWidthSE[1]', 'plug_markerHeightSE[1]',
+        'attach_plugSideLenSE[1]', 'attach_plugBackLenSE[1]',
         'plug_enabled=true',
       '</updatePlug>',
 

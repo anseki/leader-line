@@ -1015,8 +1015,10 @@
         curStats.viewBox_plugBCircleSE[i] = plugSideLen = plugBackLen = 0;
       }
       // Check events for attachment
-      setStat(props, curStats.attach_plugSideLenSE, i, plugSideLen, events.cur_attach_plugSideLenSE);
-      setStat(props, curStats.attach_plugBackLenSE, i, plugBackLen, events.cur_attach_plugBackLenSE);
+      setStat(props, curStats.attach_plugSideLenSE, i, plugSideLen, events.cur_attach_plugSideLenSE
+        /* [DEBUG] */, 'attach_plugSideLenSE[' + i + ']%_'/* [/DEBUG] */);
+      setStat(props, curStats.attach_plugBackLenSE, i, plugBackLen, events.cur_attach_plugBackLenSE
+        /* [DEBUG] */, 'attach_plugBackLenSE[' + i + ']%_'/* [/DEBUG] */);
       curStats.capsMaskAnchor_enabledSE[i] = !curStats.plug_enabledSE[i];
     });
 
@@ -3806,7 +3808,7 @@
 
     caption: {
       type: 'label',
-      stats: {color: {}, x: {}, y: {}, anchorX: {}, anchorY: {}},
+      stats: {color: {}, x: {}, y: {}},
       textStyleProps: ['fontSize'],
 
       // attachOptions: text, color(A), outlineColor, offset(A), <textStyleProps>
@@ -3859,18 +3861,13 @@
           traceLog.add('<ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats, socketXY = llStats.position_socketXYSE[attachProps.socketIndex],
-            margin, plugSideLen, anotherSocketXY, value, updated = {};
+            margin, plugSideLen, anotherSocketXY, value;
           // It's not ready yet.
           if (socketXY.x == null) { return; } // eslint-disable-line eqeqeq
 
-          updated.anchorX = setStat(attachProps, curStats, 'anchorX', socketXY.x
-            /* [DEBUG] */, null, 'curStats.anchorX=%s'/* [/DEBUG] */);
-          updated.anchorY = setStat(attachProps, curStats, 'anchorY', socketXY.y
-            /* [DEBUG] */, null, 'curStats.anchorY=%s'/* [/DEBUG] */);
-
           if (attachProps.offset) {
-            curStats.x = curStats.anchorX + attachProps.offset.x;
-            curStats.y = curStats.anchorY + attachProps.offset.y;
+            curStats.x = socketXY.x + attachProps.offset.x;
+            curStats.y = socketXY.y + attachProps.offset.y;
           } else {
             margin = attachProps.height / 2; // Half of line height
             plugSideLen = Math.max(llStats.attach_plugSideLenSE[attachProps.socketIndex] || 0,
@@ -3878,16 +3875,16 @@
             anotherSocketXY = llStats.position_socketXYSE[attachProps.socketIndex ? 0 : 1];
             if (socketXY.socketId === SOCKET_LEFT || socketXY.socketId === SOCKET_RIGHT) {
               curStats.x = socketXY.socketId === SOCKET_LEFT ?
-                curStats.anchorX - margin - attachProps.width : curStats.anchorX + margin;
+                socketXY.x - margin - attachProps.width : socketXY.x + margin;
               curStats.y = anotherSocketXY.y < socketXY.y ?
-                curStats.anchorY + plugSideLen + margin :
-                curStats.anchorY - plugSideLen - margin - attachProps.height;
+                socketXY.y + plugSideLen + margin :
+                socketXY.y - plugSideLen - margin - attachProps.height;
             } else {
               curStats.x = anotherSocketXY.x < socketXY.x ?
-                curStats.anchorX + plugSideLen + margin :
-                curStats.anchorX - plugSideLen - margin - attachProps.width;
+                socketXY.x + plugSideLen + margin :
+                socketXY.x - plugSideLen - margin - attachProps.width;
               curStats.y = socketXY.socketId === SOCKET_TOP ?
-                curStats.anchorY - margin - attachProps.height : curStats.anchorY + margin;
+                socketXY.y - margin - attachProps.height : socketXY.y + margin;
             }
           }
 
@@ -3902,17 +3899,36 @@
           traceLog.add('</ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
         };
 
-        attachProps.updatePath = function() {
+        attachProps.updatePath = function(props) {
           traceLog.add('<ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
-          // var
-          //   point = ATTACHMENTS.caption.getMidPoint(
-          //     props.pathList.animVal || props.pathList.baseVal, attachProps.lineOffset);
+          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+            pathList = props.pathList.animVal || props.pathList.baseVal,
+            point, value;
+
+          point = ATTACHMENTS.caption.getMidPoint(pathList, attachProps.lineOffset);
+          curStats.x = point.x - attachProps.width / 2;
+          curStats.y = point.y - attachProps.height / 2;
+
+          if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
+              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.x=%s'/* [/DEBUG] */)) {
+            attachProps.elmPosition.x.baseVal.getItem(0).value = value;
+          }
+          if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
+              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.y=%s'/* [/DEBUG] */)) {
+            attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
+          }
           traceLog.add('</ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
         };
 
-        attachProps.updateShow = function() {
-          // svgShow(attachProps, attachProps.bindTargets.some(
-          //   function(bindTarget) { return bindTarget.props.isShown === true; }));
+        attachProps.updateShow = function(props) {
+          traceLog.add('<ATTACHMENTS.caption.updateShow>'); // [DEBUG/]
+          var on = props.isShown === true;
+          if (on !== attachProps.isShown) {
+            traceLog.add('on=' + on); // [DEBUG/]
+            attachProps.styleShow.visibility = on ? '' : 'hidden';
+            attachProps.isShown = on;
+          }
+          traceLog.add('</ATTACHMENTS.caption.updateShow>'); // [DEBUG/]
         };
 
         traceLog.add('</ATTACHMENTS.caption.init>'); // [DEBUG/]
@@ -3925,7 +3941,7 @@
        * @param {SVGSVGElement} svg - Parent `<svg>` element.
        * @param {string} id - ID of `<text>` element.
        * @param {boolean} [stroke] - Setup for `stroke`.
-       * @returns {Object} - {elmPosition, styleText, styleFill, styleStroke, elmsAppend}
+       * @returns {Object} - {elmPosition, styleText, styleFill, styleStroke, styleShow, elmsAppend}
        */
       newText: function(text, document, svg, id, stroke) {
         var elmText, elmG, elmDefs, elmUseFill, elmUseStroke, style;
@@ -3957,6 +3973,7 @@
             styleText: elmText.style,
             styleFill: elmUseFill.style,
             styleStroke: style,
+            styleShow: elmG.style,
             elmsAppend: [elmDefs, elmG]
           };
 
@@ -3971,6 +3988,7 @@
             styleText: style,
             styleFill: style,
             styleStroke: stroke ? style : null,
+            styleShow: style,
             elmsAppend: [elmText]
           };
         }
@@ -4015,8 +4033,11 @@
 
         attachProps.elmPosition = text.elmPosition;
         attachProps.styleFill = text.styleFill;
+        attachProps.styleShow = text.styleShow;
         attachProps.elmsAppend = text.elmsAppend;
 
+        attachProps.isShown = false;
+        attachProps.styleShow.visibility = 'hidden';
         ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
           if (attachProps[propName]) { text.styleText[propName] = attachProps[propName]; }
         });
@@ -4050,9 +4071,9 @@
           if (attachProps.refSocketXY) {
             attachProps.updateSocketXY(props);
           } else {
-            attachProps.updatePath();
+            attachProps.updatePath(props);
           }
-          attachProps.updateShow();
+          attachProps.updateShow(props);
         });
         traceLog.add('</ATTACHMENTS.caption.bind>'); // [DEBUG/]
         return true;
