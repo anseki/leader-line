@@ -118,6 +118,8 @@ module.exports = grunt => {
                 codeSrc.SYMBOLS[id].widthR = bBox.width / DEFAULT_LINE_SIZE;
                 codeSrc.SYMBOLS[id].heightR = bBox.height / DEFAULT_LINE_SIZE;
                 codeSrc.SYMBOLS[id].bCircle = Math.max(-bBox.left, -bBox.top, bBox.right, bBox.bottom);
+                codeSrc.SYMBOLS[id].sideLen = Math.max(-bBox.top, bBox.bottom);
+                codeSrc.SYMBOLS[id].backLen = -bBox.left;
                 codeSrc.SYMBOLS[id].overhead = noOverhead ? 0 : bBox.right;
 
                 if ((outlineBase = $('.outline-base', elm)).length &&

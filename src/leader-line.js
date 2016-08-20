@@ -55,6 +55,8 @@
      * @property {number} widthR
      * @property {number} heightR
      * @property {number} bCircle
+     * @property {number} sideLen
+     * @property {number} backLen
      * @property {number} overhead
      * @property {(boolean|null)} noRotate
      * @property {(number|null)} outlineBase
@@ -165,7 +167,8 @@
       capsMaskMarker_enabled: {iniValue: false}, capsMaskMarker_enabledSE: {hasSE: true, iniValue: false},
       capsMaskMarker_plugSE: {hasSE: true, iniValue: PLUG_BEHIND},
       capsMaskMarker_markerWidthSE: {hasSE: true}, capsMaskMarker_markerHeightSE: {hasSE: true},
-      caps_enabled: {iniValue: false}
+      caps_enabled: {iniValue: false},
+      attach_plugSideLenSE: {hasSE: true}, attach_plugBackLenSE: {hasSE: true}
     },
     SHOW_STATS = {
       show_on: {}, show_effect: {}, show_animOptions: {}, show_animId: {}, show_inAnim: {}
@@ -951,7 +954,8 @@
     updated = setStat(props, curStats, 'line_color', options.lineColor,
       events.cur_line_color) || updated;
     updated = setStat(props, curStats, 'line_colorTra', getAlpha(curStats.line_color)[0] < 1) || updated;
-    updated = setStat(props, curStats, 'line_strokeWidth', options.lineSize) || updated;
+    updated = setStat(props, curStats, 'line_strokeWidth', options.lineSize,
+      events.cur_line_strokeWidth) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
     traceLog.add('</updateLine>'); // [DEBUG/]
@@ -969,7 +973,7 @@
 
     [0, 1].forEach(function(i) {
       var plugId = options.plugSE[i], symbolConf,
-        width, height, plugMarkerWidth, plugMarkerHeight, value;
+        width, height, plugMarkerWidth, plugMarkerHeight, plugSideLen, plugBackLen, value;
 
       updated = setStat(props, curStats.plug_enabledSE, i, plugId !== PLUG_BEHIND
         /* [DEBUG] */, null, 'plug_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
@@ -1001,13 +1005,18 @@
 
       curStats.plugOutline_plugSE[i] = curStats.capsMaskMarker_plugSE[i] = plugId;
       if (curStats.plug_enabledSE[i]) {
-        value = curStats.line_strokeWidth / DEFAULT_OPTIONS.lineSize;
-        curStats.position_plugOverheadSE[i] = value * symbolConf.overhead * options.plugSizeSE[i];
-        curStats.viewBox_plugBCircleSE[i] = value * symbolConf.bCircle * options.plugSizeSE[i];
+        value = curStats.line_strokeWidth / DEFAULT_OPTIONS.lineSize * options.plugSizeSE[i];
+        curStats.position_plugOverheadSE[i] = symbolConf.overhead * value;
+        curStats.viewBox_plugBCircleSE[i] = symbolConf.bCircle * value;
+        plugSideLen = symbolConf.sideLen * value;
+        plugBackLen = symbolConf.backLen * value;
       } else {
         curStats.position_plugOverheadSE[i] = -(curStats.line_strokeWidth / 2);
-        curStats.viewBox_plugBCircleSE[i] = 0;
+        curStats.viewBox_plugBCircleSE[i] = plugSideLen = plugBackLen = 0;
       }
+      // Check events for attachment
+      setStat(props, curStats.attach_plugSideLenSE, i, plugSideLen, events.cur_attach_plugSideLenSE);
+      setStat(props, curStats.attach_plugBackLenSE, i, plugBackLen, events.cur_attach_plugBackLenSE);
       curStats.capsMaskAnchor_enabledSE[i] = !curStats.plug_enabledSE[i];
     });
 
@@ -3850,7 +3859,9 @@
           traceLog.add('<ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats, socketXY = llStats.position_socketXYSE[attachProps.socketIndex],
-            margin, socketBCircle, anotherSocketXY, value, updated = {};
+            margin, plugSideLen, anotherSocketXY, value, updated = {};
+          // It's not ready yet.
+          if (socketXY.x == null) { return; } // eslint-disable-line eqeqeq
 
           updated.anchorX = setStat(attachProps, curStats, 'anchorX', socketXY.x
             /* [DEBUG] */, null, 'curStats.anchorX=%s'/* [/DEBUG] */);
@@ -3862,19 +3873,19 @@
             curStats.y = curStats.anchorY + attachProps.offset.y;
           } else {
             margin = attachProps.height / 2; // Half of line height
-            socketBCircle = Math.max(llStats.viewBox_plugBCircleSE[attachProps.socketIndex] || 0,
+            plugSideLen = Math.max(llStats.attach_plugSideLenSE[attachProps.socketIndex] || 0,
               llStats.line_strokeWidth / 2);
             anotherSocketXY = llStats.position_socketXYSE[attachProps.socketIndex ? 0 : 1];
             if (socketXY.socketId === SOCKET_LEFT || socketXY.socketId === SOCKET_RIGHT) {
               curStats.x = socketXY.socketId === SOCKET_LEFT ?
                 curStats.anchorX - margin - attachProps.width : curStats.anchorX + margin;
               curStats.y = anotherSocketXY.y < socketXY.y ?
-                curStats.anchorY + socketBCircle + margin :
-                curStats.anchorY - socketBCircle - margin - attachProps.height;
+                curStats.anchorY + plugSideLen + margin :
+                curStats.anchorY - plugSideLen - margin - attachProps.height;
             } else {
               curStats.x = anotherSocketXY.x < socketXY.x ?
-                curStats.anchorX + socketBCircle + margin :
-                curStats.anchorX - socketBCircle - margin - attachProps.width;
+                curStats.anchorX + plugSideLen + margin :
+                curStats.anchorX - plugSideLen - margin - attachProps.width;
               curStats.y = socketXY.socketId === SOCKET_TOP ?
                 curStats.anchorY - margin - attachProps.height : curStats.anchorY + margin;
             }
@@ -4026,6 +4037,10 @@
             bindTarget.optionName === 'startLabel' || bindTarget.optionName === 'endLabel')) {
           attachProps.socketIndex = bindTarget.optionName === 'startLabel' ? 0 : 1;
           addEventHandler(props, 'apl_position', attachProps.updateSocketXY);
+          if (!attachProps.offset) {
+            addEventHandler(props, 'cur_attach_plugSideLenSE', attachProps.updateSocketXY);
+            addEventHandler(props, 'cur_line_strokeWidth', attachProps.updateSocketXY);
+          }
         } else {
           addEventHandler(props, 'apl_path', attachProps.updatePath);
         }
@@ -4049,6 +4064,10 @@
         if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         if (attachProps.refSocketXY) {
           removeEventHandler(props, 'apl_position', attachProps.updateSocketXY);
+          if (!attachProps.offset) {
+            removeEventHandler(props, 'cur_attach_plugSideLenSE', attachProps.updateSocketXY);
+            removeEventHandler(props, 'cur_line_strokeWidth', attachProps.updateSocketXY);
+          }
         } else {
           removeEventHandler(props, 'apl_path', attachProps.updatePath);
         }
