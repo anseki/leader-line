@@ -951,8 +951,7 @@
     var options = props.options, curStats = props.curStats, events = props.events,
       updated = false;
 
-    updated = setStat(props, curStats, 'line_color', options.lineColor,
-      events.cur_line_color) || updated;
+    updated = setStat(props, curStats, 'line_color', options.lineColor, events.cur_line_color) || updated;
     updated = setStat(props, curStats, 'line_colorTra', getAlpha(curStats.line_color)[0] < 1) || updated;
     updated = setStat(props, curStats, 'line_strokeWidth', options.lineSize,
       events.cur_line_strokeWidth) || updated;
@@ -2276,10 +2275,8 @@
    * @returns {void}
    */
   function unbindAttachment(props, attachProps, dontRemove) {
-    var i;
-    if ((i = props.attachments.indexOf(attachProps)) > -1) {
-      props.attachments.splice(i, 1);
-    }
+    var i = props.attachments.indexOf(attachProps);
+    if (i > -1) { props.attachments.splice(i, 1); }
 
     if (attachProps.bindTargets.some(function(bindTarget, iTarget) {
       if (bindTarget.props === props) {
@@ -2856,11 +2853,8 @@
           effectOptions = aplStats.dash_options,
           update = false, timeRatio;
 
-        checkCurStats(props, 'dash_len', null, effectOptions.len || aplStats.line_strokeWidth * 2); // [DEBUG/]
         curStats.dash_len = effectOptions.len || aplStats.line_strokeWidth * 2;
-        checkCurStats(props, 'dash_gap', null, effectOptions.gap || aplStats.line_strokeWidth); // [DEBUG/]
         curStats.dash_gap = effectOptions.gap || aplStats.line_strokeWidth;
-        checkCurStats(props, 'dash_maxOffset', null, curStats.dash_len + curStats.dash_gap); // [DEBUG/]
         curStats.dash_maxOffset = curStats.dash_len + curStats.dash_gap;
 
         update = setStat(props, aplStats, 'dash_len', curStats.dash_len
@@ -2946,7 +2940,6 @@
           pathSeg, point;
 
         [0, 1].forEach(function(i) {
-          checkCurStats(props, 'gradient_colorSE', i, effectOptions.colorSE[i] || curStats.plug_colorSE[i]); // [DEBUG/]
           curStats.gradient_colorSE[i] = effectOptions.colorSE[i] || curStats.plug_colorSE[i];
         });
 
@@ -3485,9 +3478,7 @@
             llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
             value;
 
-          checkCurStats(attachProps, 'color', null, attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor)); // [DEBUG/]
           curStats.color = attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor);
-
           if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
               /* [DEBUG] */, null, 'ATTACHMENTS.area.aplStats.color=%s'/* [/DEBUG] */)) {
             attachProps.path.style.stroke = value;
@@ -3841,15 +3832,12 @@
         attachProps.id = id;
 
         // event handler for each instance
-        attachProps.updateColor = function() {
+        attachProps.updateColor = function(props) {
           traceLog.add('<ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null,
-            value;
+            llStats = props.curStats, value;
 
-          checkCurStats(attachProps, 'color', null, attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor)); // [DEBUG/]
-          curStats.color = attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor);
-
+          curStats.color = attachProps.color || llStats.line_color;
           if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
               /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.color=%s'/* [/DEBUG] */)) {
             attachProps.styleFill.fill = value;
@@ -4052,6 +4040,10 @@
           text.styleStroke.strokeWidth = strokeWidth + 'px';
           text.styleStroke.stroke = attachProps.outlineColor;
         }
+
+        //     llStats = attachProps.bindTargets.length ? attachProps.bindTargets[0].props.curStats : null;
+        // attachProps.bindTargets.slice().forEach( // Copy bindTargets because removeOption may change array.
+        //   function(bindTarget) { attachProps.conf.removeOption(attachProps, bindTarget); });
 
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         if ((attachProps.refSocketXY =

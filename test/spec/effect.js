@@ -482,9 +482,6 @@ describe('effect', function() {
       expect(traceLog.log).toContain('<EFFECTS.dash.init>');
       expect(props.events.apl_line_strokeWidth.length).toBe(1); // addEventHandler
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
-        'curStats.dash_len=' + len,
-        'curStats.dash_gap=' + gap,
-        'curStats.dash_maxOffset=' + (len + gap),
         'aplStats.dash_len=' + len,
         'aplStats.dash_gap=' + gap
       ]);
@@ -504,9 +501,6 @@ describe('effect', function() {
       expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.remove>']);
       expect(traceLog.getTaggedLog('updateFaces')).toContain('line_strokeWidth=5');
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
-        'curStats.dash_len=' + len,
-        'curStats.dash_gap=' + gap,
-        'curStats.dash_maxOffset=' + (len + gap),
         'aplStats.dash_len=' + len,
         'aplStats.dash_gap=' + gap
       ]);
@@ -526,8 +520,6 @@ describe('effect', function() {
       expect(traceLog.log).toContainAll(['<EFFECTS.dash.remove>', '<EFFECTS.dash.init>']);
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
         // curStats.dash_len are not updated (curStats* were not cleared by remove())
-        'curStats.dash_gap=' + gap,
-        'curStats.dash_maxOffset=' + (len + gap),
         'aplStats.dash_len=' + len,
         'aplStats.dash_gap=' + gap
       ]);
@@ -547,8 +539,6 @@ describe('effect', function() {
       expect(traceLog.log).toContainAll(['<EFFECTS.dash.remove>', '<EFFECTS.dash.init>']);
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
         // curStats.dash_maxOffset are not updated (curStats* were not cleared by remove())
-        'curStats.dash_len=' + len,
-        'curStats.dash_gap=' + gap,
         'aplStats.dash_len=' + len,
         'aplStats.dash_gap=' + gap
       ]);
@@ -619,9 +609,6 @@ describe('effect', function() {
       expect(traceLog.log).toContain('<EFFECTS.dash.init>');
       expect(props.events.apl_line_strokeWidth.length).toBe(1); // addEventHandler
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
-        'curStats.dash_len=' + len,
-        'curStats.dash_gap=' + gap,
-        'curStats.dash_maxOffset=' + (len + gap),
         'aplStats.dash_len=' + len,
         'aplStats.dash_gap=' + gap,
         'aplStats.dash_maxOffset=' + (len + gap),
@@ -665,9 +652,6 @@ describe('effect', function() {
       expect(traceLog.log).toNotContainAny(['<EFFECTS.dash.init>', '<EFFECTS.dash.remove>']);
       expect(traceLog.getTaggedLog('updateFaces')).toContain('line_strokeWidth=6');
       expect(traceLog.getTaggedLog('EFFECTS.dash.update')).toEqual([
-        'curStats.dash_len=' + len,
-        'curStats.dash_gap=' + gap,
-        'curStats.dash_maxOffset=' + (len + gap),
         'aplStats.dash_len=' + len,
         'aplStats.dash_gap=' + gap,
         'aplStats.dash_maxOffset=' + (len + gap),
@@ -739,8 +723,6 @@ describe('effect', function() {
       expect(props.events.cur_plug_colorSE.length).toBe(1); // addEventHandler
       expect(props.events.apl_path.length).toBe(1); // addEventHandler
       expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
-        'curStats.gradient_colorSE[0]=' + color0,
-        'curStats.gradient_colorSE[1]=' + color1,
         'aplStats.gradient_colorSE[0]=' + color0,
         'aplStats.gradient_pointSE[0].x', 'aplStats.gradient_pointSE[0].y',
         'aplStats.gradient_colorSE[1]=' + color1,
@@ -760,10 +742,7 @@ describe('effect', function() {
       ll.startPlugColor = (color0 = 'green');
       expect(traceLog.log).toNotContainAny(['<EFFECTS.gradient.init>', '<EFFECTS.gradient.remove>']);
       expect(traceLog.getTaggedLog('updatePlug')).toContain('plug_colorSE[0]=green');
-      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
-        'curStats.gradient_colorSE[0]=' + color0,
-        'aplStats.gradient_colorSE[0]=' + color0
-      ]);
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual(['aplStats.gradient_colorSE[0]=' + color0]);
       expect(props.curStats.gradient_colorSE[0]).toBe(color0);
       expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
       expect(props.curStats.gradient_colorSE[1]).toBe(color1);
@@ -780,10 +759,7 @@ describe('effect', function() {
       expect(traceLog.log).toNotContainAny(['<EFFECTS.gradient.init>', '<EFFECTS.gradient.remove>']);
       expect(traceLog.getTaggedLog('updateLine')).toContain('line_color=lime');
       expect(traceLog.getTaggedLog('updatePlug')).toContain('plug_colorSE[1]=lime');
-      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
-        'curStats.gradient_colorSE[1]=' + color1,
-        'aplStats.gradient_colorSE[1]=' + color1
-      ]);
+      expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual(['aplStats.gradient_colorSE[1]=' + color1]);
       expect(props.curStats.gradient_colorSE[0]).toBe(color0);
       expect(props.aplStats.gradient_colorSE[0]).toBe(color0);
       expect(props.curStats.gradient_colorSE[1]).toBe(color1);
@@ -819,7 +795,6 @@ describe('effect', function() {
       expect(traceLog.log).toContainAll(['<EFFECTS.gradient.remove>', '<EFFECTS.gradient.init>']);
       expect(traceLog.getTaggedLog('EFFECTS.gradient.update')).toEqual([
         // curStats.gradient_colorSE[0] are not updated (curStats* were not cleared by remove())
-        'curStats.gradient_colorSE[1]=' + color1,
         'aplStats.gradient_colorSE[0]=' + color0,
         'aplStats.gradient_pointSE[0].x', 'aplStats.gradient_pointSE[0].y',
         'aplStats.gradient_colorSE[1]=' + color1,
