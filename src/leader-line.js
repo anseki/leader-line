@@ -2857,17 +2857,14 @@
         curStats.dash_gap = effectOptions.gap || aplStats.line_strokeWidth;
         curStats.dash_maxOffset = curStats.dash_len + curStats.dash_gap;
 
-        update = setStat(props, aplStats, 'dash_len', curStats.dash_len
-          /* [DEBUG] */, null, 'aplStats.dash_len=%s'/* [/DEBUG] */) || update;
-        update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap
-          /* [DEBUG] */, null, 'aplStats.dash_gap=%s'/* [/DEBUG] */) || update;
+        update = setStat(props, aplStats, 'dash_len', curStats.dash_len) || update;
+        update = setStat(props, aplStats, 'dash_gap', curStats.dash_gap) || update;
         if (update) {
           props.lineFace.style.strokeDasharray = aplStats.dash_len + ',' + aplStats.dash_gap;
         }
 
         if (curStats.dash_animOptions) {
-          update = setStat(props, aplStats, 'dash_maxOffset', curStats.dash_maxOffset
-            /* [DEBUG] */, null, 'aplStats.dash_maxOffset=%s'/* [/DEBUG] */);
+          update = setStat(props, aplStats, 'dash_maxOffset', curStats.dash_maxOffset);
 
           if (aplStats.dash_animOptions && ( // ON -> ON (update)
               // Normally, animOptions is not changed because the effect was removed when it was changed.
@@ -2953,7 +2950,7 @@
           var value;
 
           if (setStat(props, aplStats.gradient_colorSE, i, (value = curStats.gradient_colorSE[i])
-              /* [DEBUG] */, null, 'aplStats.gradient_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
+              /* [DEBUG] */, null, 'gradient_colorSE[' + i + ']=%s'/* [/DEBUG] */)) {
             if (IS_WEBKIT) {
               // [WEBKIT] stopColor doesn't support alpha channel
               value = getAlpha(value);
@@ -2966,7 +2963,7 @@
 
           ['x', 'y'].forEach(function(pointKey) {
             if ((value = curStats.gradient_pointSE[i][pointKey]) !== aplStats.gradient_pointSE[i][pointKey]) {
-              traceLog.add('aplStats.gradient_pointSE[' + i + '].' + pointKey); // [DEBUG/]
+              traceLog.add('gradient_pointSE[' + i + '].' + pointKey); // [DEBUG/]
               props.lineGradient[pointKey + (i + 1)].baseVal.value = aplStats.gradient_pointSE[i][pointKey] = value;
             }
           });
@@ -3479,8 +3476,7 @@
             value;
 
           curStats.color = attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor);
-          if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
-              /* [DEBUG] */, null, 'ATTACHMENTS.area.aplStats.color=%s'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'color', (value = curStats.color))) {
             attachProps.path.style.stroke = value;
           }
           traceLog.add('</ATTACHMENTS.area.updateColor>'); // [DEBUG/]
@@ -3571,14 +3567,11 @@
 
         updated.strokeWidth = setStat(attachProps, curStats, 'strokeWidth',
           attachProps.size != null ? attachProps.size : // eslint-disable-line eqeqeq
-            (llStats ? llStats.line_strokeWidth : DEFAULT_OPTIONS.lineSize)
-          /* [DEBUG] */, null, 'curStats.strokeWidth=%s'/* [/DEBUG] */);
+            (llStats ? llStats.line_strokeWidth : DEFAULT_OPTIONS.lineSize));
 
         elementBBox = getBBox(attachProps.element);
-        updated.elementWidth = setStat(attachProps, curStats, 'elementWidth', elementBBox.width
-          /* [DEBUG] */, null, 'curStats.elementWidth=%s'/* [/DEBUG] */);
-        updated.elementHeight = setStat(attachProps, curStats, 'elementHeight', elementBBox.height
-          /* [DEBUG] */, null, 'curStats.elementHeight=%s'/* [/DEBUG] */);
+        updated.elementWidth = setStat(attachProps, curStats, 'elementWidth', elementBBox.width);
+        updated.elementHeight = setStat(attachProps, curStats, 'elementHeight', elementBBox.height);
 
         if (updated.strokeWidth ||
             attachProps.hasRatio && (updated.elementWidth || updated.elementHeight)) { // generate path
@@ -3763,14 +3756,13 @@
           });
         }
 
-        if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth)
-            /* [DEBUG] */, null, 'aplStats.strokeWidth=%s'/* [/DEBUG] */)) {
+        if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth))) {
           attachProps.path.style.strokeWidth = value + 'px';
         }
 
         // Apply `pathData`
         if (pathDataHasChanged((value = curStats.pathData), aplStats.pathData)) {
-          traceLog.add('aplStats.pathData'); // [DEBUG/]
+          traceLog.add('pathData'); // [DEBUG/]
           attachProps.path.setPathData(value);
           aplStats.pathData = value;
         }
@@ -3838,8 +3830,7 @@
             llStats = props.curStats, value;
 
           curStats.color = attachProps.color || llStats.line_color;
-          if (setStat(attachProps, aplStats, 'color', (value = curStats.color)
-              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.color=%s'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'color', (value = curStats.color))) {
             attachProps.styleFill.fill = value;
           }
           traceLog.add('</ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
@@ -3876,12 +3867,10 @@
             }
           }
 
-          if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
-              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.x=%s'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'x', (value = curStats.x))) {
             attachProps.elmPosition.x.baseVal.getItem(0).value = value;
           }
-          if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
-              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.y=%s'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'y', (value = curStats.y))) {
             attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
           }
           traceLog.add('</ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
@@ -3897,12 +3886,10 @@
           curStats.x = point.x - attachProps.width / 2;
           curStats.y = point.y - attachProps.height / 2;
 
-          if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
-              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.x=%s'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'x', (value = curStats.x))) {
             attachProps.elmPosition.x.baseVal.getItem(0).value = value;
           }
-          if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
-              /* [DEBUG] */, null, 'ATTACHMENTS.caption.aplStats.y=%s'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'y', (value = curStats.y))) {
             attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
           }
           traceLog.add('</ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
@@ -4056,7 +4043,7 @@
         addEventHandler(props, 'svgShow', attachProps.updateShow);
         addDelayedProc(function() { // after updating `attachProps.boundTargets`
           oldBoundTargets.forEach( // Only one target can be bound.
-            function(boundTarget) { attachProps.conf.removeOption(attachProps, boundTarget); });
+            function(boundTarget) { ATTACHMENTS.caption.removeOption(attachProps, boundTarget); });
           attachProps.updateColor(props);
           if (attachProps.refSocketXY) {
             attachProps.updateSocketXY(props);

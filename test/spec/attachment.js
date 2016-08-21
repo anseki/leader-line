@@ -64,7 +64,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
       expect(props.attachments.length).toBe(1);
-      expect(attachProps.bindTargets.length).toBe(1);
+      expect(attachProps.boundTargets.length).toBe(1);
       atc.remove();
       expect(ll.start).toBe(document.getElementById('elm1'));
       expect(ll.end).toBe(document.getElementById('elm3'));
@@ -75,7 +75,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
       expect(props.attachments.length).toBe(1);
-      expect(attachProps.bindTargets.length).toBe(1);
+      expect(attachProps.boundTargets.length).toBe(1);
       atc.remove();
       expect(ll.start).toBe(document.body);
       expect(ll.end).toBe(document.getElementById('elm3'));
@@ -86,7 +86,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       ll.setOptions({start: atc, end: document.body});
       expect(props.attachments.length).toBe(1);
-      expect(attachProps.bindTargets.length).toBe(1);
+      expect(attachProps.boundTargets.length).toBe(1);
       atc.remove();
       expect(ll.start).not.toBe(document.body);
       expect(ll.start instanceof window.LeaderLineAttachment).toBe(true);
@@ -149,10 +149,10 @@ describe('attachment', function() {
 
       // bind
       expect(props1.attachments.length).toBe(0);
-      expect(attachProps1.bindTargets.length).toBe(0);
+      expect(attachProps1.boundTargets.length).toBe(0);
       ll.start = atc1;
       expect(props1.attachments.length).toBe(1);
-      expect(attachProps1.bindTargets.length).toBe(1);
+      expect(attachProps1.boundTargets.length).toBe(1);
       expect(atc1.isRemoved).toBe(false);
       expect(window.insAttachProps[atc1._id] != null).toBe(true); // eslint-disable-line eqeqeq
 
@@ -171,7 +171,7 @@ describe('attachment', function() {
         props2 = window.insProps[ll2._id];
         expect(props1.attachments.length).toBe(1);
         expect(props2.attachments.length).toBe(1);
-        expect(attachProps2.bindTargets.length).toBe(2);
+        expect(attachProps2.boundTargets.length).toBe(2);
         expect(atc2.isRemoved).toBe(false);
         expect(window.insAttachProps[atc2._id] != null).toBe(true); // eslint-disable-line eqeqeq
 
@@ -183,7 +183,7 @@ describe('attachment', function() {
           expect(log != null).toBe(false); // eslint-disable-line eqeqeq
           expect(props1.attachments.length).toBe(0);
           expect(props2.attachments.length).toBe(1);
-          expect(attachProps2.bindTargets.length).toBe(1);
+          expect(attachProps2.boundTargets.length).toBe(1);
           expect(atc2.isRemoved).toBe(false);
           expect(window.insAttachProps[atc2._id] != null).toBe(true); // eslint-disable-line eqeqeq
 
@@ -204,7 +204,7 @@ describe('attachment', function() {
             ll2.start = atc1;
             expect(props1.attachments.length).toBe(1);
             expect(props2.attachments.length).toBe(1);
-            expect(attachProps1.bindTargets.length).toBe(2);
+            expect(attachProps1.boundTargets.length).toBe(2);
             expect(atc1.isRemoved).toBe(false);
             traceLog.clear();
             atc1.remove();
@@ -227,8 +227,8 @@ describe('attachment', function() {
               attachProps2 = window.insAttachProps[atc2._id];
               ll.setOptions({start: atc1, end: atc2});
               expect(props1.attachments.length).toBe(2);
-              expect(attachProps1.bindTargets.length).toBe(1);
-              expect(attachProps2.bindTargets.length).toBe(1);
+              expect(attachProps1.boundTargets.length).toBe(1);
+              expect(attachProps2.boundTargets.length).toBe(1);
               expect(atc1.isRemoved).toBe(false);
               expect(atc2.isRemoved).toBe(false);
               traceLog.clear();
@@ -268,8 +268,8 @@ describe('attachment', function() {
         '<setOptions>', 'needs.position', '</setOptions>',
         '<updatePosition>',
         '<ATTACHMENTS.area.update>',
-        'curStats.strokeWidth=4', 'curStats.elementWidth=100', 'curStats.elementHeight=30',
-        'generate-path', 'aplStats.strokeWidth=4', 'aplStats.pathData',
+        'strokeWidth=4', 'elementWidth=100', 'elementHeight=30',
+        'generate-path', 'strokeWidth=4', 'pathData',
         'x', 'y', 'width', 'height',
         '</ATTACHMENTS.area.update>',
         'position_socketXYSE[0]', 'new-position',
@@ -301,7 +301,7 @@ describe('attachment', function() {
           '</updateMask>',
           '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
           '<execDelayedProcs>',
-          '<ATTACHMENTS.area.updateColor>', 'ATTACHMENTS.area.aplStats.color=coral', '</ATTACHMENTS.area.updateColor>',
+          '<ATTACHMENTS.area.updateColor>', 'color=coral', '</ATTACHMENTS.area.updateColor>',
           '<svgShow>', '</svgShow>',
           '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
           '<svgShow>', '</svgShow>',
@@ -320,7 +320,7 @@ describe('attachment', function() {
         props2 = window.insProps[ll2._id];
         expect(props1.attachments.length).toBe(1);
         expect(props2.attachments.length).toBe(1);
-        expect(attachProps2.bindTargets.length).toBe(2);
+        expect(attachProps2.boundTargets.length).toBe(2);
         expect(props1.events.cur_line_color.length).toBe(1); // addEventHandler
         expect(props1.events.svgShow.length).toBe(1); // addEventHandler
         expect(props2.events.cur_line_color.length).toBe(1); // addEventHandler
@@ -353,7 +353,7 @@ describe('attachment', function() {
           ]);
           expect(props1.attachments.length).toBe(0);
           expect(props2.attachments.length).toBe(1);
-          expect(attachProps2.bindTargets.length).toBe(1);
+          expect(attachProps2.boundTargets.length).toBe(1);
           expect(props1.events.cur_line_color.length).toBe(0); // removeEventHandler
           expect(props1.events.svgShow.length).toBe(0); // removeEventHandler
           expect(props2.events.cur_line_color.length).toBe(1);
@@ -396,7 +396,7 @@ describe('attachment', function() {
             ll2.start = atc1;
             expect(props1.attachments.length).toBe(1);
             expect(props2.attachments.length).toBe(1);
-            expect(attachProps1.bindTargets.length).toBe(2);
+            expect(attachProps1.boundTargets.length).toBe(2);
             expect(props1.events.cur_line_color.length).toBe(1);
             expect(props1.events.svgShow.length).toBe(1);
             expect(props2.events.cur_line_color.length).toBe(1);
@@ -430,9 +430,7 @@ describe('attachment', function() {
                 '</ATTACHMENTS.point.removeOption>',
                 '</LeaderLineAttachment.remove>',
                 '<execDelayedProcs>',
-                '<ATTACHMENTS.area.updateColor>',
-                'ATTACHMENTS.area.aplStats.color=coral',
-                '</ATTACHMENTS.area.updateColor>',
+                '<ATTACHMENTS.area.updateColor>', 'color=coral', '</ATTACHMENTS.area.updateColor>',
                 '<svgShow>', '</svgShow>',
                 '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
                 '<svgShow>', '</svgShow>',
@@ -462,8 +460,8 @@ describe('attachment', function() {
               attachProps2 = window.insAttachProps[atc2._id];
               ll.setOptions({start: atc1, end: atc2});
               expect(props1.attachments.length).toBe(2);
-              expect(attachProps1.bindTargets.length).toBe(1);
-              expect(attachProps2.bindTargets.length).toBe(1);
+              expect(attachProps1.boundTargets.length).toBe(1);
+              expect(attachProps2.boundTargets.length).toBe(1);
               expect(props1.events.cur_line_color.length).toBe(2);
               expect(props1.events.svgShow.length).toBe(2);
               traceLog.clear();
@@ -473,13 +471,9 @@ describe('attachment', function() {
                   '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
                   '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
                   '<execDelayedProcs>',
-                  '<ATTACHMENTS.area.updateColor>',
-                  'ATTACHMENTS.area.aplStats.color=coral',
-                  '</ATTACHMENTS.area.updateColor>',
+                  '<ATTACHMENTS.area.updateColor>', 'color=coral', '</ATTACHMENTS.area.updateColor>',
                   '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.area.updateColor>',
-                  'ATTACHMENTS.area.aplStats.color=coral',
-                  '</ATTACHMENTS.area.updateColor>',
+                  '<ATTACHMENTS.area.updateColor>', 'color=coral', '</ATTACHMENTS.area.updateColor>',
                   '<svgShow>', '</svgShow>',
                   '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
                   '<svgShow>', '</svgShow>',
@@ -660,9 +654,7 @@ describe('attachment', function() {
         expect(traceLog.log).toEqual([
           '<setOptions>', 'needs.line', '</setOptions>',
           '<updateLine>', 'line_color=red',
-          '<ATTACHMENTS.area.updateColor>',
-          'ATTACHMENTS.area.aplStats.color=red',
-          '</ATTACHMENTS.area.updateColor>',
+          '<ATTACHMENTS.area.updateColor>', 'color=red', '</ATTACHMENTS.area.updateColor>',
           '</updateLine>',
           '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
           '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
@@ -871,7 +863,7 @@ describe('attachment', function() {
 
             ll2.start = document.getElementById('elm1');
             setTimeout(function() { // `bind` calls setTimeout
-              expect(attachProps.bindTargets.length).toBe(1);
+              expect(attachProps.boundTargets.length).toBe(1);
               expect(attachProps.isShown).toBe(false);
               expect(attachProps.svg.style.visibility).toBe('hidden');
               pageDone();
