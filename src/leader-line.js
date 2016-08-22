@@ -3804,7 +3804,8 @@
     caption: {
       type: 'label',
       stats: {color: {}, x: {}, y: {}},
-      textStyleProps: ['fontSize'],
+      textStyleProps: ['fontFamily', 'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch',
+        'fontSize', 'fontSizeAdjust', 'kerning', 'letterSpacing', 'wordSpacing', 'textDecoration'],
 
       // attachOptions: text, color(A), outlineColor, offset(A), <textStyleProps>
       init: function(attachProps, attachOptions, id) {
@@ -3829,8 +3830,8 @@
         }
 
         ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
-          if (typeof attachOptions[propName] === 'string') {
-            attachProps[propName] = attachOptions[propName].trim();
+          if (attachOptions[propName] != null) { // eslint-disable-line eqeqeq
+            attachProps[propName] = attachOptions[propName];
           }
         });
         attachProps.id = id;
@@ -4026,7 +4027,9 @@
         attachProps.isShown = false;
         attachProps.styleShow.visibility = 'hidden';
         ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
-          if (attachProps[propName]) { text.styleText[propName] = attachProps[propName]; }
+          if (attachProps[propName] != null) { // eslint-disable-line eqeqeq
+            text.styleText[propName] = attachProps[propName];
+          }
         });
 
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
