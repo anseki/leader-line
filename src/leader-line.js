@@ -2391,9 +2391,11 @@
           (newOption.nodeType != null || // eslint-disable-line eqeqeq
             (newIsAttachment = isAttachment(newOption, 'anchor'))) &&
           newOption !== options.anchorSE[i]) {
+
         if (props.optionIsAttach.anchorSE[i] !== false) {
           unbindAttachment(props, insAttachProps[options.anchorSE[i]._id]); // Unbind old
         }
+
         if (newIsAttachment && !bindAttachment(props, insAttachProps[newOption._id], optionName)) { // Bind new
           throw new Error('Can\'t bind attachment');
         }
@@ -2500,17 +2502,27 @@
       var newOption = newOptions[optionName],
         oldOption = options.labelSEM[i] && !props.optionIsAttach.labelSEM[i] ?
           insAttachProps[options.labelSEM[i]._id].text : options.labelSEM[i],
-        newIsAttachment = false, plain, label;
+        newIsAttachment = false, plain, attachProps, label;
 
       if ((plain = typeof newOption === 'string')) { newOption = newOption.trim(); }
       if ((plain || newOption && (newIsAttachment = isAttachment(newOption, 'label'))) &&
           newOption !== oldOption) {
+
         if (options.labelSEM[i]) {
           unbindAttachment(props, insAttachProps[options.labelSEM[i]._id]); // Unbind old
           options.labelSEM[i] = '';
         }
+
         if (newOption) {
-          label = newIsAttachment ? newOption : new LeaderLineAttachment(ATTACHMENTS.caption, {text: newOption});
+          if (newIsAttachment) {
+            label = newOption;
+            // Only one target can be bound.
+            attachProps = insAttachProps[label._id];
+            attachProps.boundTargets.slice().forEach( // Copy boundTargets because removeOption may change array.
+              function(boundTarget) { attachProps.conf.removeOption(attachProps, boundTarget); });
+          } else {
+            label = new LeaderLineAttachment(ATTACHMENTS.caption, {text: newOption});
+          }
           if (!bindAttachment(props, insAttachProps[label._id], optionName)) {
             throw new Error('Can\'t bind attachment');
           }
@@ -3264,7 +3276,7 @@
       return;
     }
 
-    attachProps.boundTargets.forEach(
+    attachProps.boundTargets.slice().forEach(
       function(boundTarget) { unbindAttachment(boundTarget.props, attachProps, true); });
     if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
     delete insAttachProps[id];
@@ -4001,7 +4013,7 @@
 
       bind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.caption.bind>'); // [DEBUG/]
-        var props = bindTarget.props, oldBoundTargets = attachProps.boundTargets.slice(),
+        var props = bindTarget.props,
           text = ATTACHMENTS.caption.newText(attachProps.text, props.baseWindow.document,
             props.svg, APP_ID + '-attach-caption-' + attachProps.id, attachProps.outlineColor),
           bBox, strokeWidth;
@@ -4042,8 +4054,6 @@
         }
         addEventHandler(props, 'svgShow', attachProps.updateShow);
         addDelayedProc(function() { // after updating `attachProps.boundTargets`
-          oldBoundTargets.forEach( // Only one target can be bound.
-            function(boundTarget) { ATTACHMENTS.caption.removeOption(attachProps, boundTarget); });
           attachProps.updateColor(props);
           if (attachProps.refSocketXY) {
             attachProps.updateSocketXY(props);
@@ -4074,6 +4084,8 @@
         if (attachProps.elmsAppend) {
           attachProps.elmsAppend.forEach(function(elm) { props.svg.removeChild(elm); });
         }
+        initStats(attachProps.curStats, ATTACHMENTS.caption.stats);
+        initStats(attachProps.aplStats, ATTACHMENTS.caption.stats);
         traceLog.add('</ATTACHMENTS.caption.unbind>'); // [DEBUG/]
       },
 
