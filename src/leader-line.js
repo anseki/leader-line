@@ -643,12 +643,6 @@
     };
   }
 
-  function setStyles(element, styles) {
-    var style = element.style;
-    Object.keys(styles).forEach(function(key) { style[key] = styles[key]; });
-    return element;
-  }
-
   function initStats(container, statsConf) {
     Object.keys(statsConf).forEach(function(statName) {
       var statConf = statsConf[statName];
@@ -671,16 +665,6 @@
     }
     return false;
   }
-
-  // [DEBUG]
-  function checkCurStats(props, key, i, value, log) {
-    /* eslint-disable eqeqeq */
-    if (value !== (i == null ? props.curStats[key] : props.curStats[key][i])) {
-      traceLog.add(log || 'curStats.' + key + (i == null ? '' : '[' + i + ']') + '=%s', value);
-    }
-    /* eslint-enable eqeqeq */
-  }
-  // [/DEBUG]
 
   /**
    * Get distance between `window` and its `<body>`.
