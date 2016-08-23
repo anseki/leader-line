@@ -153,9 +153,8 @@
       plugOutline_strokeWidthSE: {hasSE: true}, plugOutline_inStrokeWidthSE: {hasSE: true},
       position_socketXYSE: {hasSE: true, hasProps: true}, position_plugOverheadSE: {hasSE: true},
       position_path: {}, position_lineStrokeWidth: {}, position_socketGravitySE: {hasSE: true},
-      path_pathData: {},
-      viewBox_bBox: {hasProps: true},
-      viewBox_plugBCircleSE: {hasSE: true}, viewBox_edge: {hasProps: true},
+      path_pathData: {}, path_edge: {hasProps: true},
+      viewBox_bBox: {hasProps: true}, viewBox_plugBCircleSE: {hasSE: true},
       lineMask_enabled: {iniValue: false},
       lineMask_outlineMode: {iniValue: false},
       lineMask_x: {}, lineMask_y: {},
@@ -1805,39 +1804,19 @@
   function updatePath(props) {
     traceLog.add('<updatePath>'); // [DEBUG/]
     var curStats = props.curStats, aplStats = props.aplStats,
-      curPathData, padding,
-      edge = {}, curEdge = curStats.viewBox_edge,
       pathList = props.pathList.animVal || props.pathList.baseVal,
+      curPathData, curEdge = curStats.path_edge,
       updated = false;
 
     if (pathList) {
-      edge.x1 = edge.x2 = pathList[0][0].x;
-      edge.y1 = edge.y2 = pathList[0][0].y;
+      curEdge.x1 = curEdge.x2 = pathList[0][0].x;
+      curEdge.y1 = curEdge.y2 = pathList[0][0].y;
       curStats.path_pathData = curPathData = pathList2PathData(pathList, function(point) {
-        if (point.x < edge.x1) { edge.x1 = point.x; }
-        if (point.x > edge.x2) { edge.x2 = point.x; }
-        if (point.y < edge.y1) { edge.y1 = point.y; }
-        if (point.y > edge.y2) { edge.y2 = point.y; }
+        if (point.x < curEdge.x1) { curEdge.x1 = point.x; }
+        if (point.x > curEdge.x2) { curEdge.x2 = point.x; }
+        if (point.y < curEdge.y1) { curEdge.y1 = point.y; }
+        if (point.y > curEdge.y2) { curEdge.y2 = point.y; }
       });
-      // Expand bBox with `line` or symbols
-      padding = Math.max(curStats.line_strokeWidth / 2,
-        curStats.viewBox_plugBCircleSE[0] || 0, curStats.viewBox_plugBCircleSE[1] || 0);
-      edge.x1 -= padding;
-      edge.y1 -= padding;
-      edge.x2 += padding;
-      edge.y2 += padding;
-
-      // Apply `viewBox_edge`
-      if (edge.x1 !== curEdge.x1 || edge.y1 !== curEdge.y1 ||
-          edge.x2 !== curEdge.x2 || edge.y2 !== curEdge.y2) {
-        traceLog.add('viewBox_edge'); // [DEBUG/]
-        curStats.viewBox_edge = edge;
-        updated = true;
-
-        if (props.events.cur_viewBox_edge) {
-          props.events.cur_viewBox_edge.forEach(function(handler) { handler(props, curStats.viewBox_edge); });
-        }
-      }
 
       // Apply `pathData`
       if (pathDataHasChanged(curPathData, aplStats.path_pathData)) {
@@ -1874,15 +1853,24 @@
   function updateViewBox(props) {
     traceLog.add('<updateViewBox>'); // [DEBUG/]
     var curStats = props.curStats, aplStats = props.aplStats,
-      curEdge = curStats.viewBox_edge,
+      curEdge = curStats.path_edge, padding, edge,
       curBBox = curStats.viewBox_bBox, aplBBox = aplStats.viewBox_bBox,
       viewBox = props.svg.viewBox.baseVal, styles = props.svg.style,
       updated = false;
 
-    curBBox.x = curStats.lineMask_x = curStats.lineOutlineMask_x = curStats.maskBGRect_x = curEdge.x1;
-    curBBox.y = curStats.lineMask_y = curStats.lineOutlineMask_y = curStats.maskBGRect_y = curEdge.y1;
-    curBBox.width = curEdge.x2 - curEdge.x1;
-    curBBox.height = curEdge.y2 - curEdge.y1;
+    // Expand bBox with `line` or symbols, and event
+    padding = Math.max(curStats.line_strokeWidth / 2,
+      curStats.viewBox_plugBCircleSE[0] || 0, curStats.viewBox_plugBCircleSE[1] || 0);
+    edge = {x1: curEdge.x1 - padding, y1: curEdge.y1 - padding,
+      x2: curEdge.x2 + padding, y2: curEdge.y2 + padding};
+    if (props.events.new_edge4viewBox) {
+      props.events.new_edge4viewBox.forEach(function(handler) { handler(props, edge); });
+    }
+
+    curBBox.x = curStats.lineMask_x = curStats.lineOutlineMask_x = curStats.maskBGRect_x = edge.x1;
+    curBBox.y = curStats.lineMask_y = curStats.lineOutlineMask_y = curStats.maskBGRect_y = edge.y1;
+    curBBox.width = edge.x2 - edge.x1;
+    curBBox.height = edge.y2 - edge.y1;
 
     ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
       var value;
@@ -3913,32 +3901,29 @@
           traceLog.add('</ATTACHMENTS.caption.updateShow>'); // [DEBUG/]
         };
 
-        if (IS_WEBKIT) {
-          // [WEBKIT] overflow:visible is ignored
-          attachProps.adjustEdge = function(props, edge) {
-            traceLog.add('<ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
-            var curStats = attachProps.curStats, textEdge, strokeWidth;
-            if (curStats.x != null) { // eslint-disable-line eqeqeq
-              textEdge = {x1: curStats.x, y1: curStats.y,
-                x2: curStats.x + attachProps.width, y2: curStats.y + attachProps.height};
-              if (attachProps.strokeWidth) {
-                strokeWidth = attachProps.strokeWidth / 2;
-                textEdge.x1 -= strokeWidth;
-                textEdge.y1 -= strokeWidth;
-                textEdge.x2 += strokeWidth;
-                textEdge.y2 += strokeWidth;
-              }
-              if (textEdge.x1 < edge.x1) { edge.x1 = textEdge.x1; }
-              if (textEdge.x2 > edge.x2) { edge.x2 = textEdge.x2; }
-              if (textEdge.y1 < edge.y1) { edge.y1 = textEdge.y1; }
-              if (textEdge.y2 > edge.y2) { edge.y2 = textEdge.y2; }
-            }
-            traceLog.add('</ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
-          };
+        if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
+          attachProps.adjustEdge =
+            function(props, edge) { ATTACHMENTS.caption.adjustEdge(attachProps, props, edge); };
         }
 
         traceLog.add('</ATTACHMENTS.caption.init>'); // [DEBUG/]
         return true;
+      },
+
+      adjustEdge: function(attachProps, props, edge) {
+        traceLog.add('<ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
+        var curStats = attachProps.curStats, textEdge, strokeWidth;
+        if (curStats.x != null) { // eslint-disable-line eqeqeq
+          strokeWidth = attachProps.strokeWidth ? attachProps.strokeWidth / 2 : 0;
+          textEdge = {x1: curStats.x - strokeWidth, y1: curStats.y - strokeWidth,
+            x2: curStats.x + attachProps.width + strokeWidth,
+            y2: curStats.y + attachProps.height + strokeWidth};
+          if (textEdge.x1 < edge.x1) { edge.x1 = textEdge.x1; }
+          if (textEdge.y1 < edge.y1) { edge.y1 = textEdge.y1; }
+          if (textEdge.x2 > edge.x2) { edge.x2 = textEdge.x2; }
+          if (textEdge.y2 > edge.y2) { edge.y2 = textEdge.y2; }
+        }
+        traceLog.add('</ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
       },
 
       /**
@@ -4075,10 +4060,8 @@
           addEventHandler(props, 'apl_path', attachProps.updatePath);
         }
         addEventHandler(props, 'svgShow', attachProps.updateShow);
-        if (IS_WEBKIT) {
-          // [WEBKIT] overflow:visible is ignored
-          addEventHandler(props, 'cur_viewBox_edge', attachProps.adjustEdge);
-        }
+        // [WEBKIT] overflow:visible is ignored
+        if (IS_WEBKIT) { addEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge); }
         addDelayedProc(function() { // after updating `attachProps.boundTargets`
           attachProps.updateColor(props);
           if (attachProps.refSocketXY) {
@@ -4086,11 +4069,7 @@
           } else {
             attachProps.updatePath(props);
           }
-          if (IS_WEBKIT) {
-            // [WEBKIT] overflow:visible is ignored
-            attachProps.adjustEdge(props, props.curStats.viewBox_edge);
-            updateViewBox(props);
-          }
+          if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored
           attachProps.updateShow(props);
         });
         traceLog.add('</ATTACHMENTS.caption.bind>'); // [DEBUG/]
@@ -4111,12 +4090,9 @@
           removeEventHandler(props, 'apl_path', attachProps.updatePath);
         }
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
-        if (IS_WEBKIT) {
-          // [WEBKIT] overflow:visible is ignored
-          removeEventHandler(props, 'cur_viewBox_edge', attachProps.adjustEdge);
-          addDelayedProc(function() { // reset viewBox_edge
-            if (updatePath(props)) { updateViewBox(props); }
-          });
+        if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
+          removeEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge);
+          addDelayedProc(function() { update(props, {}); }); // reset path_edge
         }
 
         if (attachProps.elmsAppend) {
