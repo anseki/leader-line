@@ -715,8 +715,9 @@
    */
   function bindWindow(props, newWindow) {
     traceLog.add('<bindWindow>'); // [DEBUG/]
-    var baseDocument = newWindow.document,
-      svg, defs, maskCaps, element, aplStats = props.aplStats;
+    var aplStats = props.aplStats, baseDocument = newWindow.document,
+      svg, defs, maskCaps, element, prefix = APP_ID + '-' + props._id,
+      linePathId, lineShapeId, capsId, maskBGRectId, lineOutlineMaskId, plugOutlineMaskIdSE;
 
     function setupMask(id) {
       var element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'mask'));
@@ -771,7 +772,7 @@
     props.defs = defs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
 
     props.linePath = element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-    element.id = props.linePathId;
+    element.id = (linePathId = prefix + '-line-path');
     element.className.baseVal = APP_ID + '-line-path';
     if (IS_WEBKIT) {
       // [WEBKIT] style in `use` is not updated
@@ -779,11 +780,11 @@
     }
 
     props.lineShape = element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    element.id = props.lineShapeId;
-    element.href.baseVal = '#' + props.linePathId;
+    element.id = (lineShapeId = prefix + '-line-shape');
+    element.href.baseVal = '#' + linePathId;
 
     maskCaps = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
-    maskCaps.id = props.capsId;
+    maskCaps.id = (capsId = prefix + '-caps');
 
     props.capsMaskAnchorSE = [0, 1].map(function() {
       var element = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
@@ -791,6 +792,7 @@
       return element;
     });
 
+    props.lineMaskMarkerIdSE = [prefix + '-caps-mask-marker-0', prefix + '-caps-mask-marker-1'];
     props.capsMaskMarkerSE = [0, 1].map(function(i) { return setupMarker(props.lineMaskMarkerIdSE[i]); });
     props.capsMaskMarkerShapeSE = [0, 1].map(function(i) {
       var element = props.capsMaskMarkerSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
@@ -800,10 +802,10 @@
 
     props.capsMaskLine = element = maskCaps.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.className.baseVal = APP_ID + '-caps-mask-line';
-    element.href.baseVal = '#' + props.lineShapeId;
+    element.href.baseVal = '#' + lineShapeId;
 
     props.maskBGRect = element = setWH100(defs.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
-    element.id = props.maskBGRectId;
+    element.id = (maskBGRectId = prefix + '-mask-bg-rect');
     element.className.baseVal = APP_ID + '-mask-bg-rect';
     if (IS_WEBKIT) {
       // [WEBKIT] style in `use` is not updated
@@ -811,29 +813,30 @@
     }
 
     // lineMask
-    props.lineMask = setWH100(setupMask(props.lineMaskId));
+    props.lineMask = setWH100(setupMask((props.lineMaskId = prefix + '-line-mask')));
     props.lineMaskBG = element = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    element.href.baseVal = '#' + props.maskBGRectId;
+    element.href.baseVal = '#' + maskBGRectId;
     props.lineMaskShape = element = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.className.baseVal = APP_ID + '-line-mask-shape';
-    element.href.baseVal = '#' + props.linePathId;
+    element.href.baseVal = '#' + linePathId;
     element.style.display = 'none';
     props.lineMaskCaps = element = props.lineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    element.href.baseVal = '#' + props.capsId;
+    element.href.baseVal = '#' + capsId;
 
     // lineOutlineMask
-    props.lineOutlineMask = setWH100(setupMask(props.lineOutlineMaskId));
+    props.lineOutlineMask = setWH100(setupMask((lineOutlineMaskId = prefix + '-line-outline-mask')));
     element = props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    element.href.baseVal = '#' + props.maskBGRectId;
+    element.href.baseVal = '#' + maskBGRectId;
     props.lineOutlineMaskShape = element =
       props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.className.baseVal = APP_ID + '-line-outline-mask-shape';
-    element.href.baseVal = '#' + props.linePathId;
+    element.href.baseVal = '#' + linePathId;
     props.lineOutlineMaskCaps = element =
       props.lineOutlineMask.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    element.href.baseVal = '#' + props.capsId;
+    element.href.baseVal = '#' + capsId;
 
     /* reserve for future version
+    props.lineFGId = prefix + '-line-fg';
     props.lineFG = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
     props.lineFG.id = props.lineFGId;
     props.lineFGRect = setWH100(props.lineFG.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
@@ -841,14 +844,15 @@
 
     props.face = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
     props.lineFace = element = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    element.href.baseVal = '#' + props.lineShapeId;
+    element.href.baseVal = '#' + lineShapeId;
 
     props.lineOutlineFace = element = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-    element.href.baseVal = '#' + props.lineShapeId;
-    element.style.mask = 'url(#' + props.lineOutlineMaskId + ')';
+    element.href.baseVal = '#' + lineShapeId;
+    element.style.mask = 'url(#' + lineOutlineMaskId + ')';
     element.style.display = 'none';
 
     // plugMaskSE
+    props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
     props.plugMaskSE = [0, 1].map(function(i) { return setupMask(props.plugMaskIdSE[i]); });
     props.plugMaskShapeSE = [0, 1].map(function(i) {
       var element = props.plugMaskSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
@@ -857,13 +861,16 @@
     });
 
     // plugOutlineMaskSE
-    props.plugOutlineMaskSE = [0, 1].map(function(i) { return setupMask(props.plugOutlineMaskIdSE[i]); });
+    plugOutlineMaskIdSE = [];
+    props.plugOutlineMaskSE = [0, 1].map(
+      function(i) { return setupMask((plugOutlineMaskIdSE[i] = prefix + '-plug-outline-mask-' + i)); });
     props.plugOutlineMaskShapeSE = [0, 1].map(function(i) {
       var element = props.plugOutlineMaskSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
       element.className.baseVal = APP_ID + '-plug-outline-mask-shape';
       return element;
     });
 
+    props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
     props.plugMarkerSE = [0, 1].map(function(i) {
       var element = setupMarker(props.plugMarkerIdSE[i]);
       if (IS_WEBKIT) {
@@ -881,14 +888,14 @@
     });
     props.plugOutlineFaceSE = [0, 1].map(function(i) {
       var element = props.plugMarkerShapeSE[i].appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
-      element.style.mask = 'url(#' + props.plugOutlineMaskIdSE[i] + ')';
+      element.style.mask = 'url(#' + plugOutlineMaskIdSE[i] + ')';
       element.style.display = 'none';
       return element;
     });
 
     props.plugsFace = element = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.className.baseVal = APP_ID + '-plugs-face';
-    element.href.baseVal = '#' + props.lineShapeId;
+    element.href.baseVal = '#' + lineShapeId;
     element.style.display = 'none';
 
     // show effect (after SVG setup)
@@ -2589,8 +2596,7 @@
           plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: [], labelSEM: ['', '', '']},
         optionIsAttach: {anchorSE: [false, false], labelSEM: [false, false, false]},
         curStats: {}, aplStats: {}, attachments: [], events: {}, reflowTargets: []
-      },
-      prefix;
+      };
 
     function createSetter(propName) {
       return function(value) {
@@ -2616,20 +2622,6 @@
     Object.defineProperty(that, '_id', {value: ++insId});
     props._id = that._id;
     insProps[that._id] = props;
-
-    prefix = APP_ID + '-' + that._id;
-    props.linePathId = prefix + '-line-path';
-    props.lineShapeId = prefix + '-line-shape';
-    props.lineMaskId = prefix + '-line-mask';
-    props.lineMaskMarkerIdSE = [prefix + '-caps-mask-marker-0', prefix + '-caps-mask-marker-1'];
-    props.capsId = prefix + '-caps';
-    props.maskBGRectId = prefix + '-mask-bg-rect';
-    props.lineOutlineMaskId = prefix + '-line-outline-mask';
-    props.plugMarkerIdSE = [prefix + '-plug-marker-0', prefix + '-plug-marker-1'];
-    props.plugMaskIdSE = [prefix + '-plug-mask-0', prefix + '-plug-mask-1'];
-    props.plugOutlineMaskIdSE = [prefix + '-plug-outline-mask-0', prefix + '-plug-outline-mask-1'];
-    // reserve for future version
-    // props.lineFGId = prefix + '-line-fg';
 
     if (arguments.length === 1) {
       options = start;
@@ -3253,32 +3245,18 @@
   /**
    * attachProps or id must be specified.
    * @param {attachProps|null} attachProps - `attachProps` of `LeaderLineAttachment` instance.
-   * @param {number} [id] - `_id` of `LeaderLineAttachment` instance..
    * @returns {void}
    */
-  removeAttachment = function(attachProps, id) {
+  removeAttachment = function(attachProps) {
     traceLog.add('<removeAttachment>'); // [DEBUG/]
-    if (!attachProps && !(attachProps = insAttachProps[id])) {
+    if (attachProps && insAttachProps[attachProps._id]) {
+      attachProps.boundTargets.slice().forEach(
+        function(boundTarget) { unbindAttachment(boundTarget.props, attachProps, true); });
+      if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
+      delete insAttachProps[attachProps._id];
+    } else {
       traceLog.add('not-found'); // [DEBUG/]
-      traceLog.add('</removeAttachment>'); // [DEBUG/]
-      return;
     }
-    if (!id && !Object.keys(insAttachProps).some(function(attachId) {
-      if (insAttachProps[attachId] === attachProps) {
-        id = attachId;
-        return true;
-      }
-      return false;
-    })) {
-      traceLog.add('not-found'); // [DEBUG/]
-      traceLog.add('</removeAttachment>'); // [DEBUG/]
-      return;
-    }
-
-    attachProps.boundTargets.slice().forEach(
-      function(boundTarget) { unbindAttachment(boundTarget.props, attachProps, true); });
-    if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
-    delete insAttachProps[id];
     traceLog.add('</removeAttachment>'); // [DEBUG/]
   };
 
@@ -3303,6 +3281,7 @@
 
       // isRemoved has to be set before this because init() might throw.
       if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {}, this._id)) {
+        attachProps._id = this._id;
         insAttachProps[this._id] = attachProps;
       }
     }
@@ -3320,7 +3299,7 @@
           if (attachProps) { // it should be removed by unbinding all
             traceLog.add('error-not-removed'); // [DEBUG/]
             console.error('LeaderLineAttachment was not removed by removeOption');
-            removeAttachment(attachProps, that._id); // force
+            removeAttachment(attachProps); // force
           }
           traceLog.add('</LeaderLineAttachment.remove.delayedProc>'); // [DEBUG/]
         });
