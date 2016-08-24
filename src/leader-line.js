@@ -699,10 +699,10 @@
   }
 
   function setupWindow(window) {
-    var baseDocument = window.document, defs;
+    var baseDocument = window.document, defsSvg;
     if (!baseDocument.getElementById(DEFS_ID)) { // Add svg defs
-      defs = (new window.DOMParser()).parseFromString(DEFS_HTML, 'image/svg+xml');
-      baseDocument.body.appendChild(defs.documentElement);
+      defsSvg = (new window.DOMParser()).parseFromString(DEFS_HTML, 'image/svg+xml');
+      baseDocument.body.appendChild(defsSvg.documentElement);
       pathDataPolyfill(window);
     }
   }
@@ -716,10 +716,10 @@
   function bindWindow(props, newWindow) {
     traceLog.add('<bindWindow>'); // [DEBUG/]
     var baseDocument = newWindow.document,
-      svg, elmDefs, maskCaps, element, aplStats = props.aplStats;
+      svg, defs, maskCaps, element, aplStats = props.aplStats;
 
     function setupMask(id) {
-      var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'mask'));
+      var element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'mask'));
       element.id = id;
       element.maskUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
       [element.x, element.y, element.width, element.height].forEach(function(len) {
@@ -729,7 +729,7 @@
     }
 
     function setupMarker(id) {
-      var element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
+      var element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'marker'));
       element.id = id;
       element.markerUnits.baseVal = SVGMarkerElement.SVG_MARKERUNITS_STROKEWIDTH;
       if (!element.viewBox.baseVal) {
@@ -745,6 +745,18 @@
       return element;
     }
 
+    props.pathList = {};
+    // Init stats
+    initStats(aplStats, STATS);
+    // effect (before props.svg is changed)
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var keyEnabled = effectName + '_enabled';
+      if (aplStats[keyEnabled]) {
+        EFFECTS[effectName].remove(props);
+        aplStats[keyEnabled] = false; // it might not have been disabled by remove().
+      }
+    });
+
     if (props.baseWindow && props.svg) {
       props.baseWindow.document.body.removeChild(props.svg);
     }
@@ -756,9 +768,9 @@
     props.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
     svg.className.baseVal = APP_ID;
     if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
-    elmDefs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
+    props.defs = defs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
 
-    props.linePath = element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
+    props.linePath = element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
     element.id = props.linePathId;
     element.className.baseVal = APP_ID + '-line-path';
     if (IS_WEBKIT) {
@@ -766,11 +778,11 @@
       element.style.fill = 'none';
     }
 
-    props.lineShape = element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+    props.lineShape = element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.id = props.lineShapeId;
     element.href.baseVal = '#' + props.linePathId;
 
-    maskCaps = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
+    maskCaps = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
     maskCaps.id = props.capsId;
 
     props.capsMaskAnchorSE = [0, 1].map(function() {
@@ -790,7 +802,7 @@
     element.className.baseVal = APP_ID + '-caps-mask-line';
     element.href.baseVal = '#' + props.lineShapeId;
 
-    props.maskBGRect = element = setWH100(elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
+    props.maskBGRect = element = setWH100(defs.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
     element.id = props.maskBGRectId;
     element.className.baseVal = APP_ID + '-mask-bg-rect';
     if (IS_WEBKIT) {
@@ -827,30 +839,7 @@
     props.lineFGRect = setWH100(props.lineFG.appendChild(baseDocument.createElementNS(SVG_NS, 'rect')));
     */
 
-    // lineGradient
-    props.lineGradient = element = elmDefs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
-    element.id = props.lineGradientId;
-    element.gradientUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
-    [element.x1, element.y1, element.x2, element.y2].forEach(function(len) {
-      len.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
-    });
-    props.lineGradientStopSE = [0, 1].map(function(i) {
-      var element = props.lineGradient.appendChild(baseDocument.createElementNS(SVG_NS, 'stop'));
-      try {
-        element.offset.baseVal = i; // offset === index
-      } catch (error) {
-        if (error.code === DOMException.NO_MODIFICATION_ALLOWED_ERR) {
-          // [TRIDENT] bug
-          element.setAttribute('offset', i);
-        } else {
-          throw error;
-        }
-      }
-      return element;
-    });
-
     props.face = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'g'));
-
     props.lineFace = element = props.face.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
     element.href.baseVal = '#' + props.lineShapeId;
 
@@ -902,18 +891,7 @@
     element.href.baseVal = '#' + props.lineShapeId;
     element.style.display = 'none';
 
-    props.pathList = {};
-    // Init stats
-    initStats(aplStats, STATS);
-    // effect
-    Object.keys(EFFECTS).forEach(function(effectName) {
-      var keyEnabled = effectName + '_enabled';
-      if (aplStats[keyEnabled]) {
-        EFFECTS[effectName].remove(props);
-        aplStats[keyEnabled] = false; // it might not have been disabled by remove().
-      }
-    });
-    // show effect
+    // show effect (after SVG setup)
     if (props.curStats.show_inAnim) {
       props.isShown = 1;
       SHOW_EFFECTS[aplStats.show_effect].stop(props, true); // svgShow() is called
@@ -923,7 +901,7 @@
 
     baseDocument.body.appendChild(svg);
 
-    // label (SVG in document is needed)
+    // label (after appendChild(svg), bBox is used)
     [0, 1, 2].forEach(function(i) {
       var label = props.options.labelSEM[i], attachProps;
       if (label && isAttachment(label, 'label')) {
@@ -2636,6 +2614,7 @@
     props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
 
     Object.defineProperty(that, '_id', {value: ++insId});
+    props._id = that._id;
     insProps[that._id] = props;
 
     prefix = APP_ID + '-' + that._id;
@@ -2651,7 +2630,6 @@
     props.plugOutlineMaskIdSE = [prefix + '-plug-outline-mask-0', prefix + '-plug-outline-mask-1'];
     // reserve for future version
     // props.lineFGId = prefix + '-line-fg';
-    props.lineGradientId = prefix + '-line-gradient';
 
     if (arguments.length === 1) {
       options = start;
@@ -2811,7 +2789,7 @@
    * @typedef {Object} EffectConf
    * @property {{statName: string, StatConf}} stats - Additional stats.
    * @property {EffectOptionConf[]} optionsConf
-   * @property {Function} init - function(props)
+   * @property {Function} init - function(props, id)
    * @property {Function} remove - function(props)
    * @property {Function} update - function(props[, valueByEvent])
    * @property {boolean} [anim] - Support animation.
@@ -2916,16 +2894,44 @@
 
       init: function(props) {
         traceLog.add('<EFFECTS.gradient.init>'); // [DEBUG/]
+        var baseDocument = props.baseWindow.document, defs = props.defs, element,
+          id = APP_ID + '-' + props._id + '-line-gradient';
+
+        props.lineGradient = element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
+        element.id = id;
+        element.gradientUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
+        [element.x1, element.y1, element.x2, element.y2].forEach(function(len) {
+          len.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+        });
+        props.lineGradientStopSE = [0, 1].map(function(i) {
+          var element = props.lineGradient.appendChild(baseDocument.createElementNS(SVG_NS, 'stop'));
+          try {
+            element.offset.baseVal = i; // offset === index
+          } catch (error) {
+            if (error.code === DOMException.NO_MODIFICATION_ALLOWED_ERR) { // [TRIDENT] bug
+              element.setAttribute('offset', i);
+            } else {
+              throw error;
+            }
+          }
+          return element;
+        });
+
         addEventHandler(props, 'cur_plug_colorSE', EFFECTS.gradient.update);
         addEventHandler(props, 'apl_path', EFFECTS.gradient.update);
         props.curStats.line_altColor = true;
-        props.lineFace.style.stroke = 'url(#' + props.lineGradientId + ')';
+        props.lineFace.style.stroke = 'url(#' + id + ')';
         EFFECTS.gradient.update(props);
         traceLog.add('</EFFECTS.gradient.init>'); // [DEBUG/]
       },
 
       remove: function(props) {
         traceLog.add('<EFFECTS.gradient.remove>'); // [DEBUG/]
+        if (props.lineGradient) {
+          props.lineGradientStopSE = null;
+          props.defs.removeChild(props.lineGradient);
+        }
+
         removeEventHandler(props, 'cur_plug_colorSE', EFFECTS.gradient.update);
         removeEventHandler(props, 'apl_path', EFFECTS.gradient.update);
         props.curStats.line_altColor = false;
