@@ -1221,6 +1221,243 @@ describe('attachment', function() {
       done();
     });
 
+    it(registerTitle('caption-attachOptions'), function(done) {
+      var atc, attachProps;
+
+      // invalid
+      atc = window.LeaderLine.caption({text: ' '});
+      expect(atc.isRemoved).toBe(true);
+      atc = window.LeaderLine.caption({text: 5});
+      expect(atc.isRemoved).toBe(true);
+
+      // default
+      atc = window.LeaderLine.caption({text: '  label-a  '});
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.text).toBe('label-a');
+      expect(attachProps.color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.outlineColor).toBe('#fff');
+      expect(attachProps.offset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.lineOffset == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // valid
+      atc = window.LeaderLine.caption({
+        text: '  label-a  ',
+        color: ' red ',
+        outlineColor: ' blue ',
+        offset: [1, 2],
+        lineOffset: 3
+      });
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.text).toBe('label-a');
+      expect(attachProps.color).toBe('red');
+      expect(attachProps.outlineColor).toBe('blue');
+      expect(attachProps.offset).toEqual({x: 1, y: 2});
+      expect(attachProps.lineOffset).toBe(3);
+
+      pageDone();
+      done();
+    });
+
+    it(registerTitle('caption-event auto color'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps, ll2, props2;
+
+      atc = window.LeaderLine.caption({text: 'label-a'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.startLabel = atc;
+      expect(attachProps.curStats.color).toBe('coral');
+      expect(props.events.cur_line_color.length).toBe(1); // addEventHandler
+      expect(props.attachments.length).toBe(1);
+
+      // It's changed by updating ll
+      traceLog.clear();
+      ll.color = 'red';
+      expect(traceLog.log).toEqual([
+        '<setOptions>', 'needs.line', '</setOptions>',
+        '<updateLine>', 'line_color=red',
+        '<ATTACHMENTS.caption.updateColor>', 'color=red', '</ATTACHMENTS.caption.updateColor>',
+        '</updateLine>',
+        '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
+        '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
+        '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
+        '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
+        '<updatePosition>', 'not-updated', '</updatePosition>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
+      ]);
+      expect(attachProps.curStats.color).toBe('red');
+
+      // It's changed by binding ll
+      ll2 = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'), {
+        color: 'blue'
+      });
+      props2 = window.insProps[ll2._id];
+      traceLog.clear();
+      ll2.endLabel = atc;
+      expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
+        // option of ll1
+        '<ATTACHMENTS.caption.removeOption>', 'startLabel',
+          '<ATTACHMENTS.caption.unbind>', '</ATTACHMENTS.caption.unbind>',
+          '<setOptions>', '</setOptions>',
+          '<updateViewBox>', 'not-updated', '</updateViewBox>',
+          '<updateMask>', 'not-updated', '</updateMask>',
+          '<update>', '</update>',
+        '</ATTACHMENTS.caption.removeOption>',
+
+        '<ATTACHMENTS.caption.bind>',
+          '<ATTACHMENTS.caption.initSvg>',
+            '<ATTACHMENTS.caption.updateColor>', 'color=blue', '</ATTACHMENTS.caption.updateColor>',
+            '<ATTACHMENTS.caption.updateSocketXY>', 'x=162.09375', 'y=263', '</ATTACHMENTS.caption.updateSocketXY>',
+            '<ATTACHMENTS.caption.updateShow>', 'on=true', '</ATTACHMENTS.caption.updateShow>',
+          '</ATTACHMENTS.caption.initSvg>',
+        '</ATTACHMENTS.caption.bind>',
+
+        '<setOptions>', '</setOptions>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', '</update>'
+        /* eslint-enable indent */
+      ]);
+      expect(attachProps.curStats.color).toBe('blue');
+      expect(props.events.cur_line_color.length).toBe(0); // removeEventHandler
+      expect(props2.events.cur_line_color.length).toBe(1); // addEventHandler
+      expect(props.attachments.length).toBe(0);
+      expect(props2.attachments.length).toBe(1);
+
+      traceLog.clear();
+      ll2.endLabel = '';
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.caption.unbind>', '</ATTACHMENTS.caption.unbind>',
+        '<setOptions>', '</setOptions>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', '</update>'
+      ]);
+      expect(props2.events.cur_line_color.length).toBe(0); // removeEventHandler
+      expect(props2.attachments.length).toBe(0);
+      setTimeout(function() {
+        expect(atc.isRemoved).toBe(true);
+
+        pageDone();
+        done();
+      }, 50);
+    });
+
+    it(registerTitle('caption-event static color'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps, ll2, props2;
+
+      atc = window.LeaderLine.caption({text: 'label-a', color: 'yellow'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.startLabel = atc;
+      expect(attachProps.curStats.color).toBe('yellow');
+      expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // It's changed by updating ll
+      traceLog.clear();
+      ll.color = 'red';
+      expect(traceLog.log).toEqual([
+        '<setOptions>', 'needs.line', '</setOptions>',
+        '<updateLine>', 'line_color=red',
+        // '<ATTACHMENTS.caption.updateColor>', 'color=red', '</ATTACHMENTS.caption.updateColor>',
+        '</updateLine>',
+        '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
+        '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
+        '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
+        '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
+        '<updatePosition>', 'not-updated', '</updatePosition>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
+      ]);
+      expect(attachProps.curStats.color).toBe('yellow');
+
+      // It's changed by binding ll
+      ll2 = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'), {
+        color: 'blue'
+      });
+      props2 = window.insProps[ll2._id];
+      traceLog.clear();
+      ll2.endLabel = atc;
+      expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
+        // option of ll1
+        '<ATTACHMENTS.caption.removeOption>', 'startLabel',
+          '<ATTACHMENTS.caption.unbind>', '</ATTACHMENTS.caption.unbind>',
+          '<setOptions>', '</setOptions>',
+          '<updateViewBox>', 'not-updated', '</updateViewBox>',
+          '<updateMask>', 'not-updated', '</updateMask>',
+          '<update>', '</update>',
+        '</ATTACHMENTS.caption.removeOption>',
+
+        '<ATTACHMENTS.caption.bind>',
+          '<ATTACHMENTS.caption.initSvg>',
+            '<ATTACHMENTS.caption.updateColor>', 'color=yellow', '</ATTACHMENTS.caption.updateColor>',
+            '<ATTACHMENTS.caption.updateSocketXY>', 'x=162.09375', 'y=263', '</ATTACHMENTS.caption.updateSocketXY>',
+            '<ATTACHMENTS.caption.updateShow>', 'on=true', '</ATTACHMENTS.caption.updateShow>',
+          '</ATTACHMENTS.caption.initSvg>',
+        '</ATTACHMENTS.caption.bind>',
+
+        '<setOptions>', '</setOptions>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', '</update>'
+        /* eslint-enable indent */
+      ]);
+      expect(attachProps.curStats.color).toBe('yellow');
+      expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props2.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.attachments.length).toBe(0);
+      expect(props2.attachments.length).toBe(1);
+
+      traceLog.clear();
+      ll2.endLabel = '';
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.caption.unbind>', '</ATTACHMENTS.caption.unbind>',
+        '<setOptions>', '</setOptions>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', '</update>'
+      ]);
+      expect(props2.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props2.attachments.length).toBe(0);
+      setTimeout(function() {
+        expect(atc.isRemoved).toBe(true);
+
+        pageDone();
+        done();
+      }, 50);
+    });
+
+    it(registerTitle('caption-event svgShow'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps;
+
+      atc = window.LeaderLine.caption({text: 'label-a'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.hide('none');
+      setTimeout(function() {
+        expect(props.isShown).toBe(false); // check
+
+        ll.startLabel = atc;
+        expect(attachProps.isShown).toBe(false);
+        expect(attachProps.styleShow.visibility).toBe('hidden');
+
+        ll.show();
+        setTimeout(function() {
+          expect(props.isShown).toBe(true); // check
+
+          expect(attachProps.isShown).toBe(true);
+          expect(attachProps.styleShow.visibility).toBe('');
+
+          pageDone();
+          done();
+        }, 100);
+      }, 100);
+    });
+
   });
 
 });
