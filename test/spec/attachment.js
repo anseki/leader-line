@@ -501,7 +501,7 @@ describe('attachment', function() {
 
   });
 
-  describe('ATTACHMENTS', function() {
+  describe('ATTACHMENTS anchor', function() {
 
     beforeEach(loadBefore);
 
@@ -997,8 +997,8 @@ describe('attachment', function() {
       ])).toBe(true);
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(4);
       expect(props.curStats.position_socketXYSE[0].x).toBe(rect.right + padding + 2); // right
-      expect(Math.abs(props.curStats.position_socketXYSE[0].y -
-        (rect.top + rect.height / 2))).toBeLessThan(TOLERANCE);
+      expect(Math.abs(props.curStats.position_socketXYSE[0].y - (rect.top + rect.height / 2)))
+        .toBeLessThan(TOLERANCE);
 
       pageDone();
       done();
@@ -1221,7 +1221,13 @@ describe('attachment', function() {
       done();
     });
 
-    it(registerTitle('caption-attachOptions'), function(done) {
+  });
+
+  describe('ATTACHMENTS.caption', function() {
+
+    beforeEach(loadBefore);
+
+    it(registerTitle('attachOptions'), function(done) {
       var atc, attachProps;
 
       // invalid
@@ -1258,7 +1264,7 @@ describe('attachment', function() {
       done();
     });
 
-    it(registerTitle('caption-event auto color'), function(done) {
+    it(registerTitle('event auto color'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps, ll2, props2;
 
@@ -1345,7 +1351,7 @@ describe('attachment', function() {
       }, 50);
     });
 
-    it(registerTitle('caption-event static color'), function(done) {
+    it(registerTitle('event static color'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps, ll2, props2;
 
@@ -1431,7 +1437,7 @@ describe('attachment', function() {
       }, 50);
     });
 
-    it(registerTitle('caption-event svgShow'), function(done) {
+    it(registerTitle('event svgShow'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps;
 
@@ -1456,6 +1462,166 @@ describe('attachment', function() {
           done();
         }, 100);
       }, 100);
+    });
+
+    it(registerTitle('updateSocketXY'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps, bBox, width, height, sideLen;
+
+      // offset
+      atc = window.LeaderLine.caption({text: 'label-a', offset: [3, -4]});
+      attachProps = window.insAttachProps[atc._id];
+      ll.startLabel = atc;
+      height = (bBox = attachProps.elmPosition.getBBox()).height;
+      // elm1 (1, 2) w:100 h:30
+      // socket: right (101, 17)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(101 + 3);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(17 - 4 + height);
+
+      // endLabel
+      expect(props.attachments.length).toBe(1);
+      ll.endLabel = atc;
+      // elm3 (216, 232) w:100 h:30
+      // socket: left (216, 247)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(216 + 3);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(247 - 4 + height);
+      expect(props.attachments.length).toBe(1);
+
+      // move anchor
+      document.getElementById('elm3').style.top = '15px';
+      // elm3 (216, 15) w:100 h:30
+      // socket: left (216, 30)
+      ll.position();
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(216 + 3);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(30 - 4 + height);
+
+      // auto offset
+      atc = window.LeaderLine.caption({text: 'label-a'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.endLabel = atc;
+      width = (bBox = attachProps.elmPosition.getBBox()).width;
+      height = bBox.height;
+      document.getElementById('elm3').style.left = '300px';
+      document.getElementById('elm3').style.top = '300px';
+      sideLen = 8;
+
+      document.getElementById('elm1').style.left = '0';
+      document.getElementById('elm1').style.top = '250px';
+      ll.position();
+      // socket: left (300, 315)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(300 - width - height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 + sideLen + height / 2 + height);
+
+      // updated by size
+      ll.size = 8;
+      sideLen = 16;
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(300 - width - height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 + sideLen + height / 2 + height);
+
+      ll.size = 4;
+      sideLen = 8;
+      document.getElementById('elm1').style.top = '350px';
+      ll.position();
+      // socket: left (300, 315)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(300 - width - height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 - sideLen - height / 2);
+
+      document.getElementById('elm1').style.left = '600px';
+      document.getElementById('elm1').style.top = '250px';
+      ll.position();
+      // socket: right (400, 315)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(400 + height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 + sideLen + height / 2 + height);
+
+      document.getElementById('elm1').style.top = '350px';
+      ll.position();
+      // socket: right (400, 315)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(400 + height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 - sideLen - height / 2);
+
+      document.getElementById('elm1').style.left = '250px';
+      document.getElementById('elm1').style.top = '0';
+      ll.position();
+      // socket: top (350, 300)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(350 + sideLen + height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(300 - height / 2);
+
+      document.getElementById('elm1').style.left = '350px';
+      ll.position();
+      // socket: top (350, 300)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(350 - sideLen - width - height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(300 - height / 2);
+
+      document.getElementById('elm1').style.left = '250px';
+      document.getElementById('elm1').style.top = '600px';
+      ll.position();
+      // socket: bottom (350, 330)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(350 + sideLen + height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(330 + height / 2 + height);
+
+      document.getElementById('elm1').style.left = '350px';
+      ll.position();
+      // socket: bottom (350, 330)
+      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(350 - sideLen - width - height / 2);
+      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(330 + height / 2 + height);
+
+      pageDone();
+      done();
+    });
+
+    it(registerTitle('updatePath'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps, bBox, width, height, points, point, pointLen;
+
+      atc = window.LeaderLine.caption({text: 'label-a'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.middleLabel = atc;
+      width = (bBox = attachProps.elmPosition.getBBox()).width;
+      height = bBox.height;
+      expect(props.pathList.baseVal.length).toBe(1);
+      expect(props.pathList.baseVal[0].length).toBe(4);
+      points = props.pathList.baseVal[0];
+      pointLen = window.getCubicLength(points[0], points[1], points[2], points[3]) / 2;
+      point = window.getPointOnCubic(points[0], points[1], points[2], points[3],
+        window.getCubicT(points[0], points[1], points[2], points[3], pointLen));
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value - (point.x - width / 2)))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value - (point.y - height / 2 + height)))
+        .toBeLessThan(TOLERANCE);
+
+      // move anchor
+      document.getElementById('elm1').style.top = '99px';
+      ll.position();
+      expect(props.pathList.baseVal.length).toBe(1);
+      expect(props.pathList.baseVal[0].length).toBe(4);
+      points = props.pathList.baseVal[0];
+      pointLen = window.getCubicLength(points[0], points[1], points[2], points[3]) / 2;
+      point = window.getPointOnCubic(points[0], points[1], points[2], points[3],
+        window.getCubicT(points[0], points[1], points[2], points[3], pointLen));
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value - (point.x - bBox.width / 2)))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value - (point.y - height / 2 + height)))
+        .toBeLessThan(TOLERANCE);
+
+      // lineOffset
+      atc = window.LeaderLine.caption({text: 'label-a', lineOffset: 33});
+      attachProps = window.insAttachProps[atc._id];
+      ll.middleLabel = atc;
+      width = (bBox = attachProps.elmPosition.getBBox()).width;
+      height = bBox.height;
+      expect(props.pathList.baseVal.length).toBe(1);
+      expect(props.pathList.baseVal[0].length).toBe(4);
+      points = props.pathList.baseVal[0];
+      pointLen = window.getCubicLength(points[0], points[1], points[2], points[3]) / 2 + 33;
+      point = window.getPointOnCubic(points[0], points[1], points[2], points[3],
+        window.getCubicT(points[0], points[1], points[2], points[3], pointLen));
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value - (point.x - width / 2)))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value - (point.y - height / 2 + height)))
+        .toBeLessThan(TOLERANCE);
+
+      pageDone();
+      done();
     });
 
   });
