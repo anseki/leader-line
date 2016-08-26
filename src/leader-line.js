@@ -3466,8 +3466,8 @@
             llStats = attachProps.boundTargets.length ? attachProps.boundTargets[0].props.curStats : null,
             value;
 
-          curStats.color = attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor);
-          if (setStat(attachProps, aplStats, 'color', (value = curStats.color))) {
+          curStats.color = value = attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor);
+          if (setStat(attachProps, aplStats, 'color', value)) {
             attachProps.path.style.stroke = value;
           }
           traceLog.add('</ATTACHMENTS.area.updateColor>'); // [DEBUG/]
@@ -3819,8 +3819,8 @@
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats, value;
 
-          curStats.color = attachProps.color || llStats.line_color;
-          if (setStat(attachProps, aplStats, 'color', (value = curStats.color))) {
+          curStats.color = value = attachProps.color || llStats.line_color;
+          if (setStat(attachProps, aplStats, 'color', value)) {
             attachProps.styleFill.fill = value;
           }
           traceLog.add('</ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
