@@ -2781,7 +2781,7 @@
    * @typedef {Object} EffectConf
    * @property {{statName: string, StatConf}} stats - Additional stats.
    * @property {EffectOptionConf[]} optionsConf
-   * @property {Function} init - function(props, id)
+   * @property {Function} init - function(props)
    * @property {Function} remove - function(props)
    * @property {Function} update - function(props[, valueByEvent])
    * @property {boolean} [anim] - Support animation.
@@ -3243,8 +3243,7 @@
   window.SHOW_EFFECTS = SHOW_EFFECTS; // [DEBUG/]
 
   /**
-   * attachProps or id must be specified.
-   * @param {attachProps|null} attachProps - `attachProps` of `LeaderLineAttachment` instance.
+   * @param {attachProps} attachProps - `attachProps` of `LeaderLineAttachment` instance.
    * @returns {void}
    */
   removeAttachment = function(attachProps) {
@@ -3254,7 +3253,7 @@
         function(boundTarget) { unbindAttachment(boundTarget.props, attachProps, true); });
       if (attachProps.conf.remove) { attachProps.conf.remove(attachProps); }
       delete insAttachProps[attachProps._id];
-    } else {
+    } else { // [DEBUG/]
       traceLog.add('not-found'); // [DEBUG/]
     }
     traceLog.add('</removeAttachment>'); // [DEBUG/]
@@ -3278,10 +3277,10 @@
       Object.defineProperty(this, 'isRemoved', {
         get: function() { return !insAttachProps[this._id]; }
       });
+      attachProps._id = this._id;
 
       // isRemoved has to be set before this because init() might throw.
-      if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {}, this._id)) {
-        attachProps._id = this._id;
+      if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {})) {
         insAttachProps[this._id] = attachProps;
       }
     }
@@ -3325,7 +3324,7 @@
    * @typedef {Object} AttachConf
    * @property {string} type
    * @property {{statName: string, StatConf}} stats - Additional stats.
-   * @property {Function} init - function(attachProps, attachOptions, id) returns `true` when succeeded.
+   * @property {Function} init - function(attachProps, attachOptions) returns `true` when succeeded.
    * @property {Function} bind - function(attachProps, bindTarget) returns `true` when succeeded.
    * @property {Function} unbind - function(attachProps, boundTarget)
    * @property {Function} removeOption - function(attachProps, boundTarget)
@@ -3786,8 +3785,8 @@
       textStyleProps: ['fontFamily', 'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch',
         'fontSize', 'fontSizeAdjust', 'kerning', 'letterSpacing', 'wordSpacing', 'textDecoration'],
 
-      // attachOptions: text, color(A), outlineColor, offset(A), <textStyleProps>
-      init: function(attachProps, attachOptions, id) {
+      // attachOptions: text, color(A), outlineColor, offset(A), lineOffset, <textStyleProps>
+      init: function(attachProps, attachOptions) {
         traceLog.add('<ATTACHMENTS.caption.init>'); // [DEBUG/]
         if (typeof attachOptions.text === 'string') {
           attachProps.text = attachOptions.text.trim();
@@ -3805,13 +3804,11 @@
         if (typeof attachOptions.lineOffset === 'number') {
           attachProps.lineOffset = attachOptions.lineOffset;
         }
-
         ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
           if (attachOptions[propName] != null) { // eslint-disable-line eqeqeq
             attachProps[propName] = attachOptions[propName];
           }
         });
-        attachProps.id = id;
 
         // event handler for each instance
         attachProps.updateColor = function(props) {
@@ -4013,7 +4010,7 @@
       initSvg: function(attachProps, props) {
         traceLog.add('<ATTACHMENTS.caption.initSvg>'); // [DEBUG/]
         var text = ATTACHMENTS.caption.newText(attachProps.text, props.baseWindow.document,
-            props.svg, APP_ID + '-attach-caption-' + attachProps.id, attachProps.outlineColor),
+            props.svg, APP_ID + '-attach-caption-' + attachProps._id, attachProps.outlineColor),
           bBox, strokeWidth;
 
         attachProps.elmPosition = text.elmPosition;

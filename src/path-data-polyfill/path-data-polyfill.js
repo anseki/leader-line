@@ -12,7 +12,7 @@ function pathDataPolyfill(window) {
   'use strict';
 
 // @info
-//   Polyfill for SVG 2 getPathData() and setPathData() methods. Based on:
+//   Polyfill for SVG getPathData() and setPathData() methods. Based on:
 //   - SVGPathSeg polyfill by Philip Rogers (MIT License)
 //     https://github.com/progers/pathseg
 //   - SVGPathNormalizer by Tadahisa Motooka (MIT License)
@@ -426,8 +426,8 @@ if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.proto
         cx = k * r1 * y / r2 + (x1 + x2) / 2;
         cy = k * -r2 * x / r1 + (y1 + y2) / 2;
 
-        f1 = Math.asin(((y1 - cy) / r2).toFixed(9));
-        f2 = Math.asin(((y2 - cy) / r2).toFixed(9));
+        f1 = Math.asin(parseFloat(((y1 - cy) / r2).toFixed(9)));
+        f2 = Math.asin(parseFloat(((y2 - cy) / r2).toFixed(9)));
 
         if (x1 < cx) {
           f1 = Math.PI - f1;
@@ -1016,7 +1016,7 @@ if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.proto
       }
     };
 
-    window.SVGRectElement.prototype.getPathData = function() {
+    window.SVGRectElement.prototype.getPathData = function(options) {
       var x = this.x.baseVal.value;
       var y = this.y.baseVal.value;
       var width = this.width.baseVal.value;
@@ -1050,15 +1050,19 @@ if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.proto
         return s.type === "A" && (s.values[0] === 0 || s.values[1] === 0) ? false : true;
       });
 
+      if (options && options.normalize === true) {
+        pathData = reducePathData(pathData);
+      }
+
       return pathData;
     };
 
-    window.SVGCircleElement.prototype.getPathData = function() {
+    window.SVGCircleElement.prototype.getPathData = function(options) {
       var cx = this.cx.baseVal.value;
       var cy = this.cy.baseVal.value;
       var r = this.r.baseVal.value;
 
-      return [
+      var pathData = [
         { type: "M",  values: [cx + r, cy] },
         { type: "A",  values: [r, r, 0, 0, 1, cx, cy+r] },
         { type: "A",  values: [r, r, 0, 0, 1, cx-r, cy] },
@@ -1066,15 +1070,21 @@ if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.proto
         { type: "A",  values: [r, r, 0, 0, 1, cx+r, cy] },
         { type: "Z",  values: [] }
       ];
+
+      if (options && options.normalize === true) {
+        pathData = reducePathData(pathData);
+      }
+
+      return pathData;
     };
 
-    window.SVGEllipseElement.prototype.getPathData = function() {
+    window.SVGEllipseElement.prototype.getPathData = function(options) {
       var cx = this.cx.baseVal.value;
       var cy = this.cy.baseVal.value;
       var rx = this.rx.baseVal.value;
       var ry = this.ry.baseVal.value;
 
-      return [
+      var pathData = [
         { type: "M",  values: [cx + rx, cy] },
         { type: "A",  values: [rx, ry, 0, 0, 1, cx, cy+ry] },
         { type: "A",  values: [rx, ry, 0, 0, 1, cx-rx, cy] },
@@ -1082,6 +1092,12 @@ if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.proto
         { type: "A",  values: [rx, ry, 0, 0, 1, cx+rx, cy] },
         { type: "Z",  values: [] }
       ];
+
+      if (options && options.normalize === true) {
+        pathData = reducePathData(pathData);
+      }
+
+      return pathData;
     };
 
     window.SVGLineElement.prototype.getPathData = function() {
