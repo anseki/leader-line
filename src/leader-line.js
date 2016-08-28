@@ -3813,13 +3813,7 @@
         // event handler for each instance
         attachProps.updateColor = function(props) {
           traceLog.add('<ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
-          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            llStats = props.curStats, value;
-
-          curStats.color = value = attachProps.color || llStats.line_color;
-          if (setStat(attachProps, aplStats, 'color', value)) {
-            attachProps.styleFill.fill = value;
-          }
+          ATTACHMENTS.caption.updateColor(attachProps, props);
           traceLog.add('</ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
         };
 
@@ -3884,12 +3878,7 @@
 
         attachProps.updateShow = function(props) {
           traceLog.add('<ATTACHMENTS.caption.updateShow>'); // [DEBUG/]
-          var on = props.isShown === true;
-          if (on !== attachProps.isShown) {
-            traceLog.add('on=' + on); // [DEBUG/]
-            attachProps.styleShow.visibility = on ? '' : 'hidden';
-            attachProps.isShown = on;
-          }
+          ATTACHMENTS.caption.updateShow(attachProps, props);
           traceLog.add('</ATTACHMENTS.caption.updateShow>'); // [DEBUG/]
         };
 
@@ -3900,6 +3889,25 @@
 
         traceLog.add('</ATTACHMENTS.caption.init>'); // [DEBUG/]
         return true;
+      },
+
+      updateColor: function(attachProps, props) {
+        var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+          llStats = props.curStats, value;
+
+        curStats.color = value = attachProps.color || llStats.line_color;
+        if (setStat(attachProps, aplStats, 'color', value)) {
+          attachProps.styleFill.fill = value;
+        }
+      },
+
+      updateShow: function(attachProps, props) {
+        var on = props.isShown === true;
+        if (on !== attachProps.isShown) {
+          traceLog.add('on=' + on); // [DEBUG/]
+          attachProps.styleShow.visibility = on ? '' : 'hidden';
+          attachProps.isShown = on;
+        }
       },
 
       adjustEdge: function(attachProps, props, edge) {
@@ -3922,7 +3930,7 @@
        * @param {string} text - Content of `<text>` element.
        * @param {Document} document - Document that contains `<svg>`.
        * @param {SVGSVGElement} svg - Parent `<svg>` element.
-       * @param {string} id - ID of `<text>` element.
+       * @param {string} id - ID for `href`.
        * @param {boolean} [stroke] - Setup for `stroke`.
        * @returns {Object} - {elmPosition, styleText, styleFill, styleStroke, styleShow, elmsAppend}
        */
@@ -3936,10 +3944,10 @@
           len.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
           list.baseVal.initialize(len);
         });
+
         if (typeof svg2SupportedPaintOrder !== 'boolean') {
           svg2SupportedPaintOrder = 'paintOrder' in elmText.style;
         }
-
         if (stroke && !svg2SupportedPaintOrder) {
           elmDefs = document.createElementNS(SVG_NS, 'defs');
           elmText.id = id;
@@ -4013,10 +4021,8 @@
             props.svg, APP_ID + '-attach-caption-' + attachProps._id, attachProps.outlineColor),
           bBox, strokeWidth;
 
-        attachProps.elmPosition = text.elmPosition;
-        attachProps.styleFill = text.styleFill;
-        attachProps.styleShow = text.styleShow;
-        attachProps.elmsAppend = text.elmsAppend;
+        ['elmPosition', 'styleFill', 'styleShow', 'elmsAppend']
+          .forEach(function(key) { attachProps[key] = text[key]; });
 
         attachProps.isShown = false;
         attachProps.styleShow.visibility = 'hidden';
@@ -4126,6 +4132,287 @@
             function(boundTarget) { ATTACHMENTS.caption.unbind(attachProps, boundTarget); });
         }
         traceLog.add('</ATTACHMENTS.caption.remove>'); // [DEBUG/]
+      }
+    },
+
+    alongLine: {
+      type: 'label',
+      stats: {color: {}, startOffset: {}},
+
+      // attachOptions: text, color(A), outlineColor, lineOffset, <textStyleProps>
+      init: function(attachProps, attachOptions) {
+        traceLog.add('<ATTACHMENTS.alongLine.init>'); // [DEBUG/]
+        if (typeof attachOptions.text === 'string') {
+          attachProps.text = attachOptions.text.trim();
+        }
+        if (!attachProps.text) { return false; }
+        if (typeof attachOptions.color === 'string') {
+          attachProps.color = attachOptions.color.trim();
+        }
+        attachProps.outlineColor = typeof attachOptions.outlineColor === 'string' ?
+          attachOptions.outlineColor.trim() : '#fff'; // default
+        if (typeof attachOptions.lineOffset === 'number') {
+          attachProps.lineOffset = attachOptions.lineOffset;
+        }
+        ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
+          if (attachOptions[propName] != null) { // eslint-disable-line eqeqeq
+            attachProps[propName] = attachOptions[propName];
+          }
+        });
+
+        // event handler for each instance
+        attachProps.updateColor = function(props) {
+          traceLog.add('<ATTACHMENTS.alongLine.updateColor>'); // [DEBUG/]
+          ATTACHMENTS.caption.updateColor(attachProps, props);
+          traceLog.add('</ATTACHMENTS.alongLine.updateColor>'); // [DEBUG/]
+        };
+
+        attachProps.updatePath = function(props) {
+          traceLog.add('<ATTACHMENTS.alongLine.updatePath>'); // [DEBUG/]
+          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+            pathList = props.pathList.animVal || props.pathList.baseVal,
+            point, value;
+
+          attachProps.elmPath.setPathData(pathList2PathData(pathList));
+          // point = ATTACHMENTS.alongLine.getMidPoint(pathList, attachProps.lineOffset);
+          // curStats.x = point.x - attachProps.width / 2;
+          // curStats.y = point.y - attachProps.height / 2;
+
+          // if (setStat(attachProps, aplStats, 'x', (value = curStats.x))) {
+          //   attachProps.elmPosition.x.baseVal.getItem(0).value = value;
+          // }
+          // if (setStat(attachProps, aplStats, 'y', (value = curStats.y))) {
+          //   attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
+          // }
+          traceLog.add('</ATTACHMENTS.alongLine.updatePath>'); // [DEBUG/]
+        };
+
+        attachProps.updateShow = function(props) {
+          traceLog.add('<ATTACHMENTS.alongLine.updateShow>'); // [DEBUG/]
+          ATTACHMENTS.caption.updateShow(attachProps, props);
+          traceLog.add('</ATTACHMENTS.alongLine.updateShow>'); // [DEBUG/]
+        };
+
+        if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
+          attachProps.adjustEdge =
+            function(props, edge) { ATTACHMENTS.alongLine.adjustEdge(attachProps, props, edge); };
+        }
+
+        traceLog.add('</ATTACHMENTS.alongLine.init>'); // [DEBUG/]
+        return true;
+      },
+
+      adjustEdge: function(attachProps, props, edge) {
+        traceLog.add('<ATTACHMENTS.alongLine.adjustEdge>'); // [DEBUG/]
+        var bBox = attachProps.bBox, textEdge, strokeWidth;
+        if (bBox) {
+          strokeWidth = attachProps.strokeWidth ? attachProps.strokeWidth / 2 : 0;
+          textEdge = {x1: bBox.x - strokeWidth, y1: bBox.y - strokeWidth,
+            x2: bBox.x + bBox.width + strokeWidth, y2: bBox.y + bBox.height + strokeWidth};
+          if (textEdge.x1 < edge.x1) { edge.x1 = textEdge.x1; }
+          if (textEdge.y1 < edge.y1) { edge.y1 = textEdge.y1; }
+          if (textEdge.x2 > edge.x2) { edge.x2 = textEdge.x2; }
+          if (textEdge.y2 > edge.y2) { edge.y2 = textEdge.y2; }
+        }
+        traceLog.add('</ATTACHMENTS.alongLine.adjustEdge>'); // [DEBUG/]
+      },
+
+      /**
+       * @param {string} text - Content of `<text>` element.
+       * @param {Document} document - Document that contains `<svg>`.
+       * @param {string} id - ID for `href`.
+       * @param {boolean} [stroke] - Setup for `stroke`.
+       * @returns {Object} - {elmPosition, elmPath, elmOffset,
+       *    styleText, styleFill, styleStroke, styleShow, elmsAppend}
+       */
+      newText: function(text, document, id, stroke) {
+        var pathId, textId, elmDefs, elmPath, elmText, elmTextPath, elmG, elmUseFill, elmUseStroke, style;
+
+        elmDefs = document.createElementNS(SVG_NS, 'defs');
+        elmPath = elmDefs.appendChild(document.createElementNS(SVG_NS, 'path'));
+        elmPath.id = (pathId = id + '-path');
+
+        elmText = document.createElementNS(SVG_NS, 'text');
+        elmTextPath = elmText.appendChild(document.createElementNS(SVG_NS, 'textPath'));
+        elmTextPath.href.baseVal = '#' + pathId;
+        elmTextPath.startOffset.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+        elmTextPath.textContent = text;
+
+        if (typeof svg2SupportedPaintOrder !== 'boolean') {
+          svg2SupportedPaintOrder = 'paintOrder' in elmText.style;
+        }
+        if (stroke && !svg2SupportedPaintOrder) {
+          elmText.id = (textId = id + '-text');
+          elmDefs.appendChild(elmText);
+          elmG = document.createElementNS(SVG_NS, 'g');
+          elmUseStroke = elmG.appendChild(document.createElementNS(SVG_NS, 'use'));
+          elmUseStroke.href.baseVal = '#' + textId;
+          elmUseFill = elmG.appendChild(document.createElementNS(SVG_NS, 'use'));
+          elmUseFill.href.baseVal = '#' + textId;
+          style = elmUseStroke.style;
+          style.strokeLinejoin = 'round';
+          return {
+            elmPosition: elmText,
+            elmPath: elmPath,
+            elmOffset: elmTextPath,
+            styleText: elmText.style,
+            styleFill: elmUseFill.style,
+            styleStroke: style,
+            styleShow: elmG.style,
+            elmsAppend: [elmDefs, elmG]
+          };
+
+        } else {
+          style = elmText.style;
+          if (stroke) {
+            style.strokeLinejoin = 'round';
+            style.paintOrder = 'stroke';
+          }
+          return {
+            elmPosition: elmText,
+            elmPath: elmPath,
+            elmOffset: elmTextPath,
+            styleText: style,
+            styleFill: style,
+            styleStroke: stroke ? style : null,
+            styleShow: style,
+            elmsAppend: [elmDefs, elmText]
+          };
+        }
+      },
+
+      getMidPoint: function(pathList, offset) {
+        var pathSegsLen = [], pathLenAll = 0, pointLen, points, i = -1, newPathList;
+        pathList.forEach(function(points) {
+          var pathLen = (points.length === 2 ? getPointsLength : getCubicLength).apply(null, points);
+          pathSegsLen.push(pathLen);
+          pathLenAll += pathLen;
+        });
+
+        pointLen = pathLenAll / 2 + (offset || 0);
+        if (pointLen <= 0) {
+          points = pathList[0];
+          return points.length === 2 ? getPointOnLine(points[0], points[1], 0) :
+            getPointOnCubic(points[0], points[1], points[2], points[3], 0);
+        } else if (pointLen >= pathLenAll) {
+          points = pathList[pathList.length - 1];
+          return points.length === 2 ? getPointOnLine(points[0], points[1], 1) :
+            getPointOnCubic(points[0], points[1], points[2], points[3], 1);
+        } else {
+          newPathList = [];
+          while (pointLen > pathSegsLen[++i]) {
+            newPathList.push(pathList[i]);
+            pointLen -= pathSegsLen[i];
+          }
+          points = pathList[i];
+          return points.length === 2 ? getPointOnLine(points[0], points[1], pointLen / pathSegsLen[i]) :
+            getPointOnCubic(points[0], points[1], points[2], points[3],
+              getCubicT(points[0], points[1], points[2], points[3], pointLen));
+        }
+      },
+
+      initSvg: function(attachProps, props) {
+        traceLog.add('<ATTACHMENTS.alongLine.initSvg>'); // [DEBUG/]
+        var text = ATTACHMENTS.alongLine.newText(attachProps.text, props.baseWindow.document,
+            APP_ID + '-attach-alongLine-' + attachProps._id, attachProps.outlineColor),
+          bBox, strokeWidth;
+
+        ['elmPosition', 'elmPath', 'elmOffset', 'styleFill', 'styleShow', 'elmsAppend']
+          .forEach(function(key) { attachProps[key] = text[key]; });
+
+        attachProps.isShown = false;
+        attachProps.styleShow.visibility = 'hidden';
+        ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
+          if (attachProps[propName] != null) { // eslint-disable-line eqeqeq
+            text.styleText[propName] = attachProps[propName];
+          }
+        });
+        text.styleText.textAnchor = ['start', 'end', 'middle'][attachProps.semIndex];
+
+        text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
+        if (attachProps.outlineColor) { // Get normal size
+          text.elmPath.setPathData([{type: 'M', values: [0, 100]}, {type: 'h', values: [100]}]);
+          bBox = text.elmPosition.getBBox();
+          console.log(bBox);
+          strokeWidth = bBox.height / 9;
+          strokeWidth = strokeWidth > 10 ? 10 : strokeWidth < 2 ? 2 : strokeWidth;
+          text.styleStroke.strokeWidth = strokeWidth + 'px';
+          text.styleStroke.stroke = attachProps.outlineColor;
+        }
+        attachProps.strokeWidth = strokeWidth;
+
+        initStats(attachProps.aplStats, ATTACHMENTS.alongLine.stats); // for bindWindow again
+        attachProps.updateColor(props);
+        attachProps.updatePath(props);
+        if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored
+        attachProps.updateShow(props);
+        traceLog.add('</ATTACHMENTS.alongLine.initSvg>'); // [DEBUG/]
+      },
+
+      bind: function(attachProps, bindTarget) {
+        traceLog.add('<ATTACHMENTS.alongLine.bind>'); // [DEBUG/]
+        var props = bindTarget.props;
+
+        if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
+        attachProps.semIndex = bindTarget.optionName === 'startLabel' ? 0 :
+          bindTarget.optionName === 'endLabel' ? 1 : 2;
+        addEventHandler(props, 'cur_attach_plugSideLenSE', attachProps.updatePath);///
+        addEventHandler(props, 'cur_line_strokeWidth', attachProps.updatePath);
+        addEventHandler(props, 'apl_path', attachProps.updatePath);
+        addEventHandler(props, 'svgShow', attachProps.updateShow);
+        // [WEBKIT] overflow:visible is ignored
+        if (IS_WEBKIT) { addEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge); }
+
+        // after set attachProps.semIndex
+        ATTACHMENTS.alongLine.initSvg(attachProps, props);
+
+        traceLog.add('</ATTACHMENTS.alongLine.bind>'); // [DEBUG/]
+        return true;
+      },
+
+      unbind: function(attachProps, boundTarget) {
+        traceLog.add('<ATTACHMENTS.alongLine.unbind>'); // [DEBUG/]
+        var props = boundTarget.props;
+
+        if (attachProps.elmsAppend) {
+          attachProps.elmsAppend.forEach(function(elm) { props.svg.removeChild(elm); });
+          attachProps.elmPosition = attachProps.styleFill =
+            attachProps.styleShow = attachProps.elmsAppend = null;
+        }
+        initStats(attachProps.curStats, ATTACHMENTS.alongLine.stats);
+        initStats(attachProps.aplStats, ATTACHMENTS.alongLine.stats);
+
+        if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
+        removeEventHandler(props, 'cur_attach_plugSideLenSE', attachProps.updatePath);
+        removeEventHandler(props, 'cur_line_strokeWidth', attachProps.updatePath);
+        removeEventHandler(props, 'apl_path', attachProps.updatePath);
+        removeEventHandler(props, 'svgShow', attachProps.updateShow);
+        if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
+          removeEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge);
+          // addDelayedProc(function() { update(props, {}); }); // reset path_edge
+          update(props, {});
+        }
+        traceLog.add('</ATTACHMENTS.alongLine.unbind>'); // [DEBUG/]
+      },
+
+      removeOption: function(attachProps, boundTarget) {
+        traceLog.add('<ATTACHMENTS.alongLine.removeOption>'); // [DEBUG/]
+        traceLog.add(boundTarget.optionName); // [DEBUG/]
+        var props = boundTarget.props, newOptions = {};
+        newOptions[boundTarget.optionName] = '';
+        setOptions(props, newOptions);
+        traceLog.add('</ATTACHMENTS.alongLine.removeOption>'); // [DEBUG/]
+      },
+
+      remove: function(attachProps) {
+        traceLog.add('<ATTACHMENTS.alongLine.remove>'); // [DEBUG/]
+        if (attachProps.boundTargets.length) { // it should be unbound by LeaderLineAttachment.remove
+          traceLog.add('error-not-unbound'); // [DEBUG/]
+          console.error('LeaderLineAttachment was not unbound by remove');
+          attachProps.boundTargets.forEach(
+            function(boundTarget) { ATTACHMENTS.alongLine.unbind(attachProps, boundTarget); });
+        }
+        traceLog.add('</ATTACHMENTS.alongLine.remove>'); // [DEBUG/]
       }
     }
   };
