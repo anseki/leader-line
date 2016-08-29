@@ -3883,8 +3883,16 @@
         };
 
         if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
-          attachProps.adjustEdge =
-            function(props, edge) { ATTACHMENTS.caption.adjustEdge(attachProps, props, edge); };
+          attachProps.adjustEdge = function(props, edge) {
+            traceLog.add('<ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
+            var curStats = attachProps.curStats;
+            if (curStats.x != null) { // eslint-disable-line eqeqeq
+              ATTACHMENTS.caption.adjustEdge(edge,
+                {x: curStats.x, y: curStats.y, width: attachProps.width, height: attachProps.height},
+                attachProps.strokeWidth / 2);
+            }
+            traceLog.add('</ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
+          };
         }
 
         traceLog.add('</ATTACHMENTS.caption.init>'); // [DEBUG/]
@@ -3910,20 +3918,13 @@
         }
       },
 
-      adjustEdge: function(attachProps, props, edge) {
-        traceLog.add('<ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
-        var curStats = attachProps.curStats, textEdge, strokeWidth;
-        if (curStats.x != null) { // eslint-disable-line eqeqeq
-          strokeWidth = attachProps.strokeWidth ? attachProps.strokeWidth / 2 : 0;
-          textEdge = {x1: curStats.x - strokeWidth, y1: curStats.y - strokeWidth,
-            x2: curStats.x + attachProps.width + strokeWidth,
-            y2: curStats.y + attachProps.height + strokeWidth};
-          if (textEdge.x1 < edge.x1) { edge.x1 = textEdge.x1; }
-          if (textEdge.y1 < edge.y1) { edge.y1 = textEdge.y1; }
-          if (textEdge.x2 > edge.x2) { edge.x2 = textEdge.x2; }
-          if (textEdge.y2 > edge.y2) { edge.y2 = textEdge.y2; }
-        }
-        traceLog.add('</ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
+      adjustEdge: function(edge, bBox, margin) {
+        var textEdge = {x1: bBox.x - margin, y1: bBox.y - margin,
+          x2: bBox.x + bBox.width + margin, y2: bBox.y + bBox.height + margin};
+        if (textEdge.x1 < edge.x1) { edge.x1 = textEdge.x1; }
+        if (textEdge.y1 < edge.y1) { edge.y1 = textEdge.y1; }
+        if (textEdge.x2 > edge.x2) { edge.x2 = textEdge.x2; }
+        if (textEdge.y2 > edge.y2) { edge.y2 = textEdge.y2; }
       },
 
       /**
@@ -4042,7 +4043,7 @@
           text.styleStroke.strokeWidth = strokeWidth + 'px';
           text.styleStroke.stroke = attachProps.outlineColor;
         }
-        attachProps.strokeWidth = strokeWidth;
+        attachProps.strokeWidth = strokeWidth || 0;
 
         initStats(attachProps.aplStats, ATTACHMENTS.caption.stats); // for bindWindow again
         attachProps.updateColor(props);
@@ -4169,11 +4170,17 @@
 
         attachProps.updatePath = function(props) {
           traceLog.add('<ATTACHMENTS.alongLine.updatePath>'); // [DEBUG/]
-          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            pathList = props.pathList.animVal || props.pathList.baseVal,
-            point, value;
+          var MARGIN = 2, STEP_LEN = 16,
+            curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+            llStats = props.curStats, pathList = props.pathList.animVal || props.pathList.baseVal,
+            value;
 
-          attachProps.elmPath.setPathData(pathList2PathData(pathList));
+
+
+          pathOffset = llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + MARGIN;
+
+          // attachProps.elmPath.setPathData(pathList2PathData(pathList));
+
           // point = ATTACHMENTS.alongLine.getMidPoint(pathList, attachProps.lineOffset);
           // curStats.x = point.x - attachProps.width / 2;
           // curStats.y = point.y - attachProps.height / 2;
@@ -4187,6 +4194,16 @@
           traceLog.add('</ATTACHMENTS.alongLine.updatePath>'); // [DEBUG/]
         };
 
+        attachProps.updateStartOffset = function(props) {
+          traceLog.add('<ATTACHMENTS.alongLine.updateStartOffset>'); // [DEBUG/]
+          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+            llStats = props.curStats;
+
+          plugBackLen = Math.max(llStats.attach_plugBackLenSE[attachProps.socketIndex] || 0,
+            llStats.line_strokeWidth / 2);
+          traceLog.add('</ATTACHMENTS.alongLine.updateStartOffset>'); // [DEBUG/]
+        };
+
         attachProps.updateShow = function(props) {
           traceLog.add('<ATTACHMENTS.alongLine.updateShow>'); // [DEBUG/]
           ATTACHMENTS.caption.updateShow(attachProps, props);
@@ -4194,27 +4211,17 @@
         };
 
         if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
-          attachProps.adjustEdge =
-            function(props, edge) { ATTACHMENTS.alongLine.adjustEdge(attachProps, props, edge); };
+          attachProps.adjustEdge = function(props, edge) {
+            traceLog.add('<ATTACHMENTS.alongLine.adjustEdge>'); // [DEBUG/]
+            if (attachProps.bBox) {
+              ATTACHMENTS.caption.adjustEdge(edge, attachProps.bBox, attachProps.strokeWidth / 2);
+            }
+            traceLog.add('</ATTACHMENTS.alongLine.adjustEdge>'); // [DEBUG/]
+          };
         }
 
         traceLog.add('</ATTACHMENTS.alongLine.init>'); // [DEBUG/]
         return true;
-      },
-
-      adjustEdge: function(attachProps, props, edge) {
-        traceLog.add('<ATTACHMENTS.alongLine.adjustEdge>'); // [DEBUG/]
-        var bBox = attachProps.bBox, textEdge, strokeWidth;
-        if (bBox) {
-          strokeWidth = attachProps.strokeWidth ? attachProps.strokeWidth / 2 : 0;
-          textEdge = {x1: bBox.x - strokeWidth, y1: bBox.y - strokeWidth,
-            x2: bBox.x + bBox.width + strokeWidth, y2: bBox.y + bBox.height + strokeWidth};
-          if (textEdge.x1 < edge.x1) { edge.x1 = textEdge.x1; }
-          if (textEdge.y1 < edge.y1) { edge.y1 = textEdge.y1; }
-          if (textEdge.x2 > edge.x2) { edge.x2 = textEdge.x2; }
-          if (textEdge.y2 > edge.y2) { edge.y2 = textEdge.y2; }
-        }
-        traceLog.add('</ATTACHMENTS.alongLine.adjustEdge>'); // [DEBUG/]
       },
 
       /**
@@ -4339,7 +4346,7 @@
           text.styleStroke.strokeWidth = strokeWidth + 'px';
           text.styleStroke.stroke = attachProps.outlineColor;
         }
-        attachProps.strokeWidth = strokeWidth;
+        attachProps.strokeWidth = strokeWidth || 0;
 
         initStats(attachProps.aplStats, ATTACHMENTS.alongLine.stats); // for bindWindow again
         attachProps.updateColor(props);
