@@ -427,6 +427,17 @@
   }
   window.getPointOnLine = getPointOnLine; // [DEBUG/]
 
+  function getIntersection(line1P0, line1P1, line2P0, line2P1) {
+    var sx1 = line1P1.x - line1P0.x, sy1 = line1P1.y - line1P0.y,
+      sx2 = line2P1.x - line2P0.x, sy2 = line2P1.y - line2P0.y,
+      s = (-sy1 * (line1P0.x - line2P0.x) + sx1 * (line1P0.y - line2P0.y)) / (-sx2 * sy1 + sx1 * sy2),
+      t = (sx2 * (line1P0.y - line2P0.y) - sy2 * (line1P0.x - line2P0.x)) / (-sx2 * sy1 + sx1 * sy2);
+
+    return s >= 0 && s <= 1 && t >= 0 && t <= 1 ?
+      {x: line1P0.x + (t * sx1), y: line1P0.y + (t * sy1)} : null;
+  }
+  window.getIntersection = getIntersection; // [DEBUG/]
+
   function getPointOnCubic(p0, p1, p2, p3, t) {
     var
       t2 = t * t,
