@@ -4187,7 +4187,7 @@
             value;
 
 
-          function getOffsetPath(p0, p1, p2, p3, offsetLen, stepLen) {
+          function getOffsetCubic(p0, p1, p2, p3, offsetLen, stepLen) {
             var parts = getCubicLength(p0, p1, p2, p3) / stepLen,
               tStep = 1 / (offsetLen > stepLen ? parts * (offsetLen / stepLen) : parts),
               points = [], pointOnPath, angle, t = 0;
