@@ -4187,6 +4187,26 @@
             value;
 
 
+          function getOffsetPath(p0, p1, p2, p3, offsetLen, stepLen) {
+            var parts = getCubicLength(p0, p1, p2, p3) / stepLen,
+              tStep = 1 / (offsetLen > stepLen ? parts * (offsetLen / stepLen) : parts),
+              points = [], pointOnPath, angle, t = 0;
+
+            while (true) {
+              pointOnPath = getPointOnCubic(p0, p1, p2, p3, t);
+              angle = (-pointOnPath.angle + 90) * (Math.PI / 180);
+              points.push({
+                x: pointOnPath.x + Math.cos(angle) * offsetLen,
+                y: pointOnPath.y + Math.sin(angle) * offsetLen * -1
+              });
+              if (t >= 1) { break; }
+              t += tStep;
+              if (t > 1) { t = 1; }
+            }
+            return points;
+          }
+
+
 
           pathOffset = llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + MARGIN;
 
