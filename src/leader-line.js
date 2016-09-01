@@ -438,6 +438,12 @@
   }
   window.getIntersection = getIntersection; // [DEBUG/]
 
+  function extendLine(p0, p1, len) {
+    var angle = Math.atan2(p0.y - p1.y, p1.x - p0.x);
+    return {x: p1.x + Math.cos(angle) * len, y: p1.y + Math.sin(angle) * len * -1};
+  }
+  window.extendLine = extendLine; // [DEBUG/]
+
   function getPointOnCubic(p0, p1, p2, p3, t) {
     var
       t2 = t * t,
@@ -510,6 +516,35 @@
     return t2;
   }
   window.getCubicT = getCubicT; // [DEBUG/]
+
+  function getOffsetLine(p0, p1, offsetLen) {
+    var angle = Math.atan2(p0.y - p1.y, p1.x - p0.x) + Math.PI * 0.5;
+    return [
+      {x: p0.x + Math.cos(angle) * offsetLen, y: p0.y + Math.sin(angle) * offsetLen * -1},
+      {x: p1.x + Math.cos(angle) * offsetLen, y: p1.y + Math.sin(angle) * offsetLen * -1}
+    ];
+  }
+  window.getOffsetLine = getOffsetLine; // [DEBUG/]
+
+  function getOffsetCubic(p0, p1, p2, p3, offsetLen, stepLen) {
+    var parts = getCubicLength(p0, p1, p2, p3) / stepLen,
+      tStep = 1 / (offsetLen > stepLen ? parts * (offsetLen / stepLen) : parts),
+      points = [], pointOnPath, angle, t = 0;
+
+    while (true) {
+      pointOnPath = getPointOnCubic(p0, p1, p2, p3, t);
+      angle = (-pointOnPath.angle + 90) * (Math.PI / 180);
+      points.push({
+        x: pointOnPath.x + Math.cos(angle) * offsetLen,
+        y: pointOnPath.y + Math.sin(angle) * offsetLen * -1
+      });
+      if (t >= 1) { break; }
+      t += tStep;
+      if (t > 1) { t = 1; }
+    }
+    return points;
+  }
+  window.getOffsetCubic = getOffsetCubic; // [DEBUG/]
 
   function pathList2PathData(pathList, cbPoint) {
     var pathData;
@@ -4187,24 +4222,6 @@
             value;
 
 
-          function getOffsetCubic(p0, p1, p2, p3, offsetLen, stepLen) {
-            var parts = getCubicLength(p0, p1, p2, p3) / stepLen,
-              tStep = 1 / (offsetLen > stepLen ? parts * (offsetLen / stepLen) : parts),
-              points = [], pointOnPath, angle, t = 0;
-
-            while (true) {
-              pointOnPath = getPointOnCubic(p0, p1, p2, p3, t);
-              angle = (-pointOnPath.angle + 90) * (Math.PI / 180);
-              points.push({
-                x: pointOnPath.x + Math.cos(angle) * offsetLen,
-                y: pointOnPath.y + Math.sin(angle) * offsetLen * -1
-              });
-              if (t >= 1) { break; }
-              t += tStep;
-              if (t > 1) { t = 1; }
-            }
-            return points;
-          }
 
 
 
