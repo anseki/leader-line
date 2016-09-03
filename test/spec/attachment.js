@@ -1224,7 +1224,7 @@ describe('attachment', function() {
 
   });
 
-  describe('ATTACHMENTS.caption', function() {
+  describe('ATTACHMENTS.captionLabel', function() {
 
     beforeEach(loadBefore);
 
@@ -1232,13 +1232,13 @@ describe('attachment', function() {
       var atc, attachProps;
 
       // invalid
-      atc = window.LeaderLine.caption({text: ' '});
+      atc = window.LeaderLine.captionLabel({text: ' '});
       expect(atc.isRemoved).toBe(true);
-      atc = window.LeaderLine.caption({text: 5});
+      atc = window.LeaderLine.captionLabel({text: 5});
       expect(atc.isRemoved).toBe(true);
 
       // default
-      atc = window.LeaderLine.caption({text: '  label-a  '});
+      atc = window.LeaderLine.captionLabel({text: '  label-a  '});
       attachProps = window.insAttachProps[atc._id];
       expect(attachProps.text).toBe('label-a');
       expect(attachProps.color == null).toBe(true); // eslint-disable-line eqeqeq
@@ -1247,7 +1247,7 @@ describe('attachment', function() {
       expect(attachProps.lineOffset == null).toBe(true); // eslint-disable-line eqeqeq
 
       // valid
-      atc = window.LeaderLine.caption({
+      atc = window.LeaderLine.captionLabel({
         text: '  label-a  ',
         color: ' red ',
         outlineColor: ' blue ',
@@ -1269,7 +1269,7 @@ describe('attachment', function() {
       var props = window.insProps[ll._id],
         atc, attachProps, ll2, props2;
 
-      atc = window.LeaderLine.caption({text: 'label-a'});
+      atc = window.LeaderLine.captionLabel({text: 'label-a'});
       attachProps = window.insAttachProps[atc._id];
       ll.startLabel = atc;
       expect(attachProps.curStats.color).toBe('coral');
@@ -1282,7 +1282,7 @@ describe('attachment', function() {
       expect(traceLog.log).toEqual([
         '<setOptions>', 'needs.line', '</setOptions>',
         '<updateLine>', 'line_color=red',
-        '<ATTACHMENTS.caption.updateColor>', 'color=red', '</ATTACHMENTS.caption.updateColor>',
+        '<ATTACHMENTS.captionLabel.updateColor>', 'color=red', '</ATTACHMENTS.captionLabel.updateColor>',
         '</updateLine>',
         '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
         '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
@@ -1305,21 +1305,23 @@ describe('attachment', function() {
       expect(traceLog.log).toEqual([
         /* eslint-disable indent */
         // option of ll1
-        '<ATTACHMENTS.caption.removeOption>', 'startLabel',
-          '<ATTACHMENTS.caption.unbind>', '</ATTACHMENTS.caption.unbind>',
+        '<ATTACHMENTS.captionLabel.removeOption>', 'startLabel',
+          '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
           '<setOptions>', '</setOptions>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', '</update>',
-        '</ATTACHMENTS.caption.removeOption>',
+        '</ATTACHMENTS.captionLabel.removeOption>',
 
-        '<ATTACHMENTS.caption.bind>',
-          '<ATTACHMENTS.caption.initSvg>',
-            '<ATTACHMENTS.caption.updateColor>', 'color=blue', '</ATTACHMENTS.caption.updateColor>',
-            '<ATTACHMENTS.caption.updateSocketXY>', 'x=162.09375', 'y=263', '</ATTACHMENTS.caption.updateSocketXY>',
-            '<ATTACHMENTS.caption.updateShow>', 'on=true', '</ATTACHMENTS.caption.updateShow>',
-          '</ATTACHMENTS.caption.initSvg>',
-        '</ATTACHMENTS.caption.bind>',
+        '<ATTACHMENTS.captionLabel.bind>',
+          '<ATTACHMENTS.captionLabel.initSvg>',
+            '<ATTACHMENTS.captionLabel.updateColor>', 'color=blue', '</ATTACHMENTS.captionLabel.updateColor>',
+            '<ATTACHMENTS.captionLabel.updateSocketXY>',
+              'x=162.09375', 'y=263',
+            '</ATTACHMENTS.captionLabel.updateSocketXY>',
+            '<ATTACHMENTS.captionLabel.updateShow>', 'on=true', '</ATTACHMENTS.captionLabel.updateShow>',
+          '</ATTACHMENTS.captionLabel.initSvg>',
+        '</ATTACHMENTS.captionLabel.bind>',
 
         '<setOptions>', '</setOptions>',
         '<updateViewBox>', 'not-updated', '</updateViewBox>',
@@ -1336,7 +1338,7 @@ describe('attachment', function() {
       traceLog.clear();
       ll2.endLabel = '';
       expect(traceLog.log).toEqual([
-        '<ATTACHMENTS.caption.unbind>', '</ATTACHMENTS.caption.unbind>',
+        '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
         '<setOptions>', '</setOptions>',
         '<updateViewBox>', 'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
@@ -1356,7 +1358,7 @@ describe('attachment', function() {
       var props = window.insProps[ll._id],
         atc, attachProps, ll2, props2;
 
-      atc = window.LeaderLine.caption({text: 'label-a', color: 'yellow'});
+      atc = window.LeaderLine.captionLabel({text: 'label-a', color: 'yellow'});
       attachProps = window.insAttachProps[atc._id];
       ll.startLabel = atc;
       expect(attachProps.curStats.color).toBe('yellow');
@@ -1368,7 +1370,7 @@ describe('attachment', function() {
       expect(traceLog.log).toEqual([
         '<setOptions>', 'needs.line', '</setOptions>',
         '<updateLine>', 'line_color=red',
-        // '<ATTACHMENTS.caption.updateColor>', 'color=red', '</ATTACHMENTS.caption.updateColor>',
+        // '<ATTACHMENTS.captionLabel.updateColor>', 'color=red', '</ATTACHMENTS.captionLabel.updateColor>',
         '</updateLine>',
         '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
         '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
@@ -1391,21 +1393,23 @@ describe('attachment', function() {
       expect(traceLog.log).toEqual([
         /* eslint-disable indent */
         // option of ll1
-        '<ATTACHMENTS.caption.removeOption>', 'startLabel',
-          '<ATTACHMENTS.caption.unbind>', '</ATTACHMENTS.caption.unbind>',
+        '<ATTACHMENTS.captionLabel.removeOption>', 'startLabel',
+          '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
           '<setOptions>', '</setOptions>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', '</update>',
-        '</ATTACHMENTS.caption.removeOption>',
+        '</ATTACHMENTS.captionLabel.removeOption>',
 
-        '<ATTACHMENTS.caption.bind>',
-          '<ATTACHMENTS.caption.initSvg>',
-            '<ATTACHMENTS.caption.updateColor>', 'color=yellow', '</ATTACHMENTS.caption.updateColor>',
-            '<ATTACHMENTS.caption.updateSocketXY>', 'x=162.09375', 'y=263', '</ATTACHMENTS.caption.updateSocketXY>',
-            '<ATTACHMENTS.caption.updateShow>', 'on=true', '</ATTACHMENTS.caption.updateShow>',
-          '</ATTACHMENTS.caption.initSvg>',
-        '</ATTACHMENTS.caption.bind>',
+        '<ATTACHMENTS.captionLabel.bind>',
+          '<ATTACHMENTS.captionLabel.initSvg>',
+            '<ATTACHMENTS.captionLabel.updateColor>', 'color=yellow', '</ATTACHMENTS.captionLabel.updateColor>',
+            '<ATTACHMENTS.captionLabel.updateSocketXY>',
+              'x=162.09375', 'y=263',
+            '</ATTACHMENTS.captionLabel.updateSocketXY>',
+            '<ATTACHMENTS.captionLabel.updateShow>', 'on=true', '</ATTACHMENTS.captionLabel.updateShow>',
+          '</ATTACHMENTS.captionLabel.initSvg>',
+        '</ATTACHMENTS.captionLabel.bind>',
 
         '<setOptions>', '</setOptions>',
         '<updateViewBox>', 'not-updated', '</updateViewBox>',
@@ -1422,7 +1426,7 @@ describe('attachment', function() {
       traceLog.clear();
       ll2.endLabel = '';
       expect(traceLog.log).toEqual([
-        '<ATTACHMENTS.caption.unbind>', '</ATTACHMENTS.caption.unbind>',
+        '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
         '<setOptions>', '</setOptions>',
         '<updateViewBox>', 'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
@@ -1442,7 +1446,7 @@ describe('attachment', function() {
       var props = window.insProps[ll._id],
         atc, attachProps;
 
-      atc = window.LeaderLine.caption({text: 'label-a'});
+      atc = window.LeaderLine.captionLabel({text: 'label-a'});
       attachProps = window.insAttachProps[atc._id];
       ll.hide('none');
       setTimeout(function() {
@@ -1470,7 +1474,7 @@ describe('attachment', function() {
         atc, attachProps, bBox, width, height, sideLen;
 
       // offset
-      atc = window.LeaderLine.caption({text: 'label-a', offset: [3, -4]});
+      atc = window.LeaderLine.captionLabel({text: 'label-a', offset: [3, -4]});
       attachProps = window.insAttachProps[atc._id];
       ll.startLabel = atc;
       height = (bBox = attachProps.elmPosition.getBBox()).height;
@@ -1497,7 +1501,7 @@ describe('attachment', function() {
       expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(30 - 4 + height);
 
       // auto offset
-      atc = window.LeaderLine.caption({text: 'label-a'});
+      atc = window.LeaderLine.captionLabel({text: 'label-a'});
       attachProps = window.insAttachProps[atc._id];
       ll.endLabel = atc;
       width = (bBox = attachProps.elmPosition.getBBox()).width;
@@ -1574,7 +1578,7 @@ describe('attachment', function() {
       var props = window.insProps[ll._id],
         atc, attachProps, bBox, width, height, points, point, pointLen;
 
-      atc = window.LeaderLine.caption({text: 'label-a'});
+      atc = window.LeaderLine.captionLabel({text: 'label-a'});
       attachProps = window.insAttachProps[atc._id];
       ll.middleLabel = atc;
       width = (bBox = attachProps.elmPosition.getBBox()).width;
@@ -1605,7 +1609,7 @@ describe('attachment', function() {
         .toBeLessThan(TOLERANCE);
 
       // lineOffset
-      atc = window.LeaderLine.caption({text: 'label-a', lineOffset: 33});
+      atc = window.LeaderLine.captionLabel({text: 'label-a', lineOffset: 33});
       attachProps = window.insAttachProps[atc._id];
       ll.middleLabel = atc;
       width = (bBox = attachProps.elmPosition.getBBox()).width;

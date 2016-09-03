@@ -2545,7 +2545,7 @@
             attachProps.boundTargets.slice().forEach( // Copy boundTargets because removeOption may change array.
               function(boundTarget) { attachProps.conf.removeOption(attachProps, boundTarget); });
           } else {
-            label = new LeaderLineAttachment(ATTACHMENTS.caption, {text: newOption});
+            label = new LeaderLineAttachment(ATTACHMENTS.captionLabel, {text: newOption});
           }
           if (!bindAttachment(props, insAttachProps[label._id], optionName)) {
             throw new Error('Can\'t bind attachment');
@@ -3827,7 +3827,7 @@
       }
     },
 
-    caption: {
+    captionLabel: {
       type: 'label',
       stats: {color: {}, x: {}, y: {}},
       textStyleProps: ['fontFamily', 'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch',
@@ -3835,7 +3835,7 @@
 
       // attachOptions: text, color(A), outlineColor, offset(A), lineOffset, <textStyleProps>
       init: function(attachProps, attachOptions) {
-        traceLog.add('<ATTACHMENTS.caption.init>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.captionLabel.init>'); // [DEBUG/]
         if (typeof attachOptions.text === 'string') {
           attachProps.text = attachOptions.text.trim();
         }
@@ -3852,7 +3852,7 @@
         if (typeof attachOptions.lineOffset === 'number') {
           attachProps.lineOffset = attachOptions.lineOffset;
         }
-        ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
+        ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
           if (attachOptions[propName] != null) { // eslint-disable-line eqeqeq
             attachProps[propName] = attachOptions[propName];
           }
@@ -3860,13 +3860,13 @@
 
         // event handler for each instance
         attachProps.updateColor = function(props) {
-          traceLog.add('<ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
-          ATTACHMENTS.caption.updateColor(attachProps, props);
-          traceLog.add('</ATTACHMENTS.caption.updateColor>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.captionLabel.updateColor>'); // [DEBUG/]
+          ATTACHMENTS.captionLabel.updateColor(attachProps, props);
+          traceLog.add('</ATTACHMENTS.captionLabel.updateColor>'); // [DEBUG/]
         };
 
         attachProps.updateSocketXY = function(props) {
-          traceLog.add('<ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.captionLabel.updateSocketXY>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats, socketXY = llStats.position_socketXYSE[attachProps.socketIndex],
             margin, plugSideLen, anotherSocketXY, value;
@@ -3902,16 +3902,16 @@
           if (setStat(attachProps, aplStats, 'y', (value = curStats.y))) {
             attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
           }
-          traceLog.add('</ATTACHMENTS.caption.updateSocketXY>'); // [DEBUG/]
+          traceLog.add('</ATTACHMENTS.captionLabel.updateSocketXY>'); // [DEBUG/]
         };
 
         attachProps.updatePath = function(props) {
-          traceLog.add('<ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.captionLabel.updatePath>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             pathList = props.pathList.animVal || props.pathList.baseVal,
             point, value;
 
-          point = ATTACHMENTS.caption.getMidPoint(pathList, attachProps.lineOffset);
+          point = ATTACHMENTS.captionLabel.getMidPoint(pathList, attachProps.lineOffset);
           curStats.x = point.x - attachProps.width / 2;
           curStats.y = point.y - attachProps.height / 2;
 
@@ -3921,29 +3921,29 @@
           if (setStat(attachProps, aplStats, 'y', (value = curStats.y))) {
             attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
           }
-          traceLog.add('</ATTACHMENTS.caption.updatePath>'); // [DEBUG/]
+          traceLog.add('</ATTACHMENTS.captionLabel.updatePath>'); // [DEBUG/]
         };
 
         attachProps.updateShow = function(props) {
-          traceLog.add('<ATTACHMENTS.caption.updateShow>'); // [DEBUG/]
-          ATTACHMENTS.caption.updateShow(attachProps, props);
-          traceLog.add('</ATTACHMENTS.caption.updateShow>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.captionLabel.updateShow>'); // [DEBUG/]
+          ATTACHMENTS.captionLabel.updateShow(attachProps, props);
+          traceLog.add('</ATTACHMENTS.captionLabel.updateShow>'); // [DEBUG/]
         };
 
         if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
           attachProps.adjustEdge = function(props, edge) {
-            traceLog.add('<ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
+            traceLog.add('<ATTACHMENTS.captionLabel.adjustEdge>'); // [DEBUG/]
             var curStats = attachProps.curStats;
             if (curStats.x != null) { // eslint-disable-line eqeqeq
-              ATTACHMENTS.caption.adjustEdge(edge,
+              ATTACHMENTS.captionLabel.adjustEdge(edge,
                 {x: curStats.x, y: curStats.y, width: attachProps.width, height: attachProps.height},
                 attachProps.strokeWidth / 2);
             }
-            traceLog.add('</ATTACHMENTS.caption.adjustEdge>'); // [DEBUG/]
+            traceLog.add('</ATTACHMENTS.captionLabel.adjustEdge>'); // [DEBUG/]
           };
         }
 
-        traceLog.add('</ATTACHMENTS.caption.init>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.captionLabel.init>'); // [DEBUG/]
         return true;
       },
 
@@ -4065,9 +4065,9 @@
       },
 
       initSvg: function(attachProps, props) {
-        traceLog.add('<ATTACHMENTS.caption.initSvg>'); // [DEBUG/]
-        var text = ATTACHMENTS.caption.newText(attachProps.text, props.baseWindow.document,
-            props.svg, APP_ID + '-attach-caption-' + attachProps._id, attachProps.outlineColor),
+        traceLog.add('<ATTACHMENTS.captionLabel.initSvg>'); // [DEBUG/]
+        var text = ATTACHMENTS.captionLabel.newText(attachProps.text, props.baseWindow.document,
+            props.svg, APP_ID + '-caption-label-' + attachProps._id, attachProps.outlineColor),
           bBox, strokeWidth;
 
         ['elmPosition', 'styleFill', 'styleShow', 'elmsAppend']
@@ -4075,7 +4075,7 @@
 
         attachProps.isShown = false;
         attachProps.styleShow.visibility = 'hidden';
-        ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
+        ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
           if (attachProps[propName] != null) { // eslint-disable-line eqeqeq
             text.styleText[propName] = attachProps[propName];
           }
@@ -4093,7 +4093,7 @@
         }
         attachProps.strokeWidth = strokeWidth || 0;
 
-        initStats(attachProps.aplStats, ATTACHMENTS.caption.stats); // for bindWindow again
+        initStats(attachProps.aplStats, ATTACHMENTS.captionLabel.stats); // for bindWindow again
         attachProps.updateColor(props);
         if (attachProps.refSocketXY) {
           attachProps.updateSocketXY(props);
@@ -4102,11 +4102,11 @@
         }
         if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored
         attachProps.updateShow(props);
-        traceLog.add('</ATTACHMENTS.caption.initSvg>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.captionLabel.initSvg>'); // [DEBUG/]
       },
 
       bind: function(attachProps, bindTarget) {
-        traceLog.add('<ATTACHMENTS.caption.bind>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.captionLabel.bind>'); // [DEBUG/]
         var props = bindTarget.props;
 
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
@@ -4126,14 +4126,14 @@
         if (IS_WEBKIT) { addEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge); }
 
         // after set attachProps.refSocketXY
-        ATTACHMENTS.caption.initSvg(attachProps, props);
+        ATTACHMENTS.captionLabel.initSvg(attachProps, props);
 
-        traceLog.add('</ATTACHMENTS.caption.bind>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.captionLabel.bind>'); // [DEBUG/]
         return true;
       },
 
       unbind: function(attachProps, boundTarget) {
-        traceLog.add('<ATTACHMENTS.caption.unbind>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.captionLabel.unbind>'); // [DEBUG/]
         var props = boundTarget.props;
 
         if (attachProps.elmsAppend) {
@@ -4141,8 +4141,8 @@
           attachProps.elmPosition = attachProps.styleFill =
             attachProps.styleShow = attachProps.elmsAppend = null;
         }
-        initStats(attachProps.curStats, ATTACHMENTS.caption.stats);
-        initStats(attachProps.aplStats, ATTACHMENTS.caption.stats);
+        initStats(attachProps.curStats, ATTACHMENTS.captionLabel.stats);
+        initStats(attachProps.aplStats, ATTACHMENTS.captionLabel.stats);
 
         if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         if (attachProps.refSocketXY) {
@@ -4160,37 +4160,37 @@
           // addDelayedProc(function() { update(props, {}); }); // reset path_edge
           update(props, {});
         }
-        traceLog.add('</ATTACHMENTS.caption.unbind>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.captionLabel.unbind>'); // [DEBUG/]
       },
 
       removeOption: function(attachProps, boundTarget) {
-        traceLog.add('<ATTACHMENTS.caption.removeOption>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.captionLabel.removeOption>'); // [DEBUG/]
         traceLog.add(boundTarget.optionName); // [DEBUG/]
         var props = boundTarget.props, newOptions = {};
         newOptions[boundTarget.optionName] = '';
         setOptions(props, newOptions);
-        traceLog.add('</ATTACHMENTS.caption.removeOption>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.captionLabel.removeOption>'); // [DEBUG/]
       },
 
       remove: function(attachProps) {
-        traceLog.add('<ATTACHMENTS.caption.remove>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.captionLabel.remove>'); // [DEBUG/]
         if (attachProps.boundTargets.length) { // it should be unbound by LeaderLineAttachment.remove
           traceLog.add('error-not-unbound'); // [DEBUG/]
           console.error('LeaderLineAttachment was not unbound by remove');
           attachProps.boundTargets.forEach(
-            function(boundTarget) { ATTACHMENTS.caption.unbind(attachProps, boundTarget); });
+            function(boundTarget) { ATTACHMENTS.captionLabel.unbind(attachProps, boundTarget); });
         }
-        traceLog.add('</ATTACHMENTS.caption.remove>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.captionLabel.remove>'); // [DEBUG/]
       }
     },
 
-    alongLine: {
+    pathLabel: {
       type: 'label',
       stats: {color: {}, startOffset: {}},
 
       // attachOptions: text, color(A), outlineColor, lineOffset, <textStyleProps>
       init: function(attachProps, attachOptions) {
-        traceLog.add('<ATTACHMENTS.alongLine.init>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.pathLabel.init>'); // [DEBUG/]
         if (typeof attachOptions.text === 'string') {
           attachProps.text = attachOptions.text.trim();
         }
@@ -4203,7 +4203,7 @@
         if (typeof attachOptions.lineOffset === 'number') {
           attachProps.lineOffset = attachOptions.lineOffset;
         }
-        ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
+        ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
           if (attachOptions[propName] != null) { // eslint-disable-line eqeqeq
             attachProps[propName] = attachOptions[propName];
           }
@@ -4211,13 +4211,13 @@
 
         // event handler for each instance
         attachProps.updateColor = function(props) {
-          traceLog.add('<ATTACHMENTS.alongLine.updateColor>'); // [DEBUG/]
-          ATTACHMENTS.caption.updateColor(attachProps, props);
-          traceLog.add('</ATTACHMENTS.alongLine.updateColor>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.pathLabel.updateColor>'); // [DEBUG/]
+          ATTACHMENTS.captionLabel.updateColor(attachProps, props);
+          traceLog.add('</ATTACHMENTS.pathLabel.updateColor>'); // [DEBUG/]
         };
 
         attachProps.updatePath = function(props) {
-          traceLog.add('<ATTACHMENTS.alongLine.updatePath>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.pathLabel.updatePath>'); // [DEBUG/]
           var MARGIN = 2, STEP_LEN = 16,
             curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats, pathList = props.pathList.animVal || props.pathList.baseVal,
@@ -4231,7 +4231,7 @@
 
           // attachProps.elmPath.setPathData(pathList2PathData(pathList));
 
-          // point = ATTACHMENTS.alongLine.getMidPoint(pathList, attachProps.lineOffset);
+          // point = ATTACHMENTS.pathLabel.getMidPoint(pathList, attachProps.lineOffset);
           // curStats.x = point.x - attachProps.width / 2;
           // curStats.y = point.y - attachProps.height / 2;
 
@@ -4241,36 +4241,36 @@
           // if (setStat(attachProps, aplStats, 'y', (value = curStats.y))) {
           //   attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
           // }
-          traceLog.add('</ATTACHMENTS.alongLine.updatePath>'); // [DEBUG/]
+          traceLog.add('</ATTACHMENTS.pathLabel.updatePath>'); // [DEBUG/]
         };
 
         attachProps.updateStartOffset = function(props) {
-          traceLog.add('<ATTACHMENTS.alongLine.updateStartOffset>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats;
 
           plugBackLen = Math.max(llStats.attach_plugBackLenSE[attachProps.socketIndex] || 0,
             llStats.line_strokeWidth / 2);
-          traceLog.add('</ATTACHMENTS.alongLine.updateStartOffset>'); // [DEBUG/]
+          traceLog.add('</ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]
         };
 
         attachProps.updateShow = function(props) {
-          traceLog.add('<ATTACHMENTS.alongLine.updateShow>'); // [DEBUG/]
-          ATTACHMENTS.caption.updateShow(attachProps, props);
-          traceLog.add('</ATTACHMENTS.alongLine.updateShow>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.pathLabel.updateShow>'); // [DEBUG/]
+          ATTACHMENTS.captionLabel.updateShow(attachProps, props);
+          traceLog.add('</ATTACHMENTS.pathLabel.updateShow>'); // [DEBUG/]
         };
 
         if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
           attachProps.adjustEdge = function(props, edge) {
-            traceLog.add('<ATTACHMENTS.alongLine.adjustEdge>'); // [DEBUG/]
+            traceLog.add('<ATTACHMENTS.pathLabel.adjustEdge>'); // [DEBUG/]
             if (attachProps.bBox) {
-              ATTACHMENTS.caption.adjustEdge(edge, attachProps.bBox, attachProps.strokeWidth / 2);
+              ATTACHMENTS.captionLabel.adjustEdge(edge, attachProps.bBox, attachProps.strokeWidth / 2);
             }
-            traceLog.add('</ATTACHMENTS.alongLine.adjustEdge>'); // [DEBUG/]
+            traceLog.add('</ATTACHMENTS.pathLabel.adjustEdge>'); // [DEBUG/]
           };
         }
 
-        traceLog.add('</ATTACHMENTS.alongLine.init>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.pathLabel.init>'); // [DEBUG/]
         return true;
       },
 
@@ -4369,9 +4369,9 @@
       },
 
       initSvg: function(attachProps, props) {
-        traceLog.add('<ATTACHMENTS.alongLine.initSvg>'); // [DEBUG/]
-        var text = ATTACHMENTS.alongLine.newText(attachProps.text, props.baseWindow.document,
-            APP_ID + '-attach-alongLine-' + attachProps._id, attachProps.outlineColor),
+        traceLog.add('<ATTACHMENTS.pathLabel.initSvg>'); // [DEBUG/]
+        var text = ATTACHMENTS.pathLabel.newText(attachProps.text, props.baseWindow.document,
+            APP_ID + '-path-label-' + attachProps._id, attachProps.outlineColor),
           bBox, strokeWidth;
 
         ['elmPosition', 'elmPath', 'elmOffset', 'styleFill', 'styleShow', 'elmsAppend']
@@ -4379,7 +4379,7 @@
 
         attachProps.isShown = false;
         attachProps.styleShow.visibility = 'hidden';
-        ATTACHMENTS.caption.textStyleProps.forEach(function(propName) {
+        ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
           if (attachProps[propName] != null) { // eslint-disable-line eqeqeq
             text.styleText[propName] = attachProps[propName];
           }
@@ -4398,16 +4398,16 @@
         }
         attachProps.strokeWidth = strokeWidth || 0;
 
-        initStats(attachProps.aplStats, ATTACHMENTS.alongLine.stats); // for bindWindow again
+        initStats(attachProps.aplStats, ATTACHMENTS.pathLabel.stats); // for bindWindow again
         attachProps.updateColor(props);
         attachProps.updatePath(props);
         if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored
         attachProps.updateShow(props);
-        traceLog.add('</ATTACHMENTS.alongLine.initSvg>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.pathLabel.initSvg>'); // [DEBUG/]
       },
 
       bind: function(attachProps, bindTarget) {
-        traceLog.add('<ATTACHMENTS.alongLine.bind>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.pathLabel.bind>'); // [DEBUG/]
         var props = bindTarget.props;
 
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
@@ -4421,14 +4421,14 @@
         if (IS_WEBKIT) { addEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge); }
 
         // after set attachProps.semIndex
-        ATTACHMENTS.alongLine.initSvg(attachProps, props);
+        ATTACHMENTS.pathLabel.initSvg(attachProps, props);
 
-        traceLog.add('</ATTACHMENTS.alongLine.bind>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.pathLabel.bind>'); // [DEBUG/]
         return true;
       },
 
       unbind: function(attachProps, boundTarget) {
-        traceLog.add('<ATTACHMENTS.alongLine.unbind>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.pathLabel.unbind>'); // [DEBUG/]
         var props = boundTarget.props;
 
         if (attachProps.elmsAppend) {
@@ -4436,8 +4436,8 @@
           attachProps.elmPosition = attachProps.styleFill =
             attachProps.styleShow = attachProps.elmsAppend = null;
         }
-        initStats(attachProps.curStats, ATTACHMENTS.alongLine.stats);
-        initStats(attachProps.aplStats, ATTACHMENTS.alongLine.stats);
+        initStats(attachProps.curStats, ATTACHMENTS.pathLabel.stats);
+        initStats(attachProps.aplStats, ATTACHMENTS.pathLabel.stats);
 
         if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         removeEventHandler(props, 'cur_attach_plugSideLenSE', attachProps.updatePath);
@@ -4449,27 +4449,27 @@
           // addDelayedProc(function() { update(props, {}); }); // reset path_edge
           update(props, {});
         }
-        traceLog.add('</ATTACHMENTS.alongLine.unbind>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.pathLabel.unbind>'); // [DEBUG/]
       },
 
       removeOption: function(attachProps, boundTarget) {
-        traceLog.add('<ATTACHMENTS.alongLine.removeOption>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.pathLabel.removeOption>'); // [DEBUG/]
         traceLog.add(boundTarget.optionName); // [DEBUG/]
         var props = boundTarget.props, newOptions = {};
         newOptions[boundTarget.optionName] = '';
         setOptions(props, newOptions);
-        traceLog.add('</ATTACHMENTS.alongLine.removeOption>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.pathLabel.removeOption>'); // [DEBUG/]
       },
 
       remove: function(attachProps) {
-        traceLog.add('<ATTACHMENTS.alongLine.remove>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.pathLabel.remove>'); // [DEBUG/]
         if (attachProps.boundTargets.length) { // it should be unbound by LeaderLineAttachment.remove
           traceLog.add('error-not-unbound'); // [DEBUG/]
           console.error('LeaderLineAttachment was not unbound by remove');
           attachProps.boundTargets.forEach(
-            function(boundTarget) { ATTACHMENTS.alongLine.unbind(attachProps, boundTarget); });
+            function(boundTarget) { ATTACHMENTS.pathLabel.unbind(attachProps, boundTarget); });
         }
-        traceLog.add('</ATTACHMENTS.alongLine.remove>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.pathLabel.remove>'); // [DEBUG/]
       }
     }
   };
