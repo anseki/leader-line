@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jasmine Spec Runner v2.4.1</title>
+
+  <link rel="shortcut icon" type="image/png" href="./jasmine-2.4.1/jasmine_favicon.png">
+  <link rel="stylesheet" href="./jasmine-2.4.1/jasmine.css">
+
+  <script src="./jasmine-2.4.1/jasmine.js"></script>
+  <script src="./jasmine-2.4.1/jasmine-html.js"></script>
+  <script src="./jasmine-2.4.1/boot.js"></script>
+  <script src="./traceLog.js"></script>
+
+  <script>
+
+(function() {
+  'use strict';
+
+  describe('control running', function() {
+
+    it('initialized first', function() {
+      expect(traceLog.log.length).toBe(0);
+    });
+
+    it('add() 1 after enabled', function() {
+      traceLog.enabled = true;
+      traceLog.add('a');
+      expect(traceLog.log.length).toBe(1);
+      expect(traceLog.log).toEqual(['a']);
+    });
+
+    it('add() 2', function() {
+      traceLog.add('b');
+      expect(traceLog.log.length).toBe(2);
+      expect(traceLog.log).toEqual(['a', 'b']);
+    });
+
+    it('control clear()', function() {
+      traceLog.clear();
+      expect(traceLog.log.length).toBe(0);
+    });
+
+    it('add() 3', function() {
+      traceLog.add('c');
+      expect(traceLog.log.length).toBe(1);
+      expect(traceLog.log).toEqual(['c']);
+    });
+
+    it('add() 4', function() {
+      traceLog.add('d');
+      expect(traceLog.log.length).toBe(2);
+      expect(traceLog.log).toEqual(['c', 'd']);
+    });
+
+    it('disabled', function() {
+      traceLog.enabled = false;
+      expect(traceLog.log.length).toBe(2);
+      expect(traceLog.log).toEqual(['c', 'd']);
+    });
+
+    it('add() 5', function() {
+      traceLog.add('e');
+      expect(traceLog.log.length).toBe(2);
+      expect(traceLog.log).toEqual(['c', 'd']);
+    });
+
+    it('add() 6', function() {
+      traceLog.add('f');
+      expect(traceLog.log.length).toBe(2);
+      expect(traceLog.log).toEqual(['c', 'd']);
+    });
+
+  });
+
+  describe('getMessage', function() {
+
+    beforeAll(function() {
+      traceLog.enabled = true;
+      traceLog.clear();
+    });
+
+    it('\'a\'', function() {
+      traceLog.add('a');
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('a');
+    });
+
+    it('\'foo=%s\', \'bar\'', function() {
+      traceLog.add('foo=%s', 'bar');
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=bar');
+    });
+
+    it('\'foo=%i\', 5', function() {
+      traceLog.add('foo=%i', 5);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=5');
+    });
+
+    it('\'foo=%o\', {a: 1, b: 2}', function() {
+      traceLog.add('foo=%o', {a: 1, b: 2});
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=[object Object]');
+    });
+
+    it('\'foo=%s\', 5', function() {
+      traceLog.add('foo=%s', 5);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=5');
+    });
+
+    it('\'foo=%i\', \'6bar\'', function() {
+      traceLog.add('foo=%i', '6bar');
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=6');
+    });
+
+    it('\'foo=%i\', true', function() {
+      traceLog.add('foo=%i', true);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=1');
+    });
+
+    it('\'foo=%s\', \'bar\', 5', function() {
+      traceLog.add('foo=%s', 'bar', 5);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=bar 5');
+    });
+
+    it('\'foo=%s\', \'bar\', 5, 6', function() {
+      traceLog.add('foo=%s', 'bar', 5, 6);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=bar 5 6');
+    });
+
+    it('\'foo=%s,DROP%_\', \'bar\', 5', function() {
+      traceLog.add('foo=%s,DROP%_', 'bar', 5);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=bar,DROP');
+    });
+
+    it('\'foo=%s,DROP%_\', \'bar\', 5, 6', function() {
+      traceLog.add('foo=%s,DROP%_', 'bar', 5, 6);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=bar,DROP 6');
+    });
+
+    it('\'foo=%s,DROP%_%_\', \'bar\', 5, 6', function() {
+      traceLog.add('foo=%s,DROP%_%_', 'bar', 5, 6);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo=bar,DROP');
+    });
+
+    it('\'foo1=%s,foo2=%s,foo3=%s,ETC\', \'bar\', 5', function() {
+      traceLog.add('foo1=%s,foo2=%s,foo3=%s,ETC', 'bar', 5);
+      expect(traceLog.log[traceLog.log.length - 1]).toBe('foo1=bar,foo2=5,foo3=,ETC');
+    });
+
+  });
+
+  describe('tags', function() {
+
+    beforeEach(function() {
+      traceLog.clear();
+    });
+
+    it('single tag', function() {
+      traceLog.add('a');
+      traceLog.add('b');
+      traceLog.add('c');
+      traceLog.add('<tag-A>');
+      traceLog.add('d');
+      traceLog.add('e');
+      traceLog.add('f');
+      traceLog.add('</tag-A>');
+      traceLog.add('g');
+      traceLog.add('h');
+      traceLog.add('i');
+      expect(traceLog.log.length).toBe(11);
+      expect(traceLog.log).toEqual(['a', 'b', 'c', '<tag-A>', 'd', 'e', 'f', '</tag-A>', 'g', 'h', 'i']);
+      expect(traceLog.getTaggedLog('tag-A').length).toBe(3);
+      expect(traceLog.getTaggedLog('tag-A')).toEqual(['d', 'e', 'f']);
+      expect(traceLog.getTaggedLog('tag-B') == null).toBe(true); // eslint-disable-line eqeqeq
+    });
+
+    it('multiple tags', function() {
+      traceLog.add('a');
+      traceLog.add('b');
+      traceLog.add('<tag-A>');
+      traceLog.add('c');
+      traceLog.add('d');
+      traceLog.add('</tag-A>');
+      traceLog.add('e');
+      traceLog.add('f');
+      traceLog.add('<tag-B>');
+      traceLog.add('g');
+      traceLog.add('h');
+      traceLog.add('</tag-B>');
+      traceLog.add('i');
+      expect(traceLog.log.length).toBe(13);
+      expect(traceLog.log).toEqual(['a', 'b', '<tag-A>', 'c', 'd', '</tag-A>', 'e', 'f',
+        '<tag-B>', 'g', 'h', '</tag-B>', 'i']);
+      expect(traceLog.getTaggedLog('tag-A').length).toBe(2);
+      expect(traceLog.getTaggedLog('tag-A')).toEqual(['c', 'd']);
+      expect(traceLog.getTaggedLog('tag-B').length).toBe(2);
+      expect(traceLog.getTaggedLog('tag-B')).toEqual(['g', 'h']);
+      expect(traceLog.getTaggedLog('tag-C') == null).toBe(true); // eslint-disable-line eqeqeq
+    });
+
+    it('nested tags 1', function() {
+      traceLog.add('a');
+      traceLog.add('b');
+      traceLog.add('<tag-A>');
+      traceLog.add('c');
+      traceLog.add('d');
+      traceLog.add('<tag-B>');
+      traceLog.add('e');
+      traceLog.add('f');
+      traceLog.add('g');
+      traceLog.add('</tag-B>');
+      traceLog.add('h');
+      traceLog.add('</tag-A>');
+      traceLog.add('i');
+      expect(traceLog.getTaggedLog('tag-A').length).toBe(3);
+      expect(traceLog.getTaggedLog('tag-A')).toEqual(['c', 'd', 'h']);
+      expect(traceLog.getTaggedLog('tag-B').length).toBe(3);
+      expect(traceLog.getTaggedLog('tag-B')).toEqual(['e', 'f', 'g']);
+    });
+
+    it('nested tags 2', function() {
+      traceLog.add('a');
+      traceLog.add('<tag-A>');
+      traceLog.add('b');
+      traceLog.add('<tag-B>');
+      traceLog.add('c');
+      traceLog.add('d');
+      traceLog.add('<tag-C>');
+      traceLog.add('e');
+      traceLog.add('</tag-C>');
+      traceLog.add('f');
+      traceLog.add('g');
+      traceLog.add('</tag-B>');
+      traceLog.add('h');
+      traceLog.add('</tag-A>');
+      traceLog.add('i');
+      expect(traceLog.getTaggedLog('tag-A').length).toBe(2);
+      expect(traceLog.getTaggedLog('tag-A')).toEqual(['b', 'h']);
+      expect(traceLog.getTaggedLog('tag-B').length).toBe(4);
+      expect(traceLog.getTaggedLog('tag-B')).toEqual(['c', 'd', 'f', 'g']);
+      expect(traceLog.getTaggedLog('tag-C').length).toBe(1);
+      expect(traceLog.getTaggedLog('tag-C')).toEqual(['e']);
+    });
+
+    it('nested tags skip 1', function() {
+      traceLog.add('a');
+      traceLog.add('<tag-A>');
+      traceLog.add('b');
+      traceLog.add('<tag-B>');
+      traceLog.add('c');
+      traceLog.add('d');
+      traceLog.add('<tag-C>');
+      traceLog.add('e');
+      traceLog.add('</tag-B>'); // skip
+      traceLog.add('f');
+      traceLog.add('g');
+      traceLog.add('h');
+      traceLog.add('</tag-A>');
+      traceLog.add('i');
+      expect(traceLog.getTaggedLog('tag-A').length).toBe(4);
+      expect(traceLog.getTaggedLog('tag-A')).toEqual(['b', 'f', 'g', 'h']);
+      expect(traceLog.getTaggedLog('tag-B').length).toBe(2);
+      expect(traceLog.getTaggedLog('tag-B')).toEqual(['c', 'd']);
+      expect(traceLog.getTaggedLog('tag-C').length).toBe(1);
+      expect(traceLog.getTaggedLog('tag-C')).toEqual(['e']);
+    });
+
+    it('nested tags skip 2', function() {
+      traceLog.add('a');
+      traceLog.add('<tag-A>');
+      traceLog.add('b');
+      traceLog.add('<tag-B>');
+      traceLog.add('c');
+      traceLog.add('d');
+      traceLog.add('<tag-C>');
+      traceLog.add('e');
+      traceLog.add('</tag-A>'); // skip
+      traceLog.add('f');
+      traceLog.add('g');
+      traceLog.add('h');
+      traceLog.add('i');
+      expect(traceLog.getTaggedLog('tag-A').length).toBe(1);
+      expect(traceLog.getTaggedLog('tag-A')).toEqual(['b']);
+      expect(traceLog.getTaggedLog('tag-B').length).toBe(2);
+      expect(traceLog.getTaggedLog('tag-B')).toEqual(['c', 'd']);
+      expect(traceLog.getTaggedLog('tag-C').length).toBe(1);
+      expect(traceLog.getTaggedLog('tag-C')).toEqual(['e']);
+    });
+
+    it('nested tags skip fails', function() {
+      traceLog.add('a');
+      traceLog.add('<tag-A>');
+      traceLog.add('b');
+      traceLog.add('<tag-B>');
+      traceLog.add('c');
+      traceLog.add('d');
+      traceLog.add('<tag-C>');
+      traceLog.add('e');
+      expect(traceLog.getTaggedLog('tag-A').length).toBe(1);
+      expect(traceLog.getTaggedLog('tag-A')).toEqual(['b']);
+      expect(traceLog.getTaggedLog('tag-B').length).toBe(2);
+      expect(traceLog.getTaggedLog('tag-B')).toEqual(['c', 'd']);
+      expect(traceLog.getTaggedLog('tag-C').length).toBe(1);
+      expect(traceLog.getTaggedLog('tag-C')).toEqual(['e']);
+      expect(function() {
+        traceLog.add('</tag-D>'); // invalid
+      }).toThrow();
+    });
+
+  });
+
+})();
+
+  </script>
+
+</head>
+
+<body>
+</body>
+</html>

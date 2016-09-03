@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jasmine Spec Runner v2.4.1</title>
+
+  <link rel="shortcut icon" type="image/png" href="./jasmine-2.4.1/jasmine_favicon.png">
+  <link rel="stylesheet" href="./jasmine-2.4.1/jasmine.css">
+
+  <script src="./jasmine-2.4.1/jasmine.js"></script>
+  <script src="./jasmine-2.4.1/jasmine-html.js"></script>
+  <script src="./jasmine-2.4.1/boot.js"></script>
+  <script src="./polygon2PathList.js"></script>
+
+  <script>
+
+(function() {
+  'use strict';
+
+  describe('polygon2PathList', function() {
+
+    it('getPointObject', function() {
+      expect(polygon2PathList([
+        [10, 100],
+        [11, 101, true],
+        [12, 102],
+        {x: 13, y: 103},
+        [14, 104],
+        {x: 15, y: 105},
+        [16, 106],
+        [17, 107],
+        {x: 18, y: 108},
+        {x: 19, y: 109}
+      ])).toEqual([
+        [{x: 10, y: 100}, {x: 11, y: 101}],
+        [{x: 11, y: 101}, {x: 12, y: 102}],
+        [{x: 12, y: 102}, {x: 13, y: 103}],
+        [{x: 13, y: 103}, {x: 14, y: 104}],
+        [{x: 14, y: 104}, {x: 15, y: 105}],
+        [{x: 15, y: 105}, {x: 16, y: 106}],
+        [{x: 16, y: 106}, {x: 17, y: 107}],
+        [{x: 17, y: 107}, {x: 18, y: 108}],
+        [{x: 18, y: 108}, {x: 19, y: 109}]
+      ]);
+      expect(polygon2PathList.currentPoint).toEqual({x: 19, y: 109});
+    });
+
+    it('change isAbs', function() {
+      expect(polygon2PathList([
+        [10, 100],
+        [1, 2],                       // 11, 102
+        [3, 4],                       // 14, 106
+        {x: 5, y: 6},                 // 19, 112
+        [7, 8],                       // 26, 120
+        {x: 9, y: 10},                // 35, 130
+        [16, 106, true],              // 16, 106
+        [17, 107],                    // 17, 107
+        {x: 1, y: 2, isAbs: false},   // 18, 109
+        {x: 3, y: 4}                  // 21, 113
+      ])).toEqual([
+        [{x: 10, y: 100}, {x: 11, y: 102}],
+        [{x: 11, y: 102}, {x: 14, y: 106}],
+        [{x: 14, y: 106}, {x: 19, y: 112}],
+        [{x: 19, y: 112}, {x: 26, y: 120}],
+        [{x: 26, y: 120}, {x: 35, y: 130}],
+        [{x: 35, y: 130}, {x: 16, y: 106}],
+        [{x: 16, y: 106}, {x: 17, y: 107}],
+        [{x: 17, y: 107}, {x: 18, y: 109}],
+        [{x: 18, y: 109}, {x: 21, y: 113}]
+      ]);
+      expect(polygon2PathList.currentPoint).toEqual({x: 21, y: 113});
+    });
+
+    it('currentPoint', function() {
+      expect(polygon2PathList([[10, 100], [1, 2]])).toEqual([
+        [{x: 10, y: 100}, {x: 11, y: 102}]
+      ]);
+      expect(polygon2PathList.currentPoint).toEqual({x: 11, y: 102});
+
+      expect(polygon2PathList([polygon2PathList.currentPoint, [1, 2], [3, 4]])).toEqual([
+        [{x: 11, y: 102}, {x: 12, y: 104}],
+        [{x: 12, y: 104}, {x: 15, y: 108}],
+      ]);
+      expect(polygon2PathList.currentPoint).toEqual({x: 15, y: 108});
+
+      expect(polygon2PathList([polygon2PathList.currentPoint, [1, 2], [3, 4]])).toEqual([
+        [{x: 15, y: 108}, {x: 16, y: 110}],
+        [{x: 16, y: 110}, {x: 19, y: 114}],
+      ]);
+      expect(polygon2PathList.currentPoint).toEqual({x: 19, y: 114});
+    });
+
+  });
+
+})();
+
+  </script>
+
+</head>
+
+<body>
+</body>
+</html>
