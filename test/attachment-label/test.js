@@ -1,5 +1,6 @@
 /* global LeaderLine:false, AnimEvent:false */
 
+window.traceLog.enabled = true;
 window.addEventListener('load', function() {
   'use strict';
 
@@ -11,8 +12,8 @@ window.addEventListener('load', function() {
       color: 'rgba(255, 0, 0, 0.5)', endPlug: 'disc', endPlugSize: 4,
       startLabel: '[startLabel]',
       endLabel: '[endLabel]',
-      // startLabel: LeaderLine.caption({text: '[startLabel]', offset: [0, 0]}),
-      // endLabel: LeaderLine.caption({text: '[endLabel]', offset: [0, 0]}),
+      // startLabel: LeaderLine.captionLabel({text: '[startLabel]', offset: [0, 0]}),
+      // endLabel: LeaderLine.captionLabel({text: '[endLabel]', offset: [0, 0]}),
       middleLabel: '[middleLabel]'
     }),
 

@@ -3398,7 +3398,7 @@
 
       removeOption: function(attachProps, boundTarget) {
         traceLog.add('<ATTACHMENTS.pointAnchor.removeOption>'); // [DEBUG/]
-        traceLog.add(boundTarget.optionName); // [DEBUG/]
+        traceLog.add('optionName=%s', boundTarget.optionName); // [DEBUG/]
         var props = boundTarget.props, newOptions = {}, element = attachProps.element,
           another = props.options.anchorSE[boundTarget.optionName === 'start' ? 1 : 0];
         if (element === another) { // must be not another
@@ -3839,7 +3839,10 @@
         if (typeof attachOptions.text === 'string') {
           attachProps.text = attachOptions.text.trim();
         }
-        if (!attachProps.text) { return false; }
+        if (!attachProps.text) {
+          traceLog.add('</ATTACHMENTS.captionLabel.init>'); // [DEBUG/]
+          return false;
+        }
         if (typeof attachOptions.color === 'string') {
           attachProps.color = attachOptions.color.trim();
         }
@@ -3871,7 +3874,11 @@
             llStats = props.curStats, socketXY = llStats.position_socketXYSE[attachProps.socketIndex],
             margin, plugSideLen, anotherSocketXY, value;
           // It's not ready yet.
-          if (socketXY.x == null) { return; } // eslint-disable-line eqeqeq
+          if (socketXY.x == null) { // eslint-disable-line eqeqeq
+            traceLog.add('not-ready'); // [DEBUG/]
+            traceLog.add('</ATTACHMENTS.captionLabel.updateSocketXY>'); // [DEBUG/]
+            return;
+          }
 
           if (attachProps.offset) {
             curStats.x = socketXY.x + attachProps.offset.x;
@@ -3910,6 +3917,12 @@
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             pathList = props.pathList.animVal || props.pathList.baseVal,
             point, value;
+          // It's not ready yet.
+          if (!pathList) {
+            traceLog.add('not-ready'); // [DEBUG/]
+            traceLog.add('</ATTACHMENTS.captionLabel.updatePath>'); // [DEBUG/]
+            return;
+          }
 
           point = ATTACHMENTS.captionLabel.getMidPoint(pathList, attachProps.lineOffset);
           curStats.x = point.x - attachProps.width / 2;
@@ -4107,6 +4120,7 @@
 
       bind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.captionLabel.bind>'); // [DEBUG/]
+        traceLog.add('optionName=%s', bindTarget.optionName); // [DEBUG/]
         var props = bindTarget.props;
 
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
@@ -4165,7 +4179,7 @@
 
       removeOption: function(attachProps, boundTarget) {
         traceLog.add('<ATTACHMENTS.captionLabel.removeOption>'); // [DEBUG/]
-        traceLog.add(boundTarget.optionName); // [DEBUG/]
+        traceLog.add('optionName=%s', boundTarget.optionName); // [DEBUG/]
         var props = boundTarget.props, newOptions = {};
         newOptions[boundTarget.optionName] = '';
         setOptions(props, newOptions);
@@ -4194,7 +4208,10 @@
         if (typeof attachOptions.text === 'string') {
           attachProps.text = attachOptions.text.trim();
         }
-        if (!attachProps.text) { return false; }
+        if (!attachProps.text) {
+          traceLog.add('</ATTACHMENTS.pathLabel.init>'); // [DEBUG/]
+          return false;
+        }
         if (typeof attachOptions.color === 'string') {
           attachProps.color = attachOptions.color.trim();
         }
@@ -4408,6 +4425,7 @@
 
       bind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.pathLabel.bind>'); // [DEBUG/]
+        traceLog.add('optionName=%s', bindTarget.optionName); // [DEBUG/]
         var props = bindTarget.props;
 
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
@@ -4454,7 +4472,7 @@
 
       removeOption: function(attachProps, boundTarget) {
         traceLog.add('<ATTACHMENTS.pathLabel.removeOption>'); // [DEBUG/]
-        traceLog.add(boundTarget.optionName); // [DEBUG/]
+        traceLog.add('optionName=%s', boundTarget.optionName); // [DEBUG/]
         var props = boundTarget.props, newOptions = {};
         newOptions[boundTarget.optionName] = '';
         setOptions(props, newOptions);

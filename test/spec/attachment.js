@@ -211,7 +211,8 @@ describe('attachment', function() {
             atc1.remove();
             setTimeout(function() {
               expect(traceLog.getTaggedLog('LeaderLineAttachment.remove.delayedProc')).toEqual([]);
-              expect(traceLog.getTaggedLog('ATTACHMENTS.pointAnchor.removeOption')).toEqual(['start', 'start']);
+              expect(traceLog.getTaggedLog('ATTACHMENTS.pointAnchor.removeOption'))
+                .toEqual(['optionName=start', 'optionName=start']);
               expect(traceLog.getTaggedLog('removeAttachment')).toEqual(['not-found']); // 2nd ll try to remove
               expect(props1.attachments.length).toBe(0);
               expect(props2.attachments.length).toBe(0);
@@ -407,7 +408,7 @@ describe('attachment', function() {
             setTimeout(function() {
               expect(traceLog.log).toEqual([
                 '<LeaderLineAttachment.remove>',
-                '<ATTACHMENTS.pointAnchor.removeOption>', 'start',
+                '<ATTACHMENTS.pointAnchor.removeOption>', 'optionName=start',
                 '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
                 '<setOptions>', 'needs.position', '</setOptions>',
                 '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
@@ -418,7 +419,7 @@ describe('attachment', function() {
                 '</updateMask>',
                 '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
                 '</ATTACHMENTS.pointAnchor.removeOption>',
-                '<ATTACHMENTS.pointAnchor.removeOption>', 'start',
+                '<ATTACHMENTS.pointAnchor.removeOption>', 'optionName=start',
                 '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
                 '<setOptions>', 'needs.position', '</setOptions>',
                 '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
@@ -1305,7 +1306,8 @@ describe('attachment', function() {
       expect(traceLog.log).toEqual([
         /* eslint-disable indent */
         // option of ll1
-        '<ATTACHMENTS.captionLabel.removeOption>', 'startLabel',
+        '<ATTACHMENTS.captionLabel.removeOption>',
+          'optionName=startLabel',
           '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
           '<setOptions>', '</setOptions>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
@@ -1314,6 +1316,7 @@ describe('attachment', function() {
         '</ATTACHMENTS.captionLabel.removeOption>',
 
         '<ATTACHMENTS.captionLabel.bind>',
+          'optionName=endLabel',
           '<ATTACHMENTS.captionLabel.initSvg>',
             '<ATTACHMENTS.captionLabel.updateColor>', 'color=blue', '</ATTACHMENTS.captionLabel.updateColor>',
             '<ATTACHMENTS.captionLabel.updateSocketXY>',
@@ -1393,7 +1396,8 @@ describe('attachment', function() {
       expect(traceLog.log).toEqual([
         /* eslint-disable indent */
         // option of ll1
-        '<ATTACHMENTS.captionLabel.removeOption>', 'startLabel',
+        '<ATTACHMENTS.captionLabel.removeOption>',
+          'optionName=startLabel',
           '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
           '<setOptions>', '</setOptions>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
@@ -1402,6 +1406,7 @@ describe('attachment', function() {
         '</ATTACHMENTS.captionLabel.removeOption>',
 
         '<ATTACHMENTS.captionLabel.bind>',
+          'optionName=endLabel',
           '<ATTACHMENTS.captionLabel.initSvg>',
             '<ATTACHMENTS.captionLabel.updateColor>', 'color=yellow', '</ATTACHMENTS.captionLabel.updateColor>',
             '<ATTACHMENTS.captionLabel.updateSocketXY>',
