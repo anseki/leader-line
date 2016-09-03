@@ -4291,6 +4291,100 @@
         return true;
       },
 
+      getOffsetPathData: function(pathList, offsetLen, cornerMargin) {
+        var STEP_LEN = 16, TOLERANCE = 3, parts = [], lastLineSeg, curPoint;
+
+        function nearPoints(a, b) {
+          return Math.abs(a.x - b.x) < TOLERANCE && Math.abs(a.y - b.y) < TOLERANCE;
+        }
+
+        pathList.forEach(function(points) {
+          var offsetPoints, lineSeg, lastPoints, angle, exPoint, exPointLast, intPoint;
+          if (points.length === 2) {
+            offsetPoints = getOffsetLine(points[0], points[1], offsetLen);
+
+            if (lastLineSeg) { // continued line
+              lastPoints = lastLineSeg.points;
+              angle = Math.atan2(lastPoints[1].y - lastPoints[0].y, lastPoints[0].x - lastPoints[1].x) -
+                Math.atan2(points[0].y - points[1].y, points[1].x - points[0].x);
+              if (angle >= 0 && angle <= Math.PI) { // Inside
+                lineSeg = {type: 'line', points: offsetPoints, inside: true};
+
+              } else { // Try to join the outer points of corner.
+                exPointLast = extendLine(lastPoints[0], lastPoints[1], offsetLen);
+                exPoint = extendLine(offsetPoints[1], offsetPoints[0], offsetLen); // reverse
+                if ((intPoint = getIntersection(lastPoints[0], exPointLast, exPoint, offsetPoints[1]))) {
+                  // Join the intersecting lines that were extended.
+                  lastPoints[1] = intPoint;
+                  lineSeg = {type: 'line', points: [intPoint, offsetPoints[1]]};
+                } else {
+                  lastPoints[1] = nearPoints(exPoint, exPointLast) ? exPoint : exPointLast;
+                  lineSeg = {type: 'line', points: [exPoint, offsetPoints[1]]};
+                }
+                lastLineSeg.len = getPointsLength(lastPoints[0], lastPoints[1]);
+              }
+
+            } else { // new line
+              lineSeg = {type: 'line', points: offsetPoints};
+            }
+            lineSeg.len = getPointsLength(lineSeg.points[0], lineSeg.points[1]);
+            parts.push((lastLineSeg = lineSeg));
+          } else {
+            parts.push({type: 'cubic',
+              points: getOffsetCubic(points[0], points[1], points[2], points[3], offsetLen, STEP_LEN)});
+            lastLineSeg = null;
+          }
+        });
+
+        // Adjust the inner points of corner. (after adjusting outer points)
+        lastLineSeg = null;
+        parts.forEach(function(part) {
+          var points;
+          if (part.type === 'line') {
+            if (part.inside) { // lastLineSeg should exist
+              // subtract offsetLen from prev-line
+              if (lastLineSeg.len > offsetLen) {
+                points = lastLineSeg.points;
+                points[1] = extendLine(points[0], points[1], -offsetLen);
+                lastLineSeg.len = getPointsLength(points[0], points[1]);
+              } else { // disable line
+                lastLineSeg.points = null;
+                lastLineSeg.len = 0;
+              }
+              // subtract (offsetLen + cornerMargin) from cur-line
+              if (part.len > offsetLen + cornerMargin) {
+                points = part.points;
+                points[0] = extendLine(points[1], points[0], -(offsetLen + cornerMargin));
+                part.len = getPointsLength(points[0], points[1]);
+              } else { // disable line
+                part.points = null;
+                part.len = 0;
+              }
+            }
+            lastLineSeg = part;
+          } else {
+            lastLineSeg = null;
+          }
+        });
+
+        return parts.reduce(function(pathData, pathSeg) {
+          var points = pathSeg.points;
+          if (points) {
+            if (!curPoint || !nearPoints(points[0], curPoint)) {
+              pathData.push({type: 'M', values: [points[0].x, points[0].y]});
+            }
+            if (pathSeg.type === 'line') {
+              pathData.push({type: 'L', values: [points[1].x, points[1].y]});
+            } else { // cubic
+              points.shift();
+              points.forEach(function(point) { pathData.push({type: 'L', values: [point.x, point.y]}); });
+            }
+            curPoint = points[points.length - 1];
+          }
+          return pathData;
+        }, []);
+      },
+
       /**
        * @param {string} text - Content of `<text>` element.
        * @param {Document} document - Document that contains `<svg>`.
