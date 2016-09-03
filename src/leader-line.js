@@ -3383,31 +3383,31 @@
 
   /** @type {{attachmentName: string, AttachConf}} */
   ATTACHMENTS = {
-    point: {
+    pointAnchor: {
       type: 'anchor',
 
       // attachOptions: element, x, y
       init: function(attachProps, attachOptions) {
-        traceLog.add('<ATTACHMENTS.point.init>'); // [DEBUG/]
-        attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
-        attachProps.x = ATTACHMENTS.point.parsePercent(attachOptions.x, true) || [0];
-        attachProps.y = ATTACHMENTS.point.parsePercent(attachOptions.y, true) || [0];
-        traceLog.add('</ATTACHMENTS.point.init>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.pointAnchor.init>'); // [DEBUG/]
+        attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
+        attachProps.x = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.x, true) || [0];
+        attachProps.y = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.y, true) || [0];
+        traceLog.add('</ATTACHMENTS.pointAnchor.init>'); // [DEBUG/]
         return true;
       },
 
       removeOption: function(attachProps, boundTarget) {
-        traceLog.add('<ATTACHMENTS.point.removeOption>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.pointAnchor.removeOption>'); // [DEBUG/]
         traceLog.add(boundTarget.optionName); // [DEBUG/]
         var props = boundTarget.props, newOptions = {}, element = attachProps.element,
           another = props.options.anchorSE[boundTarget.optionName === 'start' ? 1 : 0];
         if (element === another) { // must be not another
           element = another === document.body ?
-            new LeaderLineAttachment(ATTACHMENTS.point, {element: element}) : document.body;
+            new LeaderLineAttachment(ATTACHMENTS.pointAnchor, {element: element}) : document.body;
         }
         newOptions[boundTarget.optionName] = element;
         setOptions(props, newOptions);
-        traceLog.add('</ATTACHMENTS.point.removeOption>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.pointAnchor.removeOption>'); // [DEBUG/]
       },
 
       getBBoxNest: function(attachProps, props) {
@@ -3440,16 +3440,16 @@
       }
     },
 
-    area: {
+    areaAnchor: {
       type: 'anchor',
       stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {},
         pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}},
 
       // attachOptions: element, color(A), fillColor, size(A), shape, x, y, width, height, radius, points
       init: function(attachProps, attachOptions) {
-        traceLog.add('<ATTACHMENTS.area.init>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.areaAnchor.init>'); // [DEBUG/]
         var points = [], baseDocument, svg, window;
-        attachProps.element = ATTACHMENTS.point.checkElement(attachOptions.element);
+        attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
         if (typeof attachOptions.color === 'string') {
           attachProps.color = attachOptions.color.trim();
         }
@@ -3466,8 +3466,8 @@
             Array.isArray(attachOptions.points) && attachOptions.points.length >= 3 &&
             attachOptions.points.every(function(point) {
               var validPoint = {};
-              if ((validPoint.x = ATTACHMENTS.point.parsePercent(point[0], true)) &&
-                  (validPoint.y = ATTACHMENTS.point.parsePercent(point[1], true))) {
+              if ((validPoint.x = ATTACHMENTS.pointAnchor.parsePercent(point[0], true)) &&
+                  (validPoint.y = ATTACHMENTS.pointAnchor.parsePercent(point[1], true))) {
                 points.push(validPoint);
                 if (validPoint.x[1] || validPoint.y[1]) { attachProps.hasRatio = true; }
                 return true;
@@ -3483,10 +3483,10 @@
         }
 
         if (attachProps.shape === 'rect' || attachProps.shape === 'circle') {
-          attachProps.x = ATTACHMENTS.point.parsePercent(attachOptions.x, true) || [-0.05, true];
-          attachProps.y = ATTACHMENTS.point.parsePercent(attachOptions.y, true) || [-0.05, true];
-          attachProps.width = ATTACHMENTS.point.parsePercent(attachOptions.width) || [1.1, true];
-          attachProps.height = ATTACHMENTS.point.parsePercent(attachOptions.height) || [1.1, true];
+          attachProps.x = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.x, true) || [-0.05, true];
+          attachProps.y = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.y, true) || [-0.05, true];
+          attachProps.width = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.width) || [1.1, true];
+          attachProps.height = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.height) || [1.1, true];
           if (attachProps.x[1] || attachProps.y[1] ||
             attachProps.width[1] || attachProps.height[1]) { attachProps.hasRatio = true; }
         }
@@ -3494,7 +3494,7 @@
         // SVG
         baseDocument = attachProps.element.ownerDocument;
         attachProps.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
-        svg.className.baseVal = APP_ID + '-attach-area';
+        svg.className.baseVal = APP_ID + '-area-anchor';
         if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
         attachProps.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
         attachProps.path.style.fill = attachProps.fill || 'none';
@@ -3506,7 +3506,7 @@
 
         // event handler for each instance
         attachProps.updateColor = function() {
-          traceLog.add('<ATTACHMENTS.area.updateColor>'); // [DEBUG/]
+          traceLog.add('<ATTACHMENTS.areaAnchor.updateColor>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = attachProps.boundTargets.length ? attachProps.boundTargets[0].props.curStats : null,
             value;
@@ -3515,7 +3515,7 @@
           if (setStat(attachProps, aplStats, 'color', value)) {
             attachProps.path.style.stroke = value;
           }
-          traceLog.add('</ATTACHMENTS.area.updateColor>'); // [DEBUG/]
+          traceLog.add('</ATTACHMENTS.areaAnchor.updateColor>'); // [DEBUG/]
         };
 
         attachProps.updateShow = function() {
@@ -3525,12 +3525,12 @@
         // event handler to update `strokeWidth` is unnecessary
         // because `getStrokeWidth` is triggered by `updateLine` and `updatePosition`
 
-        traceLog.add('</ATTACHMENTS.area.init>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.areaAnchor.init>'); // [DEBUG/]
         return true;
       },
 
       bind: function(attachProps, bindTarget) {
-        traceLog.add('<ATTACHMENTS.area.bind>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.areaAnchor.bind>'); // [DEBUG/]
         var props = bindTarget.props;
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         addEventHandler(props, 'svgShow', attachProps.updateShow);
@@ -3538,39 +3538,41 @@
           attachProps.updateColor();
           attachProps.updateShow();
         });
-        traceLog.add('</ATTACHMENTS.area.bind>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.areaAnchor.bind>'); // [DEBUG/]
         return true;
       },
 
       unbind: function(attachProps, boundTarget) {
-        traceLog.add('<ATTACHMENTS.area.unbind>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.areaAnchor.unbind>'); // [DEBUG/]
         var props = boundTarget.props;
         if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
         addDelayedProc(function() { // after updating `attachProps.boundTargets`
           attachProps.updateColor();
           attachProps.updateShow();
-          ATTACHMENTS.area.update(attachProps); // it's not called by unbound ll
+          ATTACHMENTS.areaAnchor.update(attachProps); // it's not called by unbound ll
         });
-        traceLog.add('</ATTACHMENTS.area.unbind>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.areaAnchor.unbind>'); // [DEBUG/]
       },
 
-      removeOption: function(attachProps, boundTarget) { ATTACHMENTS.point.removeOption(attachProps, boundTarget); },
+      removeOption: function(attachProps, boundTarget) {
+        ATTACHMENTS.pointAnchor.removeOption(attachProps, boundTarget);
+      },
 
       remove: function(attachProps) {
-        traceLog.add('<ATTACHMENTS.area.remove>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.areaAnchor.remove>'); // [DEBUG/]
         if (attachProps.boundTargets.length) { // it should be unbound by LeaderLineAttachment.remove
           traceLog.add('error-not-unbound'); // [DEBUG/]
           console.error('LeaderLineAttachment was not unbound by remove');
           attachProps.boundTargets.forEach(
-            function(boundTarget) { ATTACHMENTS.area.unbind(attachProps, boundTarget); });
+            function(boundTarget) { ATTACHMENTS.areaAnchor.unbind(attachProps, boundTarget); });
         }
         attachProps.svg.parentNode.removeChild(attachProps.svg);
-        traceLog.add('</ATTACHMENTS.area.remove>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.areaAnchor.remove>'); // [DEBUG/]
       },
 
       getStrokeWidth: function(attachProps) {
-        ATTACHMENTS.area.update(attachProps);
+        ATTACHMENTS.areaAnchor.update(attachProps);
         return attachProps.curStats.strokeWidth;
       },
 
@@ -3596,7 +3598,7 @@
       },
 
       update: function(attachProps) {
-        traceLog.add('<ATTACHMENTS.area.update>'); // [DEBUG/]
+        traceLog.add('<ATTACHMENTS.areaAnchor.update>'); // [DEBUG/]
         var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
           llStats = attachProps.boundTargets.length ? attachProps.boundTargets[0].props.curStats : null,
           elementBBox, value, updated = {};
@@ -3821,7 +3823,7 @@
           });
         })();
 
-        traceLog.add('</ATTACHMENTS.area.update>'); // [DEBUG/]
+        traceLog.add('</ATTACHMENTS.areaAnchor.update>'); // [DEBUG/]
       }
     },
 

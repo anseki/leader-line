@@ -55,12 +55,12 @@ describe('attachment', function() {
 
     beforeEach(loadBefore);
 
-    it(registerTitle('point.removeOption'), function(done) {
+    it(registerTitle('pointAnchor.removeOption'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps;
 
       // replace to attachProps.element
-      atc = window.LeaderLine.point({element: document.getElementById('elm1')});
+      atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
       expect(props.attachments.length).toBe(1);
@@ -71,7 +71,7 @@ describe('attachment', function() {
       expect(props.attachments.length).toBe(0);
 
       // replace to document.body
-      atc = window.LeaderLine.point({element: document.getElementById('elm3')});
+      atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm3')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
       expect(props.attachments.length).toBe(1);
@@ -82,7 +82,7 @@ describe('attachment', function() {
       expect(props.attachments.length).toBe(0);
 
       // replace to LeaderLineAttachment
-      atc = window.LeaderLine.point({element: document.body});
+      atc = window.LeaderLine.pointAnchor({element: document.body});
       attachProps = window.insAttachProps[atc._id];
       ll.setOptions({start: atc, end: document.body});
       expect(props.attachments.length).toBe(1);
@@ -99,31 +99,32 @@ describe('attachment', function() {
       done();
     });
 
-    it(registerTitle('point.parsePercent'), function(done) {
+    it(registerTitle('pointAnchor.parsePercent'), function(done) {
+      var parsePercent = window.ATTACHMENTS.pointAnchor.parsePercent;
       // -, num, false
-      expect(window.ATTACHMENTS.point.parsePercent(-5) == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(parsePercent(-5) == null).toBe(true); // eslint-disable-line eqeqeq
       // -, num, true
-      expect(window.ATTACHMENTS.point.parsePercent(-5, true)).toEqual([-5, false]);
+      expect(parsePercent(-5, true)).toEqual([-5, false]);
       // -, per, false
-      expect(window.ATTACHMENTS.point.parsePercent('-5%') == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(parsePercent('-5%') == null).toBe(true); // eslint-disable-line eqeqeq
       // -, per, true
-      expect(window.ATTACHMENTS.point.parsePercent('-5%', true)).toEqual([-0.05, true]);
+      expect(parsePercent('-5%', true)).toEqual([-0.05, true]);
       // +, num, false
-      expect(window.ATTACHMENTS.point.parsePercent(5)).toEqual([5, false]);
+      expect(parsePercent(5)).toEqual([5, false]);
       // +, num, true
-      expect(window.ATTACHMENTS.point.parsePercent(5, true)).toEqual([5, false]);
+      expect(parsePercent(5, true)).toEqual([5, false]);
       // +, per, false
-      expect(window.ATTACHMENTS.point.parsePercent('5%')).toEqual([0.05, true]);
+      expect(parsePercent('5%')).toEqual([0.05, true]);
       // +, per, true
-      expect(window.ATTACHMENTS.point.parsePercent('5%', true)).toEqual([0.05, true]);
+      expect(parsePercent('5%', true)).toEqual([0.05, true]);
       // zero, num, false
-      expect(window.ATTACHMENTS.point.parsePercent(0)).toEqual([0, false]);
+      expect(parsePercent(0)).toEqual([0, false]);
       // zero, num, true
-      expect(window.ATTACHMENTS.point.parsePercent(0, true)).toEqual([0, false]);
+      expect(parsePercent(0, true)).toEqual([0, false]);
       // zero, per, false
-      expect(window.ATTACHMENTS.point.parsePercent('0%')).toEqual([0, false]);
+      expect(parsePercent('0%')).toEqual([0, false]);
       // zero, per, true
-      expect(window.ATTACHMENTS.point.parsePercent('0%', true)).toEqual([0, false]);
+      expect(parsePercent('0%', true)).toEqual([0, false]);
 
       pageDone();
       done();
@@ -138,8 +139,8 @@ describe('attachment', function() {
       var props1 = window.insProps[ll._id], log,
         atc1, atc2, attachProps1, attachProps2, ll2, props2;
 
-      atc1 = window.LeaderLine.point({element: document.getElementById('elm1')});
-      atc2 = window.LeaderLine.point({element: document.getElementById('elm2')});
+      atc1 = window.LeaderLine.pointAnchor({element: document.getElementById('elm1')});
+      atc2 = window.LeaderLine.pointAnchor({element: document.getElementById('elm2')});
       attachProps1 = window.insAttachProps[atc1._id];
       attachProps2 = window.insAttachProps[atc2._id];
       expect(atc1.isRemoved).toBe(false);
@@ -198,7 +199,7 @@ describe('attachment', function() {
             expect(window.insAttachProps[atc2._id] != null).toBe(false); // eslint-disable-line eqeqeq
 
             // remove atc -> unbind
-            atc1 = window.LeaderLine.point({element: document.getElementById('elm1')});
+            atc1 = window.LeaderLine.pointAnchor({element: document.getElementById('elm1')});
             attachProps1 = window.insAttachProps[atc1._id];
             ll.start = atc1;
             ll2.start = atc1;
@@ -210,7 +211,7 @@ describe('attachment', function() {
             atc1.remove();
             setTimeout(function() {
               expect(traceLog.getTaggedLog('LeaderLineAttachment.remove.delayedProc')).toEqual([]);
-              expect(traceLog.getTaggedLog('ATTACHMENTS.point.removeOption')).toEqual(['start', 'start']);
+              expect(traceLog.getTaggedLog('ATTACHMENTS.pointAnchor.removeOption')).toEqual(['start', 'start']);
               expect(traceLog.getTaggedLog('removeAttachment')).toEqual(['not-found']); // 2nd ll try to remove
               expect(props1.attachments.length).toBe(0);
               expect(props2.attachments.length).toBe(0);
@@ -221,8 +222,8 @@ describe('attachment', function() {
               expect(ll2.end).toBe(document.getElementById('elm4')); // not changed
 
               // remove ll -> unbind -> remove atc
-              atc1 = window.LeaderLine.point({element: document.getElementById('elm1')});
-              atc2 = window.LeaderLine.point({element: document.getElementById('elm2')});
+              atc1 = window.LeaderLine.pointAnchor({element: document.getElementById('elm1')});
+              atc2 = window.LeaderLine.pointAnchor({element: document.getElementById('elm2')});
               attachProps1 = window.insAttachProps[atc1._id];
               attachProps2 = window.insAttachProps[atc2._id];
               ll.setOptions({start: atc1, end: atc2});
@@ -252,11 +253,11 @@ describe('attachment', function() {
         atc1, atc2, attachProps1, attachProps2, ll2, props2;
 
       traceLog.clear();
-      atc1 = window.LeaderLine.area({element: document.getElementById('elm1')});
+      atc1 = window.LeaderLine.areaAnchor({element: document.getElementById('elm1')});
       expect(traceLog.log).toEqual([
-        '<ATTACHMENTS.area.init>', '</ATTACHMENTS.area.init>'
+        '<ATTACHMENTS.areaAnchor.init>', '</ATTACHMENTS.areaAnchor.init>'
       ]);
-      atc2 = window.LeaderLine.area({element: document.getElementById('elm2')});
+      atc2 = window.LeaderLine.areaAnchor({element: document.getElementById('elm2')});
       attachProps1 = window.insAttachProps[atc1._id];
       attachProps2 = window.insAttachProps[atc2._id];
 
@@ -264,14 +265,14 @@ describe('attachment', function() {
       traceLog.clear();
       ll.start = atc1;
       expect(traceLog.log).toEqual([
-        '<ATTACHMENTS.area.bind>', '</ATTACHMENTS.area.bind>',
+        '<ATTACHMENTS.areaAnchor.bind>', '</ATTACHMENTS.areaAnchor.bind>',
         '<setOptions>', 'needs.position', '</setOptions>',
         '<updatePosition>',
-        '<ATTACHMENTS.area.update>',
+        '<ATTACHMENTS.areaAnchor.update>',
         'strokeWidth=4', 'elementWidth=100', 'elementHeight=30',
         'generate-path', 'strokeWidth=4', 'pathData',
         'x', 'y', 'width', 'height',
-        '</ATTACHMENTS.area.update>',
+        '</ATTACHMENTS.areaAnchor.update>',
         'position_socketXYSE[0]', 'new-position',
         '</updatePosition>',
         '<updatePath>', 'path_pathData', '</updatePath>',
@@ -290,7 +291,7 @@ describe('attachment', function() {
       ll.start = document.getElementById('elm1');
       setTimeout(function() {
         expect(traceLog.log).toEqual([
-          '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+          '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
           '<setOptions>', 'needs.position', '</setOptions>',
           '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
           '<updatePath>', 'path_pathData', '</updatePath>',
@@ -301,12 +302,12 @@ describe('attachment', function() {
           '</updateMask>',
           '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
           '<execDelayedProcs>',
-          '<ATTACHMENTS.area.updateColor>', 'color=coral', '</ATTACHMENTS.area.updateColor>',
+          '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
           '<svgShow>', '</svgShow>',
-          '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+          '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
           '<svgShow>', '</svgShow>',
-          '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
-          '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
+          '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+          '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
           '</execDelayedProcs>'
         ]);
         expect(props1.attachments.length).toBe(0);
@@ -331,7 +332,7 @@ describe('attachment', function() {
         ll.start = document.getElementById('elm1');
         setTimeout(function() {
           expect(traceLog.log).toEqual([
-            '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+            '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
             '<setOptions>', 'needs.position', '</setOptions>',
             '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
             '<updatePath>', 'path_pathData', '</updatePath>',
@@ -342,13 +343,13 @@ describe('attachment', function() {
             '</updateMask>',
             '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
             '<execDelayedProcs>',
-            '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+            '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
             '<svgShow>', 'on=true', '</svgShow>',
-            '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+            '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
             '<svgShow>', '</svgShow>',
-            '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+            '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
             '<svgShow>', '</svgShow>',
-            '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
+            '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
             '</execDelayedProcs>'
           ]);
           expect(props1.attachments.length).toBe(0);
@@ -364,7 +365,7 @@ describe('attachment', function() {
           ll2.start = document.getElementById('elm1');
           setTimeout(function() {
             expect(traceLog.log).toEqual([
-              '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+              '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
               '<setOptions>', 'needs.position', '</setOptions>',
               '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
               '<updatePath>', 'path_pathData', '</updatePath>',
@@ -375,10 +376,10 @@ describe('attachment', function() {
               '</updateMask>',
               '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
               '<execDelayedProcs>',
-              '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+              '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
               '<svgShow>', 'on=false', '</svgShow>',
-              '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
-              '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
+              '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+              '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
               '</execDelayedProcs>'
             ]);
             expect(props1.attachments.length).toBe(0);
@@ -390,7 +391,7 @@ describe('attachment', function() {
             expect(props2.events.svgShow.length).toBe(0); // removeEventHandler
 
             // remove atc -> unbind
-            atc1 = window.LeaderLine.area({element: document.getElementById('elm1')});
+            atc1 = window.LeaderLine.areaAnchor({element: document.getElementById('elm1')});
             attachProps1 = window.insAttachProps[atc1._id];
             ll.start = atc1;
             ll2.start = atc1;
@@ -406,8 +407,8 @@ describe('attachment', function() {
             setTimeout(function() {
               expect(traceLog.log).toEqual([
                 '<LeaderLineAttachment.remove>',
-                '<ATTACHMENTS.point.removeOption>', 'start',
-                '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+                '<ATTACHMENTS.pointAnchor.removeOption>', 'start',
+                '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
                 '<setOptions>', 'needs.position', '</setOptions>',
                 '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
                 '<updatePath>', 'path_pathData', '</updatePath>',
@@ -416,9 +417,9 @@ describe('attachment', function() {
                 'maskBGRect_x', 'lineMask_x', 'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
                 '</updateMask>',
                 '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
-                '</ATTACHMENTS.point.removeOption>',
-                '<ATTACHMENTS.point.removeOption>', 'start',
-                '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+                '</ATTACHMENTS.pointAnchor.removeOption>',
+                '<ATTACHMENTS.pointAnchor.removeOption>', 'start',
+                '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
                 '<setOptions>', 'needs.position', '</setOptions>',
                 '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
                 '<updatePath>', 'path_pathData', '</updatePath>',
@@ -427,20 +428,20 @@ describe('attachment', function() {
                 'maskBGRect_x', 'lineMask_x', 'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
                 '</updateMask>',
                 '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
-                '</ATTACHMENTS.point.removeOption>',
+                '</ATTACHMENTS.pointAnchor.removeOption>',
                 '</LeaderLineAttachment.remove>',
                 '<execDelayedProcs>',
-                '<ATTACHMENTS.area.updateColor>', 'color=coral', '</ATTACHMENTS.area.updateColor>',
+                '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
                 '<svgShow>', '</svgShow>',
-                '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+                '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
                 '<svgShow>', '</svgShow>',
-                '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+                '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
                 '<svgShow>', '</svgShow>',
-                '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
-                '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
-                '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+                '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+                '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
+                '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
                 '<svgShow>', '</svgShow>',
-                '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
+                '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
                 '<removeAttachment>', 'not-found', '</removeAttachment>',
                 '<LeaderLineAttachment.remove.delayedProc>', '</LeaderLineAttachment.remove.delayedProc>',
                 '</execDelayedProcs>'
@@ -454,8 +455,8 @@ describe('attachment', function() {
               expect(props2.events.svgShow.length).toBe(0);
 
               // remove ll -> unbind -> remove atc
-              atc1 = window.LeaderLine.area({element: document.getElementById('elm1')});
-              atc2 = window.LeaderLine.area({element: document.getElementById('elm2')});
+              atc1 = window.LeaderLine.areaAnchor({element: document.getElementById('elm1')});
+              atc2 = window.LeaderLine.areaAnchor({element: document.getElementById('elm2')});
               attachProps1 = window.insAttachProps[atc1._id];
               attachProps2 = window.insAttachProps[atc2._id];
               ll.setOptions({start: atc1, end: atc2});
@@ -468,21 +469,21 @@ describe('attachment', function() {
               ll.remove();
               setTimeout(function() {
                 expect(traceLog.log).toEqual([
-                  '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
-                  '<ATTACHMENTS.area.unbind>', '</ATTACHMENTS.area.unbind>',
+                  '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
+                  '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
                   '<execDelayedProcs>',
-                  '<ATTACHMENTS.area.updateColor>', 'color=coral', '</ATTACHMENTS.area.updateColor>',
+                  '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
                   '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.area.updateColor>', 'color=coral', '</ATTACHMENTS.area.updateColor>',
+                  '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
                   '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+                  '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
                   '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
-                  '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
-                  '<ATTACHMENTS.area.updateColor>', '</ATTACHMENTS.area.updateColor>',
+                  '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+                  '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
+                  '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
                   '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
-                  '<removeAttachment>', '<ATTACHMENTS.area.remove>', '</ATTACHMENTS.area.remove>', '</removeAttachment>',
+                  '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+                  '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
                   '</execDelayedProcs>'
                 ]);
                 expect(atc1.isRemoved).toBe(true);
@@ -505,12 +506,12 @@ describe('attachment', function() {
 
     beforeEach(loadBefore);
 
-    it(registerTitle('point-attachOptions'), function(done) {
+    it(registerTitle('pointAnchor-attachOptions'), function(done) {
       var props = window.insProps[ll._id],
         atc;
 
       // values
-      atc = window.LeaderLine.point({element: document.getElementById('elm1'), x: 5, y: 6});
+      atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1'), x: 5, y: 6});
       ll.start = atc;
       expect(props.curStats.position_socketXYSE[0].x).toBe(6);
       expect(props.curStats.position_socketXYSE[0].y).toBe(8);
@@ -526,14 +527,14 @@ describe('attachment', function() {
 
       document.getElementById('iframe1').style.borderWidth = '0';
       // iframe1 left: 500px; top: 50px; > elm2 left: 104px; top: 108px;
-      atc = window.LeaderLine.point({
+      atc = window.LeaderLine.pointAnchor({
         element: document.getElementById('iframe1').contentDocument.getElementById('elm2'), x: 5, y: 6});
       ll.start = atc;
       expect(props.curStats.position_socketXYSE[0].x).toBe(609);
       expect(props.curStats.position_socketXYSE[0].y).toBe(164);
 
       // Percent
-      atc = window.LeaderLine.point({element: document.getElementById('elm1'), x: '10%', y: '80%'});
+      atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1'), x: '10%', y: '80%'});
       ll.start = atc;
       expect(props.curStats.position_socketXYSE[0].x).toBe(11);
       expect(props.curStats.position_socketXYSE[0].y).toBe(26);
@@ -548,7 +549,7 @@ describe('attachment', function() {
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
 
       // outside of element
-      atc = window.LeaderLine.point({element: document.getElementById('elm1'), x: -1, y: -2});
+      atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1'), x: -1, y: -2});
       ll.start = atc;
       expect(props.curStats.position_socketXYSE[0].x).toBe(0);
       expect(props.curStats.position_socketXYSE[0].y).toBe(0);
@@ -563,7 +564,7 @@ describe('attachment', function() {
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
 
       // outside of element Percent
-      atc = window.LeaderLine.point({element: document.getElementById('elm1'), x: '150%', y: '180%'});
+      atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1'), x: '150%', y: '180%'});
       ll.start = atc;
       expect(props.curStats.position_socketXYSE[0].x).toBe(151);
       expect(props.curStats.position_socketXYSE[0].y).toBe(56);
@@ -581,12 +582,12 @@ describe('attachment', function() {
       done();
     });
 
-    it(registerTitle('area-attachOptions'), function(done) {
+    it(registerTitle('areaAnchor-attachOptions'), function(done) {
       var props = window.insProps[ll._id],
         atc;
 
       // rect
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: 5, y: 6, width: 7, height: 8, size: 0});
       ll.start = atc;
       expect(props.curStats.position_socketXYSE[0].x).toBe(9.5);
@@ -603,7 +604,7 @@ describe('attachment', function() {
 
       document.getElementById('iframe1').style.borderWidth = '0';
       // iframe1 left: 500px; top: 50px; > elm2 left: 104px; top: 108px;
-      atc = window.LeaderLine.area({
+      atc = window.LeaderLine.areaAnchor({
         element: document.getElementById('iframe1').contentDocument.getElementById('elm2'),
         x: 5, y: 6, width: 7, height: 8, size: 0});
       ll.start = atc;
@@ -619,7 +620,7 @@ describe('attachment', function() {
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
 
       // Percent
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: '10%', y: '80%', width: '20%', height: '50%', size: 0});
       ll.start = atc;
       expect(props.curStats.position_socketXYSE[0].x).toBe(31);
@@ -638,11 +639,11 @@ describe('attachment', function() {
       done();
     });
 
-    it(registerTitle('area-event auto color'), function(done) {
+    it(registerTitle('areaAnchor-event auto color'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps;
 
-      atc = window.LeaderLine.area({element: document.getElementById('elm1')});
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
       setTimeout(function() { // `bind` calls setTimeout
@@ -654,14 +655,14 @@ describe('attachment', function() {
         expect(traceLog.log).toEqual([
           '<setOptions>', 'needs.line', '</setOptions>',
           '<updateLine>', 'line_color=red',
-          '<ATTACHMENTS.area.updateColor>', 'color=red', '</ATTACHMENTS.area.updateColor>',
+          '<ATTACHMENTS.areaAnchor.updateColor>', 'color=red', '</ATTACHMENTS.areaAnchor.updateColor>',
           '</updateLine>',
           '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
           '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
           '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
           '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
           '<updatePosition>',
-          '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
+          '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
           'not-updated',
           '</updatePosition>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
@@ -678,11 +679,11 @@ describe('attachment', function() {
       }, 10);
     });
 
-    it(registerTitle('area-event static color'), function(done) {
+    it(registerTitle('areaAnchor-event static color'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps;
 
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'), color: 'blue'});
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), color: 'blue'});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
       setTimeout(function() { // `bind` calls setTimeout
@@ -694,14 +695,14 @@ describe('attachment', function() {
         expect(traceLog.log).toEqual([
           '<setOptions>', 'needs.line', '</setOptions>',
           '<updateLine>', 'line_color=red',
-          // ATTACHMENTS.area.updateColor is not called
+          // ATTACHMENTS.areaAnchor.updateColor is not called
           '</updateLine>',
           '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
           '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
           '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
           '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
           '<updatePosition>',
-          '<ATTACHMENTS.area.update>', '</ATTACHMENTS.area.update>',
+          '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
           'not-updated',
           '</updatePosition>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
@@ -718,11 +719,11 @@ describe('attachment', function() {
       }, 10);
     });
 
-    it(registerTitle('area-event auto 1 ll'), function(done) {
+    it(registerTitle('areaAnchor-event auto 1 ll'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps;
 
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: 5, y: 5, width: 10, height: 10}); // (6, 7)-(16, 17)
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
@@ -754,11 +755,11 @@ describe('attachment', function() {
       }, 10);
     });
 
-    it(registerTitle('area-event auto 2 ll'), function(done) {
+    it(registerTitle('areaAnchor-event auto 2 ll'), function(done) {
       var props = window.insProps[ll._id],
         ll2, props2, atc, attachProps;
 
-      atc = window.LeaderLine.area({element: document.getElementById('elm1')});
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1')});
       attachProps = window.insAttachProps[atc._id];
       ll2 = new window.LeaderLine(atc, document.getElementById('elm2'), {color: 'red', size: 8}); // #1
       props2 = window.insProps[ll2._id];
@@ -800,11 +801,11 @@ describe('attachment', function() {
       }, 10);
     });
 
-    it(registerTitle('area-event svgShow 1 ll'), function(done) {
+    it(registerTitle('areaAnchor-event svgShow 1 ll'), function(done) {
       var props = window.insProps[ll._id],
         atc, attachProps;
 
-      atc = window.LeaderLine.area({element: document.getElementById('elm1')});
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1')});
       attachProps = window.insAttachProps[atc._id];
       ll.hide('none');
       setTimeout(function() {
@@ -829,11 +830,11 @@ describe('attachment', function() {
       }, 100);
     });
 
-    it(registerTitle('area-event svgShow 2 ll'), function(done) {
+    it(registerTitle('areaAnchor-event svgShow 2 ll'), function(done) {
       var props = window.insProps[ll._id],
         ll2, props2, atc, attachProps;
 
-      atc = window.LeaderLine.area({element: document.getElementById('elm1')});
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1')});
       attachProps = window.insAttachProps[atc._id];
       ll2 = new window.LeaderLine(atc, document.getElementById('elm2'), {hide: true});
       props2 = window.insProps[ll2._id];
@@ -874,13 +875,13 @@ describe('attachment', function() {
       }, 10);
     });
 
-    it(registerTitle('area-rect'), function(done) {
+    it(registerTitle('areaAnchor-rect'), function(done) {
       var props = window.insProps[ll._id], atc,
         elmX = 1, elmY = 2, elmWidth = 100, elmHeight = 30, // elm1
         rect, r, offset, padding;
 
       // size: 0, radius: 0
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: 5, y: 6, width: 7, height: 8, size: 0});
       ll.start = atc;
       rect = getRectByXYWH(elmX + 5, elmY + 6, 7, 8);
@@ -896,7 +897,7 @@ describe('attachment', function() {
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom);
 
       // size: 2, radius: 0
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: 5, y: 6, width: 7, height: 8, size: 2});
       ll.start = atc;
       rect = getRectByXYWH(elmX + 5, elmY + 6, 7, 8);
@@ -912,7 +913,7 @@ describe('attachment', function() {
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + 2);
 
       // Percent size: 5, radius: 0
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: '10%', y: '80%', width: '20%', height: '50%', size: 5});
       ll.start = atc;
       rect = getRectByXYWH(elmX + elmWidth * 0.1, elmY + elmHeight * 0.8, elmWidth * 0.2, elmHeight * 0.5);
@@ -929,7 +930,7 @@ describe('attachment', function() {
 
       // size: 0, radius: 4
       r = 4;
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: 0, y: 0, width: '100%', height: '100%', size: 0, radius: r});
       ll.start = atc;
       offset = r / Math.SQRT2;
@@ -965,7 +966,7 @@ describe('attachment', function() {
 
       // size: 4, radius: 5
       r = 5;
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'),
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: 0, y: 0, width: '100%', height: '100%', size: 4, radius: r});
       ll.start = atc;
       offset = (r - 2) / Math.SQRT2;
@@ -1004,14 +1005,14 @@ describe('attachment', function() {
       done();
     });
 
-    it(registerTitle('area-circle'), function(done) {
+    it(registerTitle('areaAnchor-circle'), function(done) {
       var props = window.insProps[ll._id], atc,
         elmX = 1, elmY = 2, // elm1
         rect, r, offset, padding,
         rx, ry, offsetX, offsetY, paddingX, paddingY;
 
       // size: 0, width: 10, height: 10
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), shape: 'circle',
         x: 5, y: 6, width: 10, height: 10, size: 0});
       ll.start = atc;
       r = 5 * Math.SQRT2;
@@ -1043,7 +1044,7 @@ describe('attachment', function() {
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding);
 
       // size: 0, width: 20, height: 10
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), shape: 'circle',
         x: 5, y: 6, width: 20, height: 10, size: 0});
       ll.start = atc;
       rx = 10 * Math.SQRT2;
@@ -1078,7 +1079,7 @@ describe('attachment', function() {
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.top + rect.height / 2);
 
       // size: 0, width: 0, height: 0 -> 10
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), shape: 'circle',
         x: 5, y: 6, width: 10, height: 10, size: 0});
       ll.start = atc;
       r = 5 * Math.SQRT2;
@@ -1110,7 +1111,7 @@ describe('attachment', function() {
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding);
 
       // size: 4, width: 10, height: 10
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), shape: 'circle',
         x: 5, y: 6, width: 10, height: 10, size: 4});
       ll.start = atc;
       r = 5 * Math.SQRT2 + 2;
@@ -1142,7 +1143,7 @@ describe('attachment', function() {
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding + 2);
 
       // size: 4, width: 20, height: 10
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'circle',
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), shape: 'circle',
         x: 5, y: 6, width: 20, height: 10, size: 4});
       ll.start = atc;
       rx = 10 * Math.SQRT2 + 2;
@@ -1180,13 +1181,13 @@ describe('attachment', function() {
       done();
     });
 
-    it(registerTitle('area-polygon'), function(done) {
+    it(registerTitle('areaAnchor-polygon'), function(done) {
       var props = window.insProps[ll._id], atc,
         elmX = 1, elmY = 2, // elm1
         rect, padding;
 
       // size: 0
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'polygon',
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), shape: 'polygon',
         points: [[0, 60], [80, 10], [80, 80]], size: 0, fillColor: 'rgba(0, 0, 255, 0.5)'});
       ll.start = atc;
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
@@ -1202,7 +1203,7 @@ describe('attachment', function() {
       expect(props.curStats.position_socketXYSE[0].y).toBe(rect.bottom + padding);
 
       // size: 4
-      atc = window.LeaderLine.area({element: document.getElementById('elm1'), shape: 'polygon',
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), shape: 'polygon',
         points: [[0, 60], [80, 10], [80, 80]], size: 4, fillColor: 'rgba(0, 0, 255, 0.5)'});
       ll.start = atc;
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
