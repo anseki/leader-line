@@ -4200,7 +4200,7 @@
 
     pathLabel: {
       type: 'label',
-      stats: {color: {}, startOffset: {}},
+      stats: {color: {}, startOffset: {}, pathData: {}},
 
       // attachOptions: text, color(A), outlineColor, lineOffset, <textStyleProps>
       init: function(attachProps, attachOptions) {
@@ -4235,36 +4235,35 @@
 
         attachProps.updatePath = function(props) {
           traceLog.add('<ATTACHMENTS.pathLabel.updatePath>'); // [DEBUG/]
-          var MARGIN = 2, STEP_LEN = 16,
-            curStats = attachProps.curStats, aplStats = attachProps.aplStats,
+          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats, pathList = props.pathList.animVal || props.pathList.baseVal,
-            value;
+            value, pathOffset;
+          // It's not ready yet.
+          if (!pathList) {
+            traceLog.add('not-ready'); // [DEBUG/]
+            traceLog.add('</ATTACHMENTS.pathLabel.updatePath>'); // [DEBUG/]
+            return;
+          }
 
+          // margin between line and base-line: attachProps.height / 2
+          pathOffset = llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 2;
+          curStats.pathData =
+            ATTACHMENTS.pathLabel.getOffsetPathData(pathList, pathOffset, attachProps.height * 1.5);
 
-
-
-
-          pathOffset = llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + MARGIN;
-
-          // attachProps.elmPath.setPathData(pathList2PathData(pathList));
-
-          // point = ATTACHMENTS.pathLabel.getMidPoint(pathList, attachProps.lineOffset);
-          // curStats.x = point.x - attachProps.width / 2;
-          // curStats.y = point.y - attachProps.height / 2;
-
-          // if (setStat(attachProps, aplStats, 'x', (value = curStats.x))) {
-          //   attachProps.elmPosition.x.baseVal.getItem(0).value = value;
-          // }
-          // if (setStat(attachProps, aplStats, 'y', (value = curStats.y))) {
-          //   attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
-          // }
+          // Apply `pathData`
+          if (pathDataHasChanged((value = curStats.pathData), aplStats.pathData)) {
+            traceLog.add('pathData'); // [DEBUG/]
+            attachProps.path.setPathData(value);
+            aplStats.pathData = value;
+            attachProps.bBox = attachProps.elmPosition.getBBox(); // for adjustEdge
+          }
           traceLog.add('</ATTACHMENTS.pathLabel.updatePath>'); // [DEBUG/]
         };
 
         attachProps.updateStartOffset = function(props) {
           traceLog.add('<ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            llStats = props.curStats;
+            llStats = props.curStats, plugBackLen;
 
           plugBackLen = Math.max(llStats.attach_plugBackLenSE[attachProps.socketIndex] || 0,
             llStats.line_strokeWidth / 2);
@@ -4449,36 +4448,6 @@
         }
       },
 
-      getMidPoint: function(pathList, offset) {
-        var pathSegsLen = [], pathLenAll = 0, pointLen, points, i = -1, newPathList;
-        pathList.forEach(function(points) {
-          var pathLen = (points.length === 2 ? getPointsLength : getCubicLength).apply(null, points);
-          pathSegsLen.push(pathLen);
-          pathLenAll += pathLen;
-        });
-
-        pointLen = pathLenAll / 2 + (offset || 0);
-        if (pointLen <= 0) {
-          points = pathList[0];
-          return points.length === 2 ? getPointOnLine(points[0], points[1], 0) :
-            getPointOnCubic(points[0], points[1], points[2], points[3], 0);
-        } else if (pointLen >= pathLenAll) {
-          points = pathList[pathList.length - 1];
-          return points.length === 2 ? getPointOnLine(points[0], points[1], 1) :
-            getPointOnCubic(points[0], points[1], points[2], points[3], 1);
-        } else {
-          newPathList = [];
-          while (pointLen > pathSegsLen[++i]) {
-            newPathList.push(pathList[i]);
-            pointLen -= pathSegsLen[i];
-          }
-          points = pathList[i];
-          return points.length === 2 ? getPointOnLine(points[0], points[1], pointLen / pathSegsLen[i]) :
-            getPointOnCubic(points[0], points[1], points[2], points[3],
-              getCubicT(points[0], points[1], points[2], points[3], pointLen));
-        }
-      },
-
       initSvg: function(attachProps, props) {
         traceLog.add('<ATTACHMENTS.pathLabel.initSvg>'); // [DEBUG/]
         var text = ATTACHMENTS.pathLabel.newText(attachProps.text, props.baseWindow.document,
@@ -4498,10 +4467,11 @@
         text.styleText.textAnchor = ['start', 'end', 'middle'][attachProps.semIndex];
 
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
-        if (attachProps.outlineColor) { // Get normal size
-          text.elmPath.setPathData([{type: 'M', values: [0, 100]}, {type: 'h', values: [100]}]);
-          bBox = text.elmPosition.getBBox();
-          console.log(bBox);
+        // Get size in straight
+        text.elmPath.setPathData([{type: 'M', values: [0, 100]}, {type: 'h', values: [100]}]);
+        bBox = text.elmPosition.getBBox();
+        attachProps.height = bBox.height;
+        if (attachProps.outlineColor) {
           strokeWidth = bBox.height / 9;
           strokeWidth = strokeWidth > 10 ? 10 : strokeWidth < 2 ? 2 : strokeWidth;
           text.styleStroke.strokeWidth = strokeWidth + 'px';
