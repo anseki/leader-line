@@ -565,6 +565,16 @@
   }
   window.pathList2PathData = pathList2PathData; // [DEBUG/]
 
+  function getAllPathListLen(pathList) {
+    var pathSegsLen = [], pathLenAll = 0;
+    pathList.forEach(function(points) {
+      var pathLen = (points.length === 2 ? getPointsLength : getCubicLength).apply(null, points);
+      pathSegsLen.push(pathLen);
+      pathLenAll += pathLen;
+    });
+    return {segsLen: pathSegsLen, lenAll: pathLenAll};
+  }
+
   function pathDataHasChanged(a, b) {
     return a == null || b == null || // eslint-disable-line eqeqeq
       a.length !== b.length || a.some(function(aSeg, i) {
@@ -3174,14 +3184,9 @@
       init: function(props, timeRatio) {
         traceLog.add('<SHOW_EFFECTS.draw.init>'); // [DEBUG/]
         var curStats = props.curStats, aplStats = props.aplStats,
-          pathList = props.pathList.baseVal, pathSegsLen = [], pathLenAll = 0;
+          pathList = props.pathList.baseVal,
+          allPathLen = getAllPathListLen(pathList), pathSegsLen = allPathLen.segsLen, pathLenAll = allPathLen.lenAll;
         if (curStats.show_animId) { anim.remove(curStats.show_animId); }
-
-        pathList.forEach(function(points) {
-          var pathLen = (points.length === 2 ? getPointsLength : getCubicLength).apply(null, points);
-          pathSegsLen.push(pathLen);
-          pathLenAll += pathLen;
-        });
 
         curStats.show_animId = anim.add(
           function(outputRatio) {
@@ -4048,12 +4053,8 @@
       },
 
       getMidPoint: function(pathList, offset) {
-        var pathSegsLen = [], pathLenAll = 0, pointLen, points, i = -1, newPathList;
-        pathList.forEach(function(points) {
-          var pathLen = (points.length === 2 ? getPointsLength : getCubicLength).apply(null, points);
-          pathSegsLen.push(pathLen);
-          pathLenAll += pathLen;
-        });
+        var allPathLen = getAllPathListLen(pathList), pathSegsLen = allPathLen.segsLen, pathLenAll = allPathLen.lenAll,
+          pointLen, points, i = -1, newPathList;
 
         pointLen = pathLenAll / 2 + (offset || 0);
         if (pointLen <= 0) {
@@ -4256,6 +4257,7 @@
             attachProps.path.setPathData(value);
             aplStats.pathData = value;
             attachProps.bBox = attachProps.elmPosition.getBBox(); // for adjustEdge
+            attachProps.updateStartOffset(props);
           }
           traceLog.add('</ATTACHMENTS.pathLabel.updatePath>'); // [DEBUG/]
         };
@@ -4263,10 +4265,37 @@
         attachProps.updateStartOffset = function(props) {
           traceLog.add('<ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            llStats = props.curStats, plugBackLen;
+            llStats = props.curStats, pathLenAll, plugBackLen, startOffset;
+          // It's not ready yet.
+          if (!curStats.pathData) {
+            traceLog.add('not-ready'); // [DEBUG/]
+            traceLog.add('</ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]
+            return;
+          }
+          if (attachProps.semIndex === 2 && !attachProps.lineOffset) {
+            traceLog.add('static'); // [DEBUG/]
+            traceLog.add('</ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]
+            return;
+          }
 
-          plugBackLen = Math.max(llStats.attach_plugBackLenSE[attachProps.socketIndex] || 0,
-            llStats.line_strokeWidth / 2);
+          pathLenAll = getAllPathDataLen(curStats.pathData).lenAll;
+          startOffset = attachProps.semIndex === 0 ? 0 : attachProps.semIndex === 1 ? pathLenAll : pathLenAll / 2;
+          if (attachProps.semIndex !== 2) {
+            plugBackLen = Math.max(
+              llStats.attach_plugBackLenSE[attachProps.semIndex] || 0,
+              llStats.line_strokeWidth / 2);
+            startOffset += attachProps.semIndex === 0 ? plugBackLen : -plugBackLen;
+            startOffset = startOffset < 0 ? 0 : startOffset > pathLenAll ? pathLenAll : startOffset;
+          }
+          if (attachProps.lineOffset) {
+            startOffset += attachProps.lineOffset;
+            startOffset = startOffset < 0 ? 0 : startOffset > pathLenAll ? pathLenAll : startOffset;
+          }
+
+          curStats.startOffset = startOffset;
+          if (setStat(attachProps, aplStats, 'startOffset', startOffset)) {
+            attachProps.elmOffset.startOffset.baseVal.value = startOffset;
+          }
           traceLog.add('</ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]
         };
 
@@ -4465,6 +4494,10 @@
           }
         });
         text.styleText.textAnchor = ['start', 'end', 'middle'][attachProps.semIndex];
+        if (attachProps.semIndex === 2 && !attachProps.lineOffset) {
+          // The position never change.
+          text.elmOffset.startOffset.baseVal.newValueSpecifiedUnits(SVGLength.SSVG_LENGTHTYPE_PERCENTAGE, 50);
+        }
 
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
         // Get size in straight
@@ -4482,6 +4515,7 @@
         initStats(attachProps.aplStats, ATTACHMENTS.pathLabel.stats); // for bindWindow again
         attachProps.updateColor(props);
         attachProps.updatePath(props);
+        attachProps.updateStartOffset(props);
         if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored
         attachProps.updateShow(props);
         traceLog.add('</ATTACHMENTS.pathLabel.initSvg>'); // [DEBUG/]
@@ -4495,9 +4529,11 @@
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         attachProps.semIndex = bindTarget.optionName === 'startLabel' ? 0 :
           bindTarget.optionName === 'endLabel' ? 1 : 2;
-        addEventHandler(props, 'cur_attach_plugSideLenSE', attachProps.updatePath);///
         addEventHandler(props, 'cur_line_strokeWidth', attachProps.updatePath);
         addEventHandler(props, 'apl_path', attachProps.updatePath);
+        if (attachProps.semIndex !== 2 || attachProps.lineOffset) {
+          addEventHandler(props, 'cur_attach_plugBackLenSE', attachProps.updateStartOffset);
+        }
         addEventHandler(props, 'svgShow', attachProps.updateShow);
         // [WEBKIT] overflow:visible is ignored
         if (IS_WEBKIT) { addEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge); }
@@ -4515,16 +4551,18 @@
 
         if (attachProps.elmsAppend) {
           attachProps.elmsAppend.forEach(function(elm) { props.svg.removeChild(elm); });
-          attachProps.elmPosition = attachProps.styleFill =
-            attachProps.styleShow = attachProps.elmsAppend = null;
+          attachProps.elmPosition = attachProps.elmPath = attachProps.elmOffset =
+            attachProps.styleFill = attachProps.styleShow = attachProps.elmsAppend = null;
         }
         initStats(attachProps.curStats, ATTACHMENTS.pathLabel.stats);
         initStats(attachProps.aplStats, ATTACHMENTS.pathLabel.stats);
 
         if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
-        removeEventHandler(props, 'cur_attach_plugSideLenSE', attachProps.updatePath);
         removeEventHandler(props, 'cur_line_strokeWidth', attachProps.updatePath);
         removeEventHandler(props, 'apl_path', attachProps.updatePath);
+        if (attachProps.semIndex !== 2 || attachProps.lineOffset) {
+          removeEventHandler(props, 'cur_attach_plugBackLenSE', attachProps.updateStartOffset);
+        }
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
         if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
           removeEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge);
