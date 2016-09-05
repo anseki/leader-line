@@ -575,6 +575,35 @@
     return {segsLen: pathSegsLen, lenAll: pathLenAll};
   }
 
+  function getAllPathDataLen(pathData) {
+    var curPoint;
+    return pathData.reduce(function(pathLenAll, pathSeg) {
+      var values = pathSeg.values, endPoint;
+      switch (pathSeg.type) {
+        case 'M':
+          curPoint = {x: values[0], y: values[1]};
+          break;
+        case 'L':
+          endPoint = {x: values[0], y: values[1]};
+          if (curPoint) {
+            pathLenAll += getPointsLength(curPoint, endPoint);
+          }
+          curPoint = endPoint;
+          break;
+        case 'C':
+          endPoint = {x: values[4], y: values[5]};
+          if (curPoint) {
+            pathLenAll += getCubicLength(curPoint,
+              {x: values[0], y: values[1]}, {x: values[2], y: values[3]}, endPoint);
+          }
+          curPoint = endPoint;
+          break;
+        // no default
+      }
+      return pathLenAll;
+    }, 0);
+  }
+
   function pathDataHasChanged(a, b) {
     return a == null || b == null || // eslint-disable-line eqeqeq
       a.length !== b.length || a.some(function(aSeg, i) {
@@ -4278,7 +4307,7 @@
             return;
           }
 
-          pathLenAll = getAllPathDataLen(curStats.pathData).lenAll;
+          pathLenAll = getAllPathDataLen(curStats.pathData);
           startOffset = attachProps.semIndex === 0 ? 0 : attachProps.semIndex === 1 ? pathLenAll : pathLenAll / 2;
           if (attachProps.semIndex !== 2) {
             plugBackLen = Math.max(
