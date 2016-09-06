@@ -4267,7 +4267,7 @@
           traceLog.add('<ATTACHMENTS.pathLabel.updatePath>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
             llStats = props.curStats, pathList = props.pathList.animVal || props.pathList.baseVal,
-            value, pathOffset;
+            value;
           // It's not ready yet.
           if (!pathList) {
             traceLog.add('not-ready'); // [DEBUG/]
@@ -4275,13 +4275,13 @@
             return;
           }
 
-          // margin between line and base-line: attachProps.height / 2
-          pathOffset = llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 2;
-          curStats.pathData =
-            ATTACHMENTS.pathLabel.getOffsetPathData(pathList, pathOffset, attachProps.height * 1.5);
+          curStats.pathData = value = ATTACHMENTS.pathLabel.getOffsetPathData(pathList,
+            // margin between line and base-line: attachProps.height / 2
+            llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 2,
+            attachProps.height * 1.5);
 
           // Apply `pathData`
-          if (pathDataHasChanged((value = curStats.pathData), aplStats.pathData)) {
+          if (pathDataHasChanged(value, aplStats.pathData)) {
             traceLog.add('pathData'); // [DEBUG/]
             attachProps.path.setPathData(value);
             aplStats.pathData = value;
