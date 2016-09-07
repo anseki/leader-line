@@ -2426,6 +2426,9 @@
 
     function setValidType(root, newOptions, propName, type, optionName, index, defaultValue, check, trim) {
       var curOption = getCurOption(root, propName, optionName, index, defaultValue), updated, value;
+
+      function isValidType(value, type) { return type === 'number' ? isFinite(value) : typeof value === type; }
+
       if (!type) {
         // eslint-disable-next-line eqeqeq
         if (curOption.default == null) { throw new Error('Invalid `type`: ' + propName); }
@@ -2433,7 +2436,7 @@
       }
       if (newOptions[propName] != null && ( // eslint-disable-line eqeqeq
             curOption.acceptsAuto && (newOptions[propName] + '').toLowerCase() === KEYWORD_AUTO ||
-            typeof (value = newOptions[propName]) === type &&
+            isValidType((value = newOptions[propName]), type) &&
             ((value = trim && type === 'string' && value ? value.trim() : value) || true) &&
             (!check || check(value))
           ) && value !== curOption.container[curOption.key]) {
