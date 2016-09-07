@@ -37,3 +37,9 @@ select.guide-mask-select {
   stroke-width: 1px;
   fill: none;
 }
+
+.guide-pathLabel {
+  fill: none;
+  stroke-width: 1px;
+  stroke: rgba(0, 112, 254, 0.7);
+}

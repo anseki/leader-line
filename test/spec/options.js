@@ -179,6 +179,20 @@ describe('options', function() {
       expect(props.options.plugSizeSE[0]).toBe(2);
       expect(ll.startPlugSize).toBe(2);
 
+      // invalid number (NaN)
+      traceLog.clear();
+      ll.startPlugSize = NaN;
+      expect(traceLog.getTaggedLog('setOptions')).not.toContain('needs.plug');
+      expect(props.options.plugSizeSE[0]).toBe(2);
+      expect(ll.startPlugSize).toBe(2);
+
+      // invalid number (Infinity)
+      traceLog.clear();
+      ll.startPlugSize = Infinity;
+      expect(traceLog.getTaggedLog('setOptions')).not.toContain('needs.plug');
+      expect(props.options.plugSizeSE[0]).toBe(2);
+      expect(ll.startPlugSize).toBe(2);
+
       // valid value (specified type)
       traceLog.clear();
       ll.startPlugSize = 3; // number

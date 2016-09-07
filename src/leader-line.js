@@ -4281,14 +4281,16 @@
           }
 
           curStats.pathData = value = ATTACHMENTS.pathLabel.getOffsetPathData(pathList,
-            // margin between line and base-line: attachProps.height / 2
-            llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 2,
-            attachProps.height * 1.5);
+            // margin between line and base-line: attachProps.height / 4
+            // llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 2,
+            llStats.line_strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 4,
+            // margin between corner and text: attachProps.height * 1.25
+            attachProps.height * 1.25);
 
           // Apply `pathData`
           if (pathDataHasChanged(value, aplStats.pathData)) {
             traceLog.add('pathData'); // [DEBUG/]
-            attachProps.path.setPathData(value);
+            attachProps.elmPath.setPathData(value);
             aplStats.pathData = value;
             attachProps.bBox = attachProps.elmPosition.getBBox(); // for adjustEdge
             attachProps.updateStartOffset(props);
@@ -4317,7 +4319,9 @@
           if (attachProps.semIndex !== 2) {
             plugBackLen = Math.max(
               llStats.attach_plugBackLenSE[attachProps.semIndex] || 0,
-              llStats.line_strokeWidth / 2);
+              llStats.line_strokeWidth / 2) +
+              // margin between plug and text: attachProps.height / 4
+              attachProps.strokeWidth / 2 + attachProps.height / 4;
             startOffset += attachProps.semIndex === 0 ? plugBackLen : -plugBackLen;
             startOffset = startOffset < 0 ? 0 : startOffset > pathLenAll ? pathLenAll : startOffset;
           }
@@ -4527,16 +4531,17 @@
             text.styleText[propName] = attachProps[propName];
           }
         });
-        text.styleText.textAnchor = ['start', 'end', 'middle'][attachProps.semIndex];
-        if (attachProps.semIndex === 2 && !attachProps.lineOffset) {
-          // The position never change.
-          text.elmOffset.startOffset.baseVal.newValueSpecifiedUnits(SVGLength.SSVG_LENGTHTYPE_PERCENTAGE, 50);
-        }
 
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
         // Get size in straight
         text.elmPath.setPathData([{type: 'M', values: [0, 100]}, {type: 'h', values: [100]}]);
         bBox = text.elmPosition.getBBox();
+        // textAnchor and startOffset might affect the size.
+        text.styleText.textAnchor = ['start', 'end', 'middle'][attachProps.semIndex];
+        if (attachProps.semIndex === 2 && !attachProps.lineOffset) { // The position never change.
+          text.elmOffset.startOffset.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 50);
+        }
+
         attachProps.height = bBox.height;
         if (attachProps.outlineColor) {
           strokeWidth = bBox.height / 9;
@@ -4561,10 +4566,10 @@
         var props = bindTarget.props;
 
         if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
-        attachProps.semIndex = bindTarget.optionName === 'startLabel' ? 0 :
-          bindTarget.optionName === 'endLabel' ? 1 : 2;
         addEventHandler(props, 'cur_line_strokeWidth', attachProps.updatePath);
         addEventHandler(props, 'apl_path', attachProps.updatePath);
+        attachProps.semIndex = bindTarget.optionName === 'startLabel' ? 0 :
+          bindTarget.optionName === 'endLabel' ? 1 : 2;
         if (attachProps.semIndex !== 2 || attachProps.lineOffset) {
           addEventHandler(props, 'cur_attach_plugBackLenSE', attachProps.updateStartOffset);
         }

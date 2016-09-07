@@ -148,6 +148,18 @@ var guideView = (function() {
         path.setPathData(pathSegs);
       })();
 
+      // ======== pathLabel
+      (function() {
+        var elmPath, usePath;
+        props.attachments.forEach(function(attachProps) {
+          if (attachProps.conf === window.ATTACHMENTS.pathLabel && (elmPath = attachProps.elmPath)) {
+            usePath = guideSvg.appendChild(baseDocument.createElementNS(SVG_NS, 'use'));
+            usePath.href.baseVal = '#' + elmPath.id;
+            usePath.className.baseVal = 'guide-pathLabel';
+          }
+        });
+      })();
+
       guideElements.push(guideSvg);
 
       (function() {
