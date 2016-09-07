@@ -127,6 +127,8 @@
             typeof constructor === 'function' && fnToString.call(constructor) === objFnString);
       };
     })(),
+    isFinite = Number.isFinite || function(value) { return typeof value === 'number' && window.isFinite(value); },
+
     /* [DEBUG/]
     anim = @INCLUDE[code:anim]@,
     [DEBUG/] */
@@ -2259,7 +2261,7 @@
 
   function getValidAnimOptions(animOptions, defaultAnimOptions) {
     return {
-      duration: typeof animOptions.duration === 'number' && animOptions.duration > 0 ?
+      duration: isFinite(animOptions.duration) && animOptions.duration > 0 ?
         animOptions.duration : defaultAnimOptions.duration,
       timing: anim.validTiming(animOptions.timing) ?
         animOptions.timing : copyTree(defaultAnimOptions.timing)
@@ -2501,7 +2503,7 @@
       var value = false; // `false` means no-update input.
       if (newOption != null) { // eslint-disable-line eqeqeq
         if (Array.isArray(newOption)) {
-          if (typeof newOption[0] === 'number' && typeof newOption[1] === 'number') {
+          if (isFinite(newOption[0]) && isFinite(newOption[1])) {
             value = [newOption[0], newOption[1]];
             if (Array.isArray(options.socketGravitySE[i]) &&
               matchArray(value, options.socketGravitySE[i])) { value = false; }
@@ -2509,7 +2511,7 @@
         } else {
           if ((newOption + '').toLowerCase() === KEYWORD_AUTO) {
             value = null;
-          } else if (typeof newOption === 'number' && newOption >= 0) {
+          } else if (isFinite(newOption) && newOption >= 0) {
             value = newOption;
           }
           if (value === options.socketGravitySE[i]) { value = false; }
@@ -3454,10 +3456,10 @@
       },
 
       parsePercent: function(value, allowNegative) {
-        var type = typeof value, matches, num, ratio = false;
-        if (type === 'number') {
+        var matches, num, ratio = false;
+        if (isFinite(value)) {
           num = value;
-        } else if (type === 'string' && (matches = RE_PERCENT.exec(value)) && matches[2]) {
+        } else if (typeof value === 'string' && (matches = RE_PERCENT.exec(value)) && matches[2]) {
           num = parseFloat(matches[1]) / 100;
           ratio = num !== 0;
         }
@@ -3490,7 +3492,7 @@
         if (typeof attachOptions.fillColor === 'string') {
           attachProps.fill = attachOptions.fillColor.trim();
         }
-        if (typeof attachOptions.size === 'number' && attachOptions.size >= 0) {
+        if (isFinite(attachOptions.size) && attachOptions.size >= 0) {
           attachProps.size = attachOptions.size;
         }
 
@@ -3513,7 +3515,7 @@
         } else {
           attachProps.shape = 'rect';
           attachProps.radius =
-            typeof attachOptions.radius === 'number' && attachOptions.radius >= 0 ? attachOptions.radius : 0;
+            isFinite(attachOptions.radius) && attachOptions.radius >= 0 ? attachOptions.radius : 0;
         }
 
         if (attachProps.shape === 'rect' || attachProps.shape === 'circle') {
@@ -3883,10 +3885,10 @@
         attachProps.outlineColor = typeof attachOptions.outlineColor === 'string' ?
           attachOptions.outlineColor.trim() : '#fff'; // default
         if (Array.isArray(attachOptions.offset) &&
-            typeof attachOptions.offset[0] === 'number' && typeof attachOptions.offset[1] === 'number') {
+            isFinite(attachOptions.offset[0]) && isFinite(attachOptions.offset[1])) {
           attachProps.offset = {x: attachOptions.offset[0], y: attachOptions.offset[1]};
         }
-        if (typeof attachOptions.lineOffset === 'number') {
+        if (isFinite(attachOptions.lineOffset)) {
           attachProps.lineOffset = attachOptions.lineOffset;
         }
         ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
@@ -4247,7 +4249,7 @@
         }
         attachProps.outlineColor = typeof attachOptions.outlineColor === 'string' ?
           attachOptions.outlineColor.trim() : '#fff'; // default
-        if (typeof attachOptions.lineOffset === 'number') {
+        if (isFinite(attachOptions.lineOffset)) {
           attachProps.lineOffset = attachOptions.lineOffset;
         }
         ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {

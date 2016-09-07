@@ -27,6 +27,8 @@ var anim =
       window.msCancelAnimationFrame ||
       function(requestID) { clearTimeout(requestID); },
 
+    isFinite = Number.isFinite || function(value) { return typeof value === 'number' && window.isFinite(value); },
+
     /**
      * @callback frameCallback
      * @param {} value - A value that was made by `valueCallback`.
@@ -272,7 +274,7 @@ var anim =
     validTiming: function(timing) {
       return typeof timing === 'string' ? FUNC_KEYS[timing] :
         Array.isArray(timing) && [0, 1, 2, 3].every(function(i) {
-          return typeof timing[i] === 'number' && timing[i] >= 0 && timing[i] <= 1;
+          return isFinite(timing[i]) && timing[i] >= 0 && timing[i] <= 1;
         }) ? [timing[0], timing[1], timing[2], timing[3]] :
         null;
     }
