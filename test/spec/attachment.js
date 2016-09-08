@@ -1636,4 +1636,427 @@ describe('attachment', function() {
 
   });
 
+  describe('ATTACHMENTS.pathLabel', function() {
+
+    beforeEach(loadBefore);
+
+    it(registerTitle('attachOptions'), function(done) {
+      var atc, attachProps;
+
+      // invalid
+      atc = window.LeaderLine.pathLabel({text: ' '});
+      expect(atc.isRemoved).toBe(true);
+      atc = window.LeaderLine.pathLabel({text: 5});
+      expect(atc.isRemoved).toBe(true);
+
+      // default
+      atc = window.LeaderLine.pathLabel({text: '  label-a  '});
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.text).toBe('label-a');
+      expect(attachProps.color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.outlineColor).toBe('#fff');
+      expect(attachProps.lineOffset == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // valid
+      atc = window.LeaderLine.pathLabel({
+        text: '  label-a  ',
+        color: ' red ',
+        outlineColor: ' blue ',
+        lineOffset: 3
+      });
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.text).toBe('label-a');
+      expect(attachProps.color).toBe('red');
+      expect(attachProps.outlineColor).toBe('blue');
+      expect(attachProps.lineOffset).toBe(3);
+
+      pageDone();
+      done();
+    });
+
+    it(registerTitle('event auto color'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps, ll2, props2;
+
+      atc = window.LeaderLine.pathLabel({text: 'label-a'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.startLabel = atc;
+      expect(attachProps.curStats.color).toBe('coral');
+      expect(props.events.cur_line_color.length).toBe(1); // addEventHandler
+      expect(props.attachments.length).toBe(1);
+
+      // It's changed by updating ll
+      traceLog.clear();
+      ll.color = 'red';
+      expect(traceLog.log).toEqual([
+        '<setOptions>', 'needs.line', '</setOptions>',
+        '<updateLine>', 'line_color=red',
+        '<ATTACHMENTS.pathLabel.updateColor>', 'color=red', '</ATTACHMENTS.pathLabel.updateColor>',
+        '</updateLine>',
+        '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
+        '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
+        '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
+        '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
+        '<updatePosition>', 'not-updated', '</updatePosition>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
+      ]);
+      expect(attachProps.curStats.color).toBe('red');
+
+      // It's changed by binding ll
+      ll2 = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'), {
+        color: 'blue'
+      });
+      props2 = window.insProps[ll2._id];
+      traceLog.clear();
+      ll2.endLabel = atc;
+      expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
+        // option of ll1
+        '<ATTACHMENTS.pathLabel.removeOption>',
+          'optionName=startLabel',
+          '<ATTACHMENTS.pathLabel.unbind>', '</ATTACHMENTS.pathLabel.unbind>',
+          '<setOptions>', '</setOptions>',
+          '<updateViewBox>', 'not-updated', '</updateViewBox>',
+          '<updateMask>', 'not-updated', '</updateMask>',
+          '<update>', '</update>',
+        '</ATTACHMENTS.pathLabel.removeOption>',
+
+        '<ATTACHMENTS.pathLabel.bind>',
+          'optionName=endLabel',
+          '<ATTACHMENTS.pathLabel.initSvg>',
+            '<ATTACHMENTS.pathLabel.updateColor>', 'color=blue', '</ATTACHMENTS.pathLabel.updateColor>',
+            '<ATTACHMENTS.pathLabel.updatePath>',
+              'pathData',
+              '<ATTACHMENTS.pathLabel.updateStartOffset>', // in updatePath
+                'startOffset=267.81356660456',
+              '</ATTACHMENTS.pathLabel.updateStartOffset>',
+            '</ATTACHMENTS.pathLabel.updatePath>',
+            '<ATTACHMENTS.pathLabel.updateStartOffset>', '</ATTACHMENTS.pathLabel.updateStartOffset>',
+            '<ATTACHMENTS.pathLabel.updateShow>', 'on=true', '</ATTACHMENTS.pathLabel.updateShow>',
+          '</ATTACHMENTS.pathLabel.initSvg>',
+        '</ATTACHMENTS.pathLabel.bind>',
+
+        '<setOptions>', '</setOptions>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', '</update>'
+        /* eslint-enable indent */
+      ]);
+      expect(attachProps.curStats.color).toBe('blue');
+      expect(props.events.cur_line_color.length).toBe(0); // removeEventHandler
+      expect(props2.events.cur_line_color.length).toBe(1); // addEventHandler
+      expect(props.attachments.length).toBe(0);
+      expect(props2.attachments.length).toBe(1);
+
+      traceLog.clear();
+      ll2.endLabel = '';
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.pathLabel.unbind>', '</ATTACHMENTS.pathLabel.unbind>',
+        '<setOptions>', '</setOptions>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', '</update>'
+      ]);
+      expect(props2.events.cur_line_color.length).toBe(0); // removeEventHandler
+      expect(props2.attachments.length).toBe(0);
+      setTimeout(function() {
+        expect(atc.isRemoved).toBe(true);
+
+        pageDone();
+        done();
+      }, 50);
+    });
+
+    it(registerTitle('event static color'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps, ll2, props2;
+
+      atc = window.LeaderLine.pathLabel({text: 'label-a', color: 'yellow'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.startLabel = atc;
+      expect(attachProps.curStats.color).toBe('yellow');
+      expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // It's changed by updating ll
+      traceLog.clear();
+      ll.color = 'red';
+      expect(traceLog.log).toEqual([
+        '<setOptions>', 'needs.line', '</setOptions>',
+        '<updateLine>', 'line_color=red',
+        // '<ATTACHMENTS.pathLabel.updateColor>', 'color=red', '</ATTACHMENTS.pathLabel.updateColor>',
+        '</updateLine>',
+        '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
+        '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
+        '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
+        '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
+        '<updatePosition>', 'not-updated', '</updatePosition>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
+      ]);
+      expect(attachProps.curStats.color).toBe('yellow');
+
+      // It's changed by binding ll
+      ll2 = new window.LeaderLine(document.getElementById('elm1'), document.getElementById('elm3'), {
+        color: 'blue'
+      });
+      props2 = window.insProps[ll2._id];
+      traceLog.clear();
+      ll2.endLabel = atc;
+      expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
+        // option of ll1
+        '<ATTACHMENTS.pathLabel.removeOption>',
+          'optionName=startLabel',
+          '<ATTACHMENTS.pathLabel.unbind>', '</ATTACHMENTS.pathLabel.unbind>',
+          '<setOptions>', '</setOptions>',
+          '<updateViewBox>', 'not-updated', '</updateViewBox>',
+          '<updateMask>', 'not-updated', '</updateMask>',
+          '<update>', '</update>',
+        '</ATTACHMENTS.pathLabel.removeOption>',
+
+        '<ATTACHMENTS.pathLabel.bind>',
+          'optionName=endLabel',
+          '<ATTACHMENTS.pathLabel.initSvg>',
+            '<ATTACHMENTS.pathLabel.updateColor>', 'color=yellow', '</ATTACHMENTS.pathLabel.updateColor>',
+            '<ATTACHMENTS.pathLabel.updatePath>',
+              'pathData',
+              '<ATTACHMENTS.pathLabel.updateStartOffset>', // in updatePath
+                'startOffset=267.81356660456',
+              '</ATTACHMENTS.pathLabel.updateStartOffset>',
+            '</ATTACHMENTS.pathLabel.updatePath>',
+            '<ATTACHMENTS.pathLabel.updateStartOffset>', '</ATTACHMENTS.pathLabel.updateStartOffset>',
+            '<ATTACHMENTS.pathLabel.updateShow>', 'on=true', '</ATTACHMENTS.pathLabel.updateShow>',
+          '</ATTACHMENTS.pathLabel.initSvg>',
+        '</ATTACHMENTS.pathLabel.bind>',
+
+        '<setOptions>', '</setOptions>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', '</update>'
+        /* eslint-enable indent */
+      ]);
+      expect(attachProps.curStats.color).toBe('yellow');
+      expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props2.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.attachments.length).toBe(0);
+      expect(props2.attachments.length).toBe(1);
+
+      traceLog.clear();
+      ll2.endLabel = '';
+      expect(traceLog.log).toEqual([
+        '<ATTACHMENTS.pathLabel.unbind>', '</ATTACHMENTS.pathLabel.unbind>',
+        '<setOptions>', '</setOptions>',
+        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateMask>', 'not-updated', '</updateMask>',
+        '<update>', '</update>'
+      ]);
+      expect(props2.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props2.attachments.length).toBe(0);
+      setTimeout(function() {
+        expect(atc.isRemoved).toBe(true);
+
+        pageDone();
+        done();
+      }, 50);
+    });
+
+    it(registerTitle('event svgShow'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps;
+
+      atc = window.LeaderLine.pathLabel({text: 'label-a'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.hide('none');
+      setTimeout(function() {
+        expect(props.isShown).toBe(false); // check
+
+        ll.startLabel = atc;
+        expect(attachProps.isShown).toBe(false);
+        expect(attachProps.styleShow.visibility).toBe('hidden');
+
+        ll.show();
+        setTimeout(function() {
+          expect(props.isShown).toBe(true); // check
+
+          expect(attachProps.isShown).toBe(true);
+          expect(attachProps.styleShow.visibility).toBe('');
+
+          pageDone();
+          done();
+        }, 100);
+      }, 100);
+    });
+
+    it(registerTitle('updatePath'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps, fontSize, strokeWidth;
+
+      atc = window.LeaderLine.pathLabel({text: 'label-a'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.middleLabel = atc;
+      expect(matchPathData(attachProps.elmPath.getPathData(),
+        /* eslint-disable */
+        [{"type":"M","values":[99,10]},{"type":"L","values":[113.45790540711569,12.588993479995715]},{"type":"L","values":[125.00367009929991,20.052521291856852]},{"type":"L","values":[133.25392274031714,31.10649327917713]},{"type":"L","values":[138.86195583820046,44.63620486761069]},{"type":"L","values":[142.6194913389643,60.12119820877575]},{"type":"L","values":[145.11025096028396,77.19164735965228]},{"type":"L","values":[146.79443584936524,95.450767445376]},{"type":"L","values":[148.08134035790187,114.46006326276132]},{"type":"L","values":[149.3586991910288,133.7502464183206]},{"type":"L","values":[151.001808544847,152.82907696175036]},{"type":"L","values":[153.3728781429567,171.18425484673858]},{"type":"L","values":[156.81219871199187,188.28417155251176]},{"type":"L","values":[161.61856547609653,203.5845027988012]},{"type":"L","values":[168.02223388301437,216.56396932825058]},{"type":"L","values":[176.19964066022627,226.82867707972056]},{"type":"L","values":[186.45991976322395,234.2244985862475]},{"type":"L","values":[199.50078379254754,238.6383814624575]},{"type":"L","values":[208.32484360596925,239.6452753738043]}]
+        /* eslint-enable */
+      )).toBe(true);
+
+      ll.size = 16;
+      expect(matchPathData(attachProps.elmPath.getPathData(),
+        /* eslint-disable */
+        [{"type":"M","values":[93,4]},{"type":"L","values":[114.20947945953301,6.091423069232938]},{"type":"L","values":[131.4698555031056,12.698358169234679]},{"type":"L","values":[144.2742615692582,24.025871063915208]},{"type":"L","values":[151.69058015937972,38.54878855107664]},{"type":"L","values":[154.5150200830456,54.34728990721647]},{"type":"L","values":[154.23995252679438,70.8017858058205]},{"type":"L","values":[151.94761169050295,87.83353142273594]},{"type":"L","values":[148.4120312831293,105.32027984679462]},{"type":"L","values":[144.2918935965981,123.0204322875196]},{"type":"L","values":[140.20756530254704,140.6014680872292]},{"type":"L","values":[136.76022144758608,157.65978578393887]},{"type":"L","values":[134.5214672282143,173.72243037601524]},{"type":"L","values":[133.989315888415,188.2441522690337]},{"type":"L","values":[135.49386613813357,200.65598171667304]},{"type":"L","values":[139.12753673013012,210.6205843911355]},{"type":"L","values":[145.11116347950176,218.48160745957898]},{"type":"L","values":[154.5907322007727,224.91467179259445]},{"type":"L","values":[169.21196232512074,229.748974040884]},{"type":"L","values":[184.95666727010772,231.85696552796642]}]
+        /* eslint-enable */
+      )).toBe(true);
+
+      ll.size = 4;
+      document.getElementById('elm3').style.left = '300px';
+      document.getElementById('elm3').style.top = '300px';
+      ll.position();
+      expect(matchPathData(attachProps.elmPath.getPathData(),
+        /* eslint-disable */
+        [{"type":"M","values":[99,10]},{"type":"L","values":[112.63313145373253,11.777157240055438]},{"type":"L","values":[124.96758856721615,16.883111088721456]},{"type":"L","values":[135.8701099374102,24.819455428886144]},{"type":"L","values":[145.45648368405125,35.08569167070432]},{"type":"L","values":[153.95656947272747,47.30861796828751]},{"type":"L","values":[161.5934043875896,61.20656329575481]},{"type":"L","values":[168.553025058285,76.53218509749871]},{"type":"L","values":[174.99140641337257,93.04373896691506]},{"type":"L","values":[181.0456029600108,110.49564669477604]},{"type":"L","values":[186.84148125772245,128.63667103031895]},{"type":"L","values":[192.49817850255434,147.21031450669147]},{"type":"L","values":[198.13044770894624,165.9555637180103]},{"type":"L","values":[203.84970371122546,184.60743378311733]},{"type":"L","values":[209.76417474123423,202.8972078972368]},{"type":"L","values":[215.97825997006294,220.55242160285275]},{"type":"L","values":[222.59095208694544,237.29677367411068]},{"type":"L","values":[229.69298128308986,252.85044500920839]},{"type":"L","values":[237.36230914444823,266.93205451610976]},{"type":"L","values":[245.65841939400428,279.26508260587866]},{"type":"L","values":[254.6195457123344,289.59384523931516]},{"type":"L","values":[264.276656698847,297.7124886901758]},{"type":"L","values":[274.7069317102511,303.4901311490579]},{"type":"L","values":[286.11458837386164,306.8350179222061]},{"type":"L","values":[292.41249442024827,307.55488354172775]}]
+        /* eslint-enable */
+      )).toBe(true);
+
+      ll.path = 'straight';
+      expect(matchPathData(attachProps.elmPath.getPathData(),
+        /* eslint-disable */
+        [{"type":"M","values":[104.80329494912615,13.085697030958533]},{"type":"L","values":[301.32980584165017,304.4533599462429]}]
+        /* eslint-enable */
+      )).toBe(true);
+
+      ll.path = 'grid';
+      expect(matchPathData(attachProps.elmPath.getPathData(),
+        /* eslint-disable */
+        [{"type":"M","values":[99,10]},{"type":"L","values":[207.5,10]},{"type":"L","values":[207.5,308]},{"type":"M","values":[227.5,308]},{"type":"L","values":[292,308]}]
+        /* eslint-enable */
+      )).toBe(true);
+
+      // offset: strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 4
+      fontSize = 16;
+      strokeWidth = 4;
+      expect(attachProps.elmPath.getPathData()[0].values[1]) // y of start point
+        .toBe(props.linePath.getPathData()[0].values[1] - (
+          strokeWidth / 2 + attachProps.strokeWidth / 2 + fontSize / 4
+        ));
+
+      ll.size = 16;
+      expect(matchPathData(attachProps.elmPath.getPathData(),
+        /* eslint-disable */
+        [{"type":"M","values":[93,4]},{"type":"L","values":[213.5,4]},{"type":"L","values":[213.5,302]},{"type":"M","values":[233.5,302]},{"type":"L","values":[268,302]}]
+        /* eslint-enable */
+      )).toBe(true);
+
+      // offset: strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 4
+      fontSize = 16;
+      strokeWidth = 16;
+      expect(attachProps.elmPath.getPathData()[0].values[1]) // y of start point
+        .toBe(props.linePath.getPathData()[0].values[1] - (
+          strokeWidth / 2 + attachProps.strokeWidth / 2 + fontSize / 4
+        ));
+
+      atc = window.LeaderLine.pathLabel({text: 'label-a', fontSize: '10px'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.middleLabel = atc;
+      expect(matchPathData(attachProps.elmPath.getPathData(),
+        /* eslint-disable */
+        [{"type":"M","values":[93,5.5]},{"type":"L","values":[212,5.5]},{"type":"L","values":[212,303.5]},{"type":"M","values":[224.5,303.5]},{"type":"L","values":[268,303.5]}]
+        /* eslint-enable */
+      )).toBe(true);
+
+      // offset: strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 4
+      fontSize = 10;
+      strokeWidth = 16;
+      expect(attachProps.elmPath.getPathData()[0].values[1]) // y of start point
+        .toBe(props.linePath.getPathData()[0].values[1] - (
+          strokeWidth / 2 + attachProps.strokeWidth / 2 + fontSize / 4
+        ));
+
+      pageDone();
+      done();
+    });
+
+    it(registerTitle('startOffset'), function(done) {
+      var atc0, atc1, atc2, attachProps0, attachProps1, attachProps2,
+        lenAll, fontSize, strokeWidth;
+
+      atc0 = window.LeaderLine.pathLabel({text: 'label-0'});
+      atc1 = window.LeaderLine.pathLabel({text: 'label-1'});
+      atc2 = window.LeaderLine.pathLabel({text: 'label-2'});
+      attachProps0 = window.insAttachProps[atc0._id];
+      attachProps1 = window.insAttachProps[atc1._id];
+      attachProps2 = window.insAttachProps[atc2._id];
+      ll.startLabel = atc0;
+      ll.endLabel = atc1;
+      ll.middleLabel = atc2;
+      lenAll = window.getAllPathDataLen(attachProps0.elmPath.getPathData());
+
+      expect(attachProps0.elmPosition.style.textAnchor).toBe('start');
+      expect(attachProps1.elmPosition.style.textAnchor).toBe('end');
+      expect(attachProps2.elmPosition.style.textAnchor).toBe('middle');
+      fontSize = 16;
+      strokeWidth = 4;
+      expect(Math.abs(attachProps0.elmOffset.startOffset.baseVal.value - (
+        // no-plug: strokeWidth / 2 + attachProps.strokeWidth / 2 + fontSize / 4
+        strokeWidth / 2 + attachProps0.strokeWidth / 2 + fontSize / 4
+        ))).toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps1.elmOffset.startOffset.baseVal.value - (
+        // plug: plugBackLen + attachProps.strokeWidth / 2 + fontSize / 4
+        lenAll - (8 + attachProps1.strokeWidth / 2 + fontSize / 4)
+        ))).toBeLessThan(TOLERANCE);
+      // 50%
+      expect(Math.abs(attachProps2.elmOffset.startOffset.baseVal.unitType)).toBe(SVGLength.SVG_LENGTHTYPE_PERCENTAGE);
+      expect(Math.abs(attachProps2.elmOffset.startOffset.baseVal.valueInSpecifiedUnits)).toBe(50);
+
+      // backLen
+      window.SYMBOLS.square.backLen = 24;
+      ll.startPlug = 'disc'; // backLen": 5
+      ll.endPlug = 'square'; // backLen": 24
+      lenAll = window.getAllPathDataLen(attachProps0.elmPath.getPathData());
+      expect(Math.abs(attachProps0.elmOffset.startOffset.baseVal.value - (
+        // plug: plugBackLen + attachProps.strokeWidth / 2 + fontSize / 4
+        5 + attachProps0.strokeWidth / 2 + fontSize / 4
+        ))).toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps1.elmOffset.startOffset.baseVal.value - (
+        // plug: plugBackLen + attachProps.strokeWidth / 2 + fontSize / 4
+        lenAll - (24 + attachProps1.strokeWidth / 2 + fontSize / 4)
+        ))).toBeLessThan(TOLERANCE);
+
+      // lineOffset
+      ll.setOptions({startPlug: 'behind', size: 8});
+      atc0 = window.LeaderLine.pathLabel({text: 'label-0', fontSize: '10px', lineOffset: -4});
+      atc1 = window.LeaderLine.pathLabel({text: 'label-1', fontSize: '10px', lineOffset: 8});
+      atc2 = window.LeaderLine.pathLabel({text: 'label-2', fontSize: '10px', lineOffset: 16});
+      attachProps0 = window.insAttachProps[atc0._id];
+      attachProps1 = window.insAttachProps[atc1._id];
+      attachProps2 = window.insAttachProps[atc2._id];
+      ll.startLabel = atc0;
+      ll.endLabel = atc1;
+      ll.middleLabel = atc2;
+      lenAll = window.getAllPathDataLen(attachProps0.elmPath.getPathData());
+      fontSize = 10;
+      strokeWidth = 8;
+      expect(Math.abs(attachProps0.elmOffset.startOffset.baseVal.value - (
+        // no-plug: strokeWidth / 2 + attachProps.strokeWidth / 2 + fontSize / 4
+        strokeWidth / 2 + attachProps0.strokeWidth / 2 + fontSize / 4 + (-4)
+        ))).toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps1.elmOffset.startOffset.baseVal.value - (
+        // plug: plugBackLen + attachProps.strokeWidth / 2 + fontSize / 4
+        lenAll - ((24 * 8 / 4 /* DEFAULT_OPTIONS.lineSize */) + attachProps1.strokeWidth / 2 + fontSize / 4) + 8
+        ))).toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps2.elmOffset.startOffset.baseVal.value - (
+        // half
+        lenAll / 2 + 16
+        ))).toBeLessThan(TOLERANCE);
+      console.log(attachProps1.elmOffset.startOffset.baseVal.value);
+      console.log(lenAll - (24 + attachProps1.strokeWidth / 2 + fontSize / 4) + 8);
+
+      pageDone();
+      done();
+    });
+
+  });
+
 });

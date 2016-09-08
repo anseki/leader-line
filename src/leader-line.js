@@ -605,6 +605,7 @@
       return pathLenAll;
     }, 0);
   }
+  window.getAllPathDataLen = getAllPathDataLen; // [DEBUG/]
 
   function pathDataHasChanged(a, b) {
     return a == null || b == null || // eslint-disable-line eqeqeq
