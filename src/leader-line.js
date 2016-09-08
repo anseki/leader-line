@@ -184,7 +184,7 @@
     insProps = {}, insId = 0,
     /** @type {Object.<_id: number, props>} */
     insAttachProps = {}, insAttachId = 0,
-    svg2SupportedReverse, svg2SupportedPaintOrder; // Supported SVG 2 features
+    svg2SupportedReverse, svg2SupportedPaintOrder, svg2SupportedDropShadow; // Supported SVG 2 features
 
   // [DEBUG]
   window.insProps = insProps;
@@ -729,6 +729,78 @@
       orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
     };
   }
+
+  /**
+   * @param {number} dx - dx
+   * @param {number} dy - dy
+   * @param {number} stdDeviation - stdDeviation
+   * @param {(string|null)} floodColor - floodColor
+   * @param {(number|null)} floodOpacity - floodOpacity
+   * @param {Document} document - document
+   * @param {string} id - id
+   * @returns {SVGFilterElement} - filter
+   */
+  function getDropShadowFilter(dx, dy, stdDeviation, floodColor, floodOpacity, document, id) {
+    var filter, element1, element2, styles;
+
+    if (typeof svg2SupportedDropShadow !== 'boolean') {
+      // [WEBKIT] stdDeviation has bug
+      svg2SupportedDropShadow = !!window.SVGFEDropShadowElement && !IS_WEBKIT;
+    }
+
+    filter = document.createElementNS(SVG_NS, 'filter');
+    // sizing for GECKO and TRIDENT
+    filter.filterUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
+    filter.x.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+    filter.y.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+    filter.width.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
+    filter.height.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
+    filter.id = id;
+
+    if (svg2SupportedDropShadow) {
+      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feDropShadow'));
+      element1.dx.baseVal = dx;
+      element1.dy.baseVal = dy;
+      element1.setStdDeviation(stdDeviation, stdDeviation);
+      styles = element1.style;
+      if (floodColor) { styles.floodColor = floodColor; }
+      // eslint-disable-next-line eqeqeq
+      if (floodOpacity != null && floodOpacity < 1) { styles.floodOpacity = floodOpacity; }
+    } else {
+      // feGaussianBlur
+      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feGaussianBlur'));
+      element1.setStdDeviation(stdDeviation, stdDeviation);
+      // feOffset
+      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feOffset'));
+      element1.dx.baseVal = dx;
+      element1.dy.baseVal = dy;
+      element1.result.baseVal = 'offsetblur';
+      // feFlood
+      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feFlood'));
+      styles = element1.style;
+      if (floodColor) {
+        styles.floodColor = floodColor;
+      } else if (IS_TRIDENT) {
+        styles.floodColor = '#000'; // [TRIDENT] bug
+      }
+      // eslint-disable-next-line eqeqeq
+      if (floodOpacity != null && floodOpacity < 1) { styles.floodOpacity = floodOpacity; }
+      // feComposite
+      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feComposite'));
+      element1.in2.baseVal = 'offsetblur';
+      element1.operator.baseVal = SVGFECompositeElement.SVG_FECOMPOSITE_OPERATOR_IN;
+      // feMerge
+      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feMerge'));
+      // feMergeNode
+      element1.appendChild(document.createElementNS(SVG_NS, 'feMergeNode'));
+      // feMergeNode
+      element2 = element1.appendChild(document.createElementNS(SVG_NS, 'feMergeNode'));
+      element2.in1.baseVal = 'SourceGraphic';
+    }
+
+    return filter;
+  }
+  window.getDropShadowFilter = getDropShadowFilter; // [DEBUG/]
 
   function initStats(container, statsConf) {
     Object.keys(statsConf).forEach(function(statName) {
