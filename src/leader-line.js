@@ -3556,6 +3556,7 @@
       type: 'anchor',
       stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {},
         pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}},
+        //dash
 
       // attachOptions: element, color(A), fillColor, size(A), shape, x, y, width, height, radius, points
       init: function(attachProps, attachOptions) {
