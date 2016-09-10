@@ -3139,13 +3139,14 @@
     },
 
     dropShadow: {
-      stats: {dropShadow_colorSE: {hasSE: true}, dropShadow_pointSE: {hasSE: true, hasProps: true}},
+      stats: {dx: {}, dy: {}, blur: {}, color: {}, opacity: {}},
 
       optionsConf: [
-        ['type', 'dx', null, null, null, 2, function(value) { return value > 0; }],
-        ['type', 'dy', null, null, null, 4, function(value) { return value > 0; }],
-        ['type', 'len', null, null, null, 15, function(value) { return value > 0; }],
-        ['type', 'gap', 'number', null, null, null, function(value) { return value > 0; }]
+        ['type', 'dx', null, null, null, 2],
+        ['type', 'dy', null, null, null, 4],
+        ['type', 'blur', null, null, null, 3, function(value) { return value >= 0; }],
+        ['type', 'color', null, null, null, '#000', null, true],
+        ['type', 'opacity', null, null, null, 0.8, function(value) { return value >= 0 && value <= 1; }]
       ],
 
       init: function(props) {
