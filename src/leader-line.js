@@ -3142,6 +3142,8 @@
       stats: {dropShadow_colorSE: {hasSE: true}, dropShadow_pointSE: {hasSE: true, hasProps: true}},
 
       optionsConf: [
+        ['type', 'dx', null, null, null, 2, function(value) { return value > 0; }],
+        ['type', 'dy', null, null, null, 4, function(value) { return value > 0; }],
         ['type', 'len', null, null, null, 15, function(value) { return value > 0; }],
         ['type', 'gap', 'number', null, null, null, function(value) { return value > 0; }]
       ],
