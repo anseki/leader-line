@@ -3052,14 +3052,15 @@
         var baseDocument = props.baseWindow.document, defs = props.defs, element,
           id = APP_ID + '-' + props._id + '-line-gradient';
 
-        props.lineGradient = element = defs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
+        props.efc_gradient_gradient = element =
+          defs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
         element.id = id;
         element.gradientUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
         [element.x1, element.y1, element.x2, element.y2].forEach(function(len) {
           len.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
         });
-        props.lineGradientStopSE = [0, 1].map(function(i) {
-          var element = props.lineGradient.appendChild(baseDocument.createElementNS(SVG_NS, 'stop'));
+        props.efc_gradient_stopSE = [0, 1].map(function(i) {
+          var element = props.efc_gradient_gradient.appendChild(baseDocument.createElementNS(SVG_NS, 'stop'));
           try {
             element.offset.baseVal = i; // offset === index
           } catch (error) {
@@ -3082,9 +3083,9 @@
 
       remove: function(props) {
         traceLog.add('<EFFECTS.gradient.remove>'); // [DEBUG/]
-        if (props.lineGradient) {
-          props.lineGradientStopSE = null;
-          props.defs.removeChild(props.lineGradient);
+        if (props.efc_gradient_gradient) {
+          props.efc_gradient_stopSE = null;
+          props.defs.removeChild(props.efc_gradient_gradient);
         }
 
         removeEventHandler(props, 'cur_plug_colorSE', EFFECTS.gradient.update);
@@ -3120,17 +3121,17 @@
             if (IS_WEBKIT) {
               // [WEBKIT] stopColor doesn't support alpha channel
               value = getAlpha(value);
-              props.lineGradientStopSE[i].style.stopColor = value[1];
-              props.lineGradientStopSE[i].style.stopOpacity = value[0];
+              props.efc_gradient_stopSE[i].style.stopColor = value[1];
+              props.efc_gradient_stopSE[i].style.stopOpacity = value[0];
             } else {
-              props.lineGradientStopSE[i].style.stopColor = value;
+              props.efc_gradient_stopSE[i].style.stopColor = value;
             }
           }
 
           ['x', 'y'].forEach(function(pointKey) {
             if ((value = curStats.gradient_pointSE[i][pointKey]) !== aplStats.gradient_pointSE[i][pointKey]) {
               traceLog.add('gradient_pointSE[' + i + '].' + pointKey); // [DEBUG/]
-              props.lineGradient[pointKey + (i + 1)].baseVal.value = aplStats.gradient_pointSE[i][pointKey] = value;
+              props.efc_gradient_gradient[pointKey + (i + 1)].baseVal.value = aplStats.gradient_pointSE[i][pointKey] = value;
             }
           });
         });
