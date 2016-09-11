@@ -446,7 +446,7 @@ describe('effect', function() {
 
       // invalid auto
       traceLog.clear();
-      ll.dropShadow = {len: 'auto', gap: 10}; // default len: 15
+      ll.dropShadow = {dx: 'auto', dy: 10}; // default dx: 2
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.effect');
       expect(traceLog.getTaggedLog('setEffect')).toEqual(['dropShadow_enabled=true']);
       // reset
@@ -455,11 +455,11 @@ describe('effect', function() {
       ]);
       expect(props.curStats.dropShadow_enabled).toBe(true);
       expect(props.aplStats.dropShadow_enabled).toBe(true);
-      expect(props.curStats.dropShadow_options).toEqual({len: 15, gap: 10});
-      expect(props.aplStats.dropShadow_options).toEqual({len: 15, gap: 10});
+      expect(props.curStats.dropShadow_options).toEqual({dx: 2, dy: 10, blur: 3, color: '#000', opacity: 0.8});
+      expect(props.aplStats.dropShadow_options).toEqual({dx: 2, dy: 10, blur: 3, color: '#000', opacity: 0.8});
       expect(props.curStats.dropShadow_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
       expect(props.aplStats.dropShadow_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(ll.dropShadow).toEqual({len: 15, gap: 10}); // optimized
+      expect(ll.dropShadow).toEqual({dx: 2, dy: 10, blur: 3, color: '#000', opacity: 0.8}); // optimized
 
       pageDone();
     });
