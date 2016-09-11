@@ -731,24 +731,19 @@
   }
 
   /**
-   * @param {number} dx - dx
-   * @param {number} dy - dy
-   * @param {number} stdDeviation - stdDeviation
-   * @param {(string|null)} floodColor - floodColor
-   * @param {(number|null)} floodOpacity - floodOpacity
    * @param {Document} document - document
    * @param {string} id - id
-   * @returns {SVGFilterElement} - filter
+   * @returns {Object} - {elmFilter, elmOffset, elmBlur, styleFlood, elmsAppend}
    */
-  function getDropShadowFilter(dx, dy, stdDeviation, floodColor, floodOpacity, document, id) {
-    var filter, element1, element2, styles;
+  function newDropShadow(document, id) {
+    var dropShadow = {}, filter, element;
 
     if (typeof svg2SupportedDropShadow !== 'boolean') {
       // [WEBKIT] stdDeviation has bug
       svg2SupportedDropShadow = !!window.SVGFEDropShadowElement && !IS_WEBKIT;
     }
 
-    filter = document.createElementNS(SVG_NS, 'filter');
+    dropShadow.elmsAppend = [(dropShadow.elmFilter = filter = document.createElementNS(SVG_NS, 'filter'))];
     // sizing for GECKO and TRIDENT
     filter.filterUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
     filter.x.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
@@ -758,49 +753,26 @@
     filter.id = id;
 
     if (svg2SupportedDropShadow) {
-      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feDropShadow'));
-      element1.dx.baseVal = dx;
-      element1.dy.baseVal = dy;
-      element1.setStdDeviation(stdDeviation, stdDeviation);
-      styles = element1.style;
-      if (floodColor) { styles.floodColor = floodColor; }
-      // eslint-disable-next-line eqeqeq
-      if (floodOpacity != null && floodOpacity < 1) { styles.floodOpacity = floodOpacity; }
-    } else {
-      // feGaussianBlur
-      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feGaussianBlur'));
-      element1.setStdDeviation(stdDeviation, stdDeviation);
-      // feOffset
-      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feOffset'));
-      element1.dx.baseVal = dx;
-      element1.dy.baseVal = dy;
-      element1.result.baseVal = 'offsetblur';
-      // feFlood
-      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feFlood'));
-      styles = element1.style;
-      if (floodColor) {
-        styles.floodColor = floodColor;
-      } else if (IS_TRIDENT) {
-        styles.floodColor = '#000'; // [TRIDENT] bug
-      }
-      // eslint-disable-next-line eqeqeq
-      if (floodOpacity != null && floodOpacity < 1) { styles.floodOpacity = floodOpacity; }
-      // feComposite
-      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feComposite'));
-      element1.in2.baseVal = 'offsetblur';
-      element1.operator.baseVal = SVGFECompositeElement.SVG_FECOMPOSITE_OPERATOR_IN;
-      // feMerge
-      element1 = filter.appendChild(document.createElementNS(SVG_NS, 'feMerge'));
-      // feMergeNode
-      element1.appendChild(document.createElementNS(SVG_NS, 'feMergeNode'));
-      // feMergeNode
-      element2 = element1.appendChild(document.createElementNS(SVG_NS, 'feMergeNode'));
-      element2.in1.baseVal = 'SourceGraphic';
-    }
+      dropShadow.elmOffset = dropShadow.elmBlur =
+        (element = filter.appendChild(document.createElementNS(SVG_NS, 'feDropShadow')));
+      dropShadow.styleFlood = element.style;
 
-    return filter;
+    } else {
+      dropShadow.elmBlur = filter.appendChild(document.createElementNS(SVG_NS, 'feGaussianBlur'));
+      dropShadow.elmOffset = element = filter.appendChild(document.createElementNS(SVG_NS, 'feOffset'));
+      element.result.baseVal = 'offsetblur';
+      element = filter.appendChild(document.createElementNS(SVG_NS, 'feFlood'));
+      dropShadow.styleFlood = element.style;
+      element = filter.appendChild(document.createElementNS(SVG_NS, 'feComposite'));
+      element.in2.baseVal = 'offsetblur';
+      element.operator.baseVal = SVGFECompositeElement.SVG_FECOMPOSITE_OPERATOR_IN;
+      element = filter.appendChild(document.createElementNS(SVG_NS, 'feMerge'));
+      element.appendChild(document.createElementNS(SVG_NS, 'feMergeNode'));
+      element.appendChild(document.createElementNS(SVG_NS, 'feMergeNode')).in1.baseVal = 'SourceGraphic';
+    }
+    return dropShadow;
   }
-  window.getDropShadowFilter = getDropShadowFilter; // [DEBUG/]
+  window.newDropShadow = newDropShadow; // [DEBUG/]
 
   function initStats(container, statsConf) {
     Object.keys(statsConf).forEach(function(statName) {
@@ -3050,7 +3022,7 @@
       init: function(props) {
         traceLog.add('<EFFECTS.gradient.init>'); // [DEBUG/]
         var baseDocument = props.baseWindow.document, defs = props.defs, element,
-          id = APP_ID + '-' + props._id + '-line-gradient';
+          id = APP_ID + '-' + props._id + '-gradient';
 
         props.efc_gradient_gradient = element =
           defs.appendChild(baseDocument.createElementNS(SVG_NS, 'linearGradient'));
@@ -3131,7 +3103,8 @@
           ['x', 'y'].forEach(function(pointKey) {
             if ((value = curStats.gradient_pointSE[i][pointKey]) !== aplStats.gradient_pointSE[i][pointKey]) {
               traceLog.add('gradient_pointSE[' + i + '].' + pointKey); // [DEBUG/]
-              props.efc_gradient_gradient[pointKey + (i + 1)].baseVal.value = aplStats.gradient_pointSE[i][pointKey] = value;
+              props.efc_gradient_gradient[pointKey + (i + 1)].baseVal.value =
+                aplStats.gradient_pointSE[i][pointKey] = value;
             }
           });
         });
@@ -3140,7 +3113,8 @@
     },
 
     dropShadow: {
-      stats: {dx: {}, dy: {}, blur: {}, color: {}, opacity: {}},
+      stats: {dropShadow_dx: {}, dropShadow_dy: {}, dropShadow_blur: {},
+        dropShadow_color: {}, dropShadow_opacity: {}, dropShadow_x: {}, dropShadow_y: {}},
 
       optionsConf: [
         ['type', 'dx', null, null, null, 2],
@@ -3152,17 +3126,103 @@
 
       init: function(props) {
         traceLog.add('<EFFECTS.dropShadow.init>'); // [DEBUG/]
+        var baseDocument = props.baseWindow.document, defs = props.defs,
+          id = APP_ID + '-' + props._id + '-dropShadow',
+          dropShadow = newDropShadow(baseDocument, id);
+
+        ['elmFilter', 'elmOffset', 'elmBlur', 'styleFlood', 'elmsAppend']
+          .forEach(function(key) { props['efc_dropShadow_' + key] = dropShadow[key]; });
+
+        dropShadow.elmsAppend.forEach(function(elm) { defs.appendChild(elm); });
+        props.face.setAttribute('filter', 'url(#' + id + ')');
+
+        addEventHandler(props, 'apl_path', EFFECTS.dropShadow.update);
+        addEventHandler(props, 'new_edge4viewBox', EFFECTS.dropShadow.adjustEdge);
+        EFFECTS.dropShadow.update(props);
         traceLog.add('</EFFECTS.dropShadow.init>'); // [DEBUG/]
       },
 
       remove: function(props) {
         traceLog.add('<EFFECTS.dropShadow.remove>'); // [DEBUG/]
+        var defs = props.defs;
+        if (props.efc_dropShadow_elmsAppend) {
+          props.efc_dropShadow_elmsAppend.forEach(function(elm) { defs.removeChild(elm); });
+          props.efc_dropShadow_elmFilter = props.efc_dropShadow_elmOffset = props.efc_dropShadow_elmBlur =
+            props.efc_dropShadow_styleFlood = props.efc_dropShadow_elmsAppend = null;
+        }
+
+        removeEventHandler(props, 'new_edge4viewBox', EFFECTS.dropShadow.adjustEdge);
+        update(props, {}); // To call updateViewBox()
+        props.face.removeAttribute('filter');
+        initStats(props.aplStats, EFFECTS.dropShadow.stats);
         traceLog.add('</EFFECTS.dropShadow.remove>'); // [DEBUG/]
       },
 
       update: function(props) {
         traceLog.add('<EFFECTS.dropShadow.update>'); // [DEBUG/]
+        var curStats = props.curStats, aplStats = props.aplStats,
+          effectOptions = aplStats.dropShadow_options,
+          value, updateBBox;
+
+        curStats.dropShadow_dx = value = effectOptions.dx;
+        if (setStat(props, aplStats, 'dropShadow_dx', value)) {
+          props.efc_dropShadow_elmOffset.dx.baseVal = value;
+          updateBBox = true;
+        }
+
+        curStats.dropShadow_dy = value = effectOptions.dy;
+        if (setStat(props, aplStats, 'dropShadow_dy', value)) {
+          props.efc_dropShadow_elmOffset.dy.baseVal = value;
+          updateBBox = true;
+        }
+
+        curStats.dropShadow_blur = value = effectOptions.blur;
+        if (setStat(props, aplStats, 'dropShadow_blur', value)) {
+          props.efc_dropShadow_elmBlur.setStdDeviation(value, value);
+          updateBBox = true;
+        }
+
+        if (updateBBox) { update(props, {}); } // To call updateViewBox()
+
+        curStats.dropShadow_color = value = effectOptions.color;
+        if (setStat(props, aplStats, 'dropShadow_color', value)) {
+          props.efc_dropShadow_styleFlood.floodColor = value;
+        }
+
+        curStats.dropShadow_opacity = value = effectOptions.opacity;
+        if (setStat(props, aplStats, 'dropShadow_opacity', value)) {
+          props.efc_dropShadow_styleFlood.floodOpacity = value;
+        }
+
         traceLog.add('</EFFECTS.dropShadow.update>'); // [DEBUG/]
+      },
+
+      adjustEdge: function(props, edge) {
+        traceLog.add('<EFFECTS.dropShadow.adjustEdge>'); // [DEBUG/]
+        var curStats = props.curStats, aplStats = props.aplStats,
+          shadowEdge, margin, value;
+        if (curStats.dropShadow_dx != null) { // eslint-disable-line eqeqeq
+          margin = curStats.dropShadow_blur * 3; // nearly standard deviation
+          shadowEdge = {
+            x1: edge.x1 - margin + curStats.dropShadow_dx,
+            y1: edge.y1 - margin + curStats.dropShadow_dy,
+            x2: edge.x2 + margin + curStats.dropShadow_dx,
+            y2: edge.y2 + margin + curStats.dropShadow_dy};
+          if (shadowEdge.x1 < edge.x1) { edge.x1 = shadowEdge.x1; }
+          if (shadowEdge.y1 < edge.y1) { edge.y1 = shadowEdge.y1; }
+          if (shadowEdge.x2 > edge.x2) { edge.x2 = shadowEdge.x2; }
+          if (shadowEdge.y2 > edge.y2) { edge.y2 = shadowEdge.y2; }
+
+          // position filter
+          ['x', 'y'].forEach(function(boxKey) {
+            var statKey = 'dropShadow_' + boxKey;
+            curStats[statKey] = edge[boxKey + '1'];
+            if (setStat(props, aplStats, statKey, (value = curStats[statKey]))) {
+              props.efc_dropShadow_elmFilter[boxKey].baseVal.value = value;
+            }
+          });
+        }
+        traceLog.add('</EFFECTS.dropShadow.adjustEdge>'); // [DEBUG/]
       }
     }
   };
@@ -3611,7 +3671,7 @@
         // SVG
         baseDocument = attachProps.element.ownerDocument;
         attachProps.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
-        svg.className.baseVal = APP_ID + '-area-anchor';
+        svg.className.baseVal = APP_ID + '-areaAnchor';
         if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
         attachProps.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
         attachProps.path.style.fill = attachProps.fill || 'none';
@@ -4193,7 +4253,7 @@
       initSvg: function(attachProps, props) {
         traceLog.add('<ATTACHMENTS.captionLabel.initSvg>'); // [DEBUG/]
         var text = ATTACHMENTS.captionLabel.newText(attachProps.text, props.baseWindow.document,
-            props.svg, APP_ID + '-caption-label-' + attachProps._id, attachProps.outlineColor),
+            props.svg, APP_ID + '-captionLabel-' + attachProps._id, attachProps.outlineColor),
           bBox, strokeWidth;
 
         ['elmPosition', 'styleFill', 'styleShow', 'elmsAppend']
@@ -4226,7 +4286,7 @@
         } else {
           attachProps.updatePath(props);
         }
-        if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored
+        if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored (To call updateViewBox())
         attachProps.updateShow(props);
         traceLog.add('</ATTACHMENTS.captionLabel.initSvg>'); // [DEBUG/]
       },
@@ -4285,7 +4345,7 @@
         if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
           removeEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge);
           // addDelayedProc(function() { update(props, {}); }); // reset path_edge
-          update(props, {});
+          update(props, {}); // To call updateViewBox()
         }
         traceLog.add('</ATTACHMENTS.captionLabel.unbind>'); // [DEBUG/]
       },
@@ -4596,7 +4656,7 @@
       initSvg: function(attachProps, props) {
         traceLog.add('<ATTACHMENTS.pathLabel.initSvg>'); // [DEBUG/]
         var text = ATTACHMENTS.pathLabel.newText(attachProps.text, props.baseWindow.document,
-            APP_ID + '-path-label-' + attachProps._id, attachProps.outlineColor),
+            APP_ID + '-pathLabel-' + attachProps._id, attachProps.outlineColor),
           bBox, strokeWidth;
 
         ['elmPosition', 'elmPath', 'elmOffset', 'styleFill', 'styleShow', 'elmsAppend']
@@ -4633,7 +4693,7 @@
         attachProps.updateColor(props);
         attachProps.updatePath(props);
         attachProps.updateStartOffset(props);
-        if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored
+        if (IS_WEBKIT) { update(props, {}); } // [WEBKIT] overflow:visible is ignored (To call updateViewBox())
         attachProps.updateShow(props);
         traceLog.add('</ATTACHMENTS.pathLabel.initSvg>'); // [DEBUG/]
       },
@@ -4684,7 +4744,7 @@
         if (IS_WEBKIT) { // [WEBKIT] overflow:visible is ignored
           removeEventHandler(props, 'new_edge4viewBox', attachProps.adjustEdge);
           // addDelayedProc(function() { update(props, {}); }); // reset path_edge
-          update(props, {});
+          update(props, {}); // To call updateViewBox()
         }
         traceLog.add('</ATTACHMENTS.pathLabel.unbind>'); // [DEBUG/]
       },
