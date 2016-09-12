@@ -860,7 +860,7 @@ describe('effect', function() {
 
     it(registerTitle('dropShadow'), function() {
       var props = window.insProps[ll._id],
-        dx, dy, blur, color, opacity, edge, lineWidth, plugOverhead, margin;
+        dx, dy, blur, color, opacity, edge, lineWidth, plugOverhead, margin, elmEnd;
 
       ll.startPlug = ll.endPlug = 'behind'; // to disable expanding viewBox
 
@@ -906,135 +906,90 @@ describe('effect', function() {
       expect(props.aplStats.viewBox_bBox.width).toBe(edge.x2 - edge.x1);
       expect(props.aplStats.viewBox_bBox.height).toBe(edge.y2 - edge.y1);
 
-      // // update() by events new_edge4viewBox
-      // traceLog.clear();
-      // ll.startPlugColor = (color0 = 'green');
-      // expect(traceLog.log).toNotContainAny(['<EFFECTS.dropShadow.init>', '<EFFECTS.dropShadow.remove>']);
-      // expect(traceLog.getTaggedLog('updatePlug')).toContain('plug_colorSE[0]=green');
-      // expect(traceLog.getTaggedLog('EFFECTS.dropShadow.update')).toEqual(['dropShadow_colorSE[0]=' + color0]);
-      // expect(props.curStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.aplStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.curStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.aplStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.curStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.aplStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.curStats.dropShadow_pointSE[1]).toEqual(point1);
-      // expect(props.aplStats.dropShadow_pointSE[1]).toEqual(point1);
+      // update() by events new_edge4viewBox
+      traceLog.clear();
+      elmEnd = document.getElementById('elm3');
+      elmEnd.style.left = '200px';
+      elmEnd.style.top = '200px';
+      ll.position();
+      expect(traceLog.log).toNotContainAny([
+        '<EFFECTS.dropShadow.init>', '<EFFECTS.dropShadow.remove>', '<EFFECTS.dropShadow.update>']);
+      edge = {
+        x1: props.aplStats.position_socketXYSE[0].x - lineWidth / 2 - margin + dx - plugOverhead,
+        y1: props.aplStats.position_socketXYSE[0].y - lineWidth / 2 - margin + dy,
+        x2: props.aplStats.position_socketXYSE[1].x + lineWidth / 2 + margin + dx + plugOverhead,
+        y2: props.aplStats.position_socketXYSE[1].y + lineWidth / 2 + margin + dy};
+      expect(props.aplStats.viewBox_bBox.x).toBe(edge.x1);
+      expect(props.aplStats.viewBox_bBox.y).toBe(edge.y1);
+      expect(props.aplStats.viewBox_bBox.width).toBe(edge.x2 - edge.x1);
+      expect(props.aplStats.viewBox_bBox.height).toBe(edge.y2 - edge.y1);
 
-      // // update() by events cur_line_color -> cur_plug_colorSE
-      // ll.endPlugColor = 'auto';
-      // traceLog.clear();
-      // ll.color = (color1 = 'lime');
-      // expect(traceLog.log).toNotContainAny(['<EFFECTS.dropShadow.init>', '<EFFECTS.dropShadow.remove>']);
-      // expect(traceLog.getTaggedLog('updateLine')).toContain('line_color=lime');
-      // expect(traceLog.getTaggedLog('updatePlug')).toContain('plug_colorSE[1]=lime');
-      // expect(traceLog.getTaggedLog('EFFECTS.dropShadow.update')).toEqual(['dropShadow_colorSE[1]=' + color1]);
-      // expect(props.curStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.aplStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.curStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.aplStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.curStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.aplStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.curStats.dropShadow_pointSE[1]).toEqual(point1);
-      // expect(props.aplStats.dropShadow_pointSE[1]).toEqual(point1);
+      // update() by options
+      ll.dropShadow = {dx: 5, dy: 6};
+      traceLog.clear();
+      ll.dropShadow = {opacity: (opacity = 0.5)}; // dx and dy are reset to default
+      expect(traceLog.log).toContainAll(['<EFFECTS.dropShadow.remove>', '<EFFECTS.dropShadow.init>']);
+      expect(traceLog.getTaggedLog('EFFECTS.dropShadow.update')).toEqual([
+        'dropShadow_dx=' + dx,
+        'dropShadow_dy=' + dy,
+        'dropShadow_blur=' + blur,
+        'dropShadow_color=' + color,
+        'dropShadow_opacity=' + opacity
+      ]);
+      expect(props.curStats.dropShadow_dx).toBe(dx);
+      expect(props.aplStats.dropShadow_dx).toBe(dx);
+      expect(props.curStats.dropShadow_dy).toBe(dy);
+      expect(props.aplStats.dropShadow_dy).toBe(dy);
+      expect(props.curStats.dropShadow_blur).toBe(blur);
+      expect(props.aplStats.dropShadow_blur).toBe(blur);
+      expect(props.curStats.dropShadow_color).toBe(color);
+      expect(props.aplStats.dropShadow_color).toBe(color);
+      expect(props.curStats.dropShadow_opacity).toBe(opacity);
+      expect(props.aplStats.dropShadow_opacity).toBe(opacity);
 
-      // // update() by events apl_path
-      // traceLog.clear();
-      // ll.end = document.getElementById('elm2');
-      // point1 = {x: props.aplStats.position_socketXYSE[1].x, y: props.aplStats.position_socketXYSE[1].y};
-      // expect(traceLog.log).toNotContainAny(['<EFFECTS.dropShadow.init>', '<EFFECTS.dropShadow.remove>']);
-      // expect(traceLog.getTaggedLog('updatePath')).toContain('path_pathData');
-      // expect(traceLog.getTaggedLog('EFFECTS.dropShadow.update')).toEqual([
-      //   'dropShadow_pointSE[1].x', 'dropShadow_pointSE[1].y'
-      // ]);
-      // expect(props.curStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.aplStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.curStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.aplStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.curStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.aplStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.curStats.dropShadow_pointSE[1]).toEqual(point1);
-      // expect(props.aplStats.dropShadow_pointSE[1]).toEqual(point1);
+      // update() by bindWindow()
+      traceLog.clear();
+      ll.setOptions({
+        start: document.getElementById('iframe1').contentDocument.getElementById('elm1'),
+        end: document.getElementById('iframe1').contentDocument.getElementById('elm2')
+      });
+      // remove() in <bindWindow> -> init()
+      expect(traceLog.log).toContainAll(['<bindWindow>', '<EFFECTS.dropShadow.remove>', '<EFFECTS.dropShadow.init>']);
+      expect(traceLog.getTaggedLog('EFFECTS.dropShadow.update')).toEqual([
+        'dropShadow_dx=' + dx,
+        'dropShadow_dy=' + dy,
+        'dropShadow_blur=' + blur,
+        'dropShadow_color=' + color,
+        'dropShadow_opacity=' + opacity
+      ]);
+      expect(props.curStats.dropShadow_dx).toBe(dx);
+      expect(props.aplStats.dropShadow_dx).toBe(dx);
+      expect(props.curStats.dropShadow_dy).toBe(dy);
+      expect(props.aplStats.dropShadow_dy).toBe(dy);
+      expect(props.curStats.dropShadow_blur).toBe(blur);
+      expect(props.aplStats.dropShadow_blur).toBe(blur);
+      expect(props.curStats.dropShadow_color).toBe(color);
+      expect(props.aplStats.dropShadow_color).toBe(color);
+      expect(props.curStats.dropShadow_opacity).toBe(opacity);
+      expect(props.aplStats.dropShadow_opacity).toBe(opacity);
 
-      // // update() by options
-      // color0 = 'green'; // same
-      // color1 = 'yellow';
-      // traceLog.clear();
-      // ll.dropShadow = {startColor: color0, endColor: color1};
-      // expect(traceLog.log).toContainAll(['<EFFECTS.dropShadow.remove>', '<EFFECTS.dropShadow.init>']);
-      // expect(traceLog.getTaggedLog('EFFECTS.dropShadow.update')).toEqual([
-      //   // curStats.dropShadow_colorSE[0] are not updated (curStats* were not cleared by remove())
-      //   'dropShadow_colorSE[0]=' + color0,
-      //   'dropShadow_pointSE[0].x', 'dropShadow_pointSE[0].y',
-      //   'dropShadow_colorSE[1]=' + color1,
-      //   'dropShadow_pointSE[1].x', 'dropShadow_pointSE[1].y'
-      // ]);
-      // expect(props.curStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.aplStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.curStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.aplStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.curStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.aplStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.curStats.dropShadow_pointSE[1]).toEqual(point1);
-      // expect(props.aplStats.dropShadow_pointSE[1]).toEqual(point1);
-
-      // // update() by events (ignored)
-      // traceLog.clear();
-      // ll.endPlugColor = 'pink';
-      // expect(traceLog.log).toNotContainAny(['<EFFECTS.dropShadow.init>', '<EFFECTS.dropShadow.remove>']);
-      // expect(traceLog.getTaggedLog('updatePlug')).toContain('plug_colorSE[1]=pink');
-      // expect(traceLog.getTaggedLog('EFFECTS.dropShadow.update')).toEqual([]); // not updated
-      // expect(props.curStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.aplStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.curStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.aplStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.curStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.aplStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.curStats.dropShadow_pointSE[1]).toEqual(point1);
-      // expect(props.aplStats.dropShadow_pointSE[1]).toEqual(point1);
-
-      // // update() by bindWindow()
-      // traceLog.clear();
-      // ll.setOptions({
-      //   start: document.getElementById('iframe1').contentDocument.getElementById('elm1'),
-      //   end: document.getElementById('iframe1').contentDocument.getElementById('elm2')
-      // });
-      // point0 = {x: props.aplStats.position_socketXYSE[0].x, y: props.aplStats.position_socketXYSE[0].y};
-      // point1 = {x: props.aplStats.position_socketXYSE[1].x, y: props.aplStats.position_socketXYSE[1].y};
-      // // remove() in <bindWindow> -> init()
-      // expect(traceLog.log).toContainAll(['<bindWindow>', '<EFFECTS.dropShadow.remove>', '<EFFECTS.dropShadow.init>']);
-      // expect(traceLog.getTaggedLog('EFFECTS.dropShadow.update')).toEqual([
-      //   // cur* are not updated
-      //   'dropShadow_colorSE[0]=' + color0,
-      //   'dropShadow_pointSE[0].x', 'dropShadow_pointSE[0].y',
-      //   'dropShadow_colorSE[1]=' + color1,
-      //   'dropShadow_pointSE[1].x', 'dropShadow_pointSE[1].y'
-      // ]);
-      // expect(props.curStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.aplStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.curStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.aplStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.curStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.aplStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.curStats.dropShadow_pointSE[1]).toEqual(point1);
-      // expect(props.aplStats.dropShadow_pointSE[1]).toEqual(point1);
-
-      // // remove()
-      // traceLog.clear();
-      // ll.dropShadow = false;
-      // expect(traceLog.log).toNotContainAny(['<EFFECTS.dropShadow.init>', '<EFFECTS.dropShadow.update>']);
-      // expect(traceLog.log).toContain('<EFFECTS.dropShadow.remove>');
-      // expect(props.events.cur_plug_colorSE.length).toBe(0); // removeEventHandler
-      // expect(props.events.apl_path.length).toBe(0); // removeEventHandler
-      // // curStats* are not cleared
-      // expect(props.curStats.dropShadow_colorSE[0]).toBe(color0);
-      // expect(props.aplStats.dropShadow_colorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
-      // expect(props.curStats.dropShadow_colorSE[1]).toBe(color1);
-      // expect(props.aplStats.dropShadow_colorSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
-      // expect(props.curStats.dropShadow_pointSE[0]).toEqual(point0);
-      // expect(props.aplStats.dropShadow_pointSE[0]).toEqual({});
-      // expect(props.curStats.dropShadow_pointSE[1]).toEqual(point1);
-      // expect(props.aplStats.dropShadow_pointSE[1]).toEqual({});
+      // remove()
+      traceLog.clear();
+      ll.dropShadow = false;
+      expect(traceLog.log).toNotContainAny(['<EFFECTS.dropShadow.init>', '<EFFECTS.dropShadow.update>']);
+      expect(traceLog.log).toContain('<EFFECTS.dropShadow.remove>');
+      expect(props.events.new_edge4viewBox.length).toBe(0); // removeEventHandler
+      // curStats* are not cleared
+      expect(props.curStats.dropShadow_dx).toBe(dx);
+      expect(props.aplStats.dropShadow_dx == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dropShadow_dy).toBe(dy);
+      expect(props.aplStats.dropShadow_dy == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dropShadow_blur).toBe(blur);
+      expect(props.aplStats.dropShadow_blur == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dropShadow_color).toBe(color);
+      expect(props.aplStats.dropShadow_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dropShadow_opacity).toBe(opacity);
+      expect(props.aplStats.dropShadow_opacity == null).toBe(true); // eslint-disable-line eqeqeq
 
       pageDone();
     });

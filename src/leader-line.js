@@ -3201,10 +3201,10 @@
         var curStats = props.curStats, aplStats = props.aplStats, margin;
         if (curStats.dropShadow_dx != null) { // eslint-disable-line eqeqeq
           margin = curStats.dropShadow_blur * 3; // nearly standard deviation
-          edge.x1 -= margin + curStats.dropShadow_dx;
-          edge.y1 -= margin + curStats.dropShadow_dy;
-          edge.x2 += margin + curStats.dropShadow_dx;
-          edge.y2 += margin + curStats.dropShadow_dy;
+          edge.x1 = edge.x1 - margin + curStats.dropShadow_dx;
+          edge.y1 = edge.y1 - margin + curStats.dropShadow_dy;
+          edge.x2 = edge.x2 + margin + curStats.dropShadow_dx;
+          edge.y2 = edge.y2 + margin + curStats.dropShadow_dy;
 
           // position filter
           ['x', 'y'].forEach(function(boxKey) {
