@@ -3612,10 +3612,9 @@
     areaAnchor: {
       type: 'anchor',
       stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {},
-        pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}},
-        //dash
+        pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}, dashLen: {}, dashGap: {}},
 
-      // attachOptions: element, color(A), fillColor, size(A), shape, x, y, width, height, radius, points
+      // attachOptions: element, color(A), fillColor, size(A), dash, shape, x, y, width, height, radius, points
       init: function(attachProps, attachOptions) {
         traceLog.add('<ATTACHMENTS.areaAnchor.init>'); // [DEBUG/]
         var points = [], baseDocument, svg, window;
@@ -3628,6 +3627,15 @@
         }
         if (isFinite(attachOptions.size) && attachOptions.size >= 0) {
           attachProps.size = attachOptions.size;
+        }
+        if (attachOptions.dash) {
+          attachProps.dash = true;
+          if (isFinite(attachOptions.dash.len) && attachOptions.dash.len > 0) {
+            attachProps.dashLen = attachOptions.dash.len;
+          }
+          if (isFinite(attachOptions.dash.gap) && attachOptions.dash.gap > 0) {
+            attachProps.dashGap = attachOptions.dash.gap;
+          }
         }
 
         if (attachOptions.shape === 'circle') {
@@ -3973,6 +3981,30 @@
           traceLog.add('pathData'); // [DEBUG/]
           attachProps.path.setPathData(value);
           aplStats.pathData = value;
+          updated.pathData = true;
+        }
+
+        // dash
+        if (attachProps.dash) {
+          if (updated.pathData || updated.strokeWidth && (!attachProps.dashLen || !attachProps.dashGap)) {
+            curStats.dashLen = attachProps.dashLen || curStats.strokeWidth * 2;
+            curStats.dashGap = attachProps.dashGap || curStats.strokeWidth;
+            /* necessity?
+            (function() { // Adjust dash with pathLen
+              var pathLenAll, dashCount;
+              pathLenAll = getAllPathDataLen(curStats.pathData);
+              dashCount = Math.floor(pathLenAll / (curStats.dashLen + curStats.dashGap));
+              if (dashCount >= 2) {
+                curStats.dashLen = pathLenAll / dashCount - curStats.dashGap;
+              }
+            })();
+            */
+          }
+          updated.dash = setStat(attachProps, aplStats, 'dashLen', curStats.dashLen) || updated.dash;
+          updated.dash = setStat(attachProps, aplStats, 'dashGap', curStats.dashGap) || updated.dash;
+          if (updated.dash) {
+            attachProps.path.style.strokeDasharray = aplStats.dashLen + ',' + aplStats.dashGap;
+          }
         }
 
         // ViewBox
