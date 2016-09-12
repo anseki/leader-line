@@ -3056,8 +3056,8 @@
       remove: function(props) {
         traceLog.add('<EFFECTS.gradient.remove>'); // [DEBUG/]
         if (props.efc_gradient_gradient) {
-          props.efc_gradient_stopSE = null;
           props.defs.removeChild(props.efc_gradient_gradient);
+          props.efc_gradient_gradient = props.efc_gradient_stopSE = null;
         }
 
         removeEventHandler(props, 'cur_plug_colorSE', EFFECTS.gradient.update);
