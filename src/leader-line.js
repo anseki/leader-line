@@ -3136,7 +3136,6 @@
         dropShadow.elmsAppend.forEach(function(elm) { defs.appendChild(elm); });
         props.face.setAttribute('filter', 'url(#' + id + ')');
 
-        addEventHandler(props, 'apl_path', EFFECTS.dropShadow.update);
         addEventHandler(props, 'new_edge4viewBox', EFFECTS.dropShadow.adjustEdge);
         EFFECTS.dropShadow.update(props);
         traceLog.add('</EFFECTS.dropShadow.init>'); // [DEBUG/]
@@ -3199,25 +3198,19 @@
 
       adjustEdge: function(props, edge) {
         traceLog.add('<EFFECTS.dropShadow.adjustEdge>'); // [DEBUG/]
-        var curStats = props.curStats, aplStats = props.aplStats,
-          shadowEdge, margin, value;
+        var curStats = props.curStats, aplStats = props.aplStats, margin;
         if (curStats.dropShadow_dx != null) { // eslint-disable-line eqeqeq
           margin = curStats.dropShadow_blur * 3; // nearly standard deviation
-          shadowEdge = {
-            x1: edge.x1 - margin + curStats.dropShadow_dx,
-            y1: edge.y1 - margin + curStats.dropShadow_dy,
-            x2: edge.x2 + margin + curStats.dropShadow_dx,
-            y2: edge.y2 + margin + curStats.dropShadow_dy};
-          if (shadowEdge.x1 < edge.x1) { edge.x1 = shadowEdge.x1; }
-          if (shadowEdge.y1 < edge.y1) { edge.y1 = shadowEdge.y1; }
-          if (shadowEdge.x2 > edge.x2) { edge.x2 = shadowEdge.x2; }
-          if (shadowEdge.y2 > edge.y2) { edge.y2 = shadowEdge.y2; }
+          edge.x1 -= margin + curStats.dropShadow_dx;
+          edge.y1 -= margin + curStats.dropShadow_dy;
+          edge.x2 += margin + curStats.dropShadow_dx;
+          edge.y2 += margin + curStats.dropShadow_dy;
 
           // position filter
           ['x', 'y'].forEach(function(boxKey) {
-            var statKey = 'dropShadow_' + boxKey;
-            curStats[statKey] = edge[boxKey + '1'];
-            if (setStat(props, aplStats, statKey, (value = curStats[statKey]))) {
+            var statKey = 'dropShadow_' + boxKey, value;
+            curStats[statKey] = value = edge[boxKey + '1'];
+            if (setStat(props, aplStats, statKey, value)) {
               props.efc_dropShadow_elmFilter[boxKey].baseVal.value = value;
             }
           });
