@@ -1941,8 +1941,8 @@
       curEdge.y1 = curEdge.y2 = pathList[0][0].y;
       curStats.path_pathData = curPathData = pathList2PathData(pathList, function(point) {
         if (point.x < curEdge.x1) { curEdge.x1 = point.x; }
-        if (point.x > curEdge.x2) { curEdge.x2 = point.x; }
         if (point.y < curEdge.y1) { curEdge.y1 = point.y; }
+        if (point.x > curEdge.x2) { curEdge.x2 = point.x; }
         if (point.y > curEdge.y2) { curEdge.y2 = point.y; }
       });
 
@@ -3198,13 +3198,19 @@
 
       adjustEdge: function(props, edge) {
         traceLog.add('<EFFECTS.dropShadow.adjustEdge>'); // [DEBUG/]
-        var curStats = props.curStats, aplStats = props.aplStats, margin;
+        var curStats = props.curStats, aplStats = props.aplStats, margin, shadowEdge;
         if (curStats.dropShadow_dx != null) { // eslint-disable-line eqeqeq
           margin = curStats.dropShadow_blur * 3; // nearly standard deviation
-          edge.x1 = edge.x1 - margin + curStats.dropShadow_dx;
-          edge.y1 = edge.y1 - margin + curStats.dropShadow_dy;
-          edge.x2 = edge.x2 + margin + curStats.dropShadow_dx;
-          edge.y2 = edge.y2 + margin + curStats.dropShadow_dy;
+          shadowEdge = {
+            x1: edge.x1 - margin + curStats.dropShadow_dx,
+            y1: edge.y1 - margin + curStats.dropShadow_dy,
+            x2: edge.x2 + margin + curStats.dropShadow_dx,
+            y2: edge.y2 + margin + curStats.dropShadow_dy
+          };
+          if (shadowEdge.x1 < edge.x1) { edge.x1 = shadowEdge.x1; }
+          if (shadowEdge.y1 < edge.y1) { edge.y1 = shadowEdge.y1; }
+          if (shadowEdge.x2 > edge.x2) { edge.x2 = shadowEdge.x2; }
+          if (shadowEdge.y2 > edge.y2) { edge.y2 = shadowEdge.y2; }
 
           // position filter
           ['x', 'y'].forEach(function(boxKey) {
