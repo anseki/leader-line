@@ -4,6 +4,7 @@ $app_id: leader-line;
 .#{$app_id} {
   position: absolute;
   overflow: visible;
+  pointer-events: none;
   font-size: 16px; // for label
 }
 

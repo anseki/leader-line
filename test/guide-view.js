@@ -132,8 +132,8 @@ var guideView = (function() {
           var anchor = props.options.anchorSE[i], isAttach = props.optionIsAttach.anchorSE[i],
             attachProps = isAttach !== false ? window.insAttachProps[anchor._id] : null,
             bBox = isAttach !== false && attachProps.conf.getBBoxNest ?
-              attachProps.conf.getBBoxNest(props, attachProps,
-                attachProps.conf.getStrokeWidth ? attachProps.conf.getStrokeWidth(props, attachProps) : 0) :
+              attachProps.conf.getBBoxNest(attachProps, props,
+                attachProps.conf.getStrokeWidth ? attachProps.conf.getStrokeWidth(attachProps, props) : 0) :
               window.getBBoxNest(anchor, props.baseWindow);
           if (bBox.left < edgeLeft) { edgeLeft = bBox.left; }
           if (bBox.right > edgeRight) { edgeRight = bBox.right; }

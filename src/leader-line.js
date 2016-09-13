@@ -3550,9 +3550,9 @@
    * @property {Function} unbind - function(attachProps, boundTarget)
    * @property {Function} removeOption - function(attachProps, boundTarget)
    * @property {Function} remove - function(attachProps)
-   * @property {Function} [getStrokeWidth] - function(attachProps, props) type:anchro (update trigger)
-   * @property {Function} [getPathData] - function(attachProps, props, strokeWidth) type:anchro
-   * @property {Function} [getBBoxNest] - function(attachProps, props, strokeWidth) type:anchro
+   * @property {Function} [getStrokeWidth] - function(attachProps, props) type:anchor (update trigger)
+   * @property {Function} [getPathData] - function(attachProps, props, strokeWidth) type:anchor
+   * @property {Function} [getBBoxNest] - function(attachProps, props, strokeWidth) type:anchor
    * @property {Function} [initSvg] - function(attachProps, props) type:label
    */
 
@@ -4038,13 +4038,18 @@
     mouseHoverAnchor: {
       type: 'anchor',
 
-      style: {},
-      hoverStyle: {},
+      style: {
+        backgroundColor: '#ececa1',
+        paddingRight: '15px'
+      },
+      hoverStyle: {
+        backgroundColor: '#f9d26e'
+      },
 
       // attachOptions: element, style, hoverStyle, showEffectName, animOptions, onSwitch
       init: function(attachProps, attachOptions) {
         traceLog.add('<ATTACHMENTS.mouseHoverAnchor.init>'); // [DEBUG/]
-        var display, elmStyle, showEffectName, animOptions;
+        var display, elmStyle, showEffectName, animOptions, onSwitch;
         attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
 
         ['style', 'hoverStyle'].forEach(function(key) {
@@ -4068,13 +4073,15 @@
             Object.keys(optionStyle).forEach(function(propName) {
               if (typeof optionStyle[propName] === 'string' || isFinite(optionStyle[propName])) {
                 propStyle[propName] = optionStyle[propName];
+              } else if (optionStyle[propName] == null) { // eslint-disable-line eqeqeq
+                delete propStyle[propName];
               }
             });
           }
         });
 
         if (typeof attachOptions.onSwitch === 'function') {
-          attachProps.onSwitch = attachOptions.onSwitch;
+          onSwitch = attachOptions.onSwitch;
         }
 
         showEffectName = attachOptions.showEffectName;
@@ -4082,25 +4089,25 @@
         attachProps.elmStyle = elmStyle = attachProps.element.style;
 
         // event handler for each instance
-        attachProps.mouseenter = function() {
+        attachProps.mouseenter = function(event) {
           traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseenter>'); // [DEBUG/]
           attachProps.hoverStyleSave =
             ATTACHMENTS.mouseHoverAnchor.getStyles(elmStyle, Object.keys(attachProps.hoverStyle));
           ATTACHMENTS.mouseHoverAnchor.setStyles(elmStyle, attachProps.hoverStyle);
-
           attachProps.boundTargets.forEach(function(boundTarget) {
             show(boundTarget.props, true, showEffectName, animOptions);
           });
+          if (onSwitch) { onSwitch(event); }
           traceLog.add('</ATTACHMENTS.mouseHoverAnchor.mouseenter>'); // [DEBUG/]
         };
 
-        attachProps.mouseleave = function() {
+        attachProps.mouseleave = function(event) {
           traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseleave>'); // [DEBUG/]
           ATTACHMENTS.mouseHoverAnchor.setStyles(elmStyle, attachProps.hoverStyleSave);
-
           attachProps.boundTargets.forEach(function(boundTarget) {
             show(boundTarget.props, false, showEffectName, animOptions);
           });
+          if (onSwitch) { onSwitch(event); }
           traceLog.add('</ATTACHMENTS.mouseHoverAnchor.mouseleave>'); // [DEBUG/]
         };
 
@@ -4110,12 +4117,14 @@
 
       bind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
-        attachProps.styleSave =
-          ATTACHMENTS.mouseHoverAnchor.getStyles(attachProps.elmStyle, Object.keys(attachProps.style));
-        ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.style);
-
-        attachProps.element.addEventListener('mouseenter', attachProps.mouseenter, false);
-        attachProps.element.addEventListener('mouseleave', attachProps.mouseleave, false);
+        if (!attachProps.enabled) {
+          attachProps.styleSave =
+            ATTACHMENTS.mouseHoverAnchor.getStyles(attachProps.elmStyle, Object.keys(attachProps.style));
+          ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.style);
+          attachProps.element.addEventListener('mouseenter', attachProps.mouseenter, false);
+          attachProps.element.addEventListener('mouseleave', attachProps.mouseleave, false);
+          attachProps.enabled = true;
+        }
         show(bindTarget.props, false);
         traceLog.add('</ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
         return true;
@@ -4123,11 +4132,13 @@
 
       unbind: function(attachProps, boundTarget) {
         traceLog.add('<ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
-        attachProps.element.removeEventListener('mouseenter', attachProps.mouseenter, false);
-        attachProps.element.removeEventListener('mouseleave', attachProps.mouseleave, false);
+        if (attachProps.enabled && attachProps.boundTargets.length <= 1) { // last one that is unbound
+          attachProps.element.removeEventListener('mouseenter', attachProps.mouseenter, false);
+          attachProps.element.removeEventListener('mouseleave', attachProps.mouseleave, false);
+          ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.styleSave);
+          attachProps.enabled = false;
+        }
         show(boundTarget.props, true);
-
-        ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.styleSave);
         traceLog.add('</ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
       },
 
@@ -4144,6 +4155,10 @@
             function(boundTarget) { ATTACHMENTS.mouseHoverAnchor.unbind(attachProps, boundTarget); });
         }
         traceLog.add('</ATTACHMENTS.mouseHoverAnchor.remove>'); // [DEBUG/]
+      },
+
+      getBBoxNest: function(attachProps, props) {
+        return getBBoxNest(attachProps.element, props.baseWindow);
       },
 
       getStyles: function(elmStyle, propNames) {
