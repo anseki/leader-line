@@ -4035,6 +4035,129 @@
       }
     },
 
+    mouseHoverAnchor: {
+      type: 'anchor',
+
+      style: {},
+      hoverStyle: {},
+
+      // attachOptions: element, style, hoverStyle, showEffectName, animOptions, onSwitch
+      init: function(attachProps, attachOptions) {
+        traceLog.add('<ATTACHMENTS.mouseHoverAnchor.init>'); // [DEBUG/]
+        var display, elmStyle, showEffectName, animOptions;
+        attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
+
+        ['style', 'hoverStyle'].forEach(function(key) {
+          var defaultStyle = ATTACHMENTS.mouseHoverAnchor[key];
+          attachProps[key] = Object.keys(defaultStyle).reduce(function(copyObj, propName) {
+            copyObj[propName] = defaultStyle[propName];
+            return copyObj;
+          }, {});
+        });
+        // display
+        display = attachProps.element.ownerDocument.defaultView.getComputedStyle(attachProps.element);
+        if (display === 'inline') {
+          attachProps.style.display = 'inline-block';
+        } else if (display === 'none') {
+          attachProps.style.display = 'block'; // Can't get default `display` when it is `none`.
+        }
+        // merge
+        ['style', 'hoverStyle'].forEach(function(key) {
+          var propStyle = attachProps[key], optionStyle = attachOptions[key];
+          if (isObject(optionStyle)) {
+            Object.keys(optionStyle).forEach(function(propName) {
+              if (typeof optionStyle[propName] === 'string' || isFinite(optionStyle[propName])) {
+                propStyle[propName] = optionStyle[propName];
+              }
+            });
+          }
+        });
+
+        if (typeof attachOptions.onSwitch === 'function') {
+          attachProps.onSwitch = attachOptions.onSwitch;
+        }
+
+        showEffectName = attachOptions.showEffectName;
+        animOptions = attachOptions.animOptions;
+        attachProps.elmStyle = elmStyle = attachProps.element.style;
+
+        // event handler for each instance
+        attachProps.mouseenter = function() {
+          traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseenter>'); // [DEBUG/]
+          attachProps.hoverStyleSave =
+            ATTACHMENTS.mouseHoverAnchor.getStyles(elmStyle, Object.keys(attachProps.hoverStyle));
+          ATTACHMENTS.mouseHoverAnchor.setStyles(elmStyle, attachProps.hoverStyle);
+
+          attachProps.boundTargets.forEach(function(boundTarget) {
+            show(boundTarget.props, true, showEffectName, animOptions);
+          });
+          traceLog.add('</ATTACHMENTS.mouseHoverAnchor.mouseenter>'); // [DEBUG/]
+        };
+
+        attachProps.mouseleave = function() {
+          traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseleave>'); // [DEBUG/]
+          ATTACHMENTS.mouseHoverAnchor.setStyles(elmStyle, attachProps.hoverStyleSave);
+
+          attachProps.boundTargets.forEach(function(boundTarget) {
+            show(boundTarget.props, false, showEffectName, animOptions);
+          });
+          traceLog.add('</ATTACHMENTS.mouseHoverAnchor.mouseleave>'); // [DEBUG/]
+        };
+
+        traceLog.add('</ATTACHMENTS.mouseHoverAnchor.init>'); // [DEBUG/]
+        return true;
+      },
+
+      bind: function(attachProps, bindTarget) {
+        traceLog.add('<ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
+        attachProps.styleSave =
+          ATTACHMENTS.mouseHoverAnchor.getStyles(attachProps.elmStyle, Object.keys(attachProps.style));
+        ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.style);
+
+        attachProps.element.addEventListener('mouseenter', attachProps.mouseenter, false);
+        attachProps.element.addEventListener('mouseleave', attachProps.mouseleave, false);
+        show(bindTarget.props, false);
+        traceLog.add('</ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
+        return true;
+      },
+
+      unbind: function(attachProps, boundTarget) {
+        traceLog.add('<ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
+        attachProps.element.removeEventListener('mouseenter', attachProps.mouseenter, false);
+        attachProps.element.removeEventListener('mouseleave', attachProps.mouseleave, false);
+        show(boundTarget.props, true);
+
+        ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.styleSave);
+        traceLog.add('</ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
+      },
+
+      removeOption: function(attachProps, boundTarget) {
+        ATTACHMENTS.pointAnchor.removeOption(attachProps, boundTarget);
+      },
+
+      remove: function(attachProps) {
+        traceLog.add('<ATTACHMENTS.mouseHoverAnchor.remove>'); // [DEBUG/]
+        if (attachProps.boundTargets.length) { // it should be unbound by LeaderLineAttachment.remove
+          traceLog.add('error-not-unbound'); // [DEBUG/]
+          console.error('LeaderLineAttachment was not unbound by remove');
+          attachProps.boundTargets.forEach(
+            function(boundTarget) { ATTACHMENTS.mouseHoverAnchor.unbind(attachProps, boundTarget); });
+        }
+        traceLog.add('</ATTACHMENTS.mouseHoverAnchor.remove>'); // [DEBUG/]
+      },
+
+      getStyles: function(elmStyle, propNames) {
+        return propNames.reduce(function(copyObj, propName) {
+          copyObj[propName] = elmStyle[propName];
+          return copyObj;
+        }, {});
+      },
+
+      setStyles: function(elmStyle, styles) {
+        Object.keys(styles).forEach(function(propName) { elmStyle[propName] = styles[propName]; });
+      }
+    },
+
     captionLabel: {
       type: 'label',
       stats: {color: {}, x: {}, y: {}},
