@@ -320,7 +320,7 @@
    * @returns {{left: number, top: number}} - An object has `left` and `top`.
    */
   function getContentOffset(element) {
-    var styles = element.ownerDocument.defaultView.getComputedStyle(element);
+    var styles = element.ownerDocument.defaultView.getComputedStyle(element, '');
     return {
       left: element.clientLeft + parseFloat(styles.paddingLeft),
       top: element.clientTop + parseFloat(styles.paddingTop)
@@ -806,8 +806,8 @@
     function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
 
     var baseDocument = window.document,
-      stylesHtml = window.getComputedStyle(baseDocument.documentElement),
-      stylesBody = window.getComputedStyle(baseDocument.body),
+      stylesHtml = window.getComputedStyle(baseDocument.documentElement, ''),
+      stylesBody = window.getComputedStyle(baseDocument.body, ''),
       bodyOffset = {x: 0, y: 0};
 
     if (stylesBody.position !== 'static') {
@@ -4039,33 +4039,80 @@
       type: 'anchor',
 
       style: {
-        backgroundColor: '#ececa1',
-        paddingRight: '15px'
+        backgroundImage: 'url(\'data:image/svg+xml;charset=utf-8;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cG9seWdvbiBwb2ludHM9IjI0LDAgMCw4IDgsMTEgMCwxOSA1LDI0IDEzLDE2IDE2LDI0IiBmaWxsPSJjb3JhbCIvPjwvc3ZnPg==\')',
+        backgroundSize: '', // It's set in init().
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#f8f881',
+        minHeight: '15px',
+        cursor: 'default'
       },
       hoverStyle: {
-        backgroundColor: '#f9d26e'
+        backgroundImage: 'none',
+        backgroundColor: '#fadf8f'
       },
+      padding: {top: 1, right: 15, bottom: 1, left: 2},
+      backgroundPosition: {right: 2, top: 2},
+      backgroundSize: {width: 12, height: 12},
 
       // attachOptions: element, style, hoverStyle, showEffectName, animOptions, onSwitch
       init: function(attachProps, attachOptions) {
         traceLog.add('<ATTACHMENTS.mouseHoverAnchor.init>'); // [DEBUG/]
-        var display, elmStyle, showEffectName, animOptions, onSwitch;
+        var selfConf = ATTACHMENTS.mouseHoverAnchor, curStyle, elmStyle, showEffectName, animOptions, onSwitch;
         attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
 
+        selfConf.style.backgroundSize =
+          selfConf.backgroundSize.width + 'px ' + selfConf.backgroundSize.height + 'px';
+
         ['style', 'hoverStyle'].forEach(function(key) {
-          var defaultStyle = ATTACHMENTS.mouseHoverAnchor[key];
+          var defaultStyle = selfConf[key];
           attachProps[key] = Object.keys(defaultStyle).reduce(function(copyObj, propName) {
             copyObj[propName] = defaultStyle[propName];
             return copyObj;
           }, {});
         });
+        curStyle = attachProps.element.ownerDocument.defaultView.getComputedStyle(attachProps.element, '');
         // display
-        display = attachProps.element.ownerDocument.defaultView.getComputedStyle(attachProps.element);
-        if (display === 'inline') {
+        if (curStyle.display === 'inline') {
           attachProps.style.display = 'inline-block';
-        } else if (display === 'none') {
+        } else if (curStyle.display === 'none') {
           attachProps.style.display = 'block'; // Can't get default `display` when it is `none`.
         }
+        // padding (simulate minPadding)
+        [['top', 'Top'], ['right', 'Right'], ['bottom', 'Bottom'], ['left', 'Left']].forEach(function(key) {
+          var confKey = key[0], styleKey = 'padding' + key[1];
+          if (parseFloat(curStyle[styleKey]) < selfConf.padding[confKey]) {
+            attachProps.style[styleKey] = selfConf.padding[confKey] + 'px';
+          }
+        });
+        if (IS_WEBKIT) { // [WEBKIT] rel position is not supported
+          (function() {
+            var displaySave, paddingRightSave, bBox;
+            // Make box layout temporarily to get size before binding.
+            if (attachProps.style.display) {
+              displaySave = attachProps.element.style.display;
+              attachProps.element.style.display = attachProps.style.display;
+            }
+            if (attachProps.style.paddingRight) {
+              paddingRightSave = attachProps.element.style.paddingRight;
+              attachProps.element.style.paddingRight = attachProps.style.paddingRight;
+            }
+            bBox = attachProps.element.getBoundingClientRect();
+            attachProps.style.backgroundPosition =
+              // bBox.width must be larger than backgroundSize.width + backgroundPosition.right.
+              (bBox.width - selfConf.backgroundSize.width - selfConf.backgroundPosition.right) + 'px ' +
+              selfConf.backgroundPosition.top + 'px';
+            if (attachProps.style.display) {
+              attachProps.element.style.display = displaySave;
+            }
+            if (attachProps.style.paddingRight) {
+              attachProps.element.style.paddingRight = paddingRightSave;
+            }
+          })();
+        } else {
+          attachProps.style.backgroundPosition =
+            'right ' + selfConf.backgroundPosition.right + 'px top ' + selfConf.backgroundPosition.top + 'px';
+        }
+
         // merge
         ['style', 'hoverStyle'].forEach(function(key) {
           var propStyle = attachProps[key], optionStyle = attachOptions[key];
@@ -4080,9 +4127,7 @@
           }
         });
 
-        if (typeof attachOptions.onSwitch === 'function') {
-          onSwitch = attachOptions.onSwitch;
-        }
+        if (typeof attachOptions.onSwitch === 'function') { onSwitch = attachOptions.onSwitch; }
 
         showEffectName = attachOptions.showEffectName;
         animOptions = attachOptions.animOptions;
@@ -4091,9 +4136,8 @@
         // event handler for each instance
         attachProps.mouseenter = function(event) {
           traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseenter>'); // [DEBUG/]
-          attachProps.hoverStyleSave =
-            ATTACHMENTS.mouseHoverAnchor.getStyles(elmStyle, Object.keys(attachProps.hoverStyle));
-          ATTACHMENTS.mouseHoverAnchor.setStyles(elmStyle, attachProps.hoverStyle);
+          attachProps.hoverStyleSave = selfConf.getStyles(elmStyle, Object.keys(attachProps.hoverStyle));
+          selfConf.setStyles(elmStyle, attachProps.hoverStyle);
           attachProps.boundTargets.forEach(function(boundTarget) {
             show(boundTarget.props, true, showEffectName, animOptions);
           });
@@ -4103,7 +4147,7 @@
 
         attachProps.mouseleave = function(event) {
           traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseleave>'); // [DEBUG/]
-          ATTACHMENTS.mouseHoverAnchor.setStyles(elmStyle, attachProps.hoverStyleSave);
+          selfConf.setStyles(elmStyle, attachProps.hoverStyleSave);
           attachProps.boundTargets.forEach(function(boundTarget) {
             show(boundTarget.props, false, showEffectName, animOptions);
           });
