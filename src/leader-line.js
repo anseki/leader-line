@@ -280,6 +280,52 @@
   window.getAlpha = getAlpha; // [DEBUG/]
 
   /**
+   * Add `mouseenter` and `mouseleave` event listeners to the element.
+   * @param {Element} element - Target element.
+   * @param {Function} enter - Event listener.
+   * @param {Function} leave - Event listener.
+   * @returns {Function} remover - Function that removes the added listeners.
+   */
+  function mouseEnterLeave(element, enter, leave) {
+    var over, out;
+    if (element.onmouseenter && element.onmouseleave) { // Supported
+      element.addEventListener('mouseenter', enter, false);
+      element.addEventListener('mouseleave', leave, false);
+      return function() {
+        element.removeEventListener('mouseenter', enter, false);
+        element.removeEventListener('mouseleave', leave, false);
+      };
+
+    } else { // Unsupported
+      over = function(event) {
+        /* eslint-disable no-invalid-this */
+        if (!event.relatedTarget ||
+            event.relatedTarget !== this &&
+            !(this.compareDocumentPosition(event.relatedTarget) & Node.DOCUMENT_POSITION_CONTAINED_BY)) {
+          enter.apply(this, arguments);
+        }
+        /* eslint-enable no-invalid-this */
+      };
+      element.addEventListener('mouseover', over);
+      out = function(event) {
+        /* eslint-disable no-invalid-this */
+        if (!event.relatedTarget ||
+            event.relatedTarget !== this &&
+            !(this.compareDocumentPosition(event.relatedTarget) & Node.DOCUMENT_POSITION_CONTAINED_BY)) {
+          leave.apply(this, arguments);
+        }
+        /* eslint-enable no-invalid-this */
+      };
+      element.addEventListener('mouseout', out);
+      return function() {
+        element.removeEventListener('mouseover', over, false);
+        element.removeEventListener('mouseout', out, false);
+      };
+    }
+  }
+  window.mouseEnterLeave = mouseEnterLeave; // [DEBUG/]
+
+  /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
    * @param {Element} element - Target element.
    * @param {boolean} [relWindow] - Whether it's relative to the element's window, or document (i.e. `<html>`).
