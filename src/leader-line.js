@@ -288,7 +288,7 @@
    */
   function mouseEnterLeave(element, enter, leave) {
     var over, out;
-    if (element.onmouseenter && element.onmouseleave) { // Supported
+    if ('onmouseenter' in element && 'onmouseleave' in element) { // Supported
       element.addEventListener('mouseenter', enter, false);
       element.addEventListener('mouseleave', leave, false);
       return function() {
@@ -297,6 +297,7 @@
       };
 
     } else { // Unsupported
+      console.warn('mouseenter and mouseleave events polyfill is enabled.');
       over = function(event) {
         /* eslint-disable no-invalid-this */
         if (!event.relatedTarget ||
@@ -4221,8 +4222,8 @@
           attachProps.styleSave =
             ATTACHMENTS.mouseHoverAnchor.getStyles(attachProps.elmStyle, Object.keys(attachProps.style));
           ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.style);
-          attachProps.element.addEventListener('mouseenter', attachProps.mouseenter, false);
-          attachProps.element.addEventListener('mouseleave', attachProps.mouseleave, false);
+          attachProps.removeEventListener =
+            mouseEnterLeave(attachProps.element, attachProps.mouseenter, attachProps.mouseleave);
           attachProps.enabled = true;
         }
         show(bindTarget.props, false);
@@ -4233,8 +4234,7 @@
       unbind: function(attachProps, boundTarget) {
         traceLog.add('<ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
         if (attachProps.enabled && attachProps.boundTargets.length <= 1) { // last one that is unbound
-          attachProps.element.removeEventListener('mouseenter', attachProps.mouseenter, false);
-          attachProps.element.removeEventListener('mouseleave', attachProps.mouseleave, false);
+          attachProps.removeEventListener();
           ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.styleSave);
           attachProps.enabled = false;
         }
