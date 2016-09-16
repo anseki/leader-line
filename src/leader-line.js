@@ -3778,11 +3778,21 @@
         var props = boundTarget.props;
         if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
         removeEventHandler(props, 'svgShow', attachProps.updateShow);
-        addDelayedProc(function() { // after updating `attachProps.boundTargets`
-          attachProps.updateColor();
-          attachProps.updateShow();
-          ATTACHMENTS.areaAnchor.update(attachProps); // it's not called by unbound ll
-        });
+
+        if (attachProps.boundTargets.length > 1) { // It's not removed yet.
+          addDelayedProc(function() { // after updating `attachProps.boundTargets`
+            traceLog.add('<ATTACHMENTS.areaAnchor.unbind.delayedProc>'); // [DEBUG/]
+            attachProps.updateColor();
+            attachProps.updateShow();
+            if (ATTACHMENTS.areaAnchor.update(attachProps)) { // it's not called by unbound ll
+              traceLog.add('update-boundTargets'); // [DEBUG/]
+              attachProps.boundTargets.forEach(function(boundTarget) { // Update other instances.
+                update(boundTarget.props, {position: true});
+              });
+            }
+            traceLog.add('</ATTACHMENTS.areaAnchor.unbind.delayedProc>'); // [DEBUG/]
+          });
+        }
         traceLog.add('</ATTACHMENTS.areaAnchor.unbind>'); // [DEBUG/]
       },
 
@@ -3802,8 +3812,17 @@
         traceLog.add('</ATTACHMENTS.areaAnchor.remove>'); // [DEBUG/]
       },
 
-      getStrokeWidth: function(attachProps) {
-        ATTACHMENTS.areaAnchor.update(attachProps);
+      getStrokeWidth: function(attachProps, props) {
+        traceLog.add('<ATTACHMENTS.areaAnchor.getStrokeWidth>'); // [DEBUG/]
+        if (ATTACHMENTS.areaAnchor.update(attachProps) && attachProps.boundTargets.length > 1) {
+          traceLog.add('update-boundTargets'); // [DEBUG/]
+          addDelayedProc(function() {
+            attachProps.boundTargets.forEach(function(boundTarget) { // Update other instances.
+              if (boundTarget.props !== props) { update(boundTarget.props, {position: true}); }
+            });
+          });
+        }
+        traceLog.add('</ATTACHMENTS.areaAnchor.getStrokeWidth>'); // [DEBUG/]
         return attachProps.curStats.strokeWidth;
       },
 
@@ -4023,6 +4042,7 @@
             point.x += elementBBox.left;
             point.y += elementBBox.top;
           });
+          updated.pathListRel = updated.bBoxRel = true;
         }
 
         if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth))) {
@@ -4042,7 +4062,7 @@
           if (updated.pathData || updated.strokeWidth && (!attachProps.dashLen || !attachProps.dashGap)) {
             curStats.dashLen = attachProps.dashLen || curStats.strokeWidth * 2;
             curStats.dashGap = attachProps.dashGap || curStats.strokeWidth;
-            /* necessity?
+            /* necessity? (it's necessary when animation is supported)
             (function() { // Adjust dash with pathLen
               var pathLenAll, dashCount;
               pathLenAll = getAllPathDataLen(curStats.pathData);
@@ -4079,6 +4099,8 @@
         })();
 
         traceLog.add('</ATTACHMENTS.areaAnchor.update>'); // [DEBUG/]
+        // Returns `true`, when stats anchors use are updated.
+        return updated.strokeWidth || updated.pathListRel || updated.bBoxRel;
       }
     },
 
