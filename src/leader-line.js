@@ -3585,7 +3585,7 @@
    */
   isAttachment = function(obj, type) {
     return !(obj instanceof LeaderLineAttachment) ? false :
-      (!type || insAttachProps[obj._id].conf.type === type) && !obj.isRemoved ? true : null;
+      !obj.isRemoved && (!type || insAttachProps[obj._id].conf.type === type) ? true : null;
   };
 
   /**
