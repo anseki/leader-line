@@ -962,6 +962,46 @@ describe('attachment', function() {
       done();
     });
 
+    it(registerTitle('areaAnchor-event sync'), function(done) {
+      var props = window.insProps[ll._id],
+        ll2, props2, atc, rect;
+
+      rect = document.getElementById('elm3').getBoundingClientRect();
+
+      atc = window.LeaderLine.areaAnchor(
+        {element: document.getElementById('elm3'), x: 0, y: 0, width: '100%', height: '100%'});
+      ll2 = new window.LeaderLine(document.getElementById('elm4'), atc, {endSocket: 'bottom'});
+      props2 = window.insProps[ll2._id];
+      ll.end = atc;
+      setTimeout(function() {
+        expect(props.curStats.line_strokeWidth).toBe(4); // auto
+
+        expect(props.curStats.position_socketXYSE[1].x).toBe(rect.left - 4);
+        expect(props.curStats.position_socketXYSE[1].y).toBe(rect.top + rect.height / 2);
+        expect(props2.curStats.position_socketXYSE[1].x).toBe(rect.left + rect.width / 2);
+        expect(props2.curStats.position_socketXYSE[1].y).toBe(rect.bottom + 4);
+
+        ll2.size = 7; // Sockets are updated by updating lineWidth of anchor. (Change line-size)
+        setTimeout(function() {
+          expect(props.curStats.position_socketXYSE[1].x).toBe(rect.left - 7);
+          expect(props.curStats.position_socketXYSE[1].y).toBe(rect.top + rect.height / 2);
+          expect(props2.curStats.position_socketXYSE[1].x).toBe(rect.left + rect.width / 2);
+          expect(props2.curStats.position_socketXYSE[1].y).toBe(rect.bottom + 7);
+
+          ll2.end = document.getElementById('elm3'); // Unbind
+          setTimeout(function() {
+            expect(props.curStats.position_socketXYSE[1].x).toBe(rect.left - 4);
+            expect(props.curStats.position_socketXYSE[1].y).toBe(rect.top + rect.height / 2);
+            expect(props2.curStats.position_socketXYSE[1].x).toBe(rect.left + rect.width / 2);
+            expect(props2.curStats.position_socketXYSE[1].y).toBe(rect.bottom); // no attachment
+
+            pageDone();
+            done();
+          }, 10);
+        }, 10);
+      }, 10);
+    });
+
     it(registerTitle('areaAnchor-rect'), function(done) {
       var props = window.insProps[ll._id], atc,
         elmX = 1, elmY = 2, elmWidth = 100, elmHeight = 30, // elm1
@@ -2136,8 +2176,6 @@ describe('attachment', function() {
         // half
         lenAll / 2 + 16
         ))).toBeLessThan(TOLERANCE);
-      console.log(attachProps1.elmOffset.startOffset.baseVal.value);
-      console.log(lenAll - (24 + attachProps1.strokeWidth / 2 + fontSize / 4) + 8);
 
       pageDone();
       done();
