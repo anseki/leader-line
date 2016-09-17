@@ -9,10 +9,12 @@ module.exports = grunt => {
     pathUtil = require('path'),
     htmlclean = require('htmlclean'),
     CleanCSS = require('clean-css'),
+    uglify = require('uglify-js'),
 
     ROOT_PATH = __dirname,
-    SRC_PATH = pathUtil.join(ROOT_PATH, 'src'),
-    CSS_PATH = pathUtil.join(SRC_PATH, 'leader-line.css'),
+    SRC_DIR_PATH = pathUtil.join(ROOT_PATH, 'src'),
+    CSS_PATH = pathUtil.join(SRC_DIR_PATH, 'leader-line.css'),
+    DEST_DIR_PATH = pathUtil.join(ROOT_PATH, 'leader-line.min.js'),
 
     // from leader-line.js
     APP_ID = 'leader-line',
@@ -22,8 +24,7 @@ module.exports = grunt => {
       PLUG_BEHIND: 'behind'
     };
 
-  var embeddedAssets = [], referredAssets = [], protectedText = [], packages,
-    code = {},
+  var code = {},
     definedVar = Object.keys(DEFINED_VAR).reduce((definedVar, varName) => {
       definedVar[varName] = `\f${varName}\x07`;
       return definedVar;
@@ -40,26 +41,8 @@ module.exports = grunt => {
     return (new CleanCSS({keepSpecialComments: 0})).minify(content).styles;
   }
 
-  function addProtectedText(text) {
-    if (typeof text !== 'string' || text === '') { return ''; }
-    protectedText.push(text);
-    return `\f${protectedText.length - 1}\x07`;
-  }
-
-  // Redo String#replace until target is not found
-  function replaceComplete(text, re, fnc) {
-    var doNext = true, reg = new RegExp(re); // safe (not literal)
-    function fncWrap() {
-      doNext = true;
-      return fnc.apply(null, arguments);
-    }
-    // This is faster than using RegExp#exec() and RegExp#lastIndex,
-    // because replace() isn't called more than twice in almost all cases.
-    while (doNext) {
-      doNext = false;
-      text = text.replace(reg, fncWrap);
-    }
-    return text;
+  function minJs(content) {
+    return uglify.minify(content, {fromString: true}).code;
   }
 
   grunt.initConfig({
@@ -145,13 +128,13 @@ module.exports = grunt => {
             Object.keys(codeSrc).forEach(codeVar => { code[codeVar] = getCode(codeSrc[codeVar]); });
 
             // for debug
-            fs.writeFileSync(`${SRC_PATH}/symbols.json`, JSON.stringify(codeSrc.SYMBOLS));
+            fs.writeFileSync(`${SRC_DIR_PATH}/symbols.json`, JSON.stringify(codeSrc.SYMBOLS));
 
             return `var ${Object.keys(code).map(codeVar => `${codeVar}=${code[codeVar]}`).join(',')};`;
           }
         },
-        src: `${SRC_PATH}/symbols.html`,
-        dest: `${SRC_PATH}/defs.js`
+        src: `${SRC_DIR_PATH}/symbols.html`,
+        dest: `${SRC_DIR_PATH}/defs.js`
       },
 
       testFuncs: {
@@ -159,15 +142,41 @@ module.exports = grunt => {
           handlerByContent: content => {
             content.replace(/@EXPORT\[file:([^\n]+?)\]@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@/g,
               (s, file, content) => {
-                var path = pathUtil.join(SRC_PATH, file);
+                var path = pathUtil.join(SRC_DIR_PATH, file);
                 grunt.file.write(path, content);
                 grunt.log.writeln(`File "${path}" created.`);
               });
             return false;
           }
         },
-        src: `${SRC_PATH}/leader-line.js`,
-        dest: `${SRC_PATH}/dummy`
+        src: `${SRC_DIR_PATH}/leader-line.js`,
+        dest: `${SRC_DIR_PATH}/dummy`
+      },
+
+      packJs: {
+        options: {
+          handlerByContent: content => {
+            var reEXPORT = /@EXPORT@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@/g;
+            [['anim', 'anim.js'], ['pathDataPolyfill', 'path-data-polyfill/path-data-polyfill.js']]
+              .forEach(keyPath => {
+                code[keyPath[0]] = fs.readFileSync(pathUtil.join(SRC_DIR_PATH, keyPath[1]), {encoding: 'utf8'})
+                  .replace(reEXPORT, '$1');
+              });
+
+            return minJs(productSrc(
+              content.replace(/@INCLUDE\[code:([^\n]+?)\]@/g,
+                (s, codeKey) => {
+                  if (typeof code[codeKey] !== 'string') {
+                    grunt.fail.fatal(`File doesn't exist code: ${codeKey}`);
+                  }
+                  return code[codeKey];
+                }
+              )
+            ));
+          }
+        },
+        src: `${SRC_DIR_PATH}/leader-line.js`,
+        dest: DEST_DIR_PATH
       }
     }
   });
@@ -177,6 +186,7 @@ module.exports = grunt => {
   grunt.registerTask('defs', [
     'taskHelper:getSvgDefs'
   ]);
+
   grunt.registerTask('funcs', [
     'taskHelper:testFuncs'
   ]);
