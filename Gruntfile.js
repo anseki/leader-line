@@ -156,7 +156,7 @@ module.exports = grunt => {
       packJs: {
         options: {
           handlerByContent: content => {
-            var reEXPORT = /@EXPORT@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@/g;
+            var reEXPORT = /^[\s\S]*?@EXPORT@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@[\s\S]*$/;
             [['anim', 'anim.js'], ['pathDataPolyfill', 'path-data-polyfill/path-data-polyfill.js']]
               .forEach(keyPath => {
                 code[keyPath[0]] = fs.readFileSync(pathUtil.join(SRC_DIR_PATH, keyPath[1]), {encoding: 'utf8'})
@@ -191,10 +191,10 @@ module.exports = grunt => {
     'taskHelper:testFuncs'
   ]);
 
-  grunt.registerTask('default', [
-    'taskHelper:getSvgDefs',
-    'package',
-    'copy:addFiles',
-    'archive'
+  grunt.registerTask('build', [
+    'defs',
+    'taskHelper:packJs'
   ]);
+
+  grunt.registerTask('default', ['build']);
 };

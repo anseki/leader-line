@@ -6,3 +6,4 @@ src/defs.js
 src/symbols.json
 src/leader-line.css
 test/spec/func
+leader-line.min.js
