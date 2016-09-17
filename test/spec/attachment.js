@@ -266,14 +266,17 @@ describe('attachment', function() {
       traceLog.clear();
       ll.start = atc1;
       expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
         '<ATTACHMENTS.areaAnchor.bind>', '</ATTACHMENTS.areaAnchor.bind>',
         '<setOptions>', 'needs.position', '</setOptions>',
         '<updatePosition>',
-        '<ATTACHMENTS.areaAnchor.update>',
-        'strokeWidth=4', 'elementWidth=100', 'elementHeight=30',
-        'generate-path', 'strokeWidth=4', 'pathData',
-        'x', 'y', 'width', 'height',
-        '</ATTACHMENTS.areaAnchor.update>',
+        '<ATTACHMENTS.areaAnchor.getStrokeWidth>',
+          '<ATTACHMENTS.areaAnchor.update>',
+          'strokeWidth=4', 'elementWidth=100', 'elementHeight=30',
+          'generate-path', 'strokeWidth=4', 'pathData',
+          'x', 'y', 'width', 'height',
+          '</ATTACHMENTS.areaAnchor.update>',
+        '</ATTACHMENTS.areaAnchor.getStrokeWidth>',
         'position_socketXYSE[0]', 'new-position',
         '</updatePosition>',
         '<updatePath>', 'path_pathData', '</updatePath>',
@@ -283,6 +286,7 @@ describe('attachment', function() {
         'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=4',
         '</updateMask>',
         '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>'
+        /* eslint-enable indent */
       ]);
       expect(props1.events.cur_line_color.length).toBe(1); // addEventHandler
       expect(props1.events.svgShow.length).toBe(1); // addEventHandler
@@ -292,24 +296,25 @@ describe('attachment', function() {
       ll.start = document.getElementById('elm1');
       setTimeout(function() {
         expect(traceLog.log).toEqual([
+          /* eslint-disable indent */
           '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
           '<setOptions>', 'needs.position', '</setOptions>',
           '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
           '<updatePath>', 'path_pathData', '</updatePath>',
           '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
           '<updateMask>',
-          'maskBGRect_x', 'lineMask_x',
-          'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+            'maskBGRect_x', 'lineMask_x',
+            'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
           '</updateMask>',
           '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
           '<execDelayedProcs>',
-          '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
-          '<svgShow>', '</svgShow>',
-          '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-          '<svgShow>', '</svgShow>',
-          '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
-          '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
+            '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
+            '<svgShow>', '</svgShow>',
+            '<removeAttachment>',
+              '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>',
+            '</removeAttachment>',
           '</execDelayedProcs>'
+          /* eslint-enable indent */
         ]);
         expect(props1.attachments.length).toBe(0);
         expect(atc1.isRemoved).toBe(true);
@@ -333,25 +338,29 @@ describe('attachment', function() {
         ll.start = document.getElementById('elm1');
         setTimeout(function() {
           expect(traceLog.log).toEqual([
+            /* eslint-disable indent */
             '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
             '<setOptions>', 'needs.position', '</setOptions>',
             '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
             '<updatePath>', 'path_pathData', '</updatePath>',
             '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
             '<updateMask>',
-            'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y',
-            'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+              'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y',
+              'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
             '</updateMask>',
             '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
             '<execDelayedProcs>',
-            '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-            '<svgShow>', 'on=true', '</svgShow>',
-            '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-            '<svgShow>', '</svgShow>',
-            '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-            '<svgShow>', '</svgShow>',
-            '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+              '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
+              '<svgShow>', 'on=true', '</svgShow>',
+              '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
+              '<svgShow>', '</svgShow>',
+              '<ATTACHMENTS.areaAnchor.unbind.delayedProc>',
+                '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
+                '<svgShow>', '</svgShow>',
+                '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+              '</ATTACHMENTS.areaAnchor.unbind.delayedProc>',
             '</execDelayedProcs>'
+            /* eslint-enable indent */
           ]);
           expect(props1.attachments.length).toBe(0);
           expect(props2.attachments.length).toBe(1);
@@ -366,22 +375,23 @@ describe('attachment', function() {
           ll2.start = document.getElementById('elm1');
           setTimeout(function() {
             expect(traceLog.log).toEqual([
+              /* eslint-disable indent */
               '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
               '<setOptions>', 'needs.position', '</setOptions>',
               '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
               '<updatePath>', 'path_pathData', '</updatePath>',
               '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
               '<updateMask>',
-              'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y',
-              'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+                'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y',
+                'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
               '</updateMask>',
               '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
               '<execDelayedProcs>',
-              '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-              '<svgShow>', 'on=false', '</svgShow>',
-              '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
-              '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
+                '<removeAttachment>',
+                  '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>',
+                '</removeAttachment>',
               '</execDelayedProcs>'
+              /* eslint-enable indent */
             ]);
             expect(props1.attachments.length).toBe(0);
             expect(props2.attachments.length).toBe(0);
@@ -407,45 +417,50 @@ describe('attachment', function() {
             atc1.remove();
             setTimeout(function() {
               expect(traceLog.log).toEqual([
+                /* eslint-disable indent */
                 '<LeaderLineAttachment.remove>',
                 '<ATTACHMENTS.pointAnchor.removeOption>', 'optionName=start',
-                '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
-                '<setOptions>', 'needs.position', '</setOptions>',
-                '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
-                '<updatePath>', 'path_pathData', '</updatePath>',
-                '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
-                '<updateMask>',
-                'maskBGRect_x', 'lineMask_x', 'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
-                '</updateMask>',
-                '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
+                  '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
+                  '<setOptions>', 'needs.position', '</setOptions>',
+                  '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
+                  '<updatePath>', 'path_pathData', '</updatePath>',
+                  '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
+                  '<updateMask>',
+                    'maskBGRect_x', 'lineMask_x',
+                    'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+                  '</updateMask>',
+                  '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
                 '</ATTACHMENTS.pointAnchor.removeOption>',
                 '<ATTACHMENTS.pointAnchor.removeOption>', 'optionName=start',
-                '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
-                '<setOptions>', 'needs.position', '</setOptions>',
-                '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
-                '<updatePath>', 'path_pathData', '</updatePath>',
-                '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
-                '<updateMask>',
-                'maskBGRect_x', 'lineMask_x', 'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
-                '</updateMask>',
-                '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
+                  '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
+                  '<setOptions>', 'needs.position', '</setOptions>',
+                  '<updatePosition>', 'position_socketXYSE[0]', 'new-position', '</updatePosition>',
+                  '<updatePath>', 'path_pathData', '</updatePath>',
+                  '<updateViewBox>', 'x', 'width', 'height', '</updateViewBox>',
+                  '<updateMask>',
+                    'maskBGRect_x', 'lineMask_x',
+                    'capsMaskAnchor_pathDataSE[0]', 'capsMaskAnchor_strokeWidthSE[0]=0',
+                  '</updateMask>',
+                  '<update>', 'updated.position', 'updated.path', 'updated.viewBox', 'updated.mask', '</update>',
                 '</ATTACHMENTS.pointAnchor.removeOption>',
                 '</LeaderLineAttachment.remove>',
                 '<execDelayedProcs>',
-                '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
-                '<svgShow>', '</svgShow>',
-                '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-                '<svgShow>', '</svgShow>',
-                '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-                '<svgShow>', '</svgShow>',
-                '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
-                '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
-                '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-                '<svgShow>', '</svgShow>',
-                '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
-                '<removeAttachment>', 'not-found', '</removeAttachment>',
-                '<LeaderLineAttachment.remove.delayedProc>', '</LeaderLineAttachment.remove.delayedProc>',
+                  '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
+                  '<svgShow>', '</svgShow>',
+                  '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
+                  '<svgShow>', '</svgShow>',
+                  '<ATTACHMENTS.areaAnchor.unbind.delayedProc>',
+                    '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
+                    '<svgShow>', '</svgShow>',
+                    '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+                  '</ATTACHMENTS.areaAnchor.unbind.delayedProc>',
+                  '<removeAttachment>',
+                    '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>',
+                  '</removeAttachment>',
+                  '<removeAttachment>', 'not-found', '</removeAttachment>',
+                  '<LeaderLineAttachment.remove.delayedProc>', '</LeaderLineAttachment.remove.delayedProc>',
                 '</execDelayedProcs>'
+                /* eslint-enable indent */
               ]);
               expect(props1.attachments.length).toBe(0);
               expect(props2.attachments.length).toBe(0);
@@ -470,22 +485,22 @@ describe('attachment', function() {
               ll.remove();
               setTimeout(function() {
                 expect(traceLog.log).toEqual([
+                  /* eslint-disable indent */
                   '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
                   '<ATTACHMENTS.areaAnchor.unbind>', '</ATTACHMENTS.areaAnchor.unbind>',
                   '<execDelayedProcs>',
-                  '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
-                  '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
-                  '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-                  '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
-                  '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
-                  '<ATTACHMENTS.areaAnchor.updateColor>', '</ATTACHMENTS.areaAnchor.updateColor>',
-                  '<svgShow>', '</svgShow>',
-                  '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
-                  '<removeAttachment>', '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>', '</removeAttachment>',
+                    '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
+                    '<svgShow>', '</svgShow>',
+                    '<ATTACHMENTS.areaAnchor.updateColor>', 'color=coral', '</ATTACHMENTS.areaAnchor.updateColor>',
+                    '<svgShow>', '</svgShow>',
+                    '<removeAttachment>',
+                      '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>',
+                    '</removeAttachment>',
+                    '<removeAttachment>',
+                      '<ATTACHMENTS.areaAnchor.remove>', '</ATTACHMENTS.areaAnchor.remove>',
+                    '</removeAttachment>',
                   '</execDelayedProcs>'
+                  /* eslint-enable indent */
                 ]);
                 expect(atc1.isRemoved).toBe(true);
                 expect(atc2.isRemoved).toBe(true);
@@ -585,7 +600,7 @@ describe('attachment', function() {
 
     it(registerTitle('areaAnchor-attachOptions'), function(done) {
       var props = window.insProps[ll._id],
-        atc;
+        atc, attachProps, len, gap;
 
       // rect
       atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
@@ -636,6 +651,42 @@ describe('attachment', function() {
       ]);
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
 
+      // dash number
+      len = 5;
+      gap = 11;
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
+        dash: {len: len, gap: gap}});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.aplStats.dashLen).toBe(len);
+      expect(attachProps.aplStats.dashGap).toBe(gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+
+      // dash invalid number
+      expect(attachProps.curStats.strokeWidth * 2).toBe(8); // auto
+      len = 8;
+      gap = 11;
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
+        dash: {len: 0, gap: gap}});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.aplStats.dashLen).toBe(len);
+      expect(attachProps.aplStats.dashGap).toBe(gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+
+      // dash auto
+      expect(attachProps.curStats.strokeWidth * 2).toBe(8); // auto
+      expect(attachProps.curStats.strokeWidth).toBe(4); // auto
+      len = 8;
+      gap = 4;
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
+        dash: true});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.aplStats.dashLen).toBe(len);
+      expect(attachProps.aplStats.dashGap).toBe(gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+
       pageDone();
       done();
     });
@@ -654,21 +705,25 @@ describe('attachment', function() {
         traceLog.clear();
         ll.color = 'red';
         expect(traceLog.log).toEqual([
+          /* eslint-disable indent */
           '<setOptions>', 'needs.line', '</setOptions>',
           '<updateLine>', 'line_color=red',
-          '<ATTACHMENTS.areaAnchor.updateColor>', 'color=red', '</ATTACHMENTS.areaAnchor.updateColor>',
+            '<ATTACHMENTS.areaAnchor.updateColor>', 'color=red', '</ATTACHMENTS.areaAnchor.updateColor>',
           '</updateLine>',
           '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
           '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
           '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
           '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
           '<updatePosition>',
-          '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
-          'not-updated',
+            '<ATTACHMENTS.areaAnchor.getStrokeWidth>',
+              '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+            '</ATTACHMENTS.areaAnchor.getStrokeWidth>',
+            'not-updated',
           '</updatePosition>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
+          /* eslint-enable indent */
         ]);
         expect(attachProps.curStats.color).toBe('red');
 
@@ -694,6 +749,7 @@ describe('attachment', function() {
         traceLog.clear();
         ll.color = 'red';
         expect(traceLog.log).toEqual([
+          /* eslint-disable indent */
           '<setOptions>', 'needs.line', '</setOptions>',
           '<updateLine>', 'line_color=red',
           // ATTACHMENTS.areaAnchor.updateColor is not called
@@ -703,12 +759,15 @@ describe('attachment', function() {
           '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
           '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
           '<updatePosition>',
-          '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
-          'not-updated',
+            '<ATTACHMENTS.areaAnchor.getStrokeWidth>',
+              '<ATTACHMENTS.areaAnchor.update>', '</ATTACHMENTS.areaAnchor.update>',
+            '</ATTACHMENTS.areaAnchor.getStrokeWidth>',
+            'not-updated',
           '</updatePosition>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
           '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
+          /* eslint-enable indent */
         ]);
         expect(attachProps.curStats.color).toBe('blue');
 
@@ -874,6 +933,33 @@ describe('attachment', function() {
           }, 100);
         }, 100);
       }, 10);
+    });
+
+    it(registerTitle('areaAnchor-event auto dash'), function(done) {
+      var props = window.insProps[ll._id],
+        atc, attachProps, len, gap;
+
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
+        dash: true});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+
+      expect(props.curStats.line_strokeWidth).toBe(4); // auto
+      len = 8;
+      gap = 4;
+      expect(attachProps.aplStats.dashLen).toBe(len);
+      expect(attachProps.aplStats.dashGap).toBe(gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+
+      ll.size = 5;
+      len = 10;
+      gap = 5;
+      expect(attachProps.aplStats.dashLen).toBe(len);
+      expect(attachProps.aplStats.dashGap).toBe(gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+
+      pageDone();
+      done();
     });
 
     it(registerTitle('areaAnchor-rect'), function(done) {
