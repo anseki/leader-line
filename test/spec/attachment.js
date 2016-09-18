@@ -522,7 +522,7 @@ describe('attachment', function() {
 
     beforeEach(loadBefore);
 
-    it(registerTitle('pointAnchor-attachOptions'), function(done) {
+    it(registerTitle('pointAnchor'), function(done) {
       var props = window.insProps[ll._id],
         atc;
 
@@ -1347,6 +1347,173 @@ describe('attachment', function() {
 
       pageDone();
       done();
+    });
+
+    it(registerTitle('mouseHoverAnchor'), function(done) {
+      var atc, attachProps, bBox, element, called, color;
+
+      (function(cssText) {
+        var sheet;
+        if (document.createStyleSheet) { // IE
+          sheet = document.createStyleSheet();
+          sheet.cssText = cssText;
+        } else {
+          sheet = document.querySelector('head').appendChild(document.createElement('style'));
+          sheet.type = 'text/css';
+          sheet.textContent = cssText;
+        }
+      })('.inline {display: inline} .block {display: block} .padding1 {padding: 60px} .padding2 {padding: 2px}');
+
+      (function(htmlText) {
+        var p = document.body.appendChild(document.createElement('p'));
+        p.style.marginTop = '500px';
+        p.innerHTML = htmlText;
+      })('Lorem <span id="span-a">ipsum</span> dolor <span id="span-b" class="block">sit</span> amet, <span id="span-c" style="display: block">consectetur</span> adipiscing <h3 id="h3-a">elit</h3>, sed <h3 id="h3-b" class="inline">do</h3> eiusmod <h3 id="h3-c" style="display: inline">tempor</h3> incididunt <span id="span-d">ut</span> labore <span id="span-e" class="padding1">et</span> dolore <span id="span-f" style="padding: 60px">magna</span> aliqua. <span id="span-g" class="padding2">Ut</span> enim <span id="span-h" style="padding: 2px">ad</span> minim veniam, quis');
+
+      // style.display
+      // inline in native
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-a')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.display).toBe('inline-block');
+      // no-inline via class
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-b')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.display == null).toBe(true); // eslint-disable-line eqeqeq
+      // no-inline via attribute
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-c')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.display == null).toBe(true); // eslint-disable-line eqeqeq
+      // no-inline in native
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('h3-a')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.display == null).toBe(true); // eslint-disable-line eqeqeq
+      // inline via class
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('h3-b')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.display).toBe('inline-block');
+      // inline via attribute
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('h3-c')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.display).toBe('inline-block');
+
+      // style.padding
+      // padding:0 in native
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-d')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.paddingTop).toBe(1 + 'px');
+      expect(attachProps.style.paddingRight).toBe(15 + 'px');
+      expect(attachProps.style.paddingBottom).toBe(1 + 'px');
+      expect(attachProps.style.paddingLeft).toBe(2 + 'px');
+      // padding:60 via class
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-e')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.paddingTop == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingRight == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+      // padding:60 via attribute
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-f')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.paddingTop == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingRight == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+      // padding:2 via class
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-g')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.paddingTop == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingRight).toBe(15 + 'px');
+      expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+      // padding:2 via attribute
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-h')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.paddingTop == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingRight).toBe(15 + 'px');
+      expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // style.backgroundPosition
+      // IS_WEBKIT: false
+      window.engineFlags({IS_WEBKIT: false});
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-a')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.backgroundPosition).toBe('right 2px top 2px');
+      // IS_WEBKIT: true
+      window.engineFlags({IS_WEBKIT: true});
+      // padding:0 in native
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-d')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      bBox = document.getElementById('span-d').getBoundingClientRect();
+      expect(attachProps.style.backgroundPosition).toBe(
+        (bBox.width - 12/* backgroundSize.width */ - 2/* backgroundPosition.right */) + 'px ' +
+        2/* backgroundPosition.top */ + 'px');
+      // padding:60 via class
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-e')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      bBox = document.getElementById('span-e').getBoundingClientRect();
+      expect(attachProps.style.backgroundPosition).toBe(
+        (bBox.width - 12/* backgroundSize.width */ - 2/* backgroundPosition.right */) + 'px ' +
+        2/* backgroundPosition.top */ + 'px');
+
+      // merge
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-a'),
+        style: {backgroundColor: 'red', cursor: 'pointer', backgroundImage: null}});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.backgroundRepeat).toBe('no-repeat'); // default
+      expect(attachProps.style.backgroundColor).toBe('red');
+      expect(attachProps.style.cursor).toBe('pointer');
+      expect('backgroundImage' in attachProps.style).toBe(false);
+
+      // onSwitch
+      element = document.getElementById('span-a');
+      ll.start = element;
+      atc = window.LeaderLine.mouseHoverAnchor({element: element,
+        onSwitch: function() { called = true; }, showEffectName: 'none'});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      color = element.style.backgroundColor;
+      expect(color === '#f8f881' || color.replace(/\s/g, '') === 'rgb(248,248,129)').toBe(true); // default
+      (function() { // Event
+        var evt = document.createEvent('MouseEvents');
+        evt.initMouseEvent('onmouseenter' in element ? 'mouseenter' : 'mouseover', true, true, window, 1,
+          0, 0, 0, 0, false, false, false, false, 0, null);
+        element.dispatchEvent(evt);
+      })();
+      setTimeout(function() {
+        expect(called).toBe(true);
+        color = element.style.backgroundColor;
+        expect(color === '#fadf8f' || color.replace(/\s/g, '') === 'rgb(250,223,143)').toBe(true); // hover
+        (function() { // Event
+          var evt = document.createEvent('MouseEvents');
+          evt.initMouseEvent('onmouseleave' in element ? 'mouseleave' : 'mouseout', true, true, window, 1,
+            0, 0, 0, 0, false, false, false, false, 0, null);
+          element.dispatchEvent(evt);
+        })();
+        setTimeout(function() {
+          color = element.style.backgroundColor;
+          expect(color === '#f8f881' || color.replace(/\s/g, '') === 'rgb(248,248,129)').toBe(true); // default
+
+          pageDone();
+          done();
+        }, 10);
+      }, 10);
+
     });
 
   });

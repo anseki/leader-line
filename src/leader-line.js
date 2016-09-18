@@ -195,6 +195,13 @@
   window.IS_GECKO = IS_GECKO;
   window.IS_EDGE = IS_EDGE;
   window.IS_WEBKIT = IS_WEBKIT;
+  window.engineFlags = function(flags) {
+    if (typeof flags.IS_TRIDENT === 'boolean') { window.IS_TRIDENT = IS_TRIDENT = flags.IS_TRIDENT; }
+    if (typeof flags.IS_BLINK === 'boolean') { window.IS_BLINK = IS_BLINK = flags.IS_BLINK; }
+    if (typeof flags.IS_GECKO === 'boolean') { window.IS_GECKO = IS_GECKO = flags.IS_GECKO; }
+    if (typeof flags.IS_EDGE === 'boolean') { window.IS_EDGE = IS_EDGE = flags.IS_EDGE; }
+    if (typeof flags.IS_WEBKIT === 'boolean') { window.IS_WEBKIT = IS_WEBKIT = flags.IS_WEBKIT; }
+  };
   // [/DEBUG]
 
   function hasChanged(a, b) {
@@ -3735,7 +3742,7 @@
         setupWindow((window = baseDocument.defaultView));
         attachProps.bodyOffset = getBodyOffset(window); // Get `bodyOffset`
 
-        // event handler for each instance
+        // event handler for this instance
         attachProps.updateColor = function() {
           traceLog.add('<ATTACHMENTS.areaAnchor.updateColor>'); // [DEBUG/]
           var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
@@ -4128,14 +4135,15 @@
       // attachOptions: element, style, hoverStyle, showEffectName, animOptions, onSwitch
       init: function(attachProps, attachOptions) {
         traceLog.add('<ATTACHMENTS.mouseHoverAnchor.init>'); // [DEBUG/]
-        var selfConf = ATTACHMENTS.mouseHoverAnchor, curStyle, elmStyle, showEffectName, animOptions, onSwitch;
+        var conf = ATTACHMENTS.mouseHoverAnchor, curStyle, elmStyle, showEffectName, animOptions, onSwitch;
         attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
 
-        selfConf.style.backgroundSize =
-          selfConf.backgroundSize.width + 'px ' + selfConf.backgroundSize.height + 'px';
+        conf.style.backgroundSize =
+          conf.backgroundSize.width + 'px ' + conf.backgroundSize.height + 'px';
 
+        // copy default
         ['style', 'hoverStyle'].forEach(function(key) {
-          var defaultStyle = selfConf[key];
+          var defaultStyle = conf[key];
           attachProps[key] = Object.keys(defaultStyle).reduce(function(copyObj, propName) {
             copyObj[propName] = defaultStyle[propName];
             return copyObj;
@@ -4151,8 +4159,8 @@
         // padding (simulate min-padding)
         ATTACHMENTS.mouseHoverAnchor.dirKeys.forEach(function(key) {
           var confKey = key[0], styleKey = 'padding' + key[1];
-          if (parseFloat(curStyle[styleKey]) < selfConf.padding[confKey]) {
-            attachProps.style[styleKey] = selfConf.padding[confKey] + 'px';
+          if (parseFloat(curStyle[styleKey]) < conf.padding[confKey]) {
+            attachProps.style[styleKey] = conf.padding[confKey] + 'px';
           }
         });
         if (IS_WEBKIT) { // [WEBKIT] rel-position is not supported
@@ -4174,8 +4182,8 @@
             bBox = attachProps.element.getBoundingClientRect();
             attachProps.style.backgroundPosition =
               // bBox.width must be larger than backgroundSize.width + backgroundPosition.right.
-              (bBox.width - selfConf.backgroundSize.width - selfConf.backgroundPosition.right) + 'px ' +
-              selfConf.backgroundPosition.top + 'px';
+              (bBox.width - conf.backgroundSize.width - conf.backgroundPosition.right) + 'px ' +
+              conf.backgroundPosition.top + 'px';
 
             if (attachProps.style.display) {
               attachProps.element.style.display = displaySave;
@@ -4189,7 +4197,7 @@
           })();
         } else {
           attachProps.style.backgroundPosition =
-            'right ' + selfConf.backgroundPosition.right + 'px top ' + selfConf.backgroundPosition.top + 'px';
+            'right ' + conf.backgroundPosition.right + 'px top ' + conf.backgroundPosition.top + 'px';
         }
 
         // merge
@@ -4212,11 +4220,11 @@
         animOptions = attachOptions.animOptions;
         attachProps.elmStyle = elmStyle = attachProps.element.style;
 
-        // event handler for each instance
+        // event handler for this instance
         attachProps.mouseenter = function(event) {
           traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseenter>'); // [DEBUG/]
-          attachProps.hoverStyleSave = selfConf.getStyles(elmStyle, Object.keys(attachProps.hoverStyle));
-          selfConf.setStyles(elmStyle, attachProps.hoverStyle);
+          attachProps.hoverStyleSave = conf.getStyles(elmStyle, Object.keys(attachProps.hoverStyle));
+          conf.setStyles(elmStyle, attachProps.hoverStyle);
           attachProps.boundTargets.forEach(function(boundTarget) {
             show(boundTarget.props, true, showEffectName, animOptions);
           });
@@ -4226,7 +4234,7 @@
 
         attachProps.mouseleave = function(event) {
           traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseleave>'); // [DEBUG/]
-          selfConf.setStyles(elmStyle, attachProps.hoverStyleSave);
+          conf.setStyles(elmStyle, attachProps.hoverStyleSave);
           attachProps.boundTargets.forEach(function(boundTarget) {
             show(boundTarget.props, false, showEffectName, animOptions);
           });
@@ -4329,7 +4337,7 @@
           }
         });
 
-        // event handler for each instance
+        // event handler for this instance
         attachProps.updateColor = function(props) {
           traceLog.add('<ATTACHMENTS.captionLabel.updateColor>'); // [DEBUG/]
           ATTACHMENTS.captionLabel.updateColor(attachProps, props);
@@ -4690,7 +4698,7 @@
           }
         });
 
-        // event handler for each instance
+        // event handler for this instance
         attachProps.updateColor = function(props) {
           traceLog.add('<ATTACHMENTS.pathLabel.updateColor>'); // [DEBUG/]
           ATTACHMENTS.captionLabel.updateColor(attachProps, props);
