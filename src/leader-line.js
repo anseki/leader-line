@@ -3619,8 +3619,8 @@
       init: function(attachProps, attachOptions) {
         traceLog.add('<ATTACHMENTS.pointAnchor.init>'); // [DEBUG/]
         attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
-        attachProps.x = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.x, true) || [0];
-        attachProps.y = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.y, true) || [0];
+        attachProps.x = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.x, true) || [0.5, true];
+        attachProps.y = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.y, true) || [0.5, true];
         traceLog.add('</ATTACHMENTS.pointAnchor.init>'); // [DEBUG/]
         return true;
       },

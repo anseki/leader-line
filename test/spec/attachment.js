@@ -122,9 +122,9 @@ describe('attachment', function() {
       // zero, num, true
       expect(parsePercent(0, true)).toEqual([0, false]);
       // zero, per, false
-      expect(parsePercent('0%')).toEqual([0, false]);
+      expect(parsePercent('0%')).toEqual([0, false]); // The meaningless `%` is ignored.
       // zero, per, true
-      expect(parsePercent('0%', true)).toEqual([0, false]);
+      expect(parsePercent('0%', true)).toEqual([0, false]); // The meaningless `%` is ignored.
 
       pageDone();
       done();
@@ -529,10 +529,10 @@ describe('attachment', function() {
       // values
       atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1'), x: 5, y: 6});
       ll.start = atc;
+      // elm1 (1, 2) w:100 h:30
       expect(props.curStats.position_socketXYSE[0].x).toBe(6);
       expect(props.curStats.position_socketXYSE[0].y).toBe(8);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
-        // elm1 left: 1px; top: 2px;
         {type: 'M', values: [6, 8]},
         {type: 'L', values: [6, 8]},
         {type: 'L', values: [6, 8]},
@@ -552,10 +552,10 @@ describe('attachment', function() {
       // Percent
       atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1'), x: '10%', y: '80%'});
       ll.start = atc;
+      // elm1 (1, 2) w:100 h:30
       expect(props.curStats.position_socketXYSE[0].x).toBe(11);
       expect(props.curStats.position_socketXYSE[0].y).toBe(26);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
-        // elm1 left: 1px; top: 2px;
         {type: 'M', values: [11, 26]},
         {type: 'L', values: [11, 26]},
         {type: 'L', values: [11, 26]},
@@ -564,13 +564,28 @@ describe('attachment', function() {
       ]);
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
 
+      // default x, y (50%)
+      atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1')});
+      ll.start = atc;
+      // elm1 (1, 2) w:100 h:30
+      expect(props.curStats.position_socketXYSE[0].x).toBe(51);
+      expect(props.curStats.position_socketXYSE[0].y).toBe(17);
+      expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
+        {type: 'M', values: [51, 17]},
+        {type: 'L', values: [51, 17]},
+        {type: 'L', values: [51, 17]},
+        {type: 'L', values: [51, 17]},
+        {type: 'Z', values: []}
+      ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+
       // outside of element
       atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1'), x: -1, y: -2});
       ll.start = atc;
+      // elm1 (1, 2) w:100 h:30
       expect(props.curStats.position_socketXYSE[0].x).toBe(0);
       expect(props.curStats.position_socketXYSE[0].y).toBe(0);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
-        // elm1 left: 1px; top: 2px;
         {type: 'M', values: [0, 0]},
         {type: 'L', values: [0, 0]},
         {type: 'L', values: [0, 0]},
@@ -582,10 +597,10 @@ describe('attachment', function() {
       // outside of element Percent
       atc = window.LeaderLine.pointAnchor({element: document.getElementById('elm1'), x: '150%', y: '180%'});
       ll.start = atc;
+      // elm1 (1, 2) w:100 h:30
       expect(props.curStats.position_socketXYSE[0].x).toBe(151);
       expect(props.curStats.position_socketXYSE[0].y).toBe(56);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
-        // elm1 left: 1px; top: 2px;
         {type: 'M', values: [151, 56]},
         {type: 'L', values: [151, 56]},
         {type: 'L', values: [151, 56]},
@@ -606,10 +621,10 @@ describe('attachment', function() {
       atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: 5, y: 6, width: 7, height: 8, size: 0});
       ll.start = atc;
+      // elm1 (1, 2) w:100 h:30
       expect(props.curStats.position_socketXYSE[0].x).toBe(9.5);
       expect(props.curStats.position_socketXYSE[0].y).toBe(16);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
-        // elm1 left: 1px; top: 2px;
         {type: 'M', values: [6, 8]},
         {type: 'L', values: [13, 8]},
         {type: 'L', values: [13, 16]},
@@ -639,16 +654,31 @@ describe('attachment', function() {
       atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'),
         x: '10%', y: '80%', width: '20%', height: '50%', size: 0});
       ll.start = atc;
+      // elm1 (1, 2) w:100 h:30
       expect(props.curStats.position_socketXYSE[0].x).toBe(31);
       expect(props.curStats.position_socketXYSE[0].y).toBe(33.5);
       expect(props.curStats.capsMaskAnchor_pathDataSE[0]).toEqual([
-        // elm1 left: 1px; top: 2px;
         {type: 'M', values: [11, 26]},
         {type: 'L', values: [31, 26]},
         {type: 'L', values: [31, 41]},
         {type: 'L', values: [11, 41]},
         {type: 'Z', values: []}
       ]);
+      expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
+
+      // default x, y (-5%), width, height (110%)
+      atc = window.LeaderLine.areaAnchor({element: document.getElementById('elm1'), size: 0});
+      ll.start = atc;
+      // elm1 (1, 2) w:100 h:30
+      expect(Math.abs(props.curStats.position_socketXYSE[0].x - 106)).toBeLessThan(TOLERANCE);
+      expect(props.curStats.position_socketXYSE[0].y).toBe(17);
+      expect(matchPathData(props.curStats.capsMaskAnchor_pathDataSE[0], [
+        {type: 'M', values: [-4, 0.5]}, // x: 1 - 5, y: 2 - 1.5, width: 110, height: 33
+        {type: 'L', values: [106, 0.5]},
+        {type: 'L', values: [106, 33.5]},
+        {type: 'L', values: [-4, 33.5]},
+        {type: 'Z', values: []}
+      ])).toBe(true);
       expect(props.curStats.capsMaskAnchor_strokeWidthSE[0]).toBe(0);
 
       // dash number
