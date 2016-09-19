@@ -34,7 +34,7 @@ new LeaderLine(
 
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<td>`, and also, elements in another window (i.e. `<iframe>`).
 
-The constructor acceptes options also.
+The constructor accepts options also.
 
 ```js
 new LeaderLine(start, end, {color: 'red', size: 8});
@@ -113,7 +113,7 @@ new LeaderLine(start2, LeaderLine.pointAnchor({
 }));
 ```
 
-You can show and hide the leader line with effect via [`show` and `hide` methods](#show).  
+You can show and hide the leader line with effect via [`show` and `hide` methods](#show-hide).  
 [`mouseHoverAnchor` attachment](#mousehoveranchor) allows it to implement showing and hiding with mouse moving easily.
 
 ```js
@@ -142,7 +142,7 @@ Or
 line = new LeaderLine(start, end[, options])
 ```
 
-The `options` argument is an object that can have properties as [Options](#options). [`hide` option](#hide) also can be contained.
+The `options` argument is an object that can have properties as [Options](#options). [`hide` option](#hide-option) also can be contained.
 
 `start` and `end` arguments are shortcut to `options.start` and `options.end`. That is, following two codes work same.
 
@@ -154,9 +154,68 @@ new LeaderLine({start: element1, end: element2})
 new LeaderLine(element1, element2)
 ```
 
-The instance has properties that have the same name as the option to get or set those (other than [`hide` option](#hide)).
+The instance has properties that have the same name as the option to get or set those (other than [`hide` option](#hide-option)).
 
 ```js
 var line = new LeaderLine(start, end);
-
+upButton.addEventListener('mousedown', function() {
+  if (line.size < 20) { line.size++; }
+});
+downButton.addEventListener('mousedown', function() {
+  if (line.size > 4) { line.size--; }
+});
 ```
+
+If you want to set multiple options after it was constructed, using [`setOptions` method](#setoptions) instead of the properties is better for performance.
+
+### `hide` option
+
+Only the constructor accepts `hide` option. That is, the instance don't have `hide` property.  
+If `true` is specified, the leader line is not shown, it is shown by [`show` method](#show-hide).  
+This is used to hide it without [`hide` method](#show-hide), it is not shown at all until [`show` method](#show-hide) is called.
+
+```js
+// The leader line is never shown until the button is clicked.
+var line = new LeaderLine(start, end, {hide: true});
+button.addEventListener('click', function() { line.show(); });
+```
+
+## Methods
+
+## `setOptions`
+
+## `show`, `hide`
+
+## `position`
+
+## `remove`
+
+## Options
+
+### `start`, `end`
+### `color`
+### `size`
+### `path`
+### `startSocket`, `endSocket`
+### `startSocketGravity`, `endSocketGravity`
+### `startPlug`, `endPlug`
+### `startPlugColor`, `endPlugColor`
+### `startPlugSize`, `endPlugSize`
+### `outline`
+### `outlineColor`
+### `outlineSize`
+### `startPlugOutline`, `endPlugOutline`
+### `startPlugOutlineColor`, `endPlugOutlineColor`
+### `startPlugOutlineSize`, `endPlugOutlineSize`
+### `startLabel`, `middleLabel`, `endLabel`
+### `dash` (effect)
+### `gradient` (effect)
+### `dropShadow` (effect)
+
+## Attachments
+
+### `pointAnchor`
+### `areaAnchor`
+### `mouseHoverAnchor`
+### `captionLabel`
+### `pathLabel`

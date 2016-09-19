@@ -4256,7 +4256,9 @@
             mouseEnterLeave(attachProps.element, attachProps.mouseenter, attachProps.mouseleave);
           attachProps.enabled = true;
         }
-        show(bindTarget.props, false);
+        addDelayedProc(function() { // SVG might be not setup yet.
+          ATTACHMENTS.mouseHoverAnchor.llShow(bindTarget.props, false);
+        });
         traceLog.add('</ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
         return true;
       },
@@ -4268,7 +4270,7 @@
           ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.styleSave);
           attachProps.enabled = false;
         }
-        show(boundTarget.props, true);
+        ATTACHMENTS.mouseHoverAnchor.llShow(boundTarget.props, true);
         traceLog.add('</ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
       },
 
@@ -4289,6 +4291,15 @@
 
       getBBoxNest: function(attachProps, props) {
         return getBBoxNest(attachProps.element, props.baseWindow);
+      },
+
+      // show/hide immediately
+      llShow: function(props, on) {
+        if (props.curStats.show_inAnim) {
+          SHOW_EFFECTS[props.aplStats.show_effect].stop(props, true); // svgShow() is called
+        }
+        svgShow(props, on); // props.isShown is updated
+        props.aplStats.show_on = on; // aplStats.show_on is updated in only show()
       },
 
       getStyles: function(elmStyle, propNames) {
