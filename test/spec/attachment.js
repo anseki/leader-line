@@ -1392,13 +1392,13 @@ describe('attachment', function() {
           sheet.type = 'text/css';
           sheet.textContent = cssText;
         }
-      })('.inline {display: inline} .block {display: block} .padding1 {padding: 60px} .padding2 {padding: 2px}');
+      })('.inline {display: inline} .block {display: block} .padding1 {padding: 60px} .padding2 {padding: 2px} #height1 {height: 1px} #height2 {height: 1px; box-sizing: border-box}');
 
       (function(htmlText) {
         var p = document.body.appendChild(document.createElement('p'));
         p.style.marginTop = '500px';
         p.innerHTML = htmlText;
-      })('Lorem <span id="span-a">ipsum</span> dolor <span id="span-b" class="block">sit</span> amet, <span id="span-c" style="display: block">consectetur</span> adipiscing <h3 id="h3-a">elit</h3>, sed <h3 id="h3-b" class="inline">do</h3> eiusmod <h3 id="h3-c" style="display: inline">tempor</h3> incididunt <span id="span-d">ut</span> labore <span id="span-e" class="padding1">et</span> dolore <span id="span-f" style="padding: 60px">magna</span> aliqua. <span id="span-g" class="padding2">Ut</span> enim <span id="span-h" style="padding: 2px">ad</span> minim veniam, quis');
+      })('Lorem <span id="span-a">ipsum</span> dolor <span id="span-b" class="block">sit</span> amet, <span id="span-c" style="display: block">consectetur</span> adipiscing <h3 id="h3-a">elit</h3>, sed <h3 id="h3-b" class="inline">do</h3> eiusmod <h3 id="h3-c" style="display: inline">tempor</h3> incididunt <span id="span-d">ut</span> labore <span id="span-e" class="padding1">et</span> dolore <span id="span-f" style="padding: 60px">magna</span> aliqua. <span id="span-g" class="padding2">Ut</span> enim <span id="span-h" style="padding: 2px">ad</span> minim veniam, quis<div id="height1"></div><div id="height2"></div>');
 
       // style.display
       // inline in native
@@ -1473,6 +1473,26 @@ describe('attachment', function() {
       expect(attachProps.style.paddingRight).toBe(15 + 'px');
       expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
       expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+
+      // height (mi-height: 15)
+      // box-sizing: content-box
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('height1')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.paddingTop).toBe(1 + 'px');
+      expect(attachProps.style.paddingRight).toBe(15 + 'px');
+      expect(attachProps.style.paddingBottom).toBe(1 + 'px');
+      expect(attachProps.style.paddingLeft).toBe(2 + 'px');
+      expect(attachProps.style.height).toBe(13 + 'px');
+      // box-sizing: border-box
+      atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('height2')});
+      attachProps = window.insAttachProps[atc._id];
+      ll.start = atc;
+      expect(attachProps.style.paddingTop).toBe(1 + 'px');
+      expect(attachProps.style.paddingRight).toBe(15 + 'px');
+      expect(attachProps.style.paddingBottom).toBe(1 + 'px');
+      expect(attachProps.style.paddingLeft).toBe(2 + 'px');
+      expect(attachProps.style.height).toBe(15 + 'px');
 
       // style.backgroundPosition
       // IS_WEBKIT: false

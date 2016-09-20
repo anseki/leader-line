@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="/src/defs.js"></script>
+  <script src="/src/anim.js"></script>
+  <script src="/src/path-data-polyfill/path-data-polyfill.js"></script>
+  <script src="/traceLog.js"></script>
+  <script src="/src/leader-line.js"></script>
+
+  <script src="test.js"></script>
+
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <h2>Testing for bindWindow with effects/attachments</h2>
+
+  <div id="view-1" class="view">
+    <div class="end-targets"></div>
+    <div class="start-targets"></div>
+  </div>
+  <iframe id="iframe" src="index-c1.html"></iframe>
+
+  <div>
+    <button id="btn-new">new</button>
+    <button id="btn-options">setOptions</button>
+    <button id="btn-new-options">new with options</button>
+    <button id="btn-window">change window</button>
+  </div>
+
+</body>
+</html>

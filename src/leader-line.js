@@ -4119,14 +4119,14 @@
         backgroundSize: '', // It's set in init().
         backgroundRepeat: 'no-repeat',
         backgroundColor: '#f8f881',
-        minHeight: '15px',
         cursor: 'default'
       },
       hoverStyle: {
         backgroundImage: 'none',
         backgroundColor: '#fadf8f'
       },
-      padding: {top: 1, right: 15, bottom: 1, left: 2},
+      padding: {top: 1, right: 15/* >(backgroundSize.width + backgroundPosition.right) */, bottom: 1, left: 2},
+      minHeight: 15,
       backgroundPosition: {right: 2, top: 2},
       backgroundSize: {width: 12, height: 12},
 
@@ -4135,7 +4135,9 @@
       // attachOptions: element, style, hoverStyle, showEffectName, animOptions, onSwitch
       init: function(attachProps, attachOptions) {
         traceLog.add('<ATTACHMENTS.mouseHoverAnchor.init>'); // [DEBUG/]
-        var conf = ATTACHMENTS.mouseHoverAnchor, curStyle, elmStyle, showEffectName, animOptions, onSwitch;
+        var conf = ATTACHMENTS.mouseHoverAnchor,
+          curStyle, elmStyle, bBox, displaySave, paddingSave = {},
+          showEffectName, animOptions, onSwitch;
         attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
 
         conf.style.backgroundSize =
@@ -4149,6 +4151,7 @@
             return copyObj;
           }, {});
         });
+
         curStyle = attachProps.element.ownerDocument.defaultView.getComputedStyle(attachProps.element, '');
         // display
         if (curStyle.display === 'inline') {
@@ -4163,42 +4166,46 @@
             attachProps.style[styleKey] = conf.padding[confKey] + 'px';
           }
         });
+
+        // Make box layout temporarily to get size before binding.
+        if (attachProps.style.display) {
+          displaySave = attachProps.element.style.display;
+          attachProps.element.style.display = attachProps.style.display;
+        }
+        ATTACHMENTS.mouseHoverAnchor.dirKeys.forEach(function(key) {
+          var styleKey = 'padding' + key[1];
+          if (attachProps.style[styleKey]) {
+            paddingSave[styleKey] = attachProps.element.style[styleKey];
+            attachProps.element.style[styleKey] = attachProps.style[styleKey];
+          }
+        });
+        bBox = attachProps.element.getBoundingClientRect();
+
+        // height (simulate min-height with current style (particularly box-sizing))
+        if (bBox.height < conf.minHeight) {
+          attachProps.style.height = parseFloat(curStyle.height) + (conf.minHeight - bBox.height) + 'px';
+        }
+
         if (IS_WEBKIT) { // [WEBKIT] rel-position is not supported
-          (function() {
-            var displaySave, paddingSave = {}, bBox;
-            // Make box layout temporarily to get size before binding.
-            if (attachProps.style.display) {
-              displaySave = attachProps.element.style.display;
-              attachProps.element.style.display = attachProps.style.display;
-            }
-            ATTACHMENTS.mouseHoverAnchor.dirKeys.forEach(function(key) {
-              var styleKey = 'padding' + key[1];
-              if (attachProps.style[styleKey]) {
-                paddingSave[styleKey] = attachProps.element.style[styleKey];
-                attachProps.element.style[styleKey] = attachProps.style[styleKey];
-              }
-            });
-
-            bBox = attachProps.element.getBoundingClientRect();
-            attachProps.style.backgroundPosition =
-              // bBox.width must be larger than backgroundSize.width + backgroundPosition.right.
-              (bBox.width - conf.backgroundSize.width - conf.backgroundPosition.right) + 'px ' +
-              conf.backgroundPosition.top + 'px';
-
-            if (attachProps.style.display) {
-              attachProps.element.style.display = displaySave;
-            }
-            ATTACHMENTS.mouseHoverAnchor.dirKeys.forEach(function(key) {
-              var styleKey = 'padding' + key[1];
-              if (attachProps.style[styleKey]) {
-                attachProps.element.style[styleKey] = paddingSave[styleKey];
-              }
-            });
-          })();
+          attachProps.style.backgroundPosition =
+            // bBox.width should be larger than (backgroundSize.width + backgroundPosition.right) by padding.
+            (bBox.width - conf.backgroundSize.width - conf.backgroundPosition.right) + 'px ' +
+            conf.backgroundPosition.top + 'px';
         } else {
           attachProps.style.backgroundPosition =
             'right ' + conf.backgroundPosition.right + 'px top ' + conf.backgroundPosition.top + 'px';
         }
+
+        // Restore
+        if (attachProps.style.display) {
+          attachProps.element.style.display = displaySave;
+        }
+        ATTACHMENTS.mouseHoverAnchor.dirKeys.forEach(function(key) {
+          var styleKey = 'padding' + key[1];
+          if (attachProps.style[styleKey]) {
+            attachProps.element.style[styleKey] = paddingSave[styleKey];
+          }
+        });
 
         // merge
         ['style', 'hoverStyle'].forEach(function(key) {
@@ -4298,8 +4305,8 @@
         if (props.curStats.show_inAnim) {
           SHOW_EFFECTS[props.aplStats.show_effect].stop(props, true); // svgShow() is called
         }
-        svgShow(props, on); // props.isShown is updated
-        props.aplStats.show_on = on; // aplStats.show_on is updated in only show()
+        svgShow(props, on); // props.isShown is updated.
+        props.aplStats.show_on = on; // It is not updated by svgShow(). (It is used in show().)
       },
 
       getStyles: function(elmStyle, propNames) {
