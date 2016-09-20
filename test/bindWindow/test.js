@@ -93,6 +93,12 @@ window.addEventListener('load', function() {
       }
     ];
 
+  function position() {
+    setTimeout(function() {
+      items.forEach(function(item) { if (item.ll) { item.ll.position(); } });
+    }, 0);
+  }
+
   // Init anchors
   items.forEach(function(item, i) {
     function createAnchor(document, container, label) {
@@ -124,6 +130,8 @@ window.addEventListener('load', function() {
       if (item.ll) { item.ll.remove(); }
       item.ll = new LeaderLine(item.start, item.end, options);
     });
+
+    position();
   }, false);
 
   // setOptions
@@ -134,6 +142,8 @@ window.addEventListener('load', function() {
           typeof item.options === 'function' ? item.options(item.start, item.end) : item.options);
       }
     });
+
+    position();
   }, false);
 
   // new with options
@@ -155,10 +165,28 @@ window.addEventListener('load', function() {
       if (item.ll) { item.ll.remove(); }
       item.ll = new LeaderLine(options);
     });
+
+    position();
   }, false);
 
   // Anchor in child window
   document.getElementById('btn-window').addEventListener('click', function() {
+    items.forEach(function(item) {
+      var options, optionsAdd;
+      if (item.ll) {
+        options = {start: item.startC, end: item.endC};
+        optionsAdd =
+          typeof item.options === 'function' ? item.options(item.startC, item.endC) : item.options;
+
+        Object.keys(optionsAdd).forEach(function(optionName) {
+          options[optionName] = optionsAdd[optionName];
+        });
+
+        item.ll.setOptions(options);
+      }
+    });
+
+    position();
   }, false);
 
 }, false);

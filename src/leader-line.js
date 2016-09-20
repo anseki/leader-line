@@ -3671,7 +3671,7 @@
 
     areaAnchor: {
       type: 'anchor',
-      stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {},
+      stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {}, elementLeft: {}, elementTop: {},
         pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}, dashLen: {}, dashGap: {}},
 
       // attachOptions: element, color(A), fillColor, size(A), dash, shape, x, y, width, height, radius, points
@@ -3867,6 +3867,8 @@
         elementBBox = getBBox(attachProps.element);
         updated.elementWidth = setStat(attachProps, curStats, 'elementWidth', elementBBox.width);
         updated.elementHeight = setStat(attachProps, curStats, 'elementHeight', elementBBox.height);
+        updated.elementLeft = setStat(attachProps, curStats, 'elementLeft', elementBBox.left);
+        updated.elementTop = setStat(attachProps, curStats, 'elementTop', elementBBox.top);
 
         if (updated.strokeWidth ||
             attachProps.hasRatio && (updated.elementWidth || updated.elementHeight)) { // generate path
@@ -4045,11 +4047,13 @@
 
             // no default
           }
+          updated.pathListRel = updated.bBoxRel = true;
+        }
+        if (updated.pathListRel || updated.elementLeft || updated.elementTop) {
           curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
             point.x += elementBBox.left;
             point.y += elementBBox.top;
           });
-          updated.pathListRel = updated.bBoxRel = true;
         }
 
         if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth))) {
