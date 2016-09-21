@@ -2817,8 +2817,11 @@
       start = null;
     }
     options = options || {};
-    if (start) { options.start = start; }
-    if (end) { options.end = end; }
+    if (start || end) {
+      options = copyTree(options);
+      if (start) { options.start = start; }
+      if (end) { options.end = end; }
+    }
     props.isShown = props.aplStats.show_on = !options.hide; // isShown is applied in setOptions -> bindWindow
     that.setOptions(options);
 
@@ -3354,7 +3357,7 @@
             if (finish) {
               SHOW_EFFECTS.fade.stop(props, true);
             } else {
-              props.svg.style.opacity = value;
+              props.svg.style.opacity = value + '';
               // [TRIDENT] masks is ignored when opacity of svg is changed
               if (IS_TRIDENT) { forceReflowAdd(props, props.svg); forceReflowApply(props); }
             }
@@ -3394,7 +3397,7 @@
         timeRatio = curStats.show_inAnim ? anim.stop(curStats.show_animId) : on ? 1 : 0;
         curStats.show_inAnim = false;
         if (finish) {
-          props.svg.style.opacity = on ? 1 : 0;
+          props.svg.style.opacity = on ? '' : '0';
           svgShow(props, on);
         }
         traceLog.add('</SHOW_EFFECTS.fade.stop>'); // [DEBUG/]
@@ -4227,7 +4230,9 @@
 
         if (typeof attachOptions.onSwitch === 'function') { onSwitch = attachOptions.onSwitch; }
 
-        showEffectName = attachOptions.showEffectName;
+        if (attachOptions.showEffectName && SHOW_EFFECTS[attachOptions.showEffectName]) {
+          attachProps.showEffectName = showEffectName = attachOptions.showEffectName;
+        }
         animOptions = attachOptions.animOptions;
         attachProps.elmStyle = elmStyle = attachProps.element.style;
 
@@ -4259,6 +4264,13 @@
 
       bind: function(attachProps, bindTarget) {
         traceLog.add('<ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
+        if (bindTarget.props.svg) {
+          ATTACHMENTS.mouseHoverAnchor.llShow(bindTarget.props, false, attachProps.showEffectName);
+        } else { // SVG is not setup yet.
+          addDelayedProc(function() {
+            ATTACHMENTS.mouseHoverAnchor.llShow(bindTarget.props, false, attachProps.showEffectName);
+          });
+        }
         if (!attachProps.enabled) {
           attachProps.styleSave =
             ATTACHMENTS.mouseHoverAnchor.getStyles(attachProps.elmStyle, Object.keys(attachProps.style));
@@ -4267,9 +4279,6 @@
             mouseEnterLeave(attachProps.element, attachProps.mouseenter, attachProps.mouseleave);
           attachProps.enabled = true;
         }
-        addDelayedProc(function() { // SVG might be not setup yet.
-          ATTACHMENTS.mouseHoverAnchor.llShow(bindTarget.props, false);
-        });
         traceLog.add('</ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
         return true;
       },
@@ -4281,7 +4290,7 @@
           ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.styleSave);
           attachProps.enabled = false;
         }
-        ATTACHMENTS.mouseHoverAnchor.llShow(boundTarget.props, true);
+        ATTACHMENTS.mouseHoverAnchor.llShow(boundTarget.props, true, attachProps.showEffectName);
         traceLog.add('</ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
       },
 
@@ -4305,11 +4314,8 @@
       },
 
       // show/hide immediately
-      llShow: function(props, on) {
-        if (props.curStats.show_inAnim) {
-          SHOW_EFFECTS[props.aplStats.show_effect].stop(props, true); // svgShow() is called
-        }
-        svgShow(props, on); // props.isShown is updated.
+      llShow: function(props, on, showEffectName) {
+        SHOW_EFFECTS[showEffectName || props.curStats.show_effect].stop(props, true, on);
         props.aplStats.show_on = on; // It is not updated by svgShow(). (It is used in show().)
       },
 
