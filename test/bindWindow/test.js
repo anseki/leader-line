@@ -18,7 +18,7 @@ window.addEventListener('load', function() {
     endTargetC = iframeDoc2.querySelector('#view-2 .end-target'),
     elmOptions = document.getElementById('options'),
     btnWindowMix = document.getElementById('btn-window-mix'),
-    llMix, inChild,
+    llMix, inChild, inChildSave = false,
 
     BASIC_OPTIONS1 = {
       color: 'rgba(255, 127, 80, 0.7)',
@@ -226,7 +226,7 @@ window.addEventListener('load', function() {
       if (item.mix) {
         if ((mixOn = item.elmOpt.checked)) {
           optionsAdd = typeof item.options === 'function' ? item.options(start, end) : item.options;
-          if (item.once && item.mixOn) { // to avoid styling the styled element again
+          if (item.once && item.mixOn && inChild === inChildSave) { // to avoid styling the styled element again
             Object.keys(optionsAdd).forEach(function(optionName) {
               delete options[optionName];
             });
@@ -240,6 +240,7 @@ window.addEventListener('load', function() {
       }
     });
     llMix.setOptions(options);
+    inChildSave = inChild;
   }
 
   items.forEach(function(item) {
