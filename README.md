@@ -63,7 +63,7 @@ new LeaderLine(start, end, {
 });
 ```
 
-You can add [effects](#effects) to the leader line via some options.
+You can add effects to the leader line via some options.
 
 ```js
 new LeaderLine(start1, end, {
@@ -76,7 +76,7 @@ new LeaderLine(start3, end, {dash: {animation: true}});
 new LeaderLine(start4, end, {dropShadow: true});
 ```
 
-You can change symbols that are shown at the end of the leader line via [`startPlug` and `endPlug` options](#endplug).
+You can change symbols that are shown at the end of the leader line via [`startPlug` and `endPlug` options](#startplug-endplug).
 
 ```js
 new LeaderLine(start, end, {
@@ -129,7 +129,7 @@ Or
 line = new LeaderLine(start, end[, options])
 ```
 
-The `options` argument is an object that can have properties as [Options](#options). [`hide` option](#hide-option) also can be contained.
+The `options` argument is an Object that can have properties as [Options](#options). [`hide` option](#hide-option) also can be contained.
 
 `start` and `end` arguments are shortcuts to `options.start` and `options.end`. Following two codes work same.
 
@@ -159,7 +159,7 @@ If you want to set multiple options after it was constructed, using [`setOptions
 
 Only the constructor accepts `hide` option. That is, the instance doesn't have `hide` property.  
 If `true` is specified, the leader line is not shown, it is shown by [`show` method](#show-hide).  
-This is used to hide it without [`hide` method](#show-hide), it is not shown at all until [`show` method](#show-hide) is called.
+This is used to hide it without [`hide` method](#show-hide), it is not shown at all until `show` method is called.
 
 ```js
 // The leader line is never shown until the button is clicked.
@@ -176,7 +176,7 @@ self = line.setOptions(options)
 ```
 
 Set one or more options.  
-The `options` argument is an object that can have properties as [Options](#options). This may give better performance when multiple options are set.
+The `options` argument is an Object that can have properties as [Options](#options). This may give better performance when multiple options are set.
 
 ## `show`, `hide`
 
@@ -214,7 +214,7 @@ Default `animOptions`: `{duration: 500, timing: [0.58, 0, 0.42, 1]}`
 *Type:* Object  
 *Default:* See above
 
-See [Animation Options](#animation-options).
+An Object that can have properties as [Animation Options](#animation-options).
 
 ## `position`
 
@@ -223,7 +223,7 @@ self = line.position()
 ```
 
 Fix each position of the end of the leader line with current position of the elements.  
-When the elements as `options.start` or `options.end` were moved, you should call this method to reset each position. For example, you move the element as animation, you make the leader line follow the element that is scrolled, or the elements might be moved by resizing window.
+When the elements as [`start` or `end`](#start-end) were moved, you should call this method to reset each position. For example, you move the element as animation, you make the leader line follow the element that is scrolled, or the elements might be moved by resizing window.
 
 ```js
 ```
@@ -245,7 +245,11 @@ The following options are specified by [constructor](#constructor) or [`setOptio
 *Type:* DOM element or [Attachment](#attachments)  
 
 The leader line is drawn from `start` to `end`.  
-Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<td>`, and also, elements in another window (i.e. `<iframe>`).  
+Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<td>`, and also, elements in another window (i.e. `<iframe>`).
+
+```js
+```
+
 Or you can specify an [attachment](#attachments) instead of DOM element to indicate something.
 
 ### `color`
@@ -253,8 +257,10 @@ Or you can specify an [attachment](#attachments) instead of DOM element to indic
 *Type:* string  
 *Default:* `'coral'`
 
-A color of the leader line.  
-CSS color notations with alpha channel are accepted. For example, `hsl(200, 70%, 58%)`, `rgba(73, 172, 223, 0.5)`, `#49acdf`, `skyblue`, etc. Some browsers support `hwb()`, `device-cmyk()` and `gray()` also.
+A color (See [Color Value](#color-value)) of the leader line.
+
+```js
+```
 
 ### `size`
 
@@ -262,6 +268,9 @@ CSS color notations with alpha channel are accepted. For example, `hsl(200, 70%,
 *Default:* `4`
 
 The width of the leader line, in pixels.
+
+```js
+```
 
 ### `path`
 
@@ -284,79 +293,232 @@ One of the following path names:
 The string that indicates which side of the element the leader line connects, it can be `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.  
 If `'auto'` is specified, the closest side is chosen automatically.
 
+```js
+```
+
 ### `startSocketGravity`, `endSocketGravity`
 
-*Type:* number, string or Array  
+*Type:* number, Array or string  
 *Default:* `'auto'`
 
 The force of gravity at a socket.
-the direction of gravity
+
+If a number is specified, the leader line is pulled in the direction of the socket. The number is pull strength.
+
+```js
+```
+
+If an Array that is coordinates `[x, y]` is specified, the leader line is pulled in the direction of the coordinates. The distance between the coordinates and `[0, 0]` is pull strength.  
+For example, if `[50, -100]` is specified, it is pulled in the direction of the rightward and upward (The strength in the Y axis direction is larger than the X axis direction). If `[-50, 0]` is specified, it is pulled in the direction of the rightward (no strength in the Y axis direction).
+
+```js
+```
+
+If `'auto'` is specified, a value that is suited to [`path`](#path) is set automatically.
 
 ### `startPlug`, `endPlug`
 
 *Type:* string  
-*Default:* `startPlug`: `'behind'`, `endPlug`: `'arrow1'`
+*Default:* `startPlug`: `'behind'` | `endPlug`: `'arrow1'`
+
+One of the following plug (symbol that is shown at the end of the leader line) names:
+
+- `disc`
+- `square`
+- `arrow1`
+- `arrow2`
+- `arrow3`
+- `hand`  
+[`startPlugOutline` or `endPlugOutline`](#startplugoutline-endplugoutline) is ignored  
+[`startPlugColor` or `endPlugColor`](#startplugcolor-endplugcolor) is ignored
+- `crosshair`  
+[`startPlugOutline` or `endPlugOutline`](#startplugoutline-endplugoutline) is ignored
 
 ### `startPlugColor`, `endPlugColor`
 
 *Type:* string  
 *Default:* `'auto'`
 
+A color (See [Color Value](#color-value)) of a plug.  
+It is painted separately from the line. Therefore one of [`color`](#color) and `startPlugColor`/`endPlugColor` or both can have opacity.  
+If `'auto'` is specified, a value of [`color`](#color) is set synchronously (i.e. it is changed when `color` was changed).
+
+```js
+// only endPlugColor has opacity
+```
+
 ### `startPlugSize`, `endPlugSize`
 
 *Type:* number  
-*Default:* `startPlugSize`: `1`, `endPlugSize`: `1`
+*Default:* `1`
+
+A multiplying factor of the size of a plug.  
+The plugs are resized with [`size`](#size) synchronously.
+
+Plug Size: `size` * [default-plug-scale] * [`startPlugSize` or `endPlugSize`]
+
+```js
+```
 
 ### `outline`
 
 *Type:* boolean  
 *Default:* `false`
 
+If `true` is specified, an outline of the leader line is enabled.
+
+```js
+```
+
 ### `outlineColor`
 
 *Type:* string  
 *Default:* `'indianred'`
+
+A color (See [Color Value](#color-value)) of an outline of the leader line.  
+It is painted separately from inside of the line. Therefore one of [`color`](#color) and `outlineColor` or both can have opacity.  
+If [`outline`](#outline) is disabled, it is ignored.
+
+```js
+// only outlineColor has opacity
+```
 
 ### `outlineSize`
 
 *Type:* number  
 *Default:* `0.25`
 
+A multiplying factor of the size of an outline of the leader line.  
+The outline is resized with [`size`](#size) synchronously.
+
+Outline Size: `size` * `outlineSize`
+
 ### `startPlugOutline`, `endPlugOutline`
 
-*Type:* string  
-*Default:* `startPlugOutline`: `false`, `endPlugOutline`: `false`
+*Type:* boolean  
+*Default:* `false`
+
+If `true` is specified, an outline of the plug is enabled.
+
+```js
+```
 
 ### `startPlugOutlineColor`, `endPlugOutlineColor`
 
 *Type:* string  
 *Default:* `'auto'`
 
+A color (See [Color Value](#color-value)) of an outline of the plug.  
+It is painted separately from inside of the plug. Therefore one of [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) and `startPlugOutlineColor`/`endPlugOutlineColor` or both can have opacity.  
+If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) is set synchronously (i.e. it is changed when `outlineColor` was changed).  
+If [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline`) is disabled, it is ignored.
+
+```js
+// only endPlugOutlineColor has opacity
+```
+
 ### `startPlugOutlineSize`, `endPlugOutlineSize`
 
 *Type:* number  
-*Default:* `startPlugOutlineSize`: `1`, `endPlugOutlineSize`: `1`
+*Default:* `1`
+
+A multiplying factor of the size of an outline of the plug.  
+The outline is resized with [`size`](#size) synchronously.
+
+Plug Outline Size: `size` * [default-plug-scale] * [[`startPlugSize` or `endPlugSize`](#startplugsize-endplugsize)] * [default-plug-outline-scale] * [`startPlugOutlineSize` or `endPlugOutlineSize`]
 
 ### `startLabel`, `middleLabel`, `endLabel`
 
-*Type:* string  
-*Default:* `startLabel`: `''`, `middleLabel`: `''`, `endLabel`: `''`
+*Type:* string or [Attachment](#attachments)  
+*Default:* `''`
+
+An additional label that is shown on the leader line.
+
+```js
+```
+
+Or you can specify an [attachment](#attachments) instead of a string.
 
 ### `dash` (effect)
 
 *Type:* boolean or Object  
 *Default:* `false`
 
+Enable the effect with specified Object that can have properties as following options.  
+Or `true` to enable it with all default options.
+
+#### `len`, `gap`
+
+*Type:* number  
+*Default:* `len`: [`size`](#size) * 2 (synchronously) | `gap`: `size` (synchronously)
+
+The size of parts of the dashed line.  
+`len` is length of drawn lines, `gap` is gap between drawn lines.
+
+#### `animation`
+
+*Type:* boolean or Object  
+*Default:* `false`
+
+An Object that can have properties as [Animation Options](#animation-options) to animate the effect.  
+Or `true` to animate it with all default options.
+
+Default Animation Options: `{duration: 1000, timing: 'linear'}`
+
+```js
+```
+
 ### `gradient` (effect)
 
 *Type:* boolean or Object  
 *Default:* `false`
+
+Enable the effect with specified Object that can have properties as following options.  
+Or `true` to enable it with all default options.
+
+#### `startColor`, `endColor`
+
+*Type:* string  
+*Default:* [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) (synchronously)
+
+The start color (See [Color Value](#color-value)) and end color of the gradient.
 
 ### `dropShadow` (effect)
 
 *Type:* boolean or Object  
 *Default:* `false`
 
+Enable the effect with specified Object that can have properties as following options.  
+Or `true` to enable it with all default options.
+
+#### `dx`, `dy`
+
+*Type:* number  
+*Default:* `dx`: `2` | `dy`: `4`
+
+The X and Y offset of the drop shadow.
+
+#### `blur`
+
+*Type:* number  
+*Default:* `3`
+
+The standard deviation for the blur operation in the drop shadow.
+
+#### `color`
+
+*Type:* string  
+*Default:* `'#000'`
+
+A color (See [Color Value](#color-value)) of the drop shadow.  
+Alpha channel can be contained but it is specified for [`opacity` option](#opacity).
+
+#### `opacity`
+
+*Type:* number  
+*Default:* `0.8`
+
+The transparency of the drop shadow, clipped in the range `[0,1]`.
 
 ## Attachments
 
@@ -368,8 +530,6 @@ the direction of gravity
 
 ## Animation Options
 
-An object that can have following properties:
-
 ### `duration`
 
 *Type:* string  
@@ -379,3 +539,7 @@ An object that can have following properties:
 
 *Type:* string  
 *Default:* `'loading'`
+
+## Color Value
+
+CSS color notations with alpha channel are accepted. For example, `hsl(200, 70%, 58%)`, `rgba(73, 172, 223, 0.5)`, `#49acdf`, `skyblue`, etc. Some browsers support `hwb()`, `device-cmyk()` and `gray()` also.
