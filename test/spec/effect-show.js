@@ -622,7 +622,7 @@ describe('effect-show', function() {
           'finish=true', 'on=on=true'
         ]);
         expect(props.isShown).toBe(true);
-        expect(props.svg.style.opacity).toBe('1');
+        expect(props.svg.style.opacity).toBe('');
         expect(props.svg.style.visibility).toBe('');
 
         // stop() hides view
