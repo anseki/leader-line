@@ -441,4 +441,165 @@ describe('funcs', function() {
 
   });
 
+  describe('isHTMLElement()', function() {
+    var document, isHTMLElement, IS_TRIDENT, IS_WEBKIT, pageDone;
+
+    beforeAll(function(beforeDone) {
+      loadPage('spec/funcs/isHTMLElement.html', function(window, frmDocument, body, done) {
+        document = frmDocument;
+        isHTMLElement = window.isHTMLElement;
+        IS_TRIDENT = window.IS_TRIDENT;
+        IS_WEBKIT = window.IS_WEBKIT;
+        pageDone = done;
+        beforeDone();
+      });
+    });
+
+    afterAll(function() {
+      pageDone();
+    });
+
+    it('HTMLAnchorElement:true', function() {
+      var element = document.getElementsByTagName('a')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLAnchorElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('HTMLParagraphElement:true', function() {
+      var element = document.getElementsByTagName('p')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLParagraphElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('HTMLHeadElement:true', function() {
+      var element = document.getElementsByTagName('head')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLHeadElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('HTMLScriptElement:true', function() {
+      var element = document.getElementsByTagName('script')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLScriptElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('HTMLBodyElement:true', function() {
+      var element = document.body;
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLBodyElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('HTMLHtmlElement:true', function() {
+      var element = document.documentElement;
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLHtmlElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('HTMLDocument:false', function() {
+      var element = document;
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLDocument]');
+      expect(isHTMLElement(element)).toBe(false);
+    });
+
+    it('HTMLCollection:false', function() {
+      var element = document.getElementsByTagName('a');
+      expect(Object.prototype.toString.apply(element)).toBe('[object ' +
+        (IS_WEBKIT ? 'NodeList' : 'HTMLCollection') + ']');
+      expect(isHTMLElement(element)).toBe(false);
+    });
+
+    it('HTMLOptionsCollection:false', function() {
+      var element = document.getElementsByTagName('select')[0].options;
+      if (!IS_TRIDENT) { // [TRIDENT] `<select>.options` returns itself.
+        expect(Object.prototype.toString.apply(element)).toBe('[object HTMLOptionsCollection]');
+        expect(isHTMLElement(element)).toBe(false);
+      }
+    });
+
+    it('HTMLFormControlsCollection:false', function() {
+      var element = document.forms[0].elements;
+      if (!IS_TRIDENT) { // [TRIDENT] The class is not supported.
+        expect(Object.prototype.toString.apply(element)).toBe('[object HTMLFormControlsCollection]');
+      }
+      expect(isHTMLElement(element)).toBe(false);
+    });
+
+    it('Another window HTMLAnchorElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('a')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLAnchorElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window HTMLParagraphElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('p')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLParagraphElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window HTMLHeadElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('head')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLHeadElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window HTMLScriptElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('script')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLScriptElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window HTMLBodyElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.body;
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLBodyElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window HTMLHtmlElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.documentElement;
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLHtmlElement]');
+      expect(isHTMLElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window HTMLDocument:false', function() {
+      var element = document.getElementById('iframe-1').contentDocument;
+      expect(Object.prototype.toString.apply(element)).toBe('[object HTMLDocument]');
+      expect(isHTMLElement(element)).toBe(false);
+    });
+
+    it('Another window HTMLCollection:false', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('a');
+      expect(Object.prototype.toString.apply(element)).toBe('[object ' +
+        (IS_WEBKIT ? 'NodeList' : 'HTMLCollection') + ']');
+      expect(isHTMLElement(element)).toBe(false);
+    });
+
+    it('Another window HTMLOptionsCollection:false', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('select')[0].options;
+      if (!IS_TRIDENT) { // [TRIDENT] `<select>.options` returns itself.
+        expect(Object.prototype.toString.apply(element)).toBe('[object HTMLOptionsCollection]');
+        expect(isHTMLElement(element)).toBe(false);
+      }
+    });
+
+    it('Another window HTMLFormControlsCollection:false', function() {
+      var element = document.getElementById('iframe-1').contentDocument.forms[0].elements;
+      if (!IS_TRIDENT) { // [TRIDENT] The class is not supported.
+        expect(Object.prototype.toString.apply(element)).toBe('[object HTMLFormControlsCollection]');
+      }
+      expect(isHTMLElement(element)).toBe(false);
+    });
+  });
+
 });

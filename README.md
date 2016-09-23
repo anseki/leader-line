@@ -25,7 +25,7 @@ Load a file `leader-line.min.js` only into your web page.
 <script src="leader-line.min.js"></script>
 ```
 
-Pass two DOM elements to `LeaderLine` constructor. Then a leader line is drawn between those.
+Pass two HTML elements to `LeaderLine` constructor. Then a leader line is drawn between those.
 
 ```js
 new LeaderLine(
@@ -242,7 +242,7 @@ The following options are specified by [constructor](#constructor) or [`setOptio
 
 ### `start`, `end`
 
-*Type:* DOM element or [Attachment](#attachments)  
+*Type:* HTML element or [Attachment](#attachments)  
 
 The leader line is drawn from `start` to `end`.  
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<td>`, and also, elements in another window (i.e. `<iframe>`).
@@ -250,7 +250,7 @@ Any element that has bounding-box is accepted. For example, `<div>`, `<button>`,
 ```js
 ```
 
-Or you can specify an [attachment](#attachments) instead of DOM element to indicate something.
+Or you can specify an [attachment](#attachments) instead of HTML element to indicate something.
 
 ### `color`
 
@@ -524,7 +524,7 @@ The transparency of the drop shadow, clipped in the range `[0,1]`.
 
 Attachments are passed to the leader line via some options, and those make that option do special behavior.
 
-You can make new attachment instance by individual method.  
+You can get new attachment instance by individual method.  
 For example, `LeaderLine.pointAnchor` method makes new [`pointAnchor`](#pointanchor) attachment instance. And you can pass the instance to the leader line for [`start` or `end`](#start-end) option.
 
 ```js
@@ -556,6 +556,14 @@ line2.end = line1.end;
 ```
 
 ### `pointAnchor`
+
+```js
+attachment = LeaderLine.pointAnchor(options)
+```
+
+The `options` argument is an Object that can have properties as following options.
+
+
 
 
 

@@ -333,6 +333,13 @@
   }
   window.mouseEnterLeave = mouseEnterLeave; // [DEBUG/]
 
+  function isHTMLElement(element) {
+    var win, doc;
+    return !!(element && (doc = element.ownerDocument) && (win = doc.defaultView) &&
+      element instanceof win.HTMLElement);
+  }
+  window.isHTMLElement = isHTMLElement; // [DEBUG/]
+
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
    * @param {Element} element - Target element.
@@ -2555,8 +2562,7 @@
     ['start', 'end'].forEach(function(optionName, i) {
       var newOption = newOptions[optionName], newIsAttachment = false;
       if (newOption &&
-          (newOption.nodeType != null || // eslint-disable-line eqeqeq
-            (newIsAttachment = isAttachment(newOption, 'anchor'))) &&
+          (isHTMLElement(newOption) || (newIsAttachment = isAttachment(newOption, 'anchor'))) &&
           newOption !== options.anchorSE[i]) {
 
         if (props.optionIsAttach.anchorSE[i] !== false) {
@@ -3541,10 +3547,27 @@
     /**
      * @class
      * @param {AttachConf} conf - Target AttachConf.
-     * @param {Object} attachOptions - Initial options.
+     * @param {Array} args - Initial options.
      */
-    function LeaderLineAttachment(conf, attachOptions) {
-      var attachProps = {conf: conf, curStats: {}, aplStats: {}, boundTargets: []};
+    function LeaderLineAttachment(conf, args) {
+      var attachProps = {conf: conf, curStats: {}, aplStats: {}, boundTargets: []},
+        attachOptions, shortOptions = {};
+
+      // Parse arguments
+      conf.argOptions.every(function(argOption) {
+        if (args.length && (
+              typeof argOption.type === 'string' ? typeof args[0] === argOption.type :
+              args[0] instanceof argOption.type
+            )) {
+          shortOptions[argOption.optionName] = args.shift();
+          return true;
+        } else {
+          return false;
+        }
+      });
+      attachOptions = args.length && isObject(args[0]) ? copyTree(args[0]) : {};
+      Object.keys(shortOptions).forEach(
+        function(optionName) { attachOptions[optionName] = shortOptions[optionName]; });
 
       if (conf.stats) {
         initStats(attachProps.curStats, conf.stats);
@@ -3558,7 +3581,7 @@
       attachProps._id = this._id;
 
       // isRemoved has to be set before this because init() might throw.
-      if (!conf.init || conf.init(attachProps, isObject(attachOptions) ? attachOptions : {})) {
+      if (!conf.init || conf.init(attachProps, attachOptions)) {
         insAttachProps[this._id] = attachProps;
       }
     }
@@ -3601,6 +3624,7 @@
   /**
    * @typedef {Object} AttachConf
    * @property {string} type
+   * @property {{string, (string|Class)}[]} argOptions - Shortcuts to options, in arguments. (Not Object)
    * @property {{statName: string, StatConf}} stats - Additional stats.
    * @property {Function} init - function(attachProps, attachOptions) returns `true` when succeeded.
    * @property {Function} bind - function(attachProps, bindTarget) returns `true` when succeeded.
@@ -3617,6 +3641,7 @@
   ATTACHMENTS = {
     pointAnchor: {
       type: 'anchor',
+      argOptions: [{optionName: 'element', type: HTMLElement}],
 
       // attachOptions: element, x, y
       init: function(attachProps, attachOptions) {
@@ -3665,8 +3690,8 @@
       checkElement: function(element) {
         if (element == null) { // eslint-disable-line eqeqeq
           element = document.body;
-        } else if (element.nodeType == null) { // eslint-disable-line eqeqeq
-          throw new Error('`element` must be DOM');
+        } else if (!isHTMLElement(element)) {
+          throw new Error('`element` must be HTMLElement');
         }
         return element;
       }
@@ -3674,6 +3699,7 @@
 
     areaAnchor: {
       type: 'anchor',
+      argOptions: [{optionName: 'element', type: HTMLElement}, {optionName: 'shape', type: 'string'}],
       stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {}, elementLeft: {}, elementTop: {},
         pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}, dashLen: {}, dashGap: {}},
 
@@ -4120,6 +4146,7 @@
 
     mouseHoverAnchor: {
       type: 'anchor',
+      argOptions: [{optionName: 'element', type: HTMLElement}, {optionName: 'showEffectName', type: 'string'}],
 
       style: {
         backgroundImage: 'url(\'data:image/svg+xml;charset=utf-8;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cG9seWdvbiBwb2ludHM9IjI0LDAgMCw4IDgsMTEgMCwxOSA1LDI0IDEzLDE2IDE2LDI0IiBmaWxsPSJjb3JhbCIvPjwvc3ZnPg==\')',
@@ -4333,6 +4360,7 @@
 
     captionLabel: {
       type: 'label',
+      argOptions: [{optionName: 'text', type: 'string'}],
       stats: {color: {}, x: {}, y: {}},
       textStyleProps: ['fontFamily', 'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch',
         'fontSize', 'fontSizeAdjust', 'kerning', 'letterSpacing', 'wordSpacing', 'textDecoration'],
@@ -4700,6 +4728,7 @@
 
     pathLabel: {
       type: 'label',
+      argOptions: [{optionName: 'text', type: 'string'}],
       stats: {color: {}, startOffset: {}, pathData: {}},
 
       // attachOptions: text, color(A), outlineColor, lineOffset, <textStyleProps>
@@ -5100,8 +5129,8 @@
   window.ATTACHMENTS = ATTACHMENTS; // [DEBUG/]
 
   Object.keys(ATTACHMENTS).forEach(function(attachmentName) {
-    LeaderLine[attachmentName] = function(attachOptions) {
-      return new LeaderLineAttachment(ATTACHMENTS[attachmentName], attachOptions);
+    LeaderLine[attachmentName] = function() {
+      return new LeaderLineAttachment(ATTACHMENTS[attachmentName], Array.prototype.slice.call(arguments));
     };
   });
 
