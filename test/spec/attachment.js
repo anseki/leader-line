@@ -129,6 +129,66 @@ describe('attachment', function() {
       pageDone();
       done();
     });
+
+    it(registerTitle('parse options'), function(done) {
+      var atc, attachProps,
+        defaultOptions = {
+          element: document.getElementById('elm1'),
+          showEffectName: 'draw',
+          style: {dummy: 9}
+        };
+
+      // mouseHoverAnchor(element, showEffectName, options)
+
+      atc = window.LeaderLine.mouseHoverAnchor(defaultOptions);
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.element).toBe(document.getElementById('elm1'));
+      expect(attachProps.showEffectName).toBe('draw');
+      console.log(attachProps.style);
+      expect(attachProps.style.dummy).toBe(9);
+
+      atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'));
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.element).toBe(document.getElementById('elm2'));
+      expect(attachProps.showEffectName == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.dummy == null).toBe(true); // eslint-disable-line eqeqeq
+
+      atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), defaultOptions);
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.element).toBe(document.getElementById('elm2'));
+      expect(attachProps.showEffectName).toBe('draw');
+      expect(attachProps.style.dummy).toBe(9);
+
+      atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), 'none');
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.element).toBe(document.getElementById('elm2'));
+      expect(attachProps.showEffectName).toBe('none');
+      expect(attachProps.style.dummy == null).toBe(true); // eslint-disable-line eqeqeq
+
+      atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), 'none', defaultOptions);
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.element).toBe(document.getElementById('elm2'));
+      expect(attachProps.showEffectName).toBe('none');
+      expect(attachProps.style.dummy).toBe(9);
+
+      // invalid value
+
+      atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), true);
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.element).toBe(document.getElementById('elm2'));
+      expect(attachProps.showEffectName == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.dummy == null).toBe(true); // eslint-disable-line eqeqeq
+
+      atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), true, defaultOptions);
+      attachProps = window.insAttachProps[atc._id];
+      expect(attachProps.element).toBe(document.getElementById('elm2'));
+      expect(attachProps.showEffectName == null).toBe(true); // eslint-disable-line eqeqeq
+      // defaultOptions also is ignored
+      expect(attachProps.style.dummy == null).toBe(true); // eslint-disable-line eqeqeq
+
+      pageDone();
+      done();
+    });
   });
 
   describe('life cycle', function() {
