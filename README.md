@@ -522,7 +522,43 @@ The transparency of the drop shadow, clipped in the range `[0,1]`.
 
 ## Attachments
 
+Attachments are passed to the leader line via some options, and those make that option do special behavior.
+
+You can make new attachment instance by individual method.  
+For example, `LeaderLine.pointAnchor` method makes new [`pointAnchor`](#pointanchor) attachment instance. And you can pass the instance to the leader line for [`start` or `end`](#start-end) option.
+
+```js
+new LeaderLine(start, LeaderLine.pointAnchor({element: end}));
+```
+
+In the case of the plan to use the attachment afterward.
+
+```js
+var line = new LeaderLine(start, end),
+  attachment = LeaderLine.pointAnchor({element: end});
+
+function attach() {
+  line.end = attachment;
+}
+```
+
+The new attachment instance is shared between two leader lines.
+
+```js
+line1.end = line2.end = LeaderLine.pointAnchor({element: end});
+```
+
+The `line1`'s attachment instance is shared with `line2`.
+
+```js
+line1.end = LeaderLine.pointAnchor({element: end});
+line2.end = line1.end;
+```
+
 ### `pointAnchor`
+
+
+
 ### `areaAnchor`
 ### `mouseHoverAnchor`
 ### `captionLabel`
