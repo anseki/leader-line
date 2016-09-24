@@ -79,7 +79,7 @@ new LeaderLine(startElement3, endElement, {dash: {animation: true}});
 new LeaderLine(startElement4, endElement, {dropShadow: true});
 ```
 
-You can change symbols that are shown at the end of the leader line via [`startPlug` and `endPlug` options](#startplug-endplug).
+You can change symbols that are shown at the end of the leader line via [`startPlug` and `endPlug`](#startplug-endplug) options.
 
 ```js
 new LeaderLine(startElement, endElement, {
@@ -88,35 +88,37 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-You can indicate a point or area of an element instead of an element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachments.
+You can indicate a point or area of an element instead of the element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachment.
 
-You can specify additional labels via [`startLabel`, `middleLabel` and `endLabel` options](#startlabel-middlelabel-endlabel). Also, [`captionLabel`](#captionlabel) or [`pathLabel`](#pathlabel) attachments can be specified as labels.
+You can specify additional labels via [`startLabel`, `middleLabel` and `endLabel`](#startlabel-middlelabel-endlabel) options. Also, [`captionLabel`](#captionlabel) and [`pathLabel`](#pathlabel) attachments can be specified as labels.
 
 ```js
-new LeaderLine(startElement1, LeaderLine.pointAnchor({
-  element: endElement1,
-  x: 999,
-  y: 999
-}), {
-  endLabel: 'xxx'
-});
+new LeaderLine(
+  startElement1,
+  LeaderLine.pointAnchor(endElement1, {
+    x: 999,
+    y: 999
+  }),
+  {endLabel: 'xxx'}
+);
 
-new LeaderLine(startElement2, LeaderLine.areaAnchor({
-  element: endElement2,
-  x: 999,
-  y: 999,
-  width: 999,
-  height: 999,
-}), {
-  endLabel: LeaderLine.pathLabel({text: 'xxx'})
-});
+new LeaderLine(
+  startElement2,
+  LeaderLine.areaAnchor(endElement2, {
+    x: 999,
+    y: 999,
+    width: 999,
+    height: 999,
+  }),
+  {endLabel: LeaderLine.pathLabel('xxx')}
+);
 ```
 
-You can show and hide the leader line with effect by [`show` and `hide` methods](#show-hide).  
-[`mouseHoverAnchor` attachment](#mousehoveranchor) allows it to implement showing and hiding with mouse moving easily.
+You can show and hide the leader line with effect by [`show` and `hide`](#show-hide) methods.  
+[`mouseHoverAnchor`](#mousehoveranchor) attachment allows it to implement showing and hiding with mouse moving easily.
 
 ```js
-new LeaderLine(LeaderLine.mouseHoverAnchor({element: startElement}), endElement);
+new LeaderLine(LeaderLine.mouseHoverAnchor(startElement), endElement);
 ```
 
 For more details, refer to the following.
@@ -133,9 +135,9 @@ Or
 line = new LeaderLine(start, end[, options])
 ```
 
-The `options` argument is an Object that can have properties as [Options](#options). [`hide` option](#hide-option) also can be contained.
+The `options` argument is an Object that can have properties as [options](#options). [`hide`](#hide-option) option also can be contained.
 
-`start` and `end` arguments are shortcuts to `options.start` and `options.end`. Following two codes work same.
+The `start` and `end` arguments are shortcuts to `options.start` and `options.end`. Following two codes work same.
 
 ```js
 new LeaderLine({start: element1, end: element2});
@@ -147,7 +149,7 @@ new LeaderLine(element1, element2);
 new LeaderLine(element3, element4, {color: 'red'});
 ```
 
-The instance has properties that have the same name as each option to get or set those values (other than [`hide` option](#hide-option)).
+The instance has properties that have the same name as each option to get or set those values (other than [`hide`](#hide-option) option).
 
 ```js
 var line = new LeaderLine(startElement, endElement);
@@ -161,13 +163,13 @@ downButton.addEventListener('mousedown', function() {
 }, false);
 ```
 
-If you want to set multiple options after it was constructed, using [`setOptions` method](#setoptions) instead of the properties may give better performance.
+If you want to set multiple options after it was constructed, using [`setOptions`](#setoptions) method instead of the properties may give better performance.
 
 ### `hide` option
 
-Only the constructor accepts `hide` option. That is, the instance doesn't have `hide` property. (Note that the instance has [`hide` method](#show-hide).)  
-If `true` is specified, the leader line is not shown, it is shown by [`show` method](#show-hide).  
-This is used to hide it without using [`hide` method](#show-hide), it is not shown at all until `show` method is called.
+Only the constructor accepts `hide` option. That is, the instance doesn't have `hide` property. (Note that the instance has [`hide`](#show-hide) method.)  
+If `true` is specified, the leader line is not shown, it is shown by [`show`](#show-hide) method.  
+This is used to hide it without using [`hide`](#show-hide) method, it is not shown at all until `show` method is called.
 
 ```js
 // The leader line is never shown until the button is clicked.
@@ -184,7 +186,9 @@ self = line.setOptions(options)
 ```
 
 Set one or more options.  
-The `options` argument is an Object that can have properties as [Options](#options). This may give better performance when multiple options are set.
+The `options` argument is an Object that can have properties as [options](#options).
+
+Since this method updates a view once after it sets all specified options, it may give better performance than setting options via the properties when multiple options are set to the instance that already exists.
 
 ## `show`, `hide`
 
@@ -231,7 +235,7 @@ self = line.position()
 ```
 
 Fix each position of the end of the leader line with current position of the elements.  
-When the elements as [`start` or `end`](#start-end) were moved, you should call this method to reset each position. For example, you move the element as animation, you make the leader line follow the element that is scrolled, or the elements might be moved by resizing window.
+When the elements as [`start` or `end`](#start-end) option were moved, you should call this method to reset each position. For example, you move the element as animation, you make the leader line follow the element that is scrolled, or the elements might be moved by resizing window.
 
 ```js
 ```
@@ -246,11 +250,11 @@ Remove the leader line from the web page. The removed instance can't be used any
 
 ## Options
 
-The following options are specified by [constructor](#constructor) or [`setOptions` method](#setoptions). And also, those are accessed via each property of instance.
+The following options are specified by [constructor](#constructor) or [`setOptions`](#setoptions) method. And also, those are accessed via each property of instance.
 
 ### `start`, `end`
 
-*Type:* HTML element or [Attachment](#attachments)  
+*Type:* HTML element or [Attachment](#attachments)
 
 The leader line is drawn from the `start` element to the `end` element.  
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<td>`, and also, elements in another window (i.e. `<iframe>`).
@@ -322,7 +326,7 @@ For example, if `[50, -100]` is specified, it is pulled in the direction of the 
 ```js
 ```
 
-If `'auto'` is specified, a value that is suited to [`path`](#path) is set automatically.
+If `'auto'` is specified, it is adjusted to gravity suitable for current [`path`](#path) option automatically.
 
 ### `startPlug`, `endPlug`
 
@@ -337,19 +341,22 @@ One of the following plug (symbol that is shown at the end of the leader line) n
 - `arrow2`
 - `arrow3`
 - `hand`  
-[`startPlugOutline` or `endPlugOutline`](#startplugoutline-endplugoutline) is ignored  
-[`startPlugColor` or `endPlugColor`](#startplugcolor-endplugcolor) is ignored
+[`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option is ignored  
+[`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) option is ignored
 - `crosshair`  
-[`startPlugOutline` or `endPlugOutline`](#startplugoutline-endplugoutline) is ignored
+[`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option is ignored
+- `behind`
 
 ### `startPlugColor`, `endPlugColor`
 
 *Type:* string  
 *Default:* `'auto'`
 
+Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
+
 A color (See [Color Value](#color-value)) of a plug.  
-It is painted separately from the line (i.e. Those don't overlap each other). Therefore one of [`color`](#color) and `startPlugColor`/`endPlugColor` or both can have opacity.  
-If `'auto'` is specified, a value of [`color`](#color) is set synchronously (i.e. it is changed when `color` was changed).
+It is painted separately from the line (i.e. Those don't overlap each other). Therefore one of [`color`](#color) and `startPlugColor`/`endPlugColor` or both options can have opacity.  
+If `'auto'` is specified, a value of `color` option is set synchronously (i.e. it is changed when `color` was changed).
 
 ```js
 // only endPlugColor has opacity
@@ -360,8 +367,10 @@ If `'auto'` is specified, a value of [`color`](#color) is set synchronously (i.e
 *Type:* number  
 *Default:* `1`
 
+Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
+
 A multiplying factor of the size of a plug.  
-The plugs are resized with [`size`](#size) synchronously.
+The plugs are resized synchronously, with following options that contain [`size`](#size):
 
 Plug Size: `size` * [default-plug-scale] * [`startPlugSize` or `endPlugSize`]
 
@@ -383,9 +392,10 @@ If `true` is specified, an outline of the leader line is enabled.
 *Type:* string  
 *Default:* `'indianred'`
 
+An option for when `true` is specified for [`outline`](#outline) option.
+
 A color (See [Color Value](#color-value)) of an outline of the leader line.  
-It is painted separately from inside of the line (i.e. Those don't overlap each other). Therefore one of [`color`](#color) and `outlineColor` or both can have opacity.  
-If [`outline`](#outline) is disabled, it is ignored.
+It is painted separately from inside of the line (i.e. Those don't overlap each other). Therefore one of [`color`](#color) and `outlineColor` or both options can have opacity.
 
 ```js
 // only outlineColor has opacity
@@ -396,8 +406,10 @@ If [`outline`](#outline) is disabled, it is ignored.
 *Type:* number  
 *Default:* `0.25`
 
+An option for when `true` is specified for [`outline`](#outline) option.
+
 A multiplying factor of the size of an outline of the leader line.  
-The outline is resized with [`size`](#size) synchronously.
+The outline is resized synchronously, with following options that contain [`size`](#size):
 
 Outline Size: `size` * `outlineSize`
 
@@ -405,6 +417,8 @@ Outline Size: `size` * `outlineSize`
 
 *Type:* boolean  
 *Default:* `false`
+
+Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
 
 If `true` is specified, an outline of the plug is enabled.
 
@@ -416,10 +430,11 @@ If `true` is specified, an outline of the plug is enabled.
 *Type:* string  
 *Default:* `'auto'`
 
+Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option, withal `true` is specified for [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option.
+
 A color (See [Color Value](#color-value)) of an outline of the plug.  
-It is painted separately from inside of the plug (i.e. Those don't overlap each other). Therefore one of [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) and `startPlugOutlineColor`/`endPlugOutlineColor` or both can have opacity.  
-If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) is set synchronously (i.e. it is changed when `outlineColor` was changed).  
-If [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline`) is disabled, it is ignored.
+It is painted separately from inside of the plug (i.e. Those don't overlap each other). Therefore one of [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) and `startPlugOutlineColor`/`endPlugOutlineColor` or both options can have opacity.  
+If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) option is set synchronously (i.e. it is changed when `outlineColor` was changed).
 
 ```js
 // only endPlugOutlineColor has opacity
@@ -430,8 +445,10 @@ If [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline`) is d
 *Type:* number  
 *Default:* `1`
 
+Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option, withal `true` is specified for [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option.
+
 A multiplying factor of the size of an outline of the plug.  
-The outline is resized with [`size`](#size) synchronously.
+The outline is resized synchronously, with following options that contain [`size`](#size):
 
 Plug Outline Size: `size` * [default-plug-scale] * [[`startPlugSize` or `endPlugSize`](#startplugsize-endplugsize)] * [default-plug-outline-scale] * [`startPlugOutlineSize` or `endPlugOutlineSize`]
 
@@ -460,7 +477,7 @@ Or `true` to enable it with all default options.
 *Type:* number  
 *Default:* `len`: [`size`](#size) * 2 (synchronously) | `gap`: `size` (synchronously)
 
-The size of parts of the dashed line.  
+The size of parts of the dashed line, in pixels.  
 `len` is length of drawn lines, `gap` is gap between drawn lines.
 
 #### `animation`
@@ -504,7 +521,7 @@ Or `true` to enable it with all default options.
 *Type:* number  
 *Default:* `dx`: `2` | `dy`: `4`
 
-The X and Y offset of the drop shadow.
+The X and Y offset of the drop shadow, in pixels.
 
 #### `blur`
 
@@ -519,7 +536,7 @@ The standard deviation for the blur operation in the drop shadow.
 *Default:* `'#000'`
 
 A color (See [Color Value](#color-value)) of the drop shadow.  
-Alpha channel can be contained but it is specified for [`opacity` option](#opacity).
+Alpha channel can be contained but it is specified for [`opacity`](#opacity) option.
 
 #### `opacity`
 
@@ -533,7 +550,7 @@ The transparency of the drop shadow, clipped in the range `[0,1]`.
 Attachments are passed to the leader line via some options, and those make that option do special behavior.
 
 You can get new attachment instance by individual method.  
-For example, `LeaderLine.pointAnchor` method makes new [`pointAnchor`](#pointanchor) attachment instance. And you can pass the instance to the leader line for [`start` or `end`](#start-end) option.
+For example, `LeaderLine.pointAnchor` method makes new [`pointAnchor`](#pointanchor) attachment instance. The instance is passed to the leader line via [`start` or `end`](#start-end) option.
 
 ```js
 new LeaderLine(startElement, LeaderLine.pointAnchor(endElement));
@@ -555,7 +572,7 @@ The new attachment instance is shared between two leader lines.
 line1.end = line2.end = LeaderLine.pointAnchor(endElement);
 ```
 
-The `line1`'s attachment instance is shared with `line2`.
+The `line1`'s attachment instance is shared with `line2`, in the `share` function.
 
 ```js
 line1.end = LeaderLine.pointAnchor(endElement);
@@ -571,13 +588,158 @@ function share() {
 attachment = LeaderLine.pointAnchor(options)
 ```
 
-The `options` argument is an Object that can have properties as following options.
+Or
 
+```js
+attachment = LeaderLine.pointAnchor(element[, options])
+```
 
+An attachment that is specified instead of a HTML element for the `start` or `end` option of the leader line, for indicating a point instead of the element.  
+The `options` argument is an Object that can have properties as options that are described later.
 
+The `element` argument is shortcut to `options.element`. Following two codes work same.
 
+```js
+attachment1 = LeaderLine.pointAnchor({element: element1});
+attachment2 = LeaderLine.pointAnchor({element: element2, x: 16, y: 32});
+```
+
+```js
+attachment1 = LeaderLine.pointAnchor(element1);
+attachment2 = LeaderLine.pointAnchor(element2, {x: 16, y: 32});
+```
+
+#### <a name="attachments-pointanchor-element"></a>`element`
+
+*Type:* HTML element
+
+An element that is a base of the point. See [`x` and `y`](#attachments-pointanchor-x-y) options.
+
+#### <a name="attachments-pointanchor-x-y"></a>`x`, `y`
+
+*Type:* number or string  
+*Default:* `'50%'`
+
+The X and Y coordinates for the point, in pixels, relative to the left-top corner of the specified element for [`element`](#attachments-pointanchor-element) option.  
+Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: '50%'}` indicates the center of the element, `{x: '100%', y: 0}` indicates the right-top corner.  
+And also, each value can be a negative value or a value over the element's width or height, it indicates the outside of the element.
 
 ### `areaAnchor`
+
+```js
+attachment = LeaderLine.areaAnchor(options)
+```
+
+Or
+
+```js
+attachment = LeaderLine.areaAnchor(element[, shape][, options])
+```
+
+An attachment that is specified instead of a HTML element for the `start` or `end` option of the leader line, for indicating an area instead of the element.  
+The `options` argument is an Object that can have properties as options that are described later.
+
+The `element` and `shape` arguments are shortcuts to `options.element` and `options.shape`. Following two codes work same.
+
+```js
+attachment1 = LeaderLine.areaAnchor({element: element1});
+attachment2 = LeaderLine.areaAnchor({
+  element: element2, x: 16, y: 32, width: 48, height: 48
+});
+attachment3 = LeaderLine.areaAnchor({element: element3, shape: 'circle'});
+attachment4 = LeaderLine.areaAnchor({
+  element: element4, shape: 'circle', x: 16, y: 32, width: 48, height: 48
+});
+```
+
+```js
+attachment1 = LeaderLine.areaAnchor(element1);
+attachment2 = LeaderLine.areaAnchor(element2, {
+  x: 16, y: 32, width: 48, height: 48
+});
+attachment3 = LeaderLine.areaAnchor(element3, 'circle');
+attachment4 = LeaderLine.areaAnchor(element4, 'circle', {
+  x: 16, y: 32, width: 48, height: 48
+});
+```
+
+#### <a name="attachments-areaanchor-element"></a>`element`
+
+*Type:* HTML element
+
+An element that is a base of the area. See [`x`, `y`](#attachments-areaanchor-x-y), [`width` and `height`](#width-height) options.
+
+#### `shape`
+
+*Type:* string  
+*Default:* `'rect'`
+
+One of the following shape names:
+
+- `rect`
+- `circle`
+- `polygon`
+
+#### <a name="attachments-areaanchor-x-y"></a>`x`, `y`
+
+*Type:* number or string  
+*Default:* `'-5%'`
+
+An option for when `rect` or `circle` is specified for [`shape`](#shape) option.
+
+The X and Y coordinates for the left-top corner of the area, in pixels, relative to the left-top corner of the specified element for [`element`](#attachments-areaanchor-element) option.  
+Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: '50%'}` indicates the center of the element, `{x: '100%', y: 0}` indicates the right-top corner.  
+And also, each value can be a negative value or a value over the element's width or height, it indicates the outside of the element.
+
+#### `width`, `height`
+
+*Type:* number or string  
+*Default:* `'110%'`
+
+An option for when `rect` or `circle` is specified for [`shape`](#shape) option.
+
+The width and height of the area, in pixels.  
+Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: 0, width: '50%', height: '100%'}` indicates the right half of the element.  
+And also, each value can be a value over the element's width or height, it indicates the outside of the element.
+
+#### `radius`
+
+*Type:* number  
+*Default:* `0`
+
+An option for when `rect` is specified for [`shape`](#shape) option.
+
+The radius to round corners of the area, in pixels.
+
+#### `points`
+
+*Type:* Array  
+
+An option for when `polygon` is specified for [`shape`](#shape) option.
+
+An Array that contains three or more points of the polygon. Each item that is a point is an Array that contains the X and Y coordinates for the point. That is, it is Array that contains Array, like `[[x1, y1], [x2, y2], ...]`.  
+The X and Y coordinates are handled as same as [`x` and `y`](#attachments-areaanchor-x-y) options.
+
+#### `color`
+
+*Type:* number or string  
+*Default:* `'xxx'`
+
+#### `fillColor`
+
+*Type:* number or string  
+*Default:* `'xxx'`
+
+#### `size`
+
+*Type:* number or string  
+*Default:* `'xxx'`
+
+#### `dash`
+
+*Type:* number or string  
+*Default:* `'xxx'`
+
 ### `mouseHoverAnchor`
 ### `captionLabel`
 ### `pathLabel`
