@@ -600,6 +600,19 @@ describe('funcs', function() {
       }
       expect(isHTMLElement(element)).toBe(false);
     });
+
+    it('other types:false', function() {
+      expect(isHTMLElement('a')).toBe(false);
+      expect(isHTMLElement(1)).toBe(false);
+      expect(isHTMLElement('')).toBe(false);
+      expect(isHTMLElement(0)).toBe(false);
+      expect(isHTMLElement(null)).toBe(false);
+      expect(isHTMLElement()).toBe(false);
+      expect(isHTMLElement({})).toBe(false);
+      expect(isHTMLElement(true)).toBe(false);
+      expect(isHTMLElement(window)).toBe(false);
+      expect(isHTMLElement(new Date())).toBe(false);
+    });
   });
 
 });

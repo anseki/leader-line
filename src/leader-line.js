@@ -335,7 +335,7 @@
 
   function isHTMLElement(element) {
     var win, doc;
-    return !!(element && (doc = element.ownerDocument) && (win = doc.defaultView) &&
+    return !!(element && (doc = element.ownerDocument) && (win = doc.defaultView) && win.HTMLElement &&
       element instanceof win.HTMLElement);
   }
   window.isHTMLElement = isHTMLElement; // [DEBUG/]
