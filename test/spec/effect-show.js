@@ -512,7 +512,7 @@ describe('effect-show', function() {
           ll.hide('none');
           expect(traceLog.log).toContain('<SHOW_EFFECTS.none.init>');
           expect(window.animTasks.length).toBe(0);
-          expect(props.curStats.show_animId == null).toBe(true); // eslint-disable-line eqeqeq
+          expect(props.curStats.show_animId == null).toBe(true);
 
           pageDone();
           done();
@@ -696,7 +696,7 @@ describe('effect-show', function() {
           'finish=true', 'on=on=true'
         ]);
         expect(props.isShown).toBe(true);
-        expect(props.pathList.animVal == null).toBe(true); // eslint-disable-line eqeqeq
+        expect(props.pathList.animVal == null).toBe(true);
         expect(props.svg.style.visibility).toBe('');
 
         // stop() hides view

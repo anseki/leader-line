@@ -35,7 +35,7 @@ describe('attachment', function() {
   }
 
   function matchPathData(a, b) {
-    return a != null && b != null && // eslint-disable-line eqeqeq
+    return a != null && b != null &&
       a.length === b.length && a.every(function(aSeg, i) {
         var bSeg = b[i];
         return aSeg.type === bSeg.type &&
@@ -102,11 +102,11 @@ describe('attachment', function() {
     it(registerTitle('pointAnchor.parsePercent'), function(done) {
       var parsePercent = window.ATTACHMENTS.pointAnchor.parsePercent;
       // -, num, false
-      expect(parsePercent(-5) == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(parsePercent(-5) == null).toBe(true);
       // -, num, true
       expect(parsePercent(-5, true)).toEqual([-5, false]);
       // -, per, false
-      expect(parsePercent('-5%') == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(parsePercent('-5%') == null).toBe(true);
       // -, per, true
       expect(parsePercent('-5%', true)).toEqual([-0.05, true]);
       // +, num, false
@@ -150,8 +150,8 @@ describe('attachment', function() {
       atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'));
       attachProps = window.insAttachProps[atc._id];
       expect(attachProps.element).toBe(document.getElementById('elm2'));
-      expect(attachProps.showEffectName == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.dummy == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.showEffectName == null).toBe(true);
+      expect(attachProps.style.dummy == null).toBe(true);
 
       atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), defaultOptions);
       attachProps = window.insAttachProps[atc._id];
@@ -163,7 +163,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       expect(attachProps.element).toBe(document.getElementById('elm2'));
       expect(attachProps.showEffectName).toBe('none');
-      expect(attachProps.style.dummy == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.dummy == null).toBe(true);
 
       atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), 'none', defaultOptions);
       attachProps = window.insAttachProps[atc._id];
@@ -176,15 +176,15 @@ describe('attachment', function() {
       atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), true);
       attachProps = window.insAttachProps[atc._id];
       expect(attachProps.element).toBe(document.getElementById('elm2'));
-      expect(attachProps.showEffectName == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.dummy == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.showEffectName == null).toBe(true);
+      expect(attachProps.style.dummy == null).toBe(true);
 
       atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'), true, defaultOptions);
       attachProps = window.insAttachProps[atc._id];
       expect(attachProps.element).toBe(document.getElementById('elm2'));
-      expect(attachProps.showEffectName == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.showEffectName == null).toBe(true);
       // defaultOptions also is ignored
-      expect(attachProps.style.dummy == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.dummy == null).toBe(true);
 
       pageDone();
       done();
@@ -205,8 +205,8 @@ describe('attachment', function() {
       attachProps2 = window.insAttachProps[atc2._id];
       expect(atc1.isRemoved).toBe(false);
       expect(atc2.isRemoved).toBe(false);
-      expect(window.insAttachProps[atc1._id] != null).toBe(true); // eslint-disable-line eqeqeq
-      expect(window.insAttachProps[atc2._id] != null).toBe(true); // eslint-disable-line eqeqeq
+      expect(window.insAttachProps[atc1._id] != null).toBe(true);
+      expect(window.insAttachProps[atc2._id] != null).toBe(true);
 
       // bind
       expect(props1.attachments.length).toBe(0);
@@ -215,7 +215,7 @@ describe('attachment', function() {
       expect(props1.attachments.length).toBe(1);
       expect(attachProps1.boundTargets.length).toBe(1);
       expect(atc1.isRemoved).toBe(false);
-      expect(window.insAttachProps[atc1._id] != null).toBe(true); // eslint-disable-line eqeqeq
+      expect(window.insAttachProps[atc1._id] != null).toBe(true);
 
       // unbind -> remove
       traceLog.clear();
@@ -224,7 +224,7 @@ describe('attachment', function() {
         expect(traceLog.getTaggedLog('removeAttachment')).toEqual([]);
         expect(props1.attachments.length).toBe(0);
         expect(atc1.isRemoved).toBe(true);
-        expect(window.insAttachProps[atc1._id] != null).toBe(false); // eslint-disable-line eqeqeq
+        expect(window.insAttachProps[atc1._id] != null).toBe(false);
 
         // 2 ll - 1 atc
         ll.start = atc2;
@@ -234,19 +234,19 @@ describe('attachment', function() {
         expect(props2.attachments.length).toBe(1);
         expect(attachProps2.boundTargets.length).toBe(2);
         expect(atc2.isRemoved).toBe(false);
-        expect(window.insAttachProps[atc2._id] != null).toBe(true); // eslint-disable-line eqeqeq
+        expect(window.insAttachProps[atc2._id] != null).toBe(true);
 
         // unbind 1
         traceLog.clear();
         ll.start = document.getElementById('elm1');
         setTimeout(function() {
           log = traceLog.getTaggedLog('removeAttachment');
-          expect(log != null).toBe(false); // eslint-disable-line eqeqeq
+          expect(log != null).toBe(false);
           expect(props1.attachments.length).toBe(0);
           expect(props2.attachments.length).toBe(1);
           expect(attachProps2.boundTargets.length).toBe(1);
           expect(atc2.isRemoved).toBe(false);
-          expect(window.insAttachProps[atc2._id] != null).toBe(true); // eslint-disable-line eqeqeq
+          expect(window.insAttachProps[atc2._id] != null).toBe(true);
 
           // unbind 2 -> remove
           traceLog.clear();
@@ -256,7 +256,7 @@ describe('attachment', function() {
             expect(props1.attachments.length).toBe(0);
             expect(props2.attachments.length).toBe(0);
             expect(atc2.isRemoved).toBe(true);
-            expect(window.insAttachProps[atc2._id] != null).toBe(false); // eslint-disable-line eqeqeq
+            expect(window.insAttachProps[atc2._id] != null).toBe(false);
 
             // remove atc -> unbind
             atc1 = window.LeaderLine.pointAnchor({element: document.getElementById('elm1')});
@@ -833,7 +833,7 @@ describe('attachment', function() {
       ll.start = atc;
       setTimeout(function() { // `bind` calls setTimeout
         expect(attachProps.curStats.color).toBe('blue');
-        expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+        expect(props.events.cur_line_color == null).toBe(true);
 
         traceLog.clear();
         ll.color = 'red';
@@ -861,7 +861,7 @@ describe('attachment', function() {
         expect(attachProps.curStats.color).toBe('blue');
 
         ll.start = document.getElementById('elm1');
-        expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+        expect(props.events.cur_line_color == null).toBe(true);
 
         pageDone();
         done();
@@ -1469,17 +1469,17 @@ describe('attachment', function() {
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-b')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
-      expect(attachProps.style.display == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.display == null).toBe(true);
       // no-inline via attribute
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-c')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
-      expect(attachProps.style.display == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.display == null).toBe(true);
       // no-inline in native
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('h3-a')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
-      expect(attachProps.style.display == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.display == null).toBe(true);
       // inline via class
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('h3-b')});
       attachProps = window.insAttachProps[atc._id];
@@ -1504,34 +1504,34 @@ describe('attachment', function() {
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-e')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
-      expect(attachProps.style.paddingTop == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.paddingRight == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingTop == null).toBe(true);
+      expect(attachProps.style.paddingRight == null).toBe(true);
+      expect(attachProps.style.paddingBottom == null).toBe(true);
+      expect(attachProps.style.paddingLeft == null).toBe(true);
       // padding:60 via attribute
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-f')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
-      expect(attachProps.style.paddingTop == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.paddingRight == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingTop == null).toBe(true);
+      expect(attachProps.style.paddingRight == null).toBe(true);
+      expect(attachProps.style.paddingBottom == null).toBe(true);
+      expect(attachProps.style.paddingLeft == null).toBe(true);
       // padding:2 via class
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-g')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
-      expect(attachProps.style.paddingTop == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingTop == null).toBe(true);
       expect(attachProps.style.paddingRight).toBe(15 + 'px');
-      expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingBottom == null).toBe(true);
+      expect(attachProps.style.paddingLeft == null).toBe(true);
       // padding:2 via attribute
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-h')});
       attachProps = window.insAttachProps[atc._id];
       ll.start = atc;
-      expect(attachProps.style.paddingTop == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingTop == null).toBe(true);
       expect(attachProps.style.paddingRight).toBe(15 + 'px');
-      expect(attachProps.style.paddingBottom == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.style.paddingLeft == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.style.paddingBottom == null).toBe(true);
+      expect(attachProps.style.paddingLeft == null).toBe(true);
 
       // height (mi-height: 15)
       // box-sizing: content-box
@@ -1644,10 +1644,10 @@ describe('attachment', function() {
       atc = window.LeaderLine.captionLabel({text: '  label-a  '});
       attachProps = window.insAttachProps[atc._id];
       expect(attachProps.text).toBe('label-a');
-      expect(attachProps.color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.color == null).toBe(true);
       expect(attachProps.outlineColor).toBe('#fff');
-      expect(attachProps.offset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(attachProps.lineOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.offset == null).toBe(true);
+      expect(attachProps.lineOffset == null).toBe(true);
 
       // valid
       atc = window.LeaderLine.captionLabel({
@@ -1767,7 +1767,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       ll.startLabel = atc;
       expect(attachProps.curStats.color).toBe('yellow');
-      expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.events.cur_line_color == null).toBe(true);
 
       // It's changed by updating ll
       traceLog.clear();
@@ -1825,8 +1825,8 @@ describe('attachment', function() {
         /* eslint-enable indent */
       ]);
       expect(attachProps.curStats.color).toBe('yellow');
-      expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props2.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.events.cur_line_color == null).toBe(true);
+      expect(props2.events.cur_line_color == null).toBe(true);
       expect(props.attachments.length).toBe(0);
       expect(props2.attachments.length).toBe(1);
 
@@ -1839,7 +1839,7 @@ describe('attachment', function() {
         '<updateMask>', 'not-updated', '</updateMask>',
         '<update>', '</update>'
       ]);
-      expect(props2.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props2.events.cur_line_color == null).toBe(true);
       expect(props2.attachments.length).toBe(0);
       setTimeout(function() {
         expect(atc.isRemoved).toBe(true);
@@ -2055,9 +2055,9 @@ describe('attachment', function() {
       atc = window.LeaderLine.pathLabel({text: '  label-a  '});
       attachProps = window.insAttachProps[atc._id];
       expect(attachProps.text).toBe('label-a');
-      expect(attachProps.color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.color == null).toBe(true);
       expect(attachProps.outlineColor).toBe('#fff');
-      expect(attachProps.lineOffset == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(attachProps.lineOffset == null).toBe(true);
 
       // valid
       atc = window.LeaderLine.pathLabel({
@@ -2179,7 +2179,7 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       ll.startLabel = atc;
       expect(attachProps.curStats.color).toBe('yellow');
-      expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.events.cur_line_color == null).toBe(true);
 
       // It's changed by updating ll
       traceLog.clear();
@@ -2241,8 +2241,8 @@ describe('attachment', function() {
         /* eslint-enable indent */
       ]);
       expect(attachProps.curStats.color).toBe('yellow');
-      expect(props.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props2.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.events.cur_line_color == null).toBe(true);
+      expect(props2.events.cur_line_color == null).toBe(true);
       expect(props.attachments.length).toBe(0);
       expect(props2.attachments.length).toBe(1);
 
@@ -2255,7 +2255,7 @@ describe('attachment', function() {
         '<updateMask>', 'not-updated', '</updateMask>',
         '<update>', '</update>'
       ]);
-      expect(props2.events.cur_line_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props2.events.cur_line_color == null).toBe(true);
       expect(props2.attachments.length).toBe(0);
       setTimeout(function() {
         expect(atc.isRemoved).toBe(true);

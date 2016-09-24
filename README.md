@@ -39,15 +39,18 @@ Any element that has bounding-box is accepted. For example, `<div>`, `<button>`,
 And, the constructor accepts options.
 
 ```js
+var startElement = document.getElementById('element-1'),
+  endElement = document.getElementById('element-2');
+
 // New leader line has red color and size 8.
-new LeaderLine(start, end, {color: 'red', size: 8});
+new LeaderLine(startElement, endElement, {color: 'red', size: 8});
 ```
 
 Also, the options can be accessed via properties of the instance (readable and writable).
 
 ```js
-var line = new LeaderLine(start, end);
-line.color = 'red'; // Change color to red.
+var line = new LeaderLine(startElement, endElement);
+line.color = 'red'; // Change the color to red.
 line.size++; // Up size.
 console.log(line.size); // Output current size.
 ```
@@ -55,7 +58,7 @@ console.log(line.size); // Output current size.
 You can style the leader line via [`color`](#color), [`size`](#size), [`outlineColor`](#outlinecolor), and more [options](#options).
 
 ```js
-new LeaderLine(start, end, {
+new LeaderLine(startElement, endElement, {
   color: 'rgba(255, 255, 255, 0.4)',
   outline: true,
   endPlugOutline: true,
@@ -66,39 +69,40 @@ new LeaderLine(start, end, {
 You can add effects to the leader line via some options.
 
 ```js
-new LeaderLine(start1, end, {
+new LeaderLine(startElement1, endElement, {
   startPlugColor: '#555',
   endPlugColor: '#555',
   gradient: true
 });
-new LeaderLine(start2, end, {dash: true});
-new LeaderLine(start3, end, {dash: {animation: true}});
-new LeaderLine(start4, end, {dropShadow: true});
+new LeaderLine(startElement2, endElement, {dash: true});
+new LeaderLine(startElement3, endElement, {dash: {animation: true}});
+new LeaderLine(startElement4, endElement, {dropShadow: true});
 ```
 
 You can change symbols that are shown at the end of the leader line via [`startPlug` and `endPlug` options](#startplug-endplug).
 
 ```js
-new LeaderLine(start, end, {
+new LeaderLine(startElement, endElement, {
   startPlug: 'square',
   endPlug: 'hand'
 });
 ```
 
-You can indicate a point or area of an element instead of an element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachments.  
+You can indicate a point or area of an element instead of an element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachments.
+
 You can specify additional labels via [`startLabel`, `middleLabel` and `endLabel` options](#startlabel-middlelabel-endlabel). Also, [`captionLabel`](#captionlabel) or [`pathLabel`](#pathlabel) attachments can be specified as labels.
 
 ```js
-new LeaderLine(start1, LeaderLine.pointAnchor({
-  element: end1,
+new LeaderLine(startElement1, LeaderLine.pointAnchor({
+  element: endElement1,
   x: 999,
   y: 999
 }), {
   endLabel: 'xxx'
 });
 
-new LeaderLine(start2, LeaderLine.areaAnchor({
-  element: end2,
+new LeaderLine(startElement2, LeaderLine.areaAnchor({
+  element: endElement2,
   x: 999,
   y: 999,
   width: 999,
@@ -108,11 +112,11 @@ new LeaderLine(start2, LeaderLine.areaAnchor({
 });
 ```
 
-You can show and hide the leader line with effect via [`show` and `hide` methods](#show-hide).  
+You can show and hide the leader line with effect by [`show` and `hide` methods](#show-hide).  
 [`mouseHoverAnchor` attachment](#mousehoveranchor) allows it to implement showing and hiding with mouse moving easily.
 
 ```js
-new LeaderLine(LeaderLine.mouseHoverAnchor({element: start}), end);
+new LeaderLine(LeaderLine.mouseHoverAnchor({element: startElement}), endElement);
 ```
 
 For more details, refer to the following.
@@ -134,20 +138,24 @@ The `options` argument is an Object that can have properties as [Options](#optio
 `start` and `end` arguments are shortcuts to `options.start` and `options.end`. Following two codes work same.
 
 ```js
-new LeaderLine({start: element1, end: element2})
+new LeaderLine({start: element1, end: element2});
+new LeaderLine({start: element3, end: element4, color: 'red'});
 ```
 
 ```js
-new LeaderLine(element1, element2)
+new LeaderLine(element1, element2);
+new LeaderLine(element3, element4, {color: 'red'});
 ```
 
-The instance has properties that have the same name as each option to get or set those (other than [`hide` option](#hide-option)).
+The instance has properties that have the same name as each option to get or set those values (other than [`hide` option](#hide-option)).
 
 ```js
-var line = new LeaderLine(start, end);
+var line = new LeaderLine(startElement, endElement);
+
 upButton.addEventListener('mousedown', function() {
   if (line.size < 20) { line.size++; }
 }, false);
+
 downButton.addEventListener('mousedown', function() {
   if (line.size > 4) { line.size--; }
 }, false);
@@ -157,13 +165,13 @@ If you want to set multiple options after it was constructed, using [`setOptions
 
 ### `hide` option
 
-Only the constructor accepts `hide` option. That is, the instance doesn't have `hide` property.  
+Only the constructor accepts `hide` option. That is, the instance doesn't have `hide` property. (Note that the instance has [`hide` method](#show-hide).)  
 If `true` is specified, the leader line is not shown, it is shown by [`show` method](#show-hide).  
-This is used to hide it without [`hide` method](#show-hide), it is not shown at all until `show` method is called.
+This is used to hide it without using [`hide` method](#show-hide), it is not shown at all until `show` method is called.
 
 ```js
 // The leader line is never shown until the button is clicked.
-var line = new LeaderLine(start, end, {hide: true});
+var line = new LeaderLine(startElement, endElement, {hide: true});
 button.addEventListener('click', function() { line.show(); }); // first showing
 ```
 
@@ -191,7 +199,7 @@ self = line.hide([showEffectName[, animOptions]])
 Show or hide the leader line.
 
 ```js
-var line = new LeaderLine(start, end, {hide: true});
+var line = new LeaderLine(startElement, endElement, {hide: true});
 showButton.addEventListener('click', function() { line.show(); }, false);
 hideButton.addEventListener('click', function() { line.hide(); }, false);
 ```
@@ -244,7 +252,7 @@ The following options are specified by [constructor](#constructor) or [`setOptio
 
 *Type:* HTML element or [Attachment](#attachments)  
 
-The leader line is drawn from `start` to `end`.  
+The leader line is drawn from the `start` element to the `end` element.  
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<td>`, and also, elements in another window (i.e. `<iframe>`).
 
 ```js
@@ -340,7 +348,7 @@ One of the following plug (symbol that is shown at the end of the leader line) n
 *Default:* `'auto'`
 
 A color (See [Color Value](#color-value)) of a plug.  
-It is painted separately from the line. Therefore one of [`color`](#color) and `startPlugColor`/`endPlugColor` or both can have opacity.  
+It is painted separately from the line (i.e. Those don't overlap each other). Therefore one of [`color`](#color) and `startPlugColor`/`endPlugColor` or both can have opacity.  
 If `'auto'` is specified, a value of [`color`](#color) is set synchronously (i.e. it is changed when `color` was changed).
 
 ```js
@@ -376,7 +384,7 @@ If `true` is specified, an outline of the leader line is enabled.
 *Default:* `'indianred'`
 
 A color (See [Color Value](#color-value)) of an outline of the leader line.  
-It is painted separately from inside of the line. Therefore one of [`color`](#color) and `outlineColor` or both can have opacity.  
+It is painted separately from inside of the line (i.e. Those don't overlap each other). Therefore one of [`color`](#color) and `outlineColor` or both can have opacity.  
 If [`outline`](#outline) is disabled, it is ignored.
 
 ```js
@@ -409,7 +417,7 @@ If `true` is specified, an outline of the plug is enabled.
 *Default:* `'auto'`
 
 A color (See [Color Value](#color-value)) of an outline of the plug.  
-It is painted separately from inside of the plug. Therefore one of [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) and `startPlugOutlineColor`/`endPlugOutlineColor` or both can have opacity.  
+It is painted separately from inside of the plug (i.e. Those don't overlap each other). Therefore one of [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) and `startPlugOutlineColor`/`endPlugOutlineColor` or both can have opacity.  
 If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) is set synchronously (i.e. it is changed when `outlineColor` was changed).  
 If [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline`) is disabled, it is ignored.
 
@@ -528,14 +536,13 @@ You can get new attachment instance by individual method.
 For example, `LeaderLine.pointAnchor` method makes new [`pointAnchor`](#pointanchor) attachment instance. And you can pass the instance to the leader line for [`start` or `end`](#start-end) option.
 
 ```js
-new LeaderLine(start, LeaderLine.pointAnchor({element: end}));
+new LeaderLine(startElement, LeaderLine.pointAnchor(endElement));
 ```
 
 In the case of the plan to use the attachment afterward.
 
 ```js
-var line = new LeaderLine(start, end),
-  attachment = LeaderLine.pointAnchor({element: end});
+var attachment = LeaderLine.pointAnchor(endElement);
 
 function attach() {
   line.end = attachment;
@@ -545,14 +552,17 @@ function attach() {
 The new attachment instance is shared between two leader lines.
 
 ```js
-line1.end = line2.end = LeaderLine.pointAnchor({element: end});
+line1.end = line2.end = LeaderLine.pointAnchor(endElement);
 ```
 
 The `line1`'s attachment instance is shared with `line2`.
 
 ```js
-line1.end = LeaderLine.pointAnchor({element: end});
-line2.end = line1.end;
+line1.end = LeaderLine.pointAnchor(endElement);
+
+function share() {
+  line2.end = line1.end;
+}
 ```
 
 ### `pointAnchor`

@@ -65,7 +65,7 @@ window.addEventListener('load', function() {
       testCase.anchorSE[i] = testCase.anchorSE[i] || {};
       styles = anchorSE[i].style;
       ['left', 'top', 'width', 'height'].forEach(function(prop) {
-        styles[prop] = (testCase.anchorSE[i][prop] != null ? // eslint-disable-line eqeqeq
+        styles[prop] = (testCase.anchorSE[i][prop] != null ?
           testCase.anchorSE[i][prop] : DEFAULT_ANCHOR_SE[i][prop]) + 'px';
       });
     });

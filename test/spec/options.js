@@ -63,7 +63,7 @@ describe('options', function() {
       traceLog.clear();
       ll.endSocket = 'auto';
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.position');
-      expect(props.options.socketSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.options.socketSE[1] == null).toBe(true);
       expect(ll.endSocket).toBe('auto');
 
       // invalid 'auto'
@@ -152,7 +152,7 @@ describe('options', function() {
       traceLog.clear();
       ll.startPlugColor = 'auto';
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.plug');
-      expect(props.options.plugColorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.options.plugColorSE[0] == null).toBe(true);
       expect(ll.startPlugColor).toBe('auto');
 
       // invalid 'auto'
@@ -289,21 +289,21 @@ describe('options', function() {
       traceLog.clear();
       ll.startSocketGravity = 'auto';
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.position');
-      expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.options.socketGravitySE[0] == null).toBe(true);
       expect(ll.startSocketGravity).toBe('auto');
 
       // same 'auto'
       traceLog.clear();
       ll.startSocketGravity = 'auto';
       expect(traceLog.getTaggedLog('setOptions')).not.toContain('needs.position');
-      expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.options.socketGravitySE[0] == null).toBe(true);
       expect(ll.startSocketGravity).toBe('auto');
 
       // invalid value
       traceLog.clear();
       ll.startSocketGravity = -1;
       expect(traceLog.getTaggedLog('setOptions')).not.toContain('needs.position');
-      expect(props.options.socketGravitySE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.options.socketGravitySE[0] == null).toBe(true);
       expect(ll.startSocketGravity).toBe('auto');
 
       // valid value

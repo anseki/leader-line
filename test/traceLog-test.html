@@ -169,7 +169,7 @@
       expect(traceLog.log).toEqual(['a', 'b', 'c', '<tag-A>', 'd', 'e', 'f', '</tag-A>', 'g', 'h', 'i']);
       expect(traceLog.getTaggedLog('tag-A').length).toBe(3);
       expect(traceLog.getTaggedLog('tag-A')).toEqual(['d', 'e', 'f']);
-      expect(traceLog.getTaggedLog('tag-B') == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(traceLog.getTaggedLog('tag-B') == null).toBe(true);
     });
 
     it('multiple tags', function() {
@@ -193,7 +193,7 @@
       expect(traceLog.getTaggedLog('tag-A')).toEqual(['c', 'd']);
       expect(traceLog.getTaggedLog('tag-B').length).toBe(2);
       expect(traceLog.getTaggedLog('tag-B')).toEqual(['g', 'h']);
-      expect(traceLog.getTaggedLog('tag-C') == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(traceLog.getTaggedLog('tag-C') == null).toBe(true);
     });
 
     it('nested tags 1', function() {

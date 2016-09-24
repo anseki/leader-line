@@ -35,7 +35,7 @@ var polygon2PathList = (function() {
         isAbs = false; // default
 
       } else {
-        if (point.isAbs != null) { // eslint-disable-line eqeqeq
+        if (point.isAbs != null) {
           isAbs = point.isAbs;
         }
         points = [polygon2PathList.currentPoint];

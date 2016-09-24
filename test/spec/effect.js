@@ -222,8 +222,8 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({animation: false});
       expect(props.aplStats.dash_options).toEqual({animation: false});
-      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animOptions == null).toBe(true);
+      expect(props.aplStats.dash_animOptions == null).toBe(true);
       expect(ll.dash).toBe(true);
 
       // option object, animation: null
@@ -239,8 +239,8 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({animation: false});
       expect(props.aplStats.dash_options).toEqual({animation: false});
-      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animOptions == null).toBe(true);
+      expect(props.aplStats.dash_animOptions == null).toBe(true);
       expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // optimized
 
       // option object update, animation: null
@@ -256,8 +256,8 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({len: 5, animation: false});
       expect(props.aplStats.dash_options).toEqual({len: 5, animation: false});
-      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animOptions == null).toBe(true);
+      expect(props.aplStats.dash_animOptions == null).toBe(true);
       expect(ll.dash).toEqual({len: 5, gap: 'auto', animation: false}); // optimized
 
       // option object, animation: false
@@ -275,8 +275,8 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({animation: false});
       expect(props.aplStats.dash_options).toEqual({animation: false});
-      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animOptions == null).toBe(true);
+      expect(props.aplStats.dash_animOptions == null).toBe(true);
       expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // optimized
 
       // option object, animation: true
@@ -389,8 +389,8 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({animation: false});
       expect(props.aplStats.dash_options).toEqual({animation: false});
-      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animOptions == null).toBe(true);
+      expect(props.aplStats.dash_animOptions == null).toBe(true);
       expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // optimized
 
       // valid value
@@ -406,8 +406,8 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({len: 5, gap: 10, animation: false});
       expect(props.aplStats.dash_options).toEqual({len: 5, gap: 10, animation: false});
-      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animOptions == null).toBe(true);
+      expect(props.aplStats.dash_animOptions == null).toBe(true);
       expect(ll.dash).toEqual({len: 5, gap: 10, animation: false}); // optimized
 
       // invalid value
@@ -423,8 +423,8 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({animation: false});
       expect(props.aplStats.dash_options).toEqual({animation: false});
-      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animOptions == null).toBe(true);
+      expect(props.aplStats.dash_animOptions == null).toBe(true);
       expect(ll.dash).toEqual({len: 'auto', gap: 'auto', animation: false}); // optimized
 
       // valid auto
@@ -440,8 +440,8 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       expect(props.curStats.dash_options).toEqual({gap: 10, animation: false});
       expect(props.aplStats.dash_options).toEqual({gap: 10, animation: false});
-      expect(props.curStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dash_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animOptions == null).toBe(true);
+      expect(props.aplStats.dash_animOptions == null).toBe(true);
       expect(ll.dash).toEqual({len: 'auto', gap: 10, animation: false}); // optimized
 
       // invalid auto
@@ -457,8 +457,8 @@ describe('effect', function() {
       expect(props.aplStats.dropShadow_enabled).toBe(true);
       expect(props.curStats.dropShadow_options).toEqual({dx: 2, dy: 10, blur: 3, color: '#000', opacity: 0.8});
       expect(props.aplStats.dropShadow_options).toEqual({dx: 2, dy: 10, blur: 3, color: '#000', opacity: 0.8});
-      expect(props.curStats.dropShadow_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.aplStats.dropShadow_animOptions == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dropShadow_animOptions == null).toBe(true);
+      expect(props.aplStats.dropShadow_animOptions == null).toBe(true);
       expect(ll.dropShadow).toEqual({dx: 2, dy: 10, blur: 3, color: '#000', opacity: 0.8}); // optimized
 
       pageDone();
@@ -489,8 +489,8 @@ describe('effect', function() {
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
-      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_maxOffset == null).toBe(true);
+      expect(props.curStats.dash_animId == null).toBe(true);
 
       // update() by events
       traceLog.clear();
@@ -507,8 +507,8 @@ describe('effect', function() {
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
-      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_maxOffset == null).toBe(true);
+      expect(props.curStats.dash_animId == null).toBe(true);
 
       // update() by options
       len = 10; // same
@@ -525,8 +525,8 @@ describe('effect', function() {
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
-      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_maxOffset == null).toBe(true);
+      expect(props.curStats.dash_animId == null).toBe(true);
 
       // update() by options same dash_maxOffset
       len = 8;
@@ -543,8 +543,8 @@ describe('effect', function() {
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
-      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_maxOffset == null).toBe(true);
+      expect(props.curStats.dash_animId == null).toBe(true);
 
       // update() by events (ignored)
       traceLog.clear();
@@ -557,8 +557,8 @@ describe('effect', function() {
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
-      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_maxOffset == null).toBe(true);
+      expect(props.curStats.dash_animId == null).toBe(true);
 
       // update() by bindWindow()
       traceLog.clear();
@@ -577,8 +577,8 @@ describe('effect', function() {
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
-      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_maxOffset == null).toBe(true);
+      expect(props.curStats.dash_animId == null).toBe(true);
 
       // remove()
       traceLog.clear();
@@ -588,12 +588,12 @@ describe('effect', function() {
       expect(props.events.apl_line_strokeWidth.length).toBe(0); // removeEventHandler
       // curStats* are not cleared
       expect(props.curStats.dash_len).toBe(len);
-      expect(props.aplStats.dash_len == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_len == null).toBe(true);
       expect(props.curStats.dash_gap).toBe(gap);
-      expect(props.aplStats.dash_gap == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_gap == null).toBe(true);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
-      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_maxOffset == null).toBe(true);
+      expect(props.curStats.dash_animId == null).toBe(true);
 
       // anim - init()
       ll.size = 5;
@@ -613,7 +613,7 @@ describe('effect', function() {
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
       expect(props.aplStats.dash_maxOffset).toBe(len + gap);
-      expect(props.curStats.dash_animId != null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId != null).toBe(true);
 
       // anim - update by AnimOptions (the effect is removed -> inited)
       traceLog.clear();
@@ -633,7 +633,7 @@ describe('effect', function() {
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
       expect(props.aplStats.dash_maxOffset).toBe(len + gap);
-      expect(props.curStats.dash_animId != null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId != null).toBe(true);
 
       // anim - update by event
       traceLog.clear();
@@ -652,7 +652,7 @@ describe('effect', function() {
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
       expect(props.aplStats.dash_maxOffset).toBe(len + gap);
-      expect(props.curStats.dash_animId != null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId != null).toBe(true);
 
       // anim - update by event same
       ll.dash = {len: 12, gap: 6, animation: true};
@@ -669,7 +669,7 @@ describe('effect', function() {
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
       expect(props.aplStats.dash_maxOffset).toBe(len + gap);
-      expect(props.curStats.dash_animId != null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.curStats.dash_animId != null).toBe(true);
 
       // anim - remove
       traceLog.clear();
@@ -686,8 +686,8 @@ describe('effect', function() {
       expect(props.curStats.dash_gap).toBe(gap);
       expect(props.aplStats.dash_gap).toBe(gap);
       expect(props.curStats.dash_maxOffset).toBe(len + gap);
-      expect(props.aplStats.dash_maxOffset == null).toBe(true); // eslint-disable-line eqeqeq
-      expect(props.curStats.dash_animId == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dash_maxOffset == null).toBe(true);
+      expect(props.curStats.dash_animId == null).toBe(true);
 
       pageDone();
     });
@@ -847,9 +847,9 @@ describe('effect', function() {
       expect(props.events.apl_path.length).toBe(0); // removeEventHandler
       // curStats* are not cleared
       expect(props.curStats.gradient_colorSE[0]).toBe(color0);
-      expect(props.aplStats.gradient_colorSE[0] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.gradient_colorSE[0] == null).toBe(true);
       expect(props.curStats.gradient_colorSE[1]).toBe(color1);
-      expect(props.aplStats.gradient_colorSE[1] == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.gradient_colorSE[1] == null).toBe(true);
       expect(props.curStats.gradient_pointSE[0]).toEqual(point0);
       expect(props.aplStats.gradient_pointSE[0]).toEqual({});
       expect(props.curStats.gradient_pointSE[1]).toEqual(point1);
@@ -981,15 +981,15 @@ describe('effect', function() {
       expect(props.events.new_edge4viewBox.length).toBe(0); // removeEventHandler
       // curStats* are not cleared
       expect(props.curStats.dropShadow_dx).toBe(dx);
-      expect(props.aplStats.dropShadow_dx == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dropShadow_dx == null).toBe(true);
       expect(props.curStats.dropShadow_dy).toBe(dy);
-      expect(props.aplStats.dropShadow_dy == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dropShadow_dy == null).toBe(true);
       expect(props.curStats.dropShadow_blur).toBe(blur);
-      expect(props.aplStats.dropShadow_blur == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dropShadow_blur == null).toBe(true);
       expect(props.curStats.dropShadow_color).toBe(color);
-      expect(props.aplStats.dropShadow_color == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dropShadow_color == null).toBe(true);
       expect(props.curStats.dropShadow_opacity).toBe(opacity);
-      expect(props.aplStats.dropShadow_opacity == null).toBe(true); // eslint-disable-line eqeqeq
+      expect(props.aplStats.dropShadow_opacity == null).toBe(true);
 
       pageDone();
     });

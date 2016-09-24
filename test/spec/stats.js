@@ -588,7 +588,7 @@ describe('stats', function() {
     traceLog.clear();
     ll.endPlugSize = 2.2;
     // updated.plug: false -> updateFaces() is not called
-    expect(traceLog.getTaggedLog('updateFaces') == null).toBe(true); // eslint-disable-line eqeqeq
+    expect(traceLog.getTaggedLog('updateFaces') == null).toBe(true);
 
     // plug_enabledSE true -> plug_enabled true
     expect(props.curStats.plug_enabledSE[1]).toBe(false);

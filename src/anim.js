@@ -126,7 +126,7 @@ var anim =
 
   function startTask(task, timeRatio) {
     task.framesStart = Date.now();
-    if (timeRatio != null) { // eslint-disable-line eqeqeq
+    if (timeRatio != null) {
       task.framesStart -= task.duration * (task.reverse ? 1 - timeRatio : timeRatio);
     }
     task.loopsLeft = task.count;
@@ -260,7 +260,7 @@ var anim =
             } else if (timeRatio > 1) {
               timeRatio = 1;
             }
-          } else if (task.lastFrame != null) { // eslint-disable-line eqeqeq
+          } else if (task.lastFrame != null) {
             timeRatio = task.frames[task.lastFrame].timeRatio;
           }
           task.framesStart = null;

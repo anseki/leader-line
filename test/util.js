@@ -13,7 +13,7 @@
 
     function containsSequence(keys) {
       var ERR_MSG = '\\f that is used as marker is included.', keysSeq;
-      if (logSeq == null) { // eslint-disable-line eqeqeq
+      if (logSeq == null) {
         if (log.join('').indexOf('\f') > -1) { throw new Error(ERR_MSG); }
         logSeq = '\f' + log.join('\f') + '\f';
       }

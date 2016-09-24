@@ -554,7 +554,7 @@
         0.1601, 0.1601, 0.1069, 0.1069, 0.0472, 0.0472],
       sum = 0, z2, ct, xbase, ybase, comb;
 
-    t = t == null || t > 1 ? 1 : t < 0 ? 0 : t; // eslint-disable-line eqeqeq
+    t = t == null || t > 1 ? 1 : t < 0 ? 0 : t;
     z2 = t / 2;
     TVALUES.forEach(function(tValue, i) {
       ct = z2 * tValue + z2;
@@ -669,7 +669,7 @@
   window.getAllPathDataLen = getAllPathDataLen; // [DEBUG/]
 
   function pathDataHasChanged(a, b) {
-    return a == null || b == null || // eslint-disable-line eqeqeq
+    return a == null || b == null ||
       a.length !== b.length || a.some(function(aSeg, i) {
         var bSeg = b[i];
         return aSeg.type !== bSeg.type ||
@@ -678,8 +678,8 @@
   }
 
   function bBox2PathData(bBox) {
-    var right = bBox.right != null ? bBox.right : bBox.left + bBox.width, // eslint-disable-line eqeqeq
-      bottom = bBox.bottom != null ? bBox.bottom : bBox.top + bBox.height; // eslint-disable-line eqeqeq
+    var right = bBox.right != null ? bBox.right : bBox.left + bBox.width,
+      bottom = bBox.bottom != null ? bBox.bottom : bBox.top + bBox.height;
     return [
       {type: 'M', values: [bBox.left, bBox.top]},
       {type: 'L', values: [right, bBox.top]},
@@ -839,7 +839,7 @@
     Object.keys(statsConf).forEach(function(statName) {
       var statConf = statsConf[statName];
       container[statName] =
-        statConf.iniValue != null ? ( // eslint-disable-line eqeqeq
+        statConf.iniValue != null ? (
           statConf.hasSE ? [statConf.iniValue, statConf.iniValue] : statConf.iniValue
         ) :
         statConf.hasSE ? (statConf.hasProps ? [{}, {}] : []) : statConf.hasProps ? {} : null;
@@ -1499,8 +1499,8 @@
     }
 
     function socketGravityHasChanged(a, b) {
-      var aType = a == null ? 'auto' : Array.isArray(a) ? 'array' : 'number', // eslint-disable-line eqeqeq
-        bType = b == null ? 'auto' : Array.isArray(b) ? 'array' : 'number'; // eslint-disable-line eqeqeq
+      var aType = a == null ? 'auto' : Array.isArray(a) ? 'array' : 'number',
+        bType = b == null ? 'auto' : Array.isArray(b) ? 'array' : 'number';
       return aType !== bType ? true :
         aType === 'array' ? a[0] !== b[0] || a[1] !== b[1] : a !== b;
     }
@@ -2497,7 +2497,7 @@
     function getCurOption(root, propName, optionName, index, defaultValue) {
       var curOption = {};
       if (optionName) {
-        if (index != null) { // eslint-disable-line eqeqeq
+        if (index != null) {
           curOption.container = root[optionName];
           curOption.key = index;
         } else {
@@ -2509,13 +2509,13 @@
         curOption.key = propName;
       }
       curOption.default = defaultValue;
-      curOption.acceptsAuto = curOption.default == null; // eslint-disable-line eqeqeq
+      curOption.acceptsAuto = curOption.default == null;
       return curOption;
     }
 
     function setValidId(root, newOptions, propName, key2Id, optionName, index, defaultValue) {
       var curOption = getCurOption(root, propName, optionName, index, defaultValue), updated, key, id;
-      if (newOptions[propName] != null && // eslint-disable-line eqeqeq
+      if (newOptions[propName] != null &&
           (key = (newOptions[propName] + '').toLowerCase()) && (
             curOption.acceptsAuto && key === KEYWORD_AUTO ||
             (id = key2Id[key])
@@ -2523,7 +2523,7 @@
         curOption.container[curOption.key] = id; // `undefined` when `KEYWORD_AUTO`
         updated = true;
       }
-      if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
+      if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) {
         curOption.container[curOption.key] = curOption.default;
         updated = true;
       }
@@ -2536,11 +2536,10 @@
       function isValidType(value, type) { return type === 'number' ? isFinite(value) : typeof value === type; }
 
       if (!type) {
-        // eslint-disable-next-line eqeqeq
         if (curOption.default == null) { throw new Error('Invalid `type`: ' + propName); }
         type = typeof curOption.default;
       }
-      if (newOptions[propName] != null && ( // eslint-disable-line eqeqeq
+      if (newOptions[propName] != null && (
             curOption.acceptsAuto && (newOptions[propName] + '').toLowerCase() === KEYWORD_AUTO ||
             isValidType((value = newOptions[propName]), type) &&
             ((value = trim && type === 'string' && value ? value.trim() : value) || true) &&
@@ -2549,7 +2548,7 @@
         curOption.container[curOption.key] = value; // `undefined` when `KEYWORD_AUTO`
         updated = true;
       }
-      if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) { // eslint-disable-line eqeqeq
+      if (curOption.container[curOption.key] == null && !curOption.acceptsAuto) {
         curOption.container[curOption.key] = curOption.default;
         updated = true;
       }
@@ -2609,7 +2608,7 @@
       }
 
       var value = false; // `false` means no-update input.
-      if (newOption != null) { // eslint-disable-line eqeqeq
+      if (newOption != null) {
         if (Array.isArray(newOption)) {
           if (isFinite(newOption[0]) && isFinite(newOption[1])) {
             value = [newOption[0], newOption[1]];
@@ -2715,7 +2714,6 @@
         var effectOptions = {};
         effectConf.optionsConf.forEach(function(optionConf) {
           var optionClass = optionConf[0], optionName = optionConf[3], i = optionConf[4];
-          // eslint-disable-next-line eqeqeq
           if (i != null && !effectOptions[optionName]) { effectOptions[optionName] = []; }
           (typeof optionClass === 'function' ? optionClass :
               optionClass === 'id' ? setValidId : setValidType)
@@ -2846,10 +2844,10 @@
         Object.defineProperty(that, propName, {
           get: function() {
             var value = // Don't use closure.
-              i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
+              i != null ? insProps[that._id].options[optionName][i] :
               optionName ? insProps[that._id].options[optionName] :
               insProps[that._id].options[propName];
-            return value == null ? KEYWORD_AUTO : copyTree(value); // eslint-disable-line eqeqeq
+            return value == null ? KEYWORD_AUTO : copyTree(value);
           },
           set: createSetter(propName),
           enumerable: true
@@ -2864,7 +2862,7 @@
         Object.defineProperty(that, propName, {
           get: function() {
             var value = // Don't use closure.
-                i != null ? insProps[that._id].options[optionName][i] : // eslint-disable-line eqeqeq
+                i != null ? insProps[that._id].options[optionName][i] :
                 optionName ? insProps[that._id].options[optionName] :
                 insProps[that._id].options[propName],
               key;
@@ -2887,7 +2885,7 @@
           var optionClass = optionConf[0], propName = optionConf[1], key2Id = optionConf[2],
             optionName = optionConf[3], i = optionConf[4],
             value =
-              i != null ? optionValue[optionName][i] : // eslint-disable-line eqeqeq
+              i != null ? optionValue[optionName][i] :
               optionName ? optionValue[optionName] :
               optionValue[propName],
             key;
@@ -2897,9 +2895,7 @@
                 if (key2Id[optKey] === value) { key = optKey; return true; }
                 return false;
               }) ? key : new Error('It\'s broken')
-            ) : (
-              value == null ? KEYWORD_AUTO : copyTree(value) // eslint-disable-line eqeqeq
-            );
+            ) : (value == null ? KEYWORD_AUTO : copyTree(value));
           return effectOptions;
         }, {});
         if (effectConf.anim) {
@@ -3262,7 +3258,7 @@
       adjustEdge: function(props, edge) {
         traceLog.add('<EFFECTS.dropShadow.adjustEdge>'); // [DEBUG/]
         var curStats = props.curStats, aplStats = props.aplStats, margin, shadowEdge;
-        if (curStats.dropShadow_dx != null) { // eslint-disable-line eqeqeq
+        if (curStats.dropShadow_dx != null) {
           margin = curStats.dropShadow_blur * 3; // nearly standard deviation
           shadowEdge = {
             x1: edge.x1 - margin + curStats.dropShadow_dx,
@@ -3328,7 +3324,7 @@
       start: function(props, timeRatio) {
         traceLog.add('<SHOW_EFFECTS.none.start>'); // [DEBUG/]
         // [DEBUG]
-        traceLog.add('timeRatio=' + (timeRatio != null ? 'timeRatio' : 'NONE')); // eslint-disable-line eqeqeq
+        traceLog.add('timeRatio=' + (timeRatio != null ? 'timeRatio' : 'NONE'));
         // [/DEBUG]
         SHOW_EFFECTS.none.stop(props, true);
         traceLog.add('</SHOW_EFFECTS.none.start>'); // [DEBUG/]
@@ -3338,10 +3334,10 @@
         traceLog.add('<SHOW_EFFECTS.none.stop>'); // [DEBUG/]
         traceLog.add('finish=' + finish); // [DEBUG/]
         // [DEBUG]
-        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on'); // eslint-disable-line eqeqeq
+        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on');
         // [/DEBUG]
         var curStats = props.curStats;
-        on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
+        on = on != null ? on : props.aplStats.show_on;
         traceLog.add(dbgLog + '=' + on); // [DEBUG/]
         curStats.show_inAnim = false;
         if (finish) { svgShow(props, on); }
@@ -3382,12 +3378,11 @@
         svgShow(props, 1);
         // [DEBUG]
         traceLog.add('timeRatio=' +
-          // eslint-disable-next-line eqeqeq
           (timeRatio != null ? 'timeRatio' : prevTimeRatio != null ? 'prevTimeRatio' : 'NONE'));
         // [/DEBUG]
         curStats.show_inAnim = true;
         anim.start(curStats.show_animId, !props.aplStats.show_on,
-          timeRatio != null ? timeRatio : prevTimeRatio); // eslint-disable-line eqeqeq
+          timeRatio != null ? timeRatio : prevTimeRatio);
         traceLog.add('</SHOW_EFFECTS.fade.start>'); // [DEBUG/]
       },
 
@@ -3395,10 +3390,10 @@
         traceLog.add('<SHOW_EFFECTS.fade.stop>'); // [DEBUG/]
         traceLog.add('finish=' + finish); // [DEBUG/]
         // [DEBUG]
-        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on'); // eslint-disable-line eqeqeq
+        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on');
         // [/DEBUG]
         var curStats = props.curStats, timeRatio;
-        on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
+        on = on != null ? on : props.aplStats.show_on;
         traceLog.add(dbgLog + '=' + on); // [DEBUG/]
         timeRatio = curStats.show_inAnim ? anim.stop(curStats.show_animId) : on ? 1 : 0;
         curStats.show_inAnim = false;
@@ -3476,13 +3471,12 @@
         svgShow(props, 1);
         // [DEBUG]
         traceLog.add('timeRatio=' +
-          // eslint-disable-next-line eqeqeq
           (timeRatio != null ? 'timeRatio' : prevTimeRatio != null ? 'prevTimeRatio' : 'NONE'));
         // [/DEBUG]
         curStats.show_inAnim = true;
         addEventHandler(props, 'apl_position', SHOW_EFFECTS.draw.update);
         anim.start(curStats.show_animId, !props.aplStats.show_on,
-          timeRatio != null ? timeRatio : prevTimeRatio); // eslint-disable-line eqeqeq
+          timeRatio != null ? timeRatio : prevTimeRatio);
         traceLog.add('</SHOW_EFFECTS.draw.start>'); // [DEBUG/]
       },
 
@@ -3490,10 +3484,10 @@
         traceLog.add('<SHOW_EFFECTS.draw.stop>'); // [DEBUG/]
         traceLog.add('finish=' + finish); // [DEBUG/]
         // [DEBUG]
-        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on'); // eslint-disable-line eqeqeq
+        var dbgLog = 'on=' + (on != null ? 'on' : 'aplStats.show_on');
         // [/DEBUG]
         var curStats = props.curStats, timeRatio;
-        on = on != null ? on : props.aplStats.show_on; // eslint-disable-line eqeqeq
+        on = on != null ? on : props.aplStats.show_on;
         traceLog.add(dbgLog + '=' + on); // [DEBUG/]
         timeRatio = curStats.show_inAnim ? anim.stop(curStats.show_animId) : on ? 1 : 0;
         curStats.show_inAnim = false;
@@ -3684,11 +3678,11 @@
           num = parseFloat(matches[1]) / 100;
           ratio = num !== 0;
         }
-        return num != null && (allowNegative || num >= 0) ? [num, ratio] : null; // eslint-disable-line eqeqeq
+        return num != null && (allowNegative || num >= 0) ? [num, ratio] : null;
       },
 
       checkElement: function(element) {
-        if (element == null) { // eslint-disable-line eqeqeq
+        if (element == null) {
           element = document.body;
         } else if (!isHTMLElement(element)) {
           throw new Error('`element` must be HTMLElement');
@@ -3890,7 +3884,7 @@
           elementBBox, value, updated = {};
 
         updated.strokeWidth = setStat(attachProps, curStats, 'strokeWidth',
-          attachProps.size != null ? attachProps.size : // eslint-disable-line eqeqeq
+          attachProps.size != null ? attachProps.size :
             (llStats ? llStats.line_strokeWidth : DEFAULT_OPTIONS.lineSize));
 
         elementBBox = getBBox(attachProps.element);
@@ -4248,7 +4242,7 @@
             Object.keys(optionStyle).forEach(function(propName) {
               if (typeof optionStyle[propName] === 'string' || isFinite(optionStyle[propName])) {
                 propStyle[propName] = optionStyle[propName];
-              } else if (optionStyle[propName] == null) { // eslint-disable-line eqeqeq
+              } else if (optionStyle[propName] == null) {
                 delete propStyle[propName];
               }
             });
@@ -4388,7 +4382,7 @@
           attachProps.lineOffset = attachOptions.lineOffset;
         }
         ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
-          if (attachOptions[propName] != null) { // eslint-disable-line eqeqeq
+          if (attachOptions[propName] != null) {
             attachProps[propName] = attachOptions[propName];
           }
         });
@@ -4406,7 +4400,7 @@
             llStats = props.curStats, socketXY = llStats.position_socketXYSE[attachProps.socketIndex],
             margin, plugSideLen, anotherSocketXY, value;
           // It's not ready yet.
-          if (socketXY.x == null) { // eslint-disable-line eqeqeq
+          if (socketXY.x == null) {
             traceLog.add('not-ready'); // [DEBUG/]
             traceLog.add('</ATTACHMENTS.captionLabel.updateSocketXY>'); // [DEBUG/]
             return;
@@ -4479,7 +4473,7 @@
           attachProps.adjustEdge = function(props, edge) {
             traceLog.add('<ATTACHMENTS.captionLabel.adjustEdge>'); // [DEBUG/]
             var curStats = attachProps.curStats;
-            if (curStats.x != null) { // eslint-disable-line eqeqeq
+            if (curStats.x != null) {
               ATTACHMENTS.captionLabel.adjustEdge(edge,
                 {x: curStats.x, y: curStats.y, width: attachProps.width, height: attachProps.height},
                 attachProps.strokeWidth / 2);
@@ -4617,9 +4611,7 @@
         attachProps.isShown = false;
         attachProps.styleShow.visibility = 'hidden';
         ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
-          if (attachProps[propName] != null) { // eslint-disable-line eqeqeq
-            text.styleText[propName] = attachProps[propName];
-          }
+          if (attachProps[propName] != null) { text.styleText[propName] = attachProps[propName]; }
         });
 
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
@@ -4750,7 +4742,7 @@
           attachProps.lineOffset = attachOptions.lineOffset;
         }
         ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
-          if (attachOptions[propName] != null) { // eslint-disable-line eqeqeq
+          if (attachOptions[propName] != null) {
             attachProps[propName] = attachOptions[propName];
           }
         });
@@ -5021,9 +5013,7 @@
         attachProps.isShown = false;
         attachProps.styleShow.visibility = 'hidden';
         ATTACHMENTS.captionLabel.textStyleProps.forEach(function(propName) {
-          if (attachProps[propName] != null) { // eslint-disable-line eqeqeq
-            text.styleText[propName] = attachProps[propName];
-          }
+          if (attachProps[propName] != null) { text.styleText[propName] = attachProps[propName]; }
         });
 
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });

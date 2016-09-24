@@ -16,15 +16,13 @@ var pathData2BBox = (function() {
     return createBBox(pathData.reduce(function(corners, pathSeg) {
       var values = pathSeg.values, x, y, i, iLen = values.length;
       for (i = 0; i < iLen; i += 2) {
-        if (values[i + 1] == null) { break; } // eslint-disable-line eqeqeq
+        if (values[i + 1] == null) { break; }
         x = values[i];
         y = values[i + 1];
-        /* eslint-disable eqeqeq */
         if (corners.x1 == null || x < corners.x1) { corners.x1 = x; }
         if (corners.x2 == null || x > corners.x2) { corners.x2 = x; }
         if (corners.y1 == null || y < corners.y1) { corners.y1 = y; }
         if (corners.y2 == null || y > corners.y2) { corners.y2 = y; }
-        /* eslint-enable eqeqeq */
       }
       return corners;
     }, {}));
