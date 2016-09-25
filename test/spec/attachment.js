@@ -144,7 +144,6 @@ describe('attachment', function() {
       attachProps = window.insAttachProps[atc._id];
       expect(attachProps.element).toBe(document.getElementById('elm1'));
       expect(attachProps.showEffectName).toBe('draw');
-      console.log(attachProps.style);
       expect(attachProps.style.dummy).toBe(9);
 
       atc = window.LeaderLine.mouseHoverAnchor(document.getElementById('elm2'));

@@ -333,12 +333,15 @@
   }
   window.mouseEnterLeave = mouseEnterLeave; // [DEBUG/]
 
-  function isHTMLElement(element) {
-    var win, doc;
-    return !!(element && (doc = element.ownerDocument) && (win = doc.defaultView) && win.HTMLElement &&
-      element instanceof win.HTMLElement);
+  function isElement(element) {
+    // The checking the interface may not be required.
+    // var win, doc;
+    // return !!(element && (doc = element.ownerDocument) && (win = doc.defaultView) && win.HTMLElement &&
+    //   element instanceof win.HTMLElement);
+    return !!(element && element.nodeType === Node.ELEMENT_NODE &&
+      typeof element.getBoundingClientRect === 'function');
   }
-  window.isHTMLElement = isHTMLElement; // [DEBUG/]
+  window.isElement = isElement; // [DEBUG/]
 
   /**
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
@@ -2561,7 +2564,7 @@
     ['start', 'end'].forEach(function(optionName, i) {
       var newOption = newOptions[optionName], newIsAttachment = false;
       if (newOption &&
-          (isHTMLElement(newOption) || (newIsAttachment = isAttachment(newOption, 'anchor'))) &&
+          (isElement(newOption) || (newIsAttachment = isAttachment(newOption, 'anchor'))) &&
           newOption !== options.anchorSE[i]) {
 
         if (props.optionIsAttach.anchorSE[i] !== false) {
@@ -3551,7 +3554,7 @@
       conf.argOptions.every(function(argOption) {
         if (args.length && (
               typeof argOption.type === 'string' ? typeof args[0] === argOption.type :
-              args[0] instanceof argOption.type
+              typeof argOption.type === 'function' ? argOption.type(args[0]) : false
             )) {
           shortOptions[argOption.optionName] = args.shift();
           return true;
@@ -3635,7 +3638,7 @@
   ATTACHMENTS = {
     pointAnchor: {
       type: 'anchor',
-      argOptions: [{optionName: 'element', type: HTMLElement}],
+      argOptions: [{optionName: 'element', type: isElement}],
 
       // attachOptions: element, x, y
       init: function(attachProps, attachOptions) {
@@ -3684,8 +3687,8 @@
       checkElement: function(element) {
         if (element == null) {
           element = document.body;
-        } else if (!isHTMLElement(element)) {
-          throw new Error('`element` must be HTMLElement');
+        } else if (!isElement(element)) {
+          throw new Error('`element` must be Element');
         }
         return element;
       }
@@ -3693,7 +3696,7 @@
 
     areaAnchor: {
       type: 'anchor',
-      argOptions: [{optionName: 'element', type: HTMLElement}, {optionName: 'shape', type: 'string'}],
+      argOptions: [{optionName: 'element', type: isElement}, {optionName: 'shape', type: 'string'}],
       stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {}, elementLeft: {}, elementTop: {},
         pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}, dashLen: {}, dashGap: {}},
 
@@ -4140,7 +4143,7 @@
 
     mouseHoverAnchor: {
       type: 'anchor',
-      argOptions: [{optionName: 'element', type: HTMLElement}, {optionName: 'showEffectName', type: 'string'}],
+      argOptions: [{optionName: 'element', type: isElement}, {optionName: 'showEffectName', type: 'string'}],
 
       style: {
         backgroundImage: 'url(\'data:image/svg+xml;charset=utf-8;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cG9seWdvbiBwb2ludHM9IjI0LDAgMCw4IDgsMTEgMCwxOSA1LDI0IDEzLDE2IDE2LDI0IiBmaWxsPSJjb3JhbCIvPjwvc3ZnPg==\')',

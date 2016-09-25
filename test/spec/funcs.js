@@ -441,13 +441,13 @@ describe('funcs', function() {
 
   });
 
-  describe('isHTMLElement()', function() {
-    var document, isHTMLElement, IS_TRIDENT, IS_WEBKIT, pageDone;
+  describe('isElement()', function() {
+    var document, isElement, IS_TRIDENT, IS_WEBKIT, pageDone;
 
     beforeAll(function(beforeDone) {
-      loadPage('spec/funcs/isHTMLElement.html', function(window, frmDocument, body, done) {
+      loadPage('spec/funcs/isElement.html', function(window, frmDocument, body, done) {
         document = frmDocument;
-        isHTMLElement = window.isHTMLElement;
+        isElement = window.isElement;
         IS_TRIDENT = window.IS_TRIDENT;
         IS_WEBKIT = window.IS_WEBKIT;
         pageDone = done;
@@ -462,63 +462,63 @@ describe('funcs', function() {
     it('HTMLAnchorElement:true', function() {
       var element = document.getElementsByTagName('a')[0];
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLAnchorElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('HTMLParagraphElement:true', function() {
       var element = document.getElementsByTagName('p')[0];
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLParagraphElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('HTMLHeadElement:true', function() {
       var element = document.getElementsByTagName('head')[0];
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLHeadElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('HTMLScriptElement:true', function() {
       var element = document.getElementsByTagName('script')[0];
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLScriptElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('HTMLBodyElement:true', function() {
       var element = document.body;
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLBodyElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('HTMLHtmlElement:true', function() {
       var element = document.documentElement;
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLHtmlElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('HTMLDocument:false', function() {
       var element = document;
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLDocument]');
-      expect(isHTMLElement(element)).toBe(false);
+      expect(isElement(element)).toBe(false);
     });
 
     it('HTMLCollection:false', function() {
       var element = document.getElementsByTagName('a');
       expect(Object.prototype.toString.apply(element)).toBe('[object ' +
         (IS_WEBKIT ? 'NodeList' : 'HTMLCollection') + ']');
-      expect(isHTMLElement(element)).toBe(false);
+      expect(isElement(element)).toBe(false);
     });
 
     it('HTMLOptionsCollection:false', function() {
       var element = document.getElementsByTagName('select')[0].options;
       if (!IS_TRIDENT) { // [TRIDENT] `<select>.options` returns itself.
         expect(Object.prototype.toString.apply(element)).toBe('[object HTMLOptionsCollection]');
-        expect(isHTMLElement(element)).toBe(false);
+        expect(isElement(element)).toBe(false);
       }
     });
 
@@ -527,69 +527,104 @@ describe('funcs', function() {
       if (!IS_TRIDENT) { // [TRIDENT] The class is not supported.
         expect(Object.prototype.toString.apply(element)).toBe('[object HTMLFormControlsCollection]');
       }
-      expect(isHTMLElement(element)).toBe(false);
+      expect(isElement(element)).toBe(false);
+    });
+
+    it('SVGSVGElement:true', function() {
+      var element = document.getElementsByTagName('svg')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGSVGElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('SVGGElement:true', function() {
+      var element = document.getElementById('elmG');
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGGElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('SVGTextElement:true', function() {
+      var element = document.getElementById('elmText');
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGTextElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('SVGRectElement:true', function() {
+      var element = document.getElementById('elmRect');
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGRectElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('SVGDefsElement:true', function() {
+      var element = document.getElementById('elmDefs');
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGDefsElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('Another window HTMLAnchorElement:true', function() {
       var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('a')[0];
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLAnchorElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('Another window HTMLParagraphElement:true', function() {
       var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('p')[0];
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLParagraphElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('Another window HTMLHeadElement:true', function() {
       var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('head')[0];
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLHeadElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('Another window HTMLScriptElement:true', function() {
       var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('script')[0];
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLScriptElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('Another window HTMLBodyElement:true', function() {
       var element = document.getElementById('iframe-1').contentDocument.body;
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLBodyElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('Another window HTMLHtmlElement:true', function() {
       var element = document.getElementById('iframe-1').contentDocument.documentElement;
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLHtmlElement]');
-      expect(isHTMLElement(element)).toBe(true);
+      expect(isElement(element)).toBe(true);
       expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('Another window HTMLDocument:false', function() {
       var element = document.getElementById('iframe-1').contentDocument;
       expect(Object.prototype.toString.apply(element)).toBe('[object HTMLDocument]');
-      expect(isHTMLElement(element)).toBe(false);
+      expect(isElement(element)).toBe(false);
     });
 
     it('Another window HTMLCollection:false', function() {
       var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('a');
       expect(Object.prototype.toString.apply(element)).toBe('[object ' +
         (IS_WEBKIT ? 'NodeList' : 'HTMLCollection') + ']');
-      expect(isHTMLElement(element)).toBe(false);
+      expect(isElement(element)).toBe(false);
     });
 
     it('Another window HTMLOptionsCollection:false', function() {
       var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('select')[0].options;
       if (!IS_TRIDENT) { // [TRIDENT] `<select>.options` returns itself.
         expect(Object.prototype.toString.apply(element)).toBe('[object HTMLOptionsCollection]');
-        expect(isHTMLElement(element)).toBe(false);
+        expect(isElement(element)).toBe(false);
       }
     });
 
@@ -598,20 +633,55 @@ describe('funcs', function() {
       if (!IS_TRIDENT) { // [TRIDENT] The class is not supported.
         expect(Object.prototype.toString.apply(element)).toBe('[object HTMLFormControlsCollection]');
       }
-      expect(isHTMLElement(element)).toBe(false);
+      expect(isElement(element)).toBe(false);
+    });
+
+    it('Another window SVGSVGElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementsByTagName('svg')[0];
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGSVGElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window SVGGElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementById('elmG');
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGGElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window SVGTextElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementById('elmText');
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGTextElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window SVGRectElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementById('elmRect');
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGRectElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
+    });
+
+    it('Another window SVGDefsElement:true', function() {
+      var element = document.getElementById('iframe-1').contentDocument.getElementById('elmDefs');
+      expect(Object.prototype.toString.apply(element)).toBe('[object SVGDefsElement]');
+      expect(isElement(element)).toBe(true);
+      expect(typeof element.getBoundingClientRect).toBe('function');
     });
 
     it('other types:false', function() {
-      expect(isHTMLElement('a')).toBe(false);
-      expect(isHTMLElement(1)).toBe(false);
-      expect(isHTMLElement('')).toBe(false);
-      expect(isHTMLElement(0)).toBe(false);
-      expect(isHTMLElement(null)).toBe(false);
-      expect(isHTMLElement()).toBe(false);
-      expect(isHTMLElement({})).toBe(false);
-      expect(isHTMLElement(true)).toBe(false);
-      expect(isHTMLElement(window)).toBe(false);
-      expect(isHTMLElement(new Date())).toBe(false);
+      expect(isElement('a')).toBe(false);
+      expect(isElement(1)).toBe(false);
+      expect(isElement('')).toBe(false);
+      expect(isElement(0)).toBe(false);
+      expect(isElement(null)).toBe(false);
+      expect(isElement()).toBe(false);
+      expect(isElement({})).toBe(false);
+      expect(isElement(true)).toBe(false);
+      expect(isElement(window)).toBe(false);
+      expect(isElement(new Date())).toBe(false);
     });
   });
 
