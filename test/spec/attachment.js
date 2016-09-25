@@ -14,7 +14,8 @@ describe('attachment', function() {
   // ================ /context
   /* eslint-enable no-unused-vars, indent */
 
-  var TOLERANCE = 0.001;
+  var TOLERANCE = 1, // It's changed by environment.
+    IS_WEBKIT;
 
   function registerTitle(title) {
     titles.push(title);
@@ -24,6 +25,11 @@ describe('attachment', function() {
   function loadBefore(beforeDone) {
     jasmine.addMatchers(customMatchers);
     loadPage('spec/common/page.html', function(frmWindow, frmDocument, body, done) {
+      // Use setTimeout instead of requestAnimationFrame for animation.
+      frmWindow.addReqFrameAnim2(function(cb) { setTimeout(cb, frmWindow.MSPF); });
+      TOLERANCE = frmWindow.IS_WEBKIT ? 10 : frmWindow.IS_GECKO || frmWindow.IS_TRIDENT ? 5 : 1;
+      IS_WEBKIT = frmWindow.IS_WEBKIT;
+
       window = frmWindow;
       document = frmDocument;
       traceLog = window.traceLog;
@@ -748,7 +754,7 @@ describe('attachment', function() {
       ll.start = atc;
       expect(attachProps.aplStats.dashLen).toBe(len);
       expect(attachProps.aplStats.dashGap).toBe(gap);
-      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s|px/g, '')).toBe(len + ',' + gap);
 
       // dash invalid number
       expect(attachProps.curStats.strokeWidth * 2).toBe(8); // auto
@@ -760,7 +766,7 @@ describe('attachment', function() {
       ll.start = atc;
       expect(attachProps.aplStats.dashLen).toBe(len);
       expect(attachProps.aplStats.dashGap).toBe(gap);
-      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s|px/g, '')).toBe(len + ',' + gap);
 
       // dash auto
       expect(attachProps.curStats.strokeWidth * 2).toBe(8); // auto
@@ -773,7 +779,7 @@ describe('attachment', function() {
       ll.start = atc;
       expect(attachProps.aplStats.dashLen).toBe(len);
       expect(attachProps.aplStats.dashGap).toBe(gap);
-      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s|px/g, '')).toBe(len + ',' + gap);
 
       pageDone();
       done();
@@ -1037,14 +1043,14 @@ describe('attachment', function() {
       gap = 4;
       expect(attachProps.aplStats.dashLen).toBe(len);
       expect(attachProps.aplStats.dashGap).toBe(gap);
-      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s|px/g, '')).toBe(len + ',' + gap);
 
       ll.size = 5;
       len = 10;
       gap = 5;
       expect(attachProps.aplStats.dashLen).toBe(len);
       expect(attachProps.aplStats.dashGap).toBe(gap);
-      expect(attachProps.path.style.strokeDasharray.replace(/\s/g, '')).toBe(len + ',' + gap);
+      expect(attachProps.path.style.strokeDasharray.replace(/\s|px/g, '')).toBe(len + ',' + gap);
 
       pageDone();
       done();
@@ -1532,7 +1538,7 @@ describe('attachment', function() {
       expect(attachProps.style.paddingBottom == null).toBe(true);
       expect(attachProps.style.paddingLeft == null).toBe(true);
 
-      // height (mi-height: 15)
+      // height (min-height: 15)
       // box-sizing: content-box
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('height1')});
       attachProps = window.insAttachProps[atc._id];
@@ -1577,6 +1583,9 @@ describe('attachment', function() {
       expect(attachProps.style.backgroundPosition).toBe(
         (bBox.width - 12/* backgroundSize.width */ - 2/* backgroundPosition.right */) + 'px ' +
         2/* backgroundPosition.top */ + 'px');
+
+      // IS_WEBKIT: restore
+      window.engineFlags({IS_WEBKIT: IS_WEBKIT});
 
       // merge
       atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('span-a'),
@@ -1682,6 +1691,7 @@ describe('attachment', function() {
       traceLog.clear();
       ll.color = 'red';
       expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
         '<setOptions>', 'needs.line', '</setOptions>',
         '<updateLine>', 'line_color=red',
         '<ATTACHMENTS.captionLabel.updateColor>', 'color=red', '</ATTACHMENTS.captionLabel.updateColor>',
@@ -1691,10 +1701,14 @@ describe('attachment', function() {
         '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
         '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
         '<updatePosition>', 'not-updated', '</updatePosition>',
-        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateViewBox>'].concat(window.IS_WEBKIT ? [
+          '<ATTACHMENTS.captionLabel.adjustEdge>', '</ATTACHMENTS.captionLabel.adjustEdge>'
+        ] : []).concat([
+        'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
-      ]);
+        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'])
+        /* eslint-enable indent */
+      );
       expect(attachProps.curStats.color).toBe('red');
 
       // It's changed by binding ll
@@ -1709,7 +1723,12 @@ describe('attachment', function() {
         // option of ll1
         '<ATTACHMENTS.captionLabel.removeOption>',
           'optionName=startLabel',
-          '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
+          '<ATTACHMENTS.captionLabel.unbind>'].concat(window.IS_WEBKIT ? [
+            '<updateViewBox>', 'y', 'height', '</updateViewBox>',
+            '<updateMask>', 'maskBGRect_y', 'lineMask_y', '</updateMask>',
+            '<update>', 'updated.viewBox', 'updated.mask', '</update>'
+          ] : []).concat([
+          '</ATTACHMENTS.captionLabel.unbind>',
           '<setOptions>', '</setOptions>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
@@ -1720,19 +1739,30 @@ describe('attachment', function() {
           'optionName=endLabel',
           '<ATTACHMENTS.captionLabel.initSvg>',
             '<ATTACHMENTS.captionLabel.updateColor>', 'color=blue', '</ATTACHMENTS.captionLabel.updateColor>',
-            '<ATTACHMENTS.captionLabel.updateSocketXY>',
-              'x=162.09375', 'y=263',
-            '</ATTACHMENTS.captionLabel.updateSocketXY>',
+            '<ATTACHMENTS.captionLabel.updateSocketXY>', 'x', 'y', '</ATTACHMENTS.captionLabel.updateSocketXY>'
+            ].concat(window.IS_WEBKIT ? [
+              '<updateViewBox>',
+                '<ATTACHMENTS.captionLabel.adjustEdge>', '</ATTACHMENTS.captionLabel.adjustEdge>',
+                'height',
+              '</updateViewBox>',
+              '<updateMask>', 'not-updated', '</updateMask>',
+              '<update>', 'updated.viewBox', '</update>'
+            ] : []).concat([
             '<ATTACHMENTS.captionLabel.updateShow>', 'on=true', '</ATTACHMENTS.captionLabel.updateShow>',
           '</ATTACHMENTS.captionLabel.initSvg>',
         '</ATTACHMENTS.captionLabel.bind>',
 
         '<setOptions>', '</setOptions>',
-        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateViewBox>'].concat(window.IS_WEBKIT ? [
+          '<ATTACHMENTS.captionLabel.adjustEdge>', '</ATTACHMENTS.captionLabel.adjustEdge>',
+        ] : []).concat([
+        'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', '</update>'
+        '<update>', '</update>'])))
         /* eslint-enable indent */
-      ]);
+      );
+      expect(attachProps.aplStats.x - 162).toBeLessThan(TOLERANCE);
+      expect(attachProps.aplStats.y - 263).toBeLessThan(TOLERANCE);
       expect(attachProps.curStats.color).toBe('blue');
       expect(props.events.cur_line_color.length).toBe(0); // removeEventHandler
       expect(props2.events.cur_line_color.length).toBe(1); // addEventHandler
@@ -1742,12 +1772,19 @@ describe('attachment', function() {
       traceLog.clear();
       ll2.endLabel = '';
       expect(traceLog.log).toEqual([
-        '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
+        /* eslint-disable indent */
+        '<ATTACHMENTS.captionLabel.unbind>'].concat(window.IS_WEBKIT ? [
+          '<updateViewBox>', 'height', '</updateViewBox>',
+          '<updateMask>', 'not-updated', '</updateMask>',
+          '<update>', 'updated.viewBox', '</update>'
+        ] : []).concat([
+        '</ATTACHMENTS.captionLabel.unbind>',
         '<setOptions>', '</setOptions>',
         '<updateViewBox>', 'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', '</update>'
-      ]);
+        '<update>', '</update>'])
+        /* eslint-enable indent */
+      );
       expect(props2.events.cur_line_color.length).toBe(0); // removeEventHandler
       expect(props2.attachments.length).toBe(0);
       setTimeout(function() {
@@ -1772,6 +1809,7 @@ describe('attachment', function() {
       traceLog.clear();
       ll.color = 'red';
       expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
         '<setOptions>', 'needs.line', '</setOptions>',
         '<updateLine>', 'line_color=red',
         // '<ATTACHMENTS.captionLabel.updateColor>', 'color=red', '</ATTACHMENTS.captionLabel.updateColor>',
@@ -1781,10 +1819,14 @@ describe('attachment', function() {
         '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
         '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
         '<updatePosition>', 'not-updated', '</updatePosition>',
-        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateViewBox>'].concat(window.IS_WEBKIT ? [
+          '<ATTACHMENTS.captionLabel.adjustEdge>', '</ATTACHMENTS.captionLabel.adjustEdge>',
+        ] : []).concat([
+        'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
-      ]);
+        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'])
+        /* eslint-enable indent */
+      );
       expect(attachProps.curStats.color).toBe('yellow');
 
       // It's changed by binding ll
@@ -1799,7 +1841,12 @@ describe('attachment', function() {
         // option of ll1
         '<ATTACHMENTS.captionLabel.removeOption>',
           'optionName=startLabel',
-          '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
+          '<ATTACHMENTS.captionLabel.unbind>'].concat(window.IS_WEBKIT ? [
+            '<updateViewBox>', 'y', 'height', '</updateViewBox>',
+            '<updateMask>', 'maskBGRect_y', 'lineMask_y', '</updateMask>',
+            '<update>', 'updated.viewBox', 'updated.mask', '</update>'
+          ] : []).concat([
+          '</ATTACHMENTS.captionLabel.unbind>',
           '<setOptions>', '</setOptions>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
@@ -1810,19 +1857,30 @@ describe('attachment', function() {
           'optionName=endLabel',
           '<ATTACHMENTS.captionLabel.initSvg>',
             '<ATTACHMENTS.captionLabel.updateColor>', 'color=yellow', '</ATTACHMENTS.captionLabel.updateColor>',
-            '<ATTACHMENTS.captionLabel.updateSocketXY>',
-              'x=162.09375', 'y=263',
-            '</ATTACHMENTS.captionLabel.updateSocketXY>',
+            '<ATTACHMENTS.captionLabel.updateSocketXY>', 'x', 'y', '</ATTACHMENTS.captionLabel.updateSocketXY>'
+            ].concat(window.IS_WEBKIT ? [
+              '<updateViewBox>',
+                '<ATTACHMENTS.captionLabel.adjustEdge>', '</ATTACHMENTS.captionLabel.adjustEdge>',
+                'height',
+              '</updateViewBox>',
+              '<updateMask>', 'not-updated', '</updateMask>',
+              '<update>', 'updated.viewBox', '</update>'
+            ] : []).concat([
             '<ATTACHMENTS.captionLabel.updateShow>', 'on=true', '</ATTACHMENTS.captionLabel.updateShow>',
           '</ATTACHMENTS.captionLabel.initSvg>',
         '</ATTACHMENTS.captionLabel.bind>',
 
         '<setOptions>', '</setOptions>',
-        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateViewBox>'].concat(window.IS_WEBKIT ? [
+          '<ATTACHMENTS.captionLabel.adjustEdge>', '</ATTACHMENTS.captionLabel.adjustEdge>',
+        ] : []).concat([
+        'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', '</update>'
+        '<update>', '</update>'])))
         /* eslint-enable indent */
-      ]);
+      );
+      expect(attachProps.aplStats.x - 162).toBeLessThan(TOLERANCE);
+      expect(attachProps.aplStats.y - 263).toBeLessThan(TOLERANCE);
       expect(attachProps.curStats.color).toBe('yellow');
       expect(props.events.cur_line_color == null).toBe(true);
       expect(props2.events.cur_line_color == null).toBe(true);
@@ -1832,12 +1890,19 @@ describe('attachment', function() {
       traceLog.clear();
       ll2.endLabel = '';
       expect(traceLog.log).toEqual([
-        '<ATTACHMENTS.captionLabel.unbind>', '</ATTACHMENTS.captionLabel.unbind>',
+        /* eslint-disable indent */
+        '<ATTACHMENTS.captionLabel.unbind>'].concat(window.IS_WEBKIT ? [
+          '<updateViewBox>', 'height', '</updateViewBox>',
+          '<updateMask>', 'not-updated', '</updateMask>',
+          '<update>', 'updated.viewBox', '</update>'
+        ] : []).concat([
+        '</ATTACHMENTS.captionLabel.unbind>',
         '<setOptions>', '</setOptions>',
         '<updateViewBox>', 'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', '</update>'
-      ]);
+        '<update>', '</update>'])
+        /* eslint-enable indent */
+      );
       expect(props2.events.cur_line_color == null).toBe(true);
       expect(props2.attachments.length).toBe(0);
       setTimeout(function() {
@@ -1886,16 +1951,20 @@ describe('attachment', function() {
       height = (bBox = attachProps.elmPosition.getBBox()).height;
       // elm1 (1, 2) w:100 h:30
       // socket: right (101, 17)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(101 + 3);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(17 - 4 + height);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (101 + 3))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (17 - 4 + height))
+        .toBeLessThan(TOLERANCE);
 
       // endLabel
       expect(props.attachments.length).toBe(1);
       ll.endLabel = atc;
       // elm3 (216, 232) w:100 h:30
       // socket: left (216, 247)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(216 + 3);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(247 - 4 + height);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (216 + 3))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (247 - 4 + height))
+        .toBeLessThan(TOLERANCE);
       expect(props.attachments.length).toBe(1);
 
       // move anchor
@@ -1903,8 +1972,10 @@ describe('attachment', function() {
       // elm3 (216, 15) w:100 h:30
       // socket: left (216, 30)
       ll.position();
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(216 + 3);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(30 - 4 + height);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (216 + 3))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (30 - 4 + height))
+        .toBeLessThan(TOLERANCE);
 
       // auto offset
       atc = window.LeaderLine.captionLabel({text: 'label-a'});
@@ -1920,61 +1991,79 @@ describe('attachment', function() {
       document.getElementById('elm1').style.top = '250px';
       ll.position();
       // socket: left (300, 315)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(300 - width - height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 + sideLen + height / 2 + height);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (300 - width - height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (315 + sideLen + height / 2 + height))
+        .toBeLessThan(TOLERANCE);
 
       // updated by size
       ll.size = 8;
       sideLen = 16;
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(300 - width - height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 + sideLen + height / 2 + height);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (300 - width - height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (315 + sideLen + height / 2 + height))
+        .toBeLessThan(TOLERANCE);
 
       ll.size = 4;
       sideLen = 8;
       document.getElementById('elm1').style.top = '350px';
       ll.position();
       // socket: left (300, 315)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(300 - width - height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 - sideLen - height / 2);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (300 - width - height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (315 - sideLen - height / 2))
+        .toBeLessThan(TOLERANCE);
 
       document.getElementById('elm1').style.left = '600px';
       document.getElementById('elm1').style.top = '250px';
       ll.position();
       // socket: right (400, 315)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(400 + height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 + sideLen + height / 2 + height);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (400 + height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (315 + sideLen + height / 2 + height))
+        .toBeLessThan(TOLERANCE);
 
       document.getElementById('elm1').style.top = '350px';
       ll.position();
       // socket: right (400, 315)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(400 + height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(315 - sideLen - height / 2);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (400 + height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (315 - sideLen - height / 2))
+        .toBeLessThan(TOLERANCE);
 
       document.getElementById('elm1').style.left = '250px';
       document.getElementById('elm1').style.top = '0';
       ll.position();
       // socket: top (350, 300)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(350 + sideLen + height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(300 - height / 2);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (350 + sideLen + height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (300 - height / 2))
+        .toBeLessThan(TOLERANCE);
 
       document.getElementById('elm1').style.left = '350px';
       ll.position();
       // socket: top (350, 300)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(350 - sideLen - width - height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(300 - height / 2);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (350 - sideLen - width - height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (300 - height / 2))
+        .toBeLessThan(TOLERANCE);
 
       document.getElementById('elm1').style.left = '250px';
       document.getElementById('elm1').style.top = '600px';
       ll.position();
       // socket: bottom (350, 330)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(350 + sideLen + height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(330 + height / 2 + height);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (350 + sideLen + height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (330 + height / 2 + height))
+        .toBeLessThan(TOLERANCE);
 
       document.getElementById('elm1').style.left = '350px';
       ll.position();
       // socket: bottom (350, 330)
-      expect(attachProps.elmPosition.x.baseVal.getItem(0).value).toBe(350 - sideLen - width - height / 2);
-      expect(attachProps.elmPosition.y.baseVal.getItem(0).value).toBe(330 + height / 2 + height);
+      expect(Math.abs(attachProps.elmPosition.x.baseVal.getItem(0).value) - (350 - sideLen - width - height / 2))
+        .toBeLessThan(TOLERANCE);
+      expect(Math.abs(attachProps.elmPosition.y.baseVal.getItem(0).value) - (330 + height / 2 + height))
+        .toBeLessThan(TOLERANCE);
 
       pageDone();
       done();
@@ -2090,19 +2179,25 @@ describe('attachment', function() {
       traceLog.clear();
       ll.color = 'red';
       expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
         '<setOptions>', 'needs.line', '</setOptions>',
-        '<updateLine>', 'line_color=red',
-        '<ATTACHMENTS.pathLabel.updateColor>', 'color=red', '</ATTACHMENTS.pathLabel.updateColor>',
+        '<updateLine>',
+          'line_color=red',
+          '<ATTACHMENTS.pathLabel.updateColor>', 'color=red', '</ATTACHMENTS.pathLabel.updateColor>',
         '</updateLine>',
         '<updatePlug>', 'plug_colorSE[0]=red', 'plug_colorSE[1]=red', '</updatePlug>',
         '<updateLineOutline>', 'not-updated', '</updateLineOutline>',
         '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
         '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
         '<updatePosition>', 'not-updated', '</updatePosition>',
-        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateViewBox>'].concat(window.IS_WEBKIT ? [
+          '<ATTACHMENTS.pathLabel.adjustEdge>', '</ATTACHMENTS.pathLabel.adjustEdge>',
+        ] : []).concat([
+        'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
-      ]);
+        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'])
+        /* eslint-enable indent */
+      );
       expect(attachProps.curStats.color).toBe('red');
 
       // It's changed by binding ll
@@ -2117,7 +2212,12 @@ describe('attachment', function() {
         // option of ll1
         '<ATTACHMENTS.pathLabel.removeOption>',
           'optionName=startLabel',
-          '<ATTACHMENTS.pathLabel.unbind>', '</ATTACHMENTS.pathLabel.unbind>',
+          '<ATTACHMENTS.pathLabel.unbind>'].concat(window.IS_WEBKIT ? [
+            '<updateViewBox>', 'y', 'height', '</updateViewBox>',
+            '<updateMask>', 'maskBGRect_y', 'lineMask_y', '</updateMask>',
+            '<update>', 'updated.viewBox', 'updated.mask', '</update>'
+          ] : []).concat([
+          '</ATTACHMENTS.pathLabel.unbind>',
           '<setOptions>', '</setOptions>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
@@ -2131,20 +2231,32 @@ describe('attachment', function() {
             '<ATTACHMENTS.pathLabel.updatePath>',
               'pathData',
               '<ATTACHMENTS.pathLabel.updateStartOffset>', // in updatePath
-                'startOffset=267.81356660456',
+                'startOffset',
               '</ATTACHMENTS.pathLabel.updateStartOffset>',
             '</ATTACHMENTS.pathLabel.updatePath>',
-            '<ATTACHMENTS.pathLabel.updateStartOffset>', '</ATTACHMENTS.pathLabel.updateStartOffset>',
+            '<ATTACHMENTS.pathLabel.updateStartOffset>', '</ATTACHMENTS.pathLabel.updateStartOffset>'
+            ].concat(window.IS_WEBKIT ? [
+              '<updateViewBox>',
+                '<ATTACHMENTS.pathLabel.adjustEdge>', '</ATTACHMENTS.pathLabel.adjustEdge>',
+                'x', 'y', 'width', 'height',
+              '</updateViewBox>',
+              '<updateMask>', 'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y', '</updateMask>',
+              '<update>', 'updated.viewBox', 'updated.mask', '</update>'
+            ] : []).concat([
             '<ATTACHMENTS.pathLabel.updateShow>', 'on=true', '</ATTACHMENTS.pathLabel.updateShow>',
           '</ATTACHMENTS.pathLabel.initSvg>',
         '</ATTACHMENTS.pathLabel.bind>',
 
         '<setOptions>', '</setOptions>',
-        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateViewBox>'].concat(window.IS_WEBKIT ? [
+          '<ATTACHMENTS.pathLabel.adjustEdge>', '</ATTACHMENTS.pathLabel.adjustEdge>',
+        ] : []).concat([
+        'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', '</update>'
+        '<update>', '</update>'])))
         /* eslint-enable indent */
-      ]);
+      );
+      expect(attachProps.aplStats.startOffset - 268).toBeLessThan(TOLERANCE);
       expect(attachProps.curStats.color).toBe('blue');
       expect(props.events.cur_line_color.length).toBe(0); // removeEventHandler
       expect(props2.events.cur_line_color.length).toBe(1); // addEventHandler
@@ -2154,12 +2266,19 @@ describe('attachment', function() {
       traceLog.clear();
       ll2.endLabel = '';
       expect(traceLog.log).toEqual([
-        '<ATTACHMENTS.pathLabel.unbind>', '</ATTACHMENTS.pathLabel.unbind>',
+        /* eslint-disable indent */
+        '<ATTACHMENTS.pathLabel.unbind>'].concat(window.IS_WEBKIT ? [
+          '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
+          '<updateMask>', 'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y', '</updateMask>',
+          '<update>', 'updated.viewBox', 'updated.mask', '</update>'
+        ] : []).concat([
+        '</ATTACHMENTS.pathLabel.unbind>',
         '<setOptions>', '</setOptions>',
         '<updateViewBox>', 'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', '</update>'
-      ]);
+        '<update>', '</update>'])
+        /* eslint-enable indent */
+      );
       expect(props2.events.cur_line_color.length).toBe(0); // removeEventHandler
       expect(props2.attachments.length).toBe(0);
       setTimeout(function() {
@@ -2184,6 +2303,7 @@ describe('attachment', function() {
       traceLog.clear();
       ll.color = 'red';
       expect(traceLog.log).toEqual([
+        /* eslint-disable indent */
         '<setOptions>', 'needs.line', '</setOptions>',
         '<updateLine>', 'line_color=red',
         // '<ATTACHMENTS.pathLabel.updateColor>', 'color=red', '</ATTACHMENTS.pathLabel.updateColor>',
@@ -2193,10 +2313,14 @@ describe('attachment', function() {
         '<updatePlugOutline>', 'not-updated', '</updatePlugOutline>',
         '<updateFaces>', 'line_color=red', 'plug_colorSE[1]=red', '</updateFaces>',
         '<updatePosition>', 'not-updated', '</updatePosition>',
-        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateViewBox>'].concat(window.IS_WEBKIT ? [
+          '<ATTACHMENTS.pathLabel.adjustEdge>', '</ATTACHMENTS.pathLabel.adjustEdge>',
+        ] : []).concat([
+        'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'
-      ]);
+        '<update>', 'updated.line', 'updated.plug', 'updated.faces', '</update>'])
+        /* eslint-enable indent */
+      );
       expect(attachProps.curStats.color).toBe('yellow');
 
       // It's changed by binding ll
@@ -2211,7 +2335,12 @@ describe('attachment', function() {
         // option of ll1
         '<ATTACHMENTS.pathLabel.removeOption>',
           'optionName=startLabel',
-          '<ATTACHMENTS.pathLabel.unbind>', '</ATTACHMENTS.pathLabel.unbind>',
+          '<ATTACHMENTS.pathLabel.unbind>'].concat(window.IS_WEBKIT ? [
+            '<updateViewBox>', 'y', 'height', '</updateViewBox>',
+            '<updateMask>', 'maskBGRect_y', 'lineMask_y', '</updateMask>',
+            '<update>', 'updated.viewBox', 'updated.mask', '</update>'
+          ] : []).concat([
+          '</ATTACHMENTS.pathLabel.unbind>',
           '<setOptions>', '</setOptions>',
           '<updateViewBox>', 'not-updated', '</updateViewBox>',
           '<updateMask>', 'not-updated', '</updateMask>',
@@ -2225,20 +2354,32 @@ describe('attachment', function() {
             '<ATTACHMENTS.pathLabel.updatePath>',
               'pathData',
               '<ATTACHMENTS.pathLabel.updateStartOffset>', // in updatePath
-                'startOffset=267.81356660456',
+                'startOffset',
               '</ATTACHMENTS.pathLabel.updateStartOffset>',
             '</ATTACHMENTS.pathLabel.updatePath>',
-            '<ATTACHMENTS.pathLabel.updateStartOffset>', '</ATTACHMENTS.pathLabel.updateStartOffset>',
+            '<ATTACHMENTS.pathLabel.updateStartOffset>', '</ATTACHMENTS.pathLabel.updateStartOffset>'
+            ].concat(window.IS_WEBKIT ? [
+              '<updateViewBox>',
+                '<ATTACHMENTS.pathLabel.adjustEdge>', '</ATTACHMENTS.pathLabel.adjustEdge>',
+                'x', 'y', 'width', 'height',
+              '</updateViewBox>',
+              '<updateMask>', 'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y', '</updateMask>',
+              '<update>', 'updated.viewBox', 'updated.mask', '</update>'
+            ] : []).concat([
             '<ATTACHMENTS.pathLabel.updateShow>', 'on=true', '</ATTACHMENTS.pathLabel.updateShow>',
           '</ATTACHMENTS.pathLabel.initSvg>',
         '</ATTACHMENTS.pathLabel.bind>',
 
         '<setOptions>', '</setOptions>',
-        '<updateViewBox>', 'not-updated', '</updateViewBox>',
+        '<updateViewBox>'].concat(window.IS_WEBKIT ? [
+          '<ATTACHMENTS.pathLabel.adjustEdge>', '</ATTACHMENTS.pathLabel.adjustEdge>',
+        ] : []).concat([
+        'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', '</update>'
+        '<update>', '</update>'])))
         /* eslint-enable indent */
-      ]);
+      );
+      expect(attachProps.aplStats.startOffset - 268).toBeLessThan(TOLERANCE);
       expect(attachProps.curStats.color).toBe('yellow');
       expect(props.events.cur_line_color == null).toBe(true);
       expect(props2.events.cur_line_color == null).toBe(true);
@@ -2248,12 +2389,19 @@ describe('attachment', function() {
       traceLog.clear();
       ll2.endLabel = '';
       expect(traceLog.log).toEqual([
-        '<ATTACHMENTS.pathLabel.unbind>', '</ATTACHMENTS.pathLabel.unbind>',
+        /* eslint-disable indent */
+        '<ATTACHMENTS.pathLabel.unbind>'].concat(window.IS_WEBKIT ? [
+          '<updateViewBox>', 'x', 'y', 'width', 'height', '</updateViewBox>',
+          '<updateMask>', 'maskBGRect_x', 'maskBGRect_y', 'lineMask_x', 'lineMask_y', '</updateMask>',
+          '<update>', 'updated.viewBox', 'updated.mask', '</update>'
+        ] : []).concat([
+        '</ATTACHMENTS.pathLabel.unbind>',
         '<setOptions>', '</setOptions>',
         '<updateViewBox>', 'not-updated', '</updateViewBox>',
         '<updateMask>', 'not-updated', '</updateMask>',
-        '<update>', '</update>'
-      ]);
+        '<update>', '</update>'])
+        /* eslint-enable indent */
+      );
       expect(props2.events.cur_line_color == null).toBe(true);
       expect(props2.attachments.length).toBe(0);
       setTimeout(function() {
@@ -2338,10 +2486,10 @@ describe('attachment', function() {
       // offset: strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 4
       fontSize = 16;
       strokeWidth = 4;
-      expect(attachProps.elmPath.getPathData()[0].values[1]) // y of start point
-        .toBe(props.linePath.getPathData()[0].values[1] - (
+      expect(Math.abs(attachProps.elmPath.getPathData()[0].values[1]) - // y of start point
+        (props.linePath.getPathData()[0].values[1] - (
           strokeWidth / 2 + attachProps.strokeWidth / 2 + fontSize / 4
-        ));
+        ))).toBeLessThan(TOLERANCE);
 
       ll.size = 16;
       expect(matchPathData(attachProps.elmPath.getPathData(),
@@ -2353,10 +2501,10 @@ describe('attachment', function() {
       // offset: strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 4
       fontSize = 16;
       strokeWidth = 16;
-      expect(attachProps.elmPath.getPathData()[0].values[1]) // y of start point
-        .toBe(props.linePath.getPathData()[0].values[1] - (
+      expect(Math.abs(attachProps.elmPath.getPathData()[0].values[1]) - // y of start point
+        (props.linePath.getPathData()[0].values[1] - (
           strokeWidth / 2 + attachProps.strokeWidth / 2 + fontSize / 4
-        ));
+        ))).toBeLessThan(TOLERANCE);
 
       atc = window.LeaderLine.pathLabel({text: 'label-a', fontSize: '10px'});
       attachProps = window.insAttachProps[atc._id];
@@ -2370,10 +2518,10 @@ describe('attachment', function() {
       // offset: strokeWidth / 2 + attachProps.strokeWidth / 2 + attachProps.height / 4
       fontSize = 10;
       strokeWidth = 16;
-      expect(attachProps.elmPath.getPathData()[0].values[1]) // y of start point
-        .toBe(props.linePath.getPathData()[0].values[1] - (
+      expect(Math.abs(attachProps.elmPath.getPathData()[0].values[1]) - // y of start point
+        (props.linePath.getPathData()[0].values[1] - (
           strokeWidth / 2 + attachProps.strokeWidth / 2 + fontSize / 4
-        ));
+        ))).toBeLessThan(TOLERANCE);
 
       pageDone();
       done();

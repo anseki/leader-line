@@ -4214,7 +4214,20 @@
 
         // height (simulate min-height with current style (particularly box-sizing))
         if (bBox.height < conf.minHeight) {
-          attachProps.style.height = parseFloat(curStyle.height) + (conf.minHeight - bBox.height) + 'px';
+          if (IS_TRIDENT) { // `getComputedStyle().height` returns incorrect value
+            (function() {
+              var height = conf.minHeight;
+              if (curStyle.boxSizing === 'content-box') {
+                height -= parseFloat(curStyle.borderTopWidth) + parseFloat(curStyle.borderBottomWidth) +
+                  parseFloat(curStyle.paddingTop) + parseFloat(curStyle.paddingBottom);
+              } else if (curStyle.boxSizing === 'padding-box') {
+                height -= parseFloat(curStyle.borderTopWidth) + parseFloat(curStyle.borderBottomWidth);
+              }
+              attachProps.style.height = height + 'px';
+            })();
+          } else {
+            attachProps.style.height = parseFloat(curStyle.height) + (conf.minHeight - bBox.height) + 'px';
+          }
         }
 
         if (IS_WEBKIT) { // [WEBKIT] rel-position is not supported
@@ -4432,10 +4445,12 @@
             }
           }
 
-          if (setStat(attachProps, aplStats, 'x', (value = curStats.x))) {
+          if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
+              /* [DEBUG] */, null, 'x%_'/* [/DEBUG] */)) {
             attachProps.elmPosition.x.baseVal.getItem(0).value = value;
           }
-          if (setStat(attachProps, aplStats, 'y', (value = curStats.y))) {
+          if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
+              /* [DEBUG] */, null, 'y%_'/* [/DEBUG] */)) {
             attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
           }
           traceLog.add('</ATTACHMENTS.captionLabel.updateSocketXY>'); // [DEBUG/]
@@ -4820,7 +4835,8 @@
           }
 
           curStats.startOffset = startOffset;
-          if (setStat(attachProps, aplStats, 'startOffset', startOffset)) {
+          if (setStat(attachProps, aplStats, 'startOffset', startOffset
+              /* [DEBUG] */, null, 'startOffset%_'/* [/DEBUG] */)) {
             attachProps.elmOffset.startOffset.baseVal.value = startOffset;
           }
           traceLog.add('</ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]

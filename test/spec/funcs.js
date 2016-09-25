@@ -519,6 +519,8 @@ describe('funcs', function() {
       if (!IS_TRIDENT) { // [TRIDENT] `<select>.options` returns itself.
         expect(Object.prototype.toString.apply(element)).toBe('[object HTMLOptionsCollection]');
         expect(isElement(element)).toBe(false);
+      } else {
+        expect(true).toBe(true); // dummy
       }
     });
 
@@ -625,6 +627,8 @@ describe('funcs', function() {
       if (!IS_TRIDENT) { // [TRIDENT] `<select>.options` returns itself.
         expect(Object.prototype.toString.apply(element)).toBe('[object HTMLOptionsCollection]');
         expect(isElement(element)).toBe(false);
+      } else {
+        expect(true).toBe(true); // dummy
       }
     });
 
