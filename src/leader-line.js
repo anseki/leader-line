@@ -4170,6 +4170,14 @@
           curStyle, elmStyle, bBox, displaySave, paddingSave = {},
           showEffectName, animOptions, onSwitch;
         attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
+        // Check HTML element
+        if (!(function(element) {
+          var win, doc;
+          return !!((doc = element.ownerDocument) && (win = doc.defaultView) && win.HTMLElement &&
+            element instanceof win.HTMLElement);
+        })(attachProps.element)) {
+          throw new Error('`element` must be HTML element');
+        }
 
         conf.style.backgroundSize =
           conf.backgroundSize.width + 'px ' + conf.backgroundSize.height + 'px';
