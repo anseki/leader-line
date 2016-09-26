@@ -1597,6 +1597,12 @@ describe('attachment', function() {
       expect(attachProps.style.cursor).toBe('pointer');
       expect('backgroundImage' in attachProps.style).toBe(false);
 
+      // SVG
+      expect(Object.prototype.toString.apply(document.getElementById('rect1'))).toBe('[object SVGRectElement]');
+      expect(function() {
+        atc = window.LeaderLine.mouseHoverAnchor({element: document.getElementById('rect1')});
+      }).toThrow();
+
       // onSwitch
       element = document.getElementById('span-a');
       ll.start = element;

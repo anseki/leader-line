@@ -22,6 +22,18 @@
       width: 400px;
       height: 400px;
     }
+
+    #svg1 {
+      position: absolute;
+      left: 200px;
+      top: 210px;
+      width: 220px;
+      height: 230px;
+    }
+
+    #rect1 {
+      fill: red;
+    }
   </style>
 
   <link rel="stylesheet" href="/guide-view.css">
@@ -32,6 +44,10 @@
   <div id="elm2" style="left: 104px; top: 108px;">elm2</div>
   <div id="elm3" style="left: 216px; top: 232px;">elm3</div>
   <div id="elm4" style="left: 364px; top: 428px;">elm4</div>
+
+  <svg viewBox="240 250 220 230" id="svg1">
+    <rect id="rect1" x="245px" y="256px" width="20px" height="20px"/><!-- 5, 6 based on svg -->
+  </svg>
 
   <iframe id="iframe1" src="page-c1.html"></iframe>
 </body>

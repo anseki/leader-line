@@ -233,7 +233,15 @@ describe('options', function() {
       expect(traceLog.getTaggedLog('setOptions')).toContain('needs.position');
       expect(props.baseWindow).toBe(document.getElementById('iframe1').contentWindow);
 
+      // SVG
+      ll.start = document.getElementById('rect1');
+      expect(props.options.anchorSE[0]).toBe(document.getElementById('rect1'));
+
       // invalid element
+      ll.setOptions({
+        start: document.getElementById('elm2'),
+        end: document.getElementById('elm3')
+      });
       expect(function() {
         ll.start = ll.end;
       }).toThrow();

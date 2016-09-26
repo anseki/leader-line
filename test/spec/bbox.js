@@ -598,4 +598,42 @@ describe('BBox', function() {
     });
   });
 
+  describe('SVG anchor', function() {
+    it('bBox works as same as HTMLElement', function(done) {
+
+      loadPage('spec/common/page.html', function(window, document) {
+        var ll = new window.LeaderLine(
+            document.getElementById('elm1'),
+            document.getElementById('rect1')),
+          aplStats = window.insProps[ll._id].aplStats,
+          bBox = document.getElementById('rect1').getBoundingClientRect(),
+          TOLERANCE = window.IS_TRIDENT ? 3 : 0.1;
+
+        // {x: 205, y: 216, width: 20, height: 20}
+        expect(bBox.left - 205).toBeLessThan(TOLERANCE);
+        expect(bBox.top - 216).toBeLessThan(TOLERANCE);
+        expect(bBox.width - 20).toBeLessThan(TOLERANCE);
+        expect(bBox.height - 20).toBeLessThan(TOLERANCE);
+        expect(bBox.right - (205 + 20)).toBeLessThan(TOLERANCE);
+        expect(bBox.bottom - (216 + 20)).toBeLessThan(TOLERANCE);
+
+        ll.endSocket = 'top';
+        expect(aplStats.position_socketXYSE[1].x).toBe(bBox.left + bBox.width / 2);
+        expect(aplStats.position_socketXYSE[1].y).toBe(bBox.top);
+        ll.endSocket = 'right';
+        expect(aplStats.position_socketXYSE[1].x).toBe(bBox.right);
+        expect(aplStats.position_socketXYSE[1].y).toBe(bBox.top + bBox.height / 2);
+        ll.endSocket = 'bottom';
+        expect(aplStats.position_socketXYSE[1].x).toBe(bBox.left + bBox.width / 2);
+        expect(aplStats.position_socketXYSE[1].y).toBe(bBox.bottom);
+        ll.endSocket = 'left';
+        expect(aplStats.position_socketXYSE[1].x).toBe(bBox.left);
+        expect(aplStats.position_socketXYSE[1].y).toBe(bBox.top + bBox.height / 2);
+
+        done();
+      }, 'SVG');
+
+    });
+  });
+
 });
