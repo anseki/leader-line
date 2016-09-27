@@ -8,7 +8,7 @@ Draw leader line in your web page.
 ```
 
 ```js
-// Add new leader line from `start` to `end`.
+// Add new leader line from `start` to `end` (HTML/SVG elements).
 new LeaderLine(
   document.getElementById('start'),
   document.getElementById('end')
