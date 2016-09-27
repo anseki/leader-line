@@ -8,7 +8,7 @@ Draw leader line in your web page.
 ```
 
 ```js
-// Add new leader line from `start` to `end` (HTML/SVG elements).
+// Add new leader line from `start` to `end` (HTML/SVG elements), basically.
 new LeaderLine(
   document.getElementById('start'),
   document.getElementById('end')
@@ -25,7 +25,7 @@ Load a file `leader-line.min.js` only into your web page.
 <script src="leader-line.min.js"></script>
 ```
 
-Pass two HTML elements to `LeaderLine` constructor. Then a leader line is drawn between those.
+Pass two HTML/SVG elements to `LeaderLine` constructor. Then a leader line is drawn between those elements.
 
 ```js
 new LeaderLine(
@@ -34,7 +34,7 @@ new LeaderLine(
 );
 ```
 
-Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<td>`, and also, elements in another window (i.e. `<iframe>`).
+Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
 
 And, the constructor accepts options.
 
@@ -88,7 +88,7 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-You can indicate a point or area of an element instead of the element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachment.
+You can indicate a point or area of an element instead of the element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachment. You can indicate a point or area of the document also.
 
 You can specify additional labels via [`startLabel`, `middleLabel` and `endLabel`](#startlabel-middlelabel-endlabel) options. Also, [`captionLabel`](#captionlabel) and [`pathLabel`](#pathlabel) attachments can be specified as labels.
 
@@ -234,8 +234,8 @@ An Object that can have properties as [Animation Options](#animation-options).
 self = line.position()
 ```
 
-Fix each position of the end of the leader line with current position of the elements.  
-When the elements as [`start` or `end`](#start-end) option were moved, you should call this method to reset each position. For example, you move the element as animation, you make the leader line follow the element that is scrolled, or the elements might be moved by resizing window.
+Re-position the leader line with current position of the elements.  
+When the elements as [`start` or `end`](#start-end) option were moved or resized, you should call this method to reset the position of the leader line. For example, you move the element as animation, you make the leader line follow the element that is moved by scrolling, or the elements might be moved by resizing window.
 
 ```js
 ```
@@ -254,15 +254,15 @@ The following options are specified by [constructor](#constructor) or [`setOptio
 
 ### `start`, `end`
 
-*Type:* HTML element or [Attachment](#attachments)
+*Type:* HTML element, SVG element or [Attachment](#attachments)
 
 The leader line is drawn from the `start` element to the `end` element.  
-Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<td>`, and also, elements in another window (i.e. `<iframe>`).
+Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
 
 ```js
 ```
 
-Or you can specify an [attachment](#attachments) instead of HTML element to indicate something.
+Or you can specify an [attachment](#attachments) instead of HTML/SVG element to indicate something.
 
 ### `color`
 
@@ -594,7 +594,7 @@ Or
 attachment = LeaderLine.pointAnchor(element[, options])
 ```
 
-An attachment that is specified instead of a HTML element for the `start` or `end` option of the leader line, for indicating a point instead of the element.  
+An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for indicating a point instead of the element.  
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `element` argument is shortcut to `options.element`. Following two codes work same.
@@ -611,9 +611,10 @@ attachment2 = LeaderLine.pointAnchor(element2, {x: 16, y: 32});
 
 #### <a name="attachments-pointanchor-element"></a>`element`
 
-*Type:* HTML element
+*Type:* HTML element or SVG element
 
-An element that is a base of the point. See [`x` and `y`](#attachments-pointanchor-x-y) options.
+An element that is a base of the point. See [`x` and `y`](#attachments-pointanchor-x-y) options.  
+You can specify a `<body>` element also. That is, any point in the document can be indicated.
 
 #### <a name="attachments-pointanchor-x-y"></a>`x`, `y`
 
@@ -636,7 +637,7 @@ Or
 attachment = LeaderLine.areaAnchor(element[, shape][, options])
 ```
 
-An attachment that is specified instead of a HTML element for the `start` or `end` option of the leader line, for indicating an area instead of the element.  
+An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for indicating an area instead of the element.  
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `element` and `shape` arguments are shortcuts to `options.element` and `options.shape`. Following two codes work same.
@@ -665,9 +666,10 @@ attachment4 = LeaderLine.areaAnchor(element4, 'circle', {
 
 #### <a name="attachments-areaanchor-element"></a>`element`
 
-*Type:* HTML element
+*Type:* HTML element or SVG element
 
-An element that is a base of the area. See [`x`, `y`](#attachments-areaanchor-x-y), [`width` and `height`](#width-height) options.
+An element that is a base of the area. See [`x`, `y`](#attachments-areaanchor-x-y), [`width` and `height`](#width-height) options.  
+You can specify a `<body>` element also. That is, any area in the document can be indicated.
 
 #### `shape`
 
