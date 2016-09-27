@@ -55,7 +55,7 @@ line.size++; // Up size.
 console.log(line.size); // Output current size.
 ```
 
-You can style the leader line via [`color`](#color), [`size`](#size), [`outlineColor`](#outlinecolor), and more [options](#options).
+You can style the leader line via [`color`](#options-color), [`size`](#options-size), [`outlineColor`](#outlinecolor), and more [options](#options).
 
 ```js
 new LeaderLine(startElement, endElement, {
@@ -179,7 +179,7 @@ button.addEventListener('click', function() { line.show(); }); // first showing
 
 ## Methods
 
-## `setOptions`
+### `setOptions`
 
 ```js
 self = line.setOptions(options)
@@ -190,7 +190,7 @@ The `options` argument is an Object that can have properties as [options](#optio
 
 Since this method updates a view once after it sets all specified options, it may give better performance than setting options via the properties when multiple options are set to the instance that already exists.
 
-## `show`, `hide`
+### `show`, `hide`
 
 ```js
 self = line.show([showEffectName[, animOptions]])
@@ -208,7 +208,7 @@ showButton.addEventListener('click', function() { line.show(); }, false);
 hideButton.addEventListener('click', function() { line.hide(); }, false);
 ```
 
-### `showEffectName`
+#### <a name="methods-show-hide-showeffectname"></a>`showEffectName`
 
 *Type:* string  
 *Default:* Value that was specified last time, or `fade` at first time
@@ -221,14 +221,14 @@ Default `animOptions`: `{duration: 300, timing: 'linear'}`
 - `draw`  
 Default `animOptions`: `{duration: 500, timing: [0.58, 0, 0.42, 1]}`
 
-### `animOptions`
+#### <a name="methods-show-hide-animoptions"></a>`animOptions`
 
 *Type:* Object  
 *Default:* See above
 
 An Object that can have properties as [Animation Options](#animation-options).
 
-## `position`
+### `position`
 
 ```js
 self = line.position()
@@ -240,7 +240,7 @@ When the elements as [`start` or `end`](#start-end) option were moved or resized
 ```js
 ```
 
-## `remove`
+### `remove`
 
 ```js
 line.remove()
@@ -254,7 +254,7 @@ The following options are specified by [constructor](#constructor) or [`setOptio
 
 ### `start`, `end`
 
-*Type:* HTML element, SVG element or [Attachment](#attachments)
+*Type:* HTML/SVG element or [Attachment](#attachments)
 
 The leader line is drawn from the `start` element to the `end` element.  
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
@@ -264,7 +264,7 @@ Any element that has bounding-box is accepted. For example, `<div>`, `<button>`,
 
 Or you can specify an [attachment](#attachments) instead of HTML/SVG element to indicate something.
 
-### `color`
+### <a name="options-color"></a>`color`
 
 *Type:* string  
 *Default:* `'coral'`
@@ -274,7 +274,7 @@ A color (See [Color Value](#color-value)) of the leader line.
 ```js
 ```
 
-### `size`
+### <a name="options-size"></a>`size`
 
 *Type:* number  
 *Default:* `4`
@@ -355,7 +355,7 @@ One of the following plug (symbol that is shown at the end of the leader line) n
 Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
 
 A color (See [Color Value](#color-value)) of a plug.  
-It is painted separately from the line (i.e. Those don't overlap each other). Therefore one of [`color`](#color) and `startPlugColor`/`endPlugColor` or both options can have opacity.  
+It is painted separately from the line (i.e. Those don't overlap each other). Therefore one of [`color`](#options-color) and `startPlugColor`/`endPlugColor` or both options can have opacity.  
 If `'auto'` is specified, a value of `color` option is set synchronously (i.e. it is changed when `color` was changed).
 
 ```js
@@ -370,7 +370,7 @@ If `'auto'` is specified, a value of `color` option is set synchronously (i.e. i
 Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
 
 A multiplying factor of the size of a plug.  
-The plugs are resized synchronously, with following options that contain [`size`](#size):
+The plugs are resized synchronously, with following options that contain [`size`](#options-size):
 
 Plug Size: `size` * [default-plug-scale] * [`startPlugSize` or `endPlugSize`]
 
@@ -395,7 +395,7 @@ If `true` is specified, an outline of the leader line is enabled.
 An option for when `true` is specified for [`outline`](#outline) option.
 
 A color (See [Color Value](#color-value)) of an outline of the leader line.  
-It is painted separately from inside of the line (i.e. Those don't overlap each other). Therefore one of [`color`](#color) and `outlineColor` or both options can have opacity.
+It is painted separately from inside of the line (i.e. Those don't overlap each other). Therefore one of [`color`](#options-color) and `outlineColor` or both options can have opacity.
 
 ```js
 // only outlineColor has opacity
@@ -409,7 +409,7 @@ It is painted separately from inside of the line (i.e. Those don't overlap each 
 An option for when `true` is specified for [`outline`](#outline) option.
 
 A multiplying factor of the size of an outline of the leader line.  
-The outline is resized synchronously, with following options that contain [`size`](#size):
+The outline is resized synchronously, with following options that contain [`size`](#options-size):
 
 Outline Size: `size` * `outlineSize`
 
@@ -448,7 +448,7 @@ If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) option is s
 Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option, withal `true` is specified for [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option.
 
 A multiplying factor of the size of an outline of the plug.  
-The outline is resized synchronously, with following options that contain [`size`](#size):
+The outline is resized synchronously, with following options that contain [`size`](#options-size):
 
 Plug Outline Size: `size` * [default-plug-scale] * [[`startPlugSize` or `endPlugSize`](#startplugsize-endplugsize)] * [default-plug-outline-scale] * [`startPlugOutlineSize` or `endPlugOutlineSize`]
 
@@ -464,7 +464,7 @@ An additional label that is shown on the leader line.
 
 Or you can specify an [attachment](#attachments) instead of a string.
 
-### `dash` (effect)
+### <a name="options-dash"></a>`dash` (effect)
 
 *Type:* boolean or Object  
 *Default:* `false`
@@ -474,11 +474,15 @@ Or `true` to enable it with all default options.
 
 #### `len`, `gap`
 
-*Type:* number  
-*Default:* `len`: [`size`](#size) * 2 (synchronously) | `gap`: `size` (synchronously)
+*Type:* number or string  
+*Default:* `'auto'`
 
 The size of parts of the dashed line, in pixels.  
-`len` is length of drawn lines, `gap` is gap between drawn lines.
+`len` is length of drawn lines, `gap` is gap between drawn lines.  
+If `'auto'` is specified, following each value is set synchronously (i.e. it is changed when `size` was changed).
+
+`len`: [`size`](#options-size) * 2
+`gap`: `size`
 
 #### `animation`
 
@@ -486,7 +490,7 @@ The size of parts of the dashed line, in pixels.
 *Default:* `false`
 
 An Object that can have properties as [Animation Options](#animation-options) to animate the effect.  
-Or `true` to animate it with all default options.
+Or `true` to animate it with following default options.
 
 Default Animation Options: `{duration: 1000, timing: 'linear'}`
 
@@ -504,9 +508,10 @@ Or `true` to enable it with all default options.
 #### `startColor`, `endColor`
 
 *Type:* string  
-*Default:* [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) (synchronously)
+*Default:* `'auto'`
 
-The start color (See [Color Value](#color-value)) and end color of the gradient.
+The start color (See [Color Value](#color-value)) and end color of the gradient.  
+If `'auto'` is specified, each value of [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) is set synchronously (i.e. it is changed when `startPlugColor`/`endPlugColor` was changed).
 
 ### `dropShadow` (effect)
 
@@ -530,7 +535,7 @@ The X and Y offset of the drop shadow, in pixels.
 
 The standard deviation for the blur operation in the drop shadow.
 
-#### `color`
+#### <a name="options-dropshadow-color"></a>`color`
 
 *Type:* string  
 *Default:* `'#000'`
@@ -594,7 +599,8 @@ Or
 attachment = LeaderLine.pointAnchor(element[, options])
 ```
 
-An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for indicating a point instead of the element.  
+An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for indicating a point instead of the element.
+
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `element` argument is shortcut to `options.element`. Following two codes work same.
@@ -609,9 +615,11 @@ attachment1 = LeaderLine.pointAnchor(element1);
 attachment2 = LeaderLine.pointAnchor(element2, {x: 16, y: 32});
 ```
 
+This attachment can be shared between multiple leader lines.
+
 #### <a name="attachments-pointanchor-element"></a>`element`
 
-*Type:* HTML element or SVG element
+*Type:* HTML/SVG element
 
 An element that is a base of the point. See [`x` and `y`](#attachments-pointanchor-x-y) options.  
 You can specify a `<body>` element also. That is, any point in the document can be indicated.
@@ -637,7 +645,8 @@ Or
 attachment = LeaderLine.areaAnchor(element[, shape][, options])
 ```
 
-An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for indicating an area instead of the element.  
+An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for indicating an area instead of the element.
+
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `element` and `shape` arguments are shortcuts to `options.element` and `options.shape`. Following two codes work same.
@@ -664,9 +673,11 @@ attachment4 = LeaderLine.areaAnchor(element4, 'circle', {
 });
 ```
 
+This attachment can be shared between multiple leader lines.
+
 #### <a name="attachments-areaanchor-element"></a>`element`
 
-*Type:* HTML element or SVG element
+*Type:* HTML/SVG element
 
 An element that is a base of the area. See [`x`, `y`](#attachments-areaanchor-x-y), [`width` and `height`](#width-height) options.  
 You can specify a `<body>` element also. That is, any area in the document can be indicated.
@@ -722,28 +733,188 @@ An option for when `polygon` is specified for [`shape`](#shape) option.
 An Array that contains three or more points of the polygon. Each item that is a point is an Array that contains the X and Y coordinates for the point. That is, it is Array that contains Array, like `[[x1, y1], [x2, y2], ...]`.  
 The X and Y coordinates are handled as same as [`x` and `y`](#attachments-areaanchor-x-y) options.
 
-#### `color`
+#### <a name="attachments-areaanchor-color"></a>`color`
 
-*Type:* number or string  
-*Default:* `'xxx'`
+*Type:* string  
+*Default:* [`color`](#options-color) of current first attached leader line (synchronously)
+
+A color (See [Color Value](#color-value)) of the border of the area.  
+By default, a value of [`color`](#options-color) option of the first leader line in current attached leader lines is set synchronously (i.e. it is changed when `color` of the leader line was changed).
 
 #### `fillColor`
 
-*Type:* number or string  
-*Default:* `'xxx'`
+*Type:* string  
+*Default:* `''`
 
-#### `size`
+A fill-color (See [Color Value](#color-value)) of the area.  
+If it is not specified (default), the area is not painted. It is better than specifying `'rgba(0, 0, 0, 0)'`.
 
-*Type:* number or string  
-*Default:* `'xxx'`
+#### <a name="attachments-areaanchor-size"></a>`size`
 
-#### `dash`
+*Type:* number  
+*Default:* [`size`](#options-size) of current first attached leader line (synchronously)
 
-*Type:* number or string  
-*Default:* `'xxx'`
+The width of the border of the area, in pixels.  
+If `0` is specified, the border is not drawn.
+
+#### <a name="attachments-areaanchor-dash"></a>`dash`
+
+*Type:* boolean or Object  
+*Default:* `false`
+
+Enable "dashed line" effect to the border of the area with specified Object that can have properties as following options.  
+Or `true` to enable it with all default options.
+
+##### `len`, `gap`
+
+*Type:* number  
+*Default:* `len`: [`size`](#attachments-areaanchor-size) * 2 (synchronously) | `gap`: `size` (synchronously)
+
+The size of parts of the dashed line, in pixels.  
+`len` is length of drawn lines, `gap` is gap between drawn lines.
 
 ### `mouseHoverAnchor`
+
+```js
+attachment = LeaderLine.mouseHoverAnchor(options)
+```
+
+Or
+
+```js
+attachment = LeaderLine.mouseHoverAnchor(element[, showEffectName][, options])
+```
+
+An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for showing and hiding the leader line with the mouse hovering.  
+This is a convenient way to call [`show`](#show-hide) method when a mouse enters the element, and call [`hide`](#show-hide) method when a mouse leaves the element. Also, a small icon and some style are added to the element.  
+And also, it includes a polyfill for `mouseenter` and `mouseleave` events.
+
+The `options` argument is an Object that can have properties as options that are described later.
+
+The `element` and `showEffectName` arguments are shortcuts to `options.element` and `options.showEffectName`. Following two codes work same.
+
+```js
+attachment1 = LeaderLine.mouseHoverAnchor({element: element1});
+attachment2 = LeaderLine.mouseHoverAnchor({
+  element: element2, style: {color: 'red'}
+});
+attachment3 = LeaderLine.mouseHoverAnchor({
+  element: element3, showEffectName: 'draw'
+});
+attachment4 = LeaderLine.mouseHoverAnchor({
+  element: element4, showEffectName: 'draw', style: {color: 'red'}
+});
+```
+
+```js
+attachment1 = LeaderLine.mouseHoverAnchor(element1);
+attachment2 = LeaderLine.mouseHoverAnchor(element2, {style: {color: 'red'}});
+attachment3 = LeaderLine.mouseHoverAnchor(element3, 'draw');
+attachment4 = LeaderLine.mouseHoverAnchor(element4, 'draw', {
+  style: {color: 'red'}
+});
+```
+
+This attachment can be shared between multiple leader lines.
+
+Since this is attachment for convenient way, if you want more style or more custom behavior, you can use [`show`/`hide`](#show-hide) methods in your code.
+
+#### <a name="attachments-mousehoveranchor-element"></a>`element`
+
+*Type:* HTML element
+
+An element that is a trigger for showing and hiding the leader line.
+
+#### `showEffectName`
+
+*Type:* string  
+*Default:* Value that was specified last time, or `fade` at first time
+
+A value that is passed to [`show`/`hide`](#show-hide) methods as that's argument.
+
+#### `animOptions`
+
+*Type:* Object  
+*Default:* See [`showEffectName`](#methods-show-hide-showeffectname) of [`show`/`hide`](#show-hide) methods
+
+A value that is passed to [`show`/`hide`](#show-hide) methods as that's argument.
+
+#### `style`
+
+*Type:* Object  
+*Default:* `undefined`
+
+An Object that has additional style properties for the element.  
+You can specify `null` as a property to avoid adding the style property. For example, if `{backgroundColor: null}` is specified, the attachment doesn't change current `backgroundColor` style property of the element.
+
+#### `hoverStyle`
+
+*Type:* Object  
+*Default:* `undefined`
+
+This works same to [`style`](#style) option except that these style properties are added when a mouse enters the element.
+
+#### `onSwitch`
+
+*Type:* function  
+*Default:* `undefined`
+
+A function that is called after [`show`/`hide`](#show-hide) methods are called, with an `event` argument.
+
 ### `captionLabel`
+
+
+
+
+This attachment can *not* be shared between multiple leader lines.  
+When the attachment that is already attached is attached to another leader line, the former leader line is detached.
+
+
+
+#### `text`
+
+*Type:* string  
+
+#### `offset`
+
+*Type:* Array  
+*Default:* Calculated suitable position
+
+#### `lineOffset`
+
+*Type:* number  
+*Default:* `0`
+
+#### `color`
+
+*Type:* string  
+*Default:* [`color`](#options-color) of current attached leader line (synchronously)
+
+A color (See [Color Value](#color-value)) of the text.  
+By default, a value of [`color`](#options-color) option of the current attached leader line is set synchronously (i.e. it is changed when `color` of the leader line was changed).
+
+#### `outlineColor`
+
+*Type:* string  
+*Default:* `'#fff'`
+
+#### Other Style Properties
+
+*Type:* string  
+*Default:* `undefined`
+
+- `fontFamily`
+- `fontStyle`
+- `fontVariant`
+- `fontWeight`
+- `fontStretch`
+- `fontSize`
+- `fontSizeAdjust`
+- `kerning`
+- `letterSpacing`
+- `wordSpacing`
+- `textDecoration`
+
 ### `pathLabel`
 
 ## Animation Options
