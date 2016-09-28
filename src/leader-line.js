@@ -2696,7 +2696,7 @@
             attachProps.boundTargets.slice().forEach( // Copy boundTargets because removeOption may change array.
               function(boundTarget) { attachProps.conf.removeOption(attachProps, boundTarget); });
           } else {
-            label = new LeaderLineAttachment(ATTACHMENTS.captionLabel, {text: newOption});
+            label = new LeaderLineAttachment(ATTACHMENTS.captionLabel, [newOption]);
           }
           if (!bindAttachment(props, insAttachProps[label._id], optionName)) {
             throw new Error('Can\'t bind attachment');
@@ -3657,7 +3657,7 @@
           another = props.options.anchorSE[boundTarget.optionName === 'start' ? 1 : 0];
         if (element === another) { // must be not another
           element = another === document.body ?
-            new LeaderLineAttachment(ATTACHMENTS.pointAnchor, {element: element}) : document.body;
+            new LeaderLineAttachment(ATTACHMENTS.pointAnchor, [element]) : document.body;
         }
         newOptions[boundTarget.optionName] = element;
         setOptions(props, newOptions);

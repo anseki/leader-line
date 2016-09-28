@@ -246,7 +246,7 @@ When the elements as [`start` or `end`](#start-end) option were moved or resized
 line.remove()
 ```
 
-Remove the leader line from the web page. The removed instance can't be used anymore.
+Remove the leader line from the web page. It can't be used anymore.
 
 ## Options
 
@@ -555,7 +555,7 @@ The transparency of the drop shadow, clipped in the range `[0,1]`.
 Attachments are passed to the leader line via some options, and those make that option do special behavior.
 
 You can get new attachment instance by individual method.  
-For example, `LeaderLine.pointAnchor` method makes new [`pointAnchor`](#pointanchor) attachment instance. The instance is passed to the leader line via [`start` or `end`](#start-end) option.
+For example, `LeaderLine.pointAnchor` method makes new [`pointAnchor`](#pointanchor) attachment instance. It is attached to the leader line via [`start` or `end`](#start-end) option.
 
 ```js
 new LeaderLine(startElement, LeaderLine.pointAnchor(endElement));
@@ -571,22 +571,6 @@ function attach() {
 }
 ```
 
-The new attachment instance is shared between two leader lines.
-
-```js
-line1.end = line2.end = LeaderLine.pointAnchor(endElement);
-```
-
-The `line1`'s attachment instance is shared with `line2`, in the `share` function.
-
-```js
-line1.end = LeaderLine.pointAnchor(endElement);
-
-function share() {
-  line2.end = line1.end;
-}
-```
-
 ### `pointAnchor`
 
 ```js
@@ -599,7 +583,7 @@ Or
 attachment = LeaderLine.pointAnchor(element[, options])
 ```
 
-An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for indicating a point instead of the element.
+An attachment that is specified instead of an element for the [`start` or `end`](#start-end) option of the leader line, for indicating a point instead of the element.
 
 The `options` argument is an Object that can have properties as options that are described later.
 
@@ -616,6 +600,22 @@ attachment2 = LeaderLine.pointAnchor(element2, {x: 16, y: 32});
 ```
 
 This attachment can be shared between multiple leader lines.
+
+```js
+// A new attachment instance is shared between `line1` and `line2`.
+line1.end = line2.end = LeaderLine.pointAnchor(endElement);
+```
+
+```js
+// The `line1`'s attachment instance is shared with `line2`, in the `share` function.
+line1.end = LeaderLine.pointAnchor(endElement);
+
+function share() {
+  line2.end = line1.end;
+}
+```
+
+When something else is specified for `start` or `end` option of the leader line, the leader line is detached from the attachment. When the last leader line is detached, the attachment is removed from the web page, and it can't be used anymore.
 
 #### <a name="attachments-pointanchor-element"></a>`element`
 
@@ -645,7 +645,7 @@ Or
 attachment = LeaderLine.areaAnchor(element[, shape][, options])
 ```
 
-An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for indicating an area instead of the element.
+An attachment that is specified instead of an element for the [`start` or `end`](#start-end) option of the leader line, for indicating an area instead of the element.
 
 The `options` argument is an Object that can have properties as options that are described later.
 
@@ -673,7 +673,7 @@ attachment4 = LeaderLine.areaAnchor(element4, 'circle', {
 });
 ```
 
-This attachment can be shared between multiple leader lines.
+This attachment can be shared between multiple leader lines. See [`pointAnchor`](#pointanchor) attachment.
 
 #### <a name="attachments-areaanchor-element"></a>`element`
 
@@ -785,9 +785,11 @@ Or
 attachment = LeaderLine.mouseHoverAnchor(element[, showEffectName][, options])
 ```
 
-An attachment that is specified instead of an element for the `start` or `end` option of the leader line, for showing and hiding the leader line with the mouse hovering.  
+An attachment that is specified instead of an element for the [`start` or `end`](#start-end) option of the leader line, for showing and hiding the leader line with the mouse hovering.  
 This is a convenient way to call [`show`](#show-hide) method when a mouse enters the element, and call [`hide`](#show-hide) method when a mouse leaves the element. Also, a small icon and some style are added to the element.  
 And also, it includes a polyfill for `mouseenter` and `mouseleave` events.
+
+This is an attachment to provide a convenient way to do the behavior above. If you want more style or more custom behavior, you will use [`show`/`hide`](#show-hide) methods and your CSS code instead of this attachment.
 
 The `options` argument is an Object that can have properties as options that are described later.
 
@@ -817,8 +819,6 @@ attachment4 = LeaderLine.mouseHoverAnchor(element4, 'draw', {
 
 This attachment can be shared between multiple leader lines.
 
-Since this is attachment for convenient way, if you want more style or more custom behavior, you can use [`show`/`hide`](#show-hide) methods in your code.
-
 #### <a name="attachments-mousehoveranchor-element"></a>`element`
 
 *Type:* HTML element
@@ -830,14 +830,14 @@ An element that is a trigger for showing and hiding the leader line.
 *Type:* string  
 *Default:* Value that was specified last time, or `fade` at first time
 
-A value that is passed to [`show`/`hide`](#show-hide) methods as that's argument.
+A value that is passed to [`show`/`hide`](#show-hide) methods as that's `showEffectName` argument.
 
 #### `animOptions`
 
 *Type:* Object  
 *Default:* See [`showEffectName`](#methods-show-hide-showeffectname) of [`show`/`hide`](#show-hide) methods
 
-A value that is passed to [`show`/`hide`](#show-hide) methods as that's argument.
+A value that is passed to [`show`/`hide`](#show-hide) methods as that's `animOptions` argument.
 
 #### `style`
 
@@ -863,13 +863,34 @@ A function that is called after [`show`/`hide`](#show-hide) methods are called, 
 
 ### `captionLabel`
 
+```js
+attachment = LeaderLine.captionLabel(options)
+```
 
+Or
 
+```js
+attachment = LeaderLine.captionLabel(text[, options])
+```
+
+An attachment that is specified instead of a string for the [`startLabel`, `middleLabel` or `endLabel`](#startlabel-middlelabel-endlabel) option of the leader line, for showing a custom label on the leader line.
+
+The `options` argument is an Object that can have properties as options that are described later.
+
+The `text` argument is shortcut to `options.text`. Following two codes work same.
+
+```js
+attachment1 = LeaderLine.captionLabel({text: 'LABEL-1'});
+attachment2 = LeaderLine.captionLabel({text: 'LABEL-2', color: 'red'});
+```
+
+```js
+attachment1 = LeaderLine.captionLabel('LABEL-1');
+attachment2 = LeaderLine.captionLabel('LABEL-2', {color: 'red'});
+```
 
 This attachment can *not* be shared between multiple leader lines.  
-When the attachment that is already attached is attached to another leader line, the former leader line is detached.
-
-
+When the attachment that is already attached is attached to another leader line, the former leader line is detached automatically.
 
 #### `text`
 
