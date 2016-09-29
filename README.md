@@ -654,24 +654,16 @@ The `element` and `shape` arguments are shortcuts to `options.element` and `opti
 
 ```js
 attachment1 = LeaderLine.areaAnchor({element: element1});
-attachment2 = LeaderLine.areaAnchor({
-  element: element2, x: 16, y: 32, width: 48, height: 48
-});
+attachment2 = LeaderLine.areaAnchor({element: element2, color: 'red'});
 attachment3 = LeaderLine.areaAnchor({element: element3, shape: 'circle'});
-attachment4 = LeaderLine.areaAnchor({
-  element: element4, shape: 'circle', x: 16, y: 32, width: 48, height: 48
-});
+attachment4 = LeaderLine.areaAnchor({element: element4, shape: 'circle', color: 'red'});
 ```
 
 ```js
 attachment1 = LeaderLine.areaAnchor(element1);
-attachment2 = LeaderLine.areaAnchor(element2, {
-  x: 16, y: 32, width: 48, height: 48
-});
+attachment2 = LeaderLine.areaAnchor(element2, {color: 'red'});
 attachment3 = LeaderLine.areaAnchor(element3, 'circle');
-attachment4 = LeaderLine.areaAnchor(element4, 'circle', {
-  x: 16, y: 32, width: 48, height: 48
-});
+attachment4 = LeaderLine.areaAnchor(element4, 'circle', {color: 'red'});
 ```
 
 This attachment can be shared between multiple leader lines. See [`pointAnchor`](#pointanchor) attachment.
@@ -798,24 +790,17 @@ The `element` and `showEffectName` arguments are shortcuts to `options.element` 
 
 ```js
 attachment1 = LeaderLine.mouseHoverAnchor({element: element1});
-attachment2 = LeaderLine.mouseHoverAnchor({
-  element: element2, style: {color: 'red'}
-});
-attachment3 = LeaderLine.mouseHoverAnchor({
-  element: element3, showEffectName: 'draw'
-});
-attachment4 = LeaderLine.mouseHoverAnchor({
-  element: element4, showEffectName: 'draw', style: {color: 'red'}
-});
+attachment2 = LeaderLine.mouseHoverAnchor({element: element2, style: {color: 'red'}});
+attachment3 = LeaderLine.mouseHoverAnchor({element: element3, showEffectName: 'draw'});
+attachment4 = LeaderLine.mouseHoverAnchor(
+  {element: element4, showEffectName: 'draw', style: {color: 'red'}});
 ```
 
 ```js
 attachment1 = LeaderLine.mouseHoverAnchor(element1);
 attachment2 = LeaderLine.mouseHoverAnchor(element2, {style: {color: 'red'}});
 attachment3 = LeaderLine.mouseHoverAnchor(element3, 'draw');
-attachment4 = LeaderLine.mouseHoverAnchor(element4, 'draw', {
-  style: {color: 'red'}
-});
+attachment4 = LeaderLine.mouseHoverAnchor(element4, 'draw', {style: {color: 'red'}});
 ```
 
 This attachment can be shared between multiple leader lines. See [`pointAnchor`](#pointanchor) attachment.
