@@ -818,6 +818,9 @@ An element that is a trigger for showing and hiding the leader line.
 
 A value that is passed to [`show`/`hide`](#show-hide) methods as that's `showEffectName` argument.
 
+```js
+```
+
 #### `animOptions`
 
 *Type:* Object  
