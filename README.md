@@ -257,7 +257,8 @@ The following options are specified by [constructor](#constructor) or [`setOptio
 *Type:* HTML/SVG element or [Attachment](#attachments)
 
 The leader line is drawn from the `start` element to the `end` element.  
-Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
+Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).  
+Note: if you want to handle elements in another window, you should understand about security.
 
 ```js
 ```
@@ -616,7 +617,7 @@ function share() {
 }
 ```
 
-When something else is specified for `start` or `end` option of the leader line, the leader line is detached from the attachment. When the last leader line is detached, the attachment is removed from the web page, and it can't be used anymore.
+After the attachment was attached by `start` or `end` option of the leader line, when something else is specified for that option, the leader line is detached from the attachment. When the last leader line is detached, the attachment is removed from the web page, and it can't be used anymore.
 
 #### <a name="attachments-pointanchor-element"></a>`element`
 
