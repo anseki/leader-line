@@ -8,7 +8,7 @@ Draw leader line in your web page.
 ```
 
 ```js
-// Add new leader line from `start` to `end` (HTML/SVG elements), basically.
+// Add new leader line from `start` to `end` (HTML/SVG elements, basically).
 new LeaderLine(
   document.getElementById('start'),
   document.getElementById('end')
@@ -617,7 +617,7 @@ function share() {
 }
 ```
 
-After the attachment was attached by `start` or `end` option of the leader line, when something else is specified for that option, the leader line is detached from the attachment. When the last leader line is detached, the attachment is removed from the web page, and it can't be used anymore.
+After the attachment was attached by `start` or `end` option of the leader line, when something else is specified for that option, the leader line is detached from the attachment. When the last leader line is detached, the attachment is removed from the web page automatically, and it can't be used anymore.
 
 #### <a name="attachments-pointanchor-element"></a>`element`
 
@@ -667,7 +667,7 @@ attachment3 = LeaderLine.areaAnchor(element3, 'circle');
 attachment4 = LeaderLine.areaAnchor(element4, 'circle', {color: 'red'});
 ```
 
-This attachment can be shared between multiple leader lines. See [`pointAnchor`](#pointanchor) attachment.
+This attachment can be shared between multiple leader lines. See [`pointAnchor`](#pointanchor) attachment for the sharing and the life cycle.
 
 #### <a name="attachments-areaanchor-element"></a>`element`
 
@@ -681,7 +681,7 @@ You can specify a `<body>` element also. That is, any area in the document can b
 *Type:* string  
 *Default:* `'rect'`
 
-One of the following keywords to indicate the shape:
+One of the following keywords to indicate the shape of the area:
 
 - `rect`
 - `circle`
@@ -707,7 +707,7 @@ An option for when `rect` or `circle` is specified for [`shape`](#shape) option.
 
 The width and height of the area, in pixels.  
 Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: 0, width: '50%', height: '100%'}` indicates the right half of the element.  
-And also, each value can be a value over the element's width or height, it indicates the outside of the element.
+And also, each value can be a value over the element's width or height.
 
 #### `radius`
 
@@ -779,7 +779,7 @@ Or
 attachment = LeaderLine.mouseHoverAnchor(element[, showEffectName][, options])
 ```
 
-An attachment that is specified instead of an element for the [`start` or `end`](#start-end) option of the leader line, for showing and hiding the leader line with the mouse hovering.  
+An attachment that is specified instead of an element for the [`start` or `end`](#start-end) option of the leader line, for showing and hiding the leader line by the mouse hovering.  
 This is a convenient way to call [`show`](#show-hide) method when a mouse enters the element, and call [`hide`](#show-hide) method when a mouse leaves the element. Also, a small icon and some style are added to the element.  
 And also, it includes a polyfill for `mouseenter` and `mouseleave` events.
 
@@ -804,7 +804,7 @@ attachment3 = LeaderLine.mouseHoverAnchor(element3, 'draw');
 attachment4 = LeaderLine.mouseHoverAnchor(element4, 'draw', {style: {color: 'red'}});
 ```
 
-This attachment can be shared between multiple leader lines. See [`pointAnchor`](#pointanchor) attachment.
+This attachment can be shared between multiple leader lines. See [`pointAnchor`](#pointanchor) attachment for the sharing and the life cycle.
 
 #### <a name="attachments-mousehoveranchor-element"></a>`element`
 
@@ -817,7 +817,7 @@ An element that is a trigger for showing and hiding the leader line.
 *Type:* string  
 *Default:* Value that was specified last time, or `fade` at first time
 
-A value that is passed to [`show`/`hide`](#show-hide) methods as that's `showEffectName` argument.
+A value that is passed to [`show`/`hide`](#show-hide) methods as its `showEffectName` argument.
 
 ```js
 ```
@@ -827,7 +827,7 @@ A value that is passed to [`show`/`hide`](#show-hide) methods as that's `showEff
 *Type:* Object  
 *Default:* See [`showEffectName`](#methods-show-hide-showeffectname) of [`show`/`hide`](#show-hide) methods
 
-A value that is passed to [`show`/`hide`](#show-hide) methods as that's `animOptions` argument.
+A value that is passed to [`show`/`hide`](#show-hide) methods as its `animOptions` argument.
 
 #### `style`
 
@@ -835,7 +835,7 @@ A value that is passed to [`show`/`hide`](#show-hide) methods as that's `animOpt
 *Default:* `undefined`
 
 An Object that has additional style properties for the element.  
-You can specify `null` as a property to avoid adding the style property. For example, if `{backgroundColor: null}` is specified, the attachment doesn't change current `backgroundColor` style property of the element.
+You can specify `null` as a property to disable adding the style property. Note that it doesn't disable the style property. For example, if `{backgroundColor: null}` is specified, the attachment doesn't change current `backgroundColor` style property of the element.
 
 #### `hoverStyle`
 
@@ -849,7 +849,7 @@ This works same to [`style`](#style) option except that these style properties a
 *Type:* function  
 *Default:* `undefined`
 
-A function that is called after [`show`/`hide`](#show-hide) methods are called, with an `event` argument.
+A function that is called after [`show`/`hide`](#show-hide) method, with an `event` argument.
 
 ### `captionLabel`
 
@@ -880,7 +880,7 @@ attachment2 = LeaderLine.captionLabel('LABEL-2', {color: 'red'});
 ```
 
 This attachment can *not* be shared between multiple leader lines.  
-When the attachment that is already attached is attached to another leader line, then, the former leader line is detached automatically. That is, the attachment moves from the leader line to another leader line.
+When the attachment that was already attached is attached to another leader line, then, the former leader line is detached automatically. That is, the attachment moves from the leader line to another leader line.
 
 ```js
 // A new attachment instance is attached to `line1`.
@@ -897,7 +897,7 @@ Also, it can move between labels of the same leader line.
 line1.startLabel = line1.endLabel;
 ```
 
-When the leader line is detached from the attachment and any leader line is not attached, the attachment is removed from the web page, and it can't be used anymore.
+When the leader line is detached from the attachment and any leader line is not attached, the attachment is removed from the web page automatically, and it can't be used anymore.
 
 #### `text`
 
@@ -910,7 +910,7 @@ A string that is shown as a label.
 *Type:* Array  
 *Default:* Calculated suitable position
 
-By default, a `captionLabel` attachment that is attached as `startLabel` is positioned at near the socket (i.e. connecting point) that is decided by [`startSocket`](#startsocket-endsocket) option of the leader line. In like manner, attached one as `endLabel` is positioned at near the socket that is decided by `endSocket` option. Those are calculated with the size of the leader line, the font size of the label, etc.  
+By default, a `captionLabel` attachment that is attached as `startLabel` is positioned near the socket (i.e. connecting point) that is decided by [`startSocket`](#startsocket-endsocket) option of the leader line. In like manner, attached one as `endLabel` is positioned near the socket that is decided by `endSocket` option. Those are calculated with the size of the leader line, the font size of the label, etc.  
 If an Array that is `[x, y]` in pixels is specified for `offset` option, the attachment is positioned at the specified coordinates relative to the decided socket.
 
 #### `lineOffset`
@@ -935,7 +935,7 @@ By default, a value of [`color`](#options-color) option of the current attached 
 *Default:* `'#fff'`
 
 A color (see [Color Value](#color-value)) of an outline of the text.  
-The text avoid seeming to blend with a background by the outline.  
+The outline makes the text avoid seeming to blend with a background.  
 If `''` is specified, the outline is not drawn. It is better than specifying `'rgba(0, 0, 0, 0)'`.
 
 #### <a name="attachments-captionlabel-other-style-properties"></a>Other Style Properties
@@ -984,7 +984,7 @@ attachment1 = LeaderLine.pathLabel('LABEL-1');
 attachment2 = LeaderLine.pathLabel('LABEL-2', {color: 'red'});
 ```
 
-This attachment can *not* be shared between multiple leader lines. See [`captionLabel`](#captionlabel) attachment.
+This attachment can *not* be shared between multiple leader lines. See [`captionLabel`](#captionlabel) attachment for the sharing and the life cycle.
 
 #### `text`
 
@@ -997,7 +997,7 @@ A string that is shown as a label.
 *Type:* number  
 *Default:* `0`
 
-By default, a `pathLabel` attachment that is attached as `startLabel` is positioned at near the element as [`start`](#start-end) option. In like manner, attached one as `endLabel` is positioned at near the element as `end` option. And attached one as `middleLabel` is positioned at the middle point of the path of the leader line.  
+By default, a `pathLabel` attachment that is attached as `startLabel` is positioned near the element as [`start`](#start-end) option. In like manner, attached one as `endLabel` is positioned near the element as `end` option. And attached one as `middleLabel` is positioned at the middle point of the path of the leader line.  
 If a length in pixels is specified for `lineOffset` option, the attachment is positioned at the offset point from the position above. The length is distance along the path, a negative value makes it become close to the element as `start` option.
 
 #### `color`
@@ -1014,7 +1014,7 @@ By default, a value of [`color`](#options-color) option of the current attached 
 *Default:* `'#fff'`
 
 A color (see [Color Value](#color-value)) of an outline of the text.  
-The text avoid seeming to blend with a background by the outline.  
+The outline makes the text avoid seeming to blend with a background.  
 If `''` is specified, the outline is not drawn. It is better than specifying `'rgba(0, 0, 0, 0)'`.
 
 #### Other Style Properties
@@ -1044,4 +1044,5 @@ You can specify one of the following keywords also. These values mean [keywords 
 
 ## Color Value
 
-CSS color notations with alpha channel are accepted. For example, `hsl(200, 70%, 58%)`, `rgba(73, 172, 223, 0.5)`, `#49acdf`, `skyblue`, etc. Some browsers support `hwb()`, `device-cmyk()` and `gray()` also.
+CSS color notations are accepted. A value might contain an alpha channel that specifies the transparency.  
+For example, `hsl(200, 70%, 58%)`, `rgba(73, 172, 223, 0.5)`, `#49acdf`, `skyblue`, etc. Some browsers support `hwb()`, `device-cmyk()` and `gray()` also.
