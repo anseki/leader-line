@@ -631,8 +631,8 @@ You can specify a `<body>` element also. That is, you can make the leader line i
 *Type:* number or string  
 *Default:* `'50%'`
 
-The X and Y coordinates of the point, in pixels, relative to the left-top corner of the specified element for [`element`](#attachments-pointanchor-element) option.  
-Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: '50%'}` indicates the center of the element, `{x: '100%', y: 0}` indicates the right-top corner.  
+The X and Y coordinates of the point, in pixels, relative to the top-left corner of the specified element for [`element`](#attachments-pointanchor-element) option.  
+Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: '50%'}` indicates the center of the element, `{x: '100%', y: 0}` indicates the top-right corner.  
 And also, each value can be a negative value or a value over the element's width or height, it indicates the outside of the element.
 
 ### `areaAnchor`
@@ -694,8 +694,8 @@ One of the following keywords to indicate the shape of the area:
 
 An option for when `rect` or `circle` is specified for [`shape`](#shape) option.
 
-The X and Y coordinates for the left-top corner of the area, in pixels, relative to the left-top corner of the specified element for [`element`](#attachments-areaanchor-element) option.  
-Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: '50%'}` indicates the center of the element, `{x: '100%', y: 0}` indicates the right-top corner.  
+The X and Y coordinates for the top-left corner of the area, in pixels, relative to the top-left corner of the specified element for [`element`](#attachments-areaanchor-element) option.  
+Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: '50%'}` indicates the center of the element, `{x: '100%', y: 0}` indicates the top-right corner.  
 And also, each value can be a negative value or a value over the element's width or height, it indicates the outside of the element.
 
 #### `width`, `height`
