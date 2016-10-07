@@ -2,9 +2,25 @@
   "name": "leader-line",
   "version": "0.0.1",
   "title": "LeaderLine",
-  "description": "%description%",
-  "keywords": [],
-  "main": "dist/%main%",
+  "description": "Draw leader line in your web page.",
+  "keywords": [
+    "leader",
+    "line",
+    "markup",
+    "arrow",
+    "attention",
+    "highlight",
+    "spotlight",
+    "bubble",
+    "svg"
+  ],
+  "main": "leader-line.min.js",
+  "homepage": "http://anseki.github.io/leader-line/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/anseki/leader-line.git"
+  },
+  "bugs": "https://github.com/anseki/leader-line/issues",
   "license": "MIT",
   "author": {
     "name": "anseki",
