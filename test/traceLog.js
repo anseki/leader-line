@@ -34,6 +34,7 @@ var traceLog = (function() {
     traceLog = {
       log: [],
       enabled: false,
+      getOpenCloseTags: false, // Contain tags for TaggedLog
 
       add: function() {
         var message, i, matches, tagName, iStack;
@@ -56,6 +57,7 @@ var traceLog = (function() {
               tagStack.push(tagName);
               tags[tagName] = tags[tagName] || [];
             }
+            if (traceLog.getOpenCloseTags) { tags[tagName].push(i); }
           } else if (tagStack.length) {
             tags[tagStack[tagStack.length - 1]].push(i);
           }
