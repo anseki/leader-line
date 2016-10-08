@@ -16,6 +16,12 @@ module.exports = grunt => {
     CSS_PATH = pathUtil.join(SRC_DIR_PATH, 'leader-line.css'),
     DEST_DIR_PATH = pathUtil.join(ROOT_PATH, 'leader-line.min.js'),
 
+    PACK_LIBS = [
+      ['anim', 'anim.js'],
+      ['pathDataPolyfill', 'path-data-polyfill/path-data-polyfill.js'],
+      ['AnimEvent', '../node_modules/anim-event/anim-event.js']
+    ],
+
     // from leader-line.js
     APP_ID = 'leader-line',
     DEFS_ID = `${APP_ID}-defs`,
@@ -157,11 +163,10 @@ module.exports = grunt => {
         options: {
           handlerByContent: content => {
             var reEXPORT = /^[\s\S]*?@EXPORT@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@[\s\S]*$/;
-            [['anim', 'anim.js'], ['pathDataPolyfill', 'path-data-polyfill/path-data-polyfill.js']]
-              .forEach(keyPath => {
-                code[keyPath[0]] = fs.readFileSync(pathUtil.join(SRC_DIR_PATH, keyPath[1]), {encoding: 'utf8'})
-                  .replace(reEXPORT, '$1');
-              });
+            PACK_LIBS.forEach(keyPath => {
+              code[keyPath[0]] = fs.readFileSync(pathUtil.join(SRC_DIR_PATH, keyPath[1]), {encoding: 'utf8'})
+                .replace(reEXPORT, '$1');
+            });
 
             return minJs(productSrc(
               content.replace(/@INCLUDE\[code:([^\n]+?)\]@/g,

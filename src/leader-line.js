@@ -137,6 +137,10 @@
     pathDataPolyfill = @INCLUDE[code:pathDataPolyfill]@,
     [DEBUG/] */
     pathDataPolyfill = window.pathDataPolyfill, // [DEBUG/]
+    /* [DEBUG/]
+    AnimEvent = @INCLUDE[code:AnimEvent]@,
+    [DEBUG/] */
+    AnimEvent = window.AnimEvent, // [DEBUG/]
 
     /** @typedef {{hasSE, hasProps, iniValue}} StatConf */
     /** @type {{statId: string, StatConf}} */
@@ -5150,6 +5154,29 @@
       return new LeaderLineAttachment(ATTACHMENTS[attachmentName], Array.prototype.slice.call(arguments));
     };
   });
+
+  // Update position automatically
+  LeaderLine.positionWhenWindowResize = true;
+  window.addEventListener('resize', AnimEvent.add(function(/* event */) {
+    traceLog.add('<ATTACHMENTS.positionWhenWindowResize>'); // [DEBUG/]
+    // var eventWindow;
+    if (LeaderLine.positionWhenWindowResize) {
+      // eventWindow = event.target;
+      Object.keys(insProps).forEach(function(id) {
+        // Checking window may be needed when managing each window is supported.
+        /*
+        var props = insProps[id];
+        if (props.baseWindow === eventWindow) {
+          traceLog.add('id=%s', id); // [DEBUG/]
+          update(props, {position: true});
+        }
+        */
+        traceLog.add('id=%s', id); // [DEBUG/]
+        update(insProps[id], {position: true});
+      });
+    }
+    traceLog.add('</ATTACHMENTS.positionWhenWindowResize>'); // [DEBUG/]
+  }), false);
 
   return LeaderLine;
 })();
