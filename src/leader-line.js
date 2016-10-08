@@ -683,6 +683,7 @@
           aSeg.values.some(function(aSegValue, i) { return aSegValue !== bSeg.values[i]; });
       });
   }
+  window.pathDataHasChanged = pathDataHasChanged; // [DEBUG/]
 
   function bBox2PathData(bBox) {
     var right = bBox.right != null ? bBox.right : bBox.left + bBox.width,
@@ -5156,11 +5157,11 @@
   });
 
   // Update position automatically
-  LeaderLine.positionWhenWindowResize = true;
+  LeaderLine.positionByWindowResize = true;
   window.addEventListener('resize', AnimEvent.add(function(/* event */) {
-    traceLog.add('<ATTACHMENTS.positionWhenWindowResize>'); // [DEBUG/]
+    traceLog.add('<positionByWindowResize>'); // [DEBUG/]
     // var eventWindow;
-    if (LeaderLine.positionWhenWindowResize) {
+    if (LeaderLine.positionByWindowResize) {
       // eventWindow = event.target;
       Object.keys(insProps).forEach(function(id) {
         // Checking window may be needed when managing each window is supported.
@@ -5175,7 +5176,7 @@
         update(insProps[id], {position: true});
       });
     }
-    traceLog.add('</ATTACHMENTS.positionWhenWindowResize>'); // [DEBUG/]
+    traceLog.add('</positionByWindowResize>'); // [DEBUG/]
   }), false);
 
   return LeaderLine;
