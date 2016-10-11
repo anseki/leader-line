@@ -15,7 +15,20 @@ new LeaderLine(
 );
 ```
 
+ex-01
+
 Options to customize are supported.
+
+ex-02
+
+It can indicate a part of an element also instead of the element.
+
+ex-03
+
+Also, it can indicate an element of another library.  
+For example, the following uses LeaderLine with [D3.js](https://d3js.org/). Move the mouse on text.
+
+ex-04
 
 ## Usage
 
@@ -34,7 +47,9 @@ new LeaderLine(
 );
 ```
 
-Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
+ex-05
+
+Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`). (See [`start` and `end`](#start-end) option.)
 
 And, the constructor accepts options.
 
@@ -45,6 +60,8 @@ var startElement = document.getElementById('element-1'),
 // New leader line has red color and size 8.
 new LeaderLine(startElement, endElement, {color: 'red', size: 8});
 ```
+
+ex-06
 
 Also, the options can be accessed via properties of the instance (readable and writable).
 
@@ -59,25 +76,29 @@ You can change the style of the leader line via [`color`](#options-color), [`siz
 
 ```js
 new LeaderLine(startElement, endElement, {
-  color: 'rgba(255, 255, 255, 0.4)',
+  color: '#fff',
   outline: true,
   endPlugOutline: true,
   endPlugSize: 1.5
 });
 ```
 
+ex-07
+
 You can add effects to the leader line via some options.
 
 ```js
-new LeaderLine(startElement1, endElement, {
-  startPlugColor: '#555',
-  endPlugColor: '#555',
+new LeaderLine(elm1, elm5, {
+  startPlugColor: '#1a6be0',
+  endPlugColor: '#1efdaa',
   gradient: true
 });
-new LeaderLine(startElement2, endElement, {dash: true});
-new LeaderLine(startElement3, endElement, {dash: {animation: true}});
-new LeaderLine(startElement4, endElement, {dropShadow: true});
+new LeaderLine(elm4, elm2, {dropShadow: true});
+new LeaderLine(elm2, elm6, {dash: true});
+new LeaderLine(elm5, elm3, {dash: {animation: true}});
 ```
+
+ex-08
 
 You can change symbols that are shown at the end of the leader line via [`startPlug` and `endPlug`](#startplug-endplug) options.
 
@@ -88,6 +109,8 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
+ex-09
+
 You can indicate a point or area of an element instead of the element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachment. You can indicate a point or area of the document also.
 
 You can specify additional labels via [`startLabel`, `middleLabel` and `endLabel`](#startlabel-middlelabel-endlabel) options. Also, [`captionLabel`](#captionlabel) and [`pathLabel`](#pathlabel) attachments can be specified as labels.
@@ -96,23 +119,25 @@ You can specify additional labels via [`startLabel`, `middleLabel` and `endLabel
 new LeaderLine(
   startElement1,
   LeaderLine.pointAnchor(endElement1, {
-    x: 999,
-    y: 999
+    x: 60,
+    y: 20
   }),
-  {endLabel: 'xxx'}
+  {endLabel: LeaderLine.pathLabel('This is additional label')}
 );
 
 new LeaderLine(
   startElement2,
   LeaderLine.areaAnchor(endElement2, {
-    x: 999,
-    y: 999,
-    width: 999,
-    height: 999,
+    x: 80,
+    y: 60,
+    width: 50,
+    height: 80,
   }),
-  {endLabel: LeaderLine.pathLabel('xxx')}
+  {endLabel: 'This is additional label'}
 );
 ```
+
+ex-10
 
 You can show and hide the leader line with effects by [`show` and `hide`](#show-hide) methods.  
 [`mouseHoverAnchor`](#mousehoveranchor) attachment allows it to implement showing and hiding with mouse moving, easily.
@@ -120,6 +145,8 @@ You can show and hide the leader line with effects by [`show` and `hide`](#show-
 ```js
 new LeaderLine(LeaderLine.mouseHoverAnchor(startElement), endElement);
 ```
+
+ex-11
 
 For more details, refer to the following.
 
@@ -154,14 +181,16 @@ The instance has properties that have the same name as each option to get or set
 ```js
 var line = new LeaderLine(startElement, endElement);
 
-upButton.addEventListener('mousedown', function() {
+upButton.addEventListener('click', function() {
   if (line.size < 20) { line.size++; }
 }, false);
 
-downButton.addEventListener('mousedown', function() {
+downButton.addEventListener('click', function() {
   if (line.size > 4) { line.size--; }
 }, false);
 ```
+
+ex-12
 
 If you want to set multiple options after it was constructed, using [`setOptions`](#setoptions) method instead of the properties may give better performance.
 
@@ -221,6 +250,8 @@ Default `animOptions`: `{duration: 300, timing: 'linear'}`
 - `draw`  
 Default `animOptions`: `{duration: 500, timing: [0.58, 0, 0.42, 1]}`
 
+ex-13
+
 #### <a name="methods-show-hide-animoptions"></a>`animOptions`
 
 *Type:* Object  
@@ -234,11 +265,18 @@ An Object that can have properties as [Animation Options](#animation-options).
 self = line.position()
 ```
 
-Re-position the leader line with current position of the elements.  
-When the elements as [`start` or `end`](#start-end) option were moved or resized, you should call this method to reset the position of the leader line. For example, you move the element as animation, you make the leader line follow the element that is moved by scrolling, or the elements might be moved by resizing window.
+Re-position the leader line with current position and size of the elements as [`start` or `end`](#start-end) option.  
+By default, the position of each leader line is fixed automatically when the window that loads LeaderLine was resized. You should call `position` method if your web page moved or resized the elements without resizing the window. For example, animation, a box that was scrolled or `<iframe>` that was resized.
 
 ```js
+scrollableBox.addEventListener('scroll', AnimEvent.add(function() {
+  line.position();
+}), false);
 ```
+
+ex-14
+
+If you want to disable the fixing the position automatically, set `LeaderLine.positionByWindowResize` to `false`.
 
 ### `remove`
 
@@ -256,12 +294,17 @@ The following options are specified by [constructor](#constructor) or [`setOptio
 
 *Type:* HTML/SVG element or [Attachment](#attachments)
 
-The leader line is drawn from the `start` element to the `end` element.  
-Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).  
-Note: if you want to handle elements in another window, you should understand about security.
+The leader line is drawn from the `start` element to the `end` element.
 
 ```js
+line.end = document.getElementById('element');
 ```
+
+Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
+
+ex-15
+
+Note: if you want to handle elements in another window regardless of LeaderLine, you should understand about security.
 
 Or you can specify an [attachment](#attachments) instead of HTML/SVG element to indicate something.
 
@@ -273,7 +316,10 @@ Or you can specify an [attachment](#attachments) instead of HTML/SVG element to 
 A color (see [Color Value](#color-value)) of the leader line.
 
 ```js
+line.color = 'rgba(30, 130, 250, 0.5)';
 ```
+
+ex-16
 
 ### <a name="options-size"></a>`size`
 
@@ -283,7 +329,10 @@ A color (see [Color Value](#color-value)) of the leader line.
 The width of the leader line, in pixels.
 
 ```js
+line.size = 24;
 ```
+
+ex-17
 
 ### `path`
 
@@ -298,6 +347,8 @@ One of the following keywords to indicate how to draw the line:
 - `magnet`
 - `grid`
 
+ex-18
+
 ### `startSocket`, `endSocket`
 
 *Type:* string  
@@ -307,7 +358,10 @@ The string to indicate which side of the element the leader line connects. It ca
 If `'auto'` is specified, the closest side is chosen automatically.
 
 ```js
+line.setOptions({startSocket: 'bottom', endSocket: 'top'});
 ```
+
+ex-19
 
 ### `startSocketGravity`, `endSocketGravity`
 
@@ -319,13 +373,23 @@ The force of gravity at a socket.
 If a number is specified, the leader line is pulled in the direction of the socket. The number is pull strength.
 
 ```js
+line.startSocketGravity = 400;
 ```
+
+ex-20
 
 If an Array that is coordinates `[x, y]` is specified, the leader line is pulled in the direction of the coordinates. The distance between the coordinates and `[0, 0]` is pull strength.  
-For example, if `[50, -100]` is specified, it is pulled in the direction of the rightward and upward (The strength in the Y axis direction is larger than the X axis direction). If `[-50, 0]` is specified, it is pulled in the direction of the leftward (no strength in the Y axis direction).
+For example, if `[50, -100]` is specified, it is pulled in the direction of the rightward and upward (The strength in the Y axis direction is larger than the X axis direction). If `[-50, 0]` is specified, it is pulled in the direction of the leftward (no strength in the Y axis direction).  
+For example, parabola:
 
 ```js
+line.setOptions({
+  startSocketGravity: [192, -172],
+  endSocketGravity: [-192, -172]
+});
 ```
+
+ex-21
 
 If `'auto'` is specified, it is adjusted to gravity suitable for current [`path`](#path) option automatically.
 
