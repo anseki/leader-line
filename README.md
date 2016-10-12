@@ -88,14 +88,14 @@ ex-07
 You can add effects to the leader line via some options.
 
 ```js
-new LeaderLine(elm1, elm5, {
+new LeaderLine(element1, element2, {
   startPlugColor: '#1a6be0',
   endPlugColor: '#1efdaa',
   gradient: true
 });
-new LeaderLine(elm4, elm2, {dropShadow: true});
-new LeaderLine(elm2, elm6, {dash: true});
-new LeaderLine(elm5, elm3, {dash: {animation: true}});
+new LeaderLine(element2, element3, {dash: {animation: true}});
+new LeaderLine(element4, element5, {dropShadow: true});
+new LeaderLine(element5, element6, {dash: true});
 ```
 
 ex-08
@@ -118,7 +118,7 @@ You can specify additional labels via [`startLabel`, `middleLabel` and `endLabel
 ```js
 new LeaderLine(
   startElement1,
-  LeaderLine.pointAnchor(endElement1, {
+  LeaderLine.pointAnchor(endElement, {
     x: 60,
     y: 20
   }),
@@ -127,7 +127,7 @@ new LeaderLine(
 
 new LeaderLine(
   startElement2,
-  LeaderLine.areaAnchor(endElement2, {
+  LeaderLine.areaAnchor(endElement, {
     x: 80,
     y: 60,
     width: 50,
@@ -297,7 +297,7 @@ The following options are specified by [constructor](#constructor) or [`setOptio
 The leader line is drawn from the `start` element to the `end` element.
 
 ```js
-line.end = document.getElementById('element');
+line.end = document.getElementById('end-element');
 ```
 
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
@@ -329,7 +329,7 @@ ex-16
 The width of the leader line, in pixels.
 
 ```js
-line.size = 24;
+line.size = 20;
 ```
 
 ex-17
@@ -354,14 +354,15 @@ ex-18
 *Type:* string  
 *Default:* `'auto'`
 
-The string to indicate which side of the element the leader line connects. It can be `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.  
-If `'auto'` is specified, the closest side is chosen automatically.
+The string to indicate which side of the element the leader line connects. It can be `'top'`, `'right'`, `'bottom'`, `'left'` or `'auto'`.
 
 ```js
 line.setOptions({startSocket: 'bottom', endSocket: 'top'});
 ```
 
 ex-19
+
+If `'auto'` is specified, the closest side is chosen automatically.
 
 ### `startSocketGravity`, `endSocketGravity`
 
@@ -379,7 +380,8 @@ line.startSocketGravity = 400;
 ex-20
 
 If an Array that is coordinates `[x, y]` is specified, the leader line is pulled in the direction of the coordinates. The distance between the coordinates and `[0, 0]` is pull strength.  
-For example, if `[50, -100]` is specified, it is pulled in the direction of the rightward and upward (The strength in the Y axis direction is larger than the X axis direction). If `[-50, 0]` is specified, it is pulled in the direction of the leftward (no strength in the Y axis direction).  
+For example, if `[50, -100]` is specified, it is pulled in the direction of the rightward and upward (The strength in the Y axis direction is larger than the X axis direction). If `[-50, 0]` is specified, it is pulled in the direction of the leftward (no strength in the Y axis direction).
+
 For example, parabola:
 
 ```js
@@ -400,32 +402,54 @@ If `'auto'` is specified, it is adjusted to gravity suitable for current [`path`
 
 One of the following keywords to indicate type of plug (symbol that is shown at the end of the leader line):
 
-- `disc`
-- `square`
-- `arrow1`
-- `arrow2`
-- `arrow3`
+- `disc`  
+`outlineMax`: `4`
+- `square`  
+`outlineMax`: `4`
+- `arrow1`  
+`outlineMax`: `1.5`
+- `arrow2`  
+`outlineMax`: `1.75`
+- `arrow3`  
+`outlineMax`: `2.5`
 - `hand`  
 [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option is ignored  
 [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) option is ignored
 - `crosshair`  
 [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option is ignored
-- `behind`
+- `behind`  
+[`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option is ignored  
+[`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) option is ignored
+
+ex-22
 
 ### `startPlugColor`, `endPlugColor`
 
 *Type:* string  
 *Default:* `'auto'`
 
-Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
+Each option for when a plug that accepts this option is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
 
 A color (see [Color Value](#color-value)) of a plug.  
-It is painted separately from the line (i.e. Those don't overlap each other). Therefore one of [`color`](#options-color) and `startPlugColor`/`endPlugColor` or both options can have opacity.  
-If `'auto'` is specified, a value of `color` option is set synchronously (i.e. it is changed when `color` was changed).
+It is painted separately from the line (i.e. Those don't overlap each other). Therefore one of [`color`](#options-color) and `startPlugColor`/`endPlugColor` or both options can have an alpha channel.
 
 ```js
-// only endPlugColor has opacity
+lineA.setOptions({ // element-1, element-2
+  color: 'rgba(30, 130, 250, 0.5)', // translucent
+  startPlugColor: 'rgb(241, 76, 129)',
+  endPlugColor: 'rgba(241, 76, 129, 0.5)' // translucent
+});
+
+lineB.setOptions({ // element-3, element-4
+  color: 'rgb(30, 130, 250)',
+  startPlugColor: 'rgb(241, 76, 129)',
+  endPlugColor: 'rgba(241, 76, 129, 0.5)' // translucent
+});
 ```
+
+ex-23
+
+If `'auto'` is specified, a value of `color` option is set synchronously (i.e. it is changed when `color` was changed).
 
 ### `startPlugSize`, `endPlugSize`
 
@@ -440,7 +464,22 @@ The plugs are resized synchronously, with the following options that contain [`s
 Plug Size: `size` * [default-plug-scale] * [`startPlugSize` or `endPlugSize`]
 
 ```js
+new LeaderLine(element1, element2, {
+  startPlug: 'arrow1',
+  size: 4,
+  startPlugSize: 1,
+  endPlugSize: 2
+});
+
+new LeaderLine(element3, element4, {
+  startPlug: 'arrow1',
+  size: 8,
+  startPlugSize: 1,
+  endPlugSize: 2
+});
 ```
+
+ex-24
 
 ### `outline`
 
@@ -450,7 +489,10 @@ Plug Size: `size` * [default-plug-scale] * [`startPlugSize` or `endPlugSize`]
 If `true` is specified, an outline of the leader line is enabled.
 
 ```js
+line.outline = true;
 ```
+
+ex-25
 
 ### `outlineColor`
 
@@ -460,11 +502,31 @@ If `true` is specified, an outline of the leader line is enabled.
 An option for when `true` is specified for [`outline`](#outline) option.
 
 A color (see [Color Value](#color-value)) of an outline of the leader line.  
-It is painted separately from inside of the line (i.e. Those don't overlap each other). Therefore one of [`color`](#options-color) and `outlineColor` or both options can have opacity.
+It is painted separately from inside of the line (i.e. Those don't overlap each other). Therefore one of [`color`](#options-color) and `outlineColor` or both options can have an alpha channel.
 
 ```js
-// only outlineColor has opacity
+lineA.setOptions({ // element-1, element-2
+  color: 'rgb(248, 205, 30)',
+  outlineColor: 'rgb(30, 130, 250)'
+});
+
+lineB.setOptions({ // element-3, element-4
+  color: 'rgba(248, 205, 30, 0.5)', // translucent
+  outlineColor: 'rgba(30, 130, 250, 0.5)' // translucent
+});
+
+lineC.setOptions({ // element-5, element-6
+  color: 'rgba(248, 205, 30, 0.5)', // translucent
+  outlineColor: 'rgb(30, 130, 250)'
+});
+
+lineD.setOptions({ // element-7, element-8
+  color: 'rgb(248, 205, 30)',
+  outlineColor: 'rgba(30, 130, 250, 0.5)' // translucent
+});
 ```
+
+ex-26
 
 ### `outlineSize`
 
@@ -473,49 +535,101 @@ It is painted separately from inside of the line (i.e. Those don't overlap each 
 
 An option for when `true` is specified for [`outline`](#outline) option.
 
-A multiplying factor of the size of an outline of the leader line.  
+A multiplying factor of the size of an outline of the leader line, it is greater than `0` and is less than or equal to `0.48`.  
 The outline is resized synchronously, with the following options that contain [`size`](#options-size):
 
 Outline Size: `size` * `outlineSize`
+
+```js
+lineA.setOptions({ // element-1, element-2
+  size: 12,
+  outlineSize: 0.4
+});
+
+lineB.setOptions({ // element-3, element-4
+  size: 24,
+  outlineSize: 0.08
+});
+```
+
+ex-27
 
 ### `startPlugOutline`, `endPlugOutline`
 
 *Type:* boolean  
 *Default:* `false`
 
-Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
+Each option for when a plug that accepts this option is specified for [`startPlug`/`endPlug`](#startplug-endplug) option.
 
 If `true` is specified, an outline of the plug is enabled.
 
 ```js
+line.endPlugOutline = true;
 ```
+
+ex-28
 
 ### `startPlugOutlineColor`, `endPlugOutlineColor`
 
 *Type:* string  
 *Default:* `'auto'`
 
-Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option, withal `true` is specified for [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option.
+Each option for when `true` is specified for [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option.
 
 A color (see [Color Value](#color-value)) of an outline of the plug.  
-It is painted separately from inside of the plug (i.e. Those don't overlap each other). Therefore one of [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) and `startPlugOutlineColor`/`endPlugOutlineColor` or both options can have opacity.  
-If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) option is set synchronously (i.e. it is changed when `outlineColor` was changed).
+It is painted separately from inside of the plug (i.e. Those don't overlap each other). Therefore one of [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) and `startPlugOutlineColor`/`endPlugOutlineColor` or both options can have an alpha channel.
 
 ```js
-// only endPlugOutlineColor has opacity
+lineA.setOptions({ // element-1, element-2
+  startPlugColor: 'rgb(248, 205, 30)',
+  startPlugOutlineColor: 'rgb(30, 130, 250)',
+  endPlugColor: 'rgba(248, 205, 30, 0.5)', // translucent
+  endPlugOutlineColor: 'rgb(30, 130, 250)'
+});
+
+lineB.setOptions({ // element-3, element-4
+  startPlugColor: 'rgb(248, 205, 30)',
+  startPlugOutlineColor: 'rgba(30, 130, 250, 0.5)', // translucent
+  endPlugColor: 'rgba(248, 205, 30, 0.5)', // translucent
+  endPlugOutlineColor: 'rgba(30, 130, 250, 0.5)' // translucent
+});
 ```
+
+ex-29
+
+If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) option is set synchronously (i.e. it is changed when `outlineColor` was changed).
 
 ### `startPlugOutlineSize`, `endPlugOutlineSize`
 
 *Type:* number  
 *Default:* `1`
 
-Each option for when a value other than `behind` is specified for [`startPlug`/`endPlug`](#startplug-endplug) option, withal `true` is specified for [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option.
+Each option for when `true` is specified for [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option.
 
-A multiplying factor of the size of an outline of the plug.  
+A multiplying factor of the size of an outline of the plug, it is greater than or equal to `1` and is less than or equal to `outlineMax` that is shown in [`startPlug`/`endPlug`](#startplug-endplug) option.  
 The outline is resized synchronously, with the following options that contain [`size`](#options-size):
 
 Plug Outline Size: `size` * [default-plug-scale] * [[`startPlugSize` or `endPlugSize`](#startplugsize-endplugsize)] * [default-plug-outline-scale] * [`startPlugOutlineSize` or `endPlugOutlineSize`]
+
+```js
+lineA.setOptions({ // element-1, element-2
+  size: 4,
+  startPlugSize: 1.5,
+  startPlugOutlineSize: 2.5,
+  endPlugSize: 3,
+  endPlugOutlineSize: 1
+});
+
+lineB.setOptions({ // element-3, element-4
+  size: 10,
+  startPlugSize: 1.5,
+  startPlugOutlineSize: 1,
+  endPlugSize: 3,
+  endPlugOutlineSize: 2.5
+});
+```
+
+ex-30
 
 ### `startLabel`, `middleLabel`, `endLabel`
 
@@ -543,7 +657,8 @@ Or `true` to enable it with all default options.
 *Default:* `'auto'`
 
 The size of parts of the dashed line, in pixels.  
-`len` is length of drawn lines, `gap` is gap between drawn lines.  
+`len` is length of drawn lines, `gap` is gap between drawn lines.
+
 If `'auto'` is specified, the following each value is set synchronously (i.e. it is changed when `size` was changed).
 
 `len`: [`size`](#options-size) * 2
@@ -575,7 +690,8 @@ Or `true` to enable it with all default options.
 *Type:* string  
 *Default:* `'auto'`
 
-The start color (see [Color Value](#color-value)) and end color of the gradient.  
+The start color (see [Color Value](#color-value)) and end color of the gradient.
+
 If `'auto'` is specified, each value of [`startPlugColor` and `endPlugColor`](#startplugcolor-endplugcolor) is set synchronously (i.e. it is changed when `startPlugColor`/`endPlugColor` was changed).
 
 ### `dropShadow` (effect)
@@ -606,14 +722,14 @@ The standard deviation for the blur operation in the drop shadow.
 *Default:* `'#000'`
 
 A color (see [Color Value](#color-value)) of the drop shadow.  
-Alpha channel can be contained but [`opacity`](#opacity) option should be used instead of it.
+An alpha channel can be contained but [`opacity`](#opacity) option should be used instead.
 
 #### `opacity`
 
 *Type:* number  
 *Default:* `0.8`
 
-A number ranging from 0 to 1 to indicate the transparency of the drop shadow.
+A number ranging from `0` to `1` to indicate the transparency of the drop shadow.
 
 ## Attachments
 
