@@ -1,6 +1,6 @@
 # LeaderLine
 
-Draw leader line in your web page.
+Draw a leader line in your web page.
 
 ```html
 <div id="start">start</div>
@@ -15,20 +15,25 @@ new LeaderLine(
 );
 ```
 
-ex-01
+ex-010
 
-Options to customize are supported.
+It supports options to customize.
 
-ex-02
+ex-020
+
+Basically, it can indicate HTML/SVG elements such as `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, etc.
+
+ex-021
 
 It can indicate a part of an element also instead of the element.
 
-ex-03
+ex-030
+ex-031
 
 Also, it can indicate an element of another library.  
-For example, the following uses LeaderLine with [D3.js](https://d3js.org/). Move the mouse on text.
+For example, the following uses LeaderLine with [D3.js](https://d3js.org/). Move the mouse on the list.
 
-ex-04
+ex-040
 
 ## Usage
 
@@ -47,7 +52,7 @@ new LeaderLine(
 );
 ```
 
-ex-05
+ex-050
 
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`). (See [`start` and `end`](#start-end) option.)
 
@@ -61,7 +66,7 @@ var startElement = document.getElementById('element-1'),
 new LeaderLine(startElement, endElement, {color: 'red', size: 8});
 ```
 
-ex-06
+ex-060
 
 Also, the options can be accessed via properties of the instance (readable and writable).
 
@@ -83,7 +88,7 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-07
+ex-070
 
 You can add effects to the leader line via some options.
 
@@ -98,7 +103,7 @@ new LeaderLine(element4, element5, {dropShadow: true});
 new LeaderLine(element5, element6, {dash: true});
 ```
 
-ex-08
+ex-080
 
 You can change symbols that are shown at the end of the leader line via [`startPlug` and `endPlug`](#startplug-endplug) options.
 
@@ -109,7 +114,7 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-09
+ex-090
 
 You can indicate a point or area of an element instead of the element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachment. You can indicate a point or area of the document also.
 
@@ -137,7 +142,7 @@ new LeaderLine(
 );
 ```
 
-ex-10
+ex-100
 
 You can show and hide the leader line with effects by [`show` and `hide`](#show-hide) methods.  
 [`mouseHoverAnchor`](#mousehoveranchor) attachment allows it to implement showing and hiding with mouse moving, easily.
@@ -146,7 +151,7 @@ You can show and hide the leader line with effects by [`show` and `hide`](#show-
 new LeaderLine(LeaderLine.mouseHoverAnchor(startElement), endElement);
 ```
 
-ex-11
+ex-110
 
 For more details, refer to the following.
 
@@ -190,7 +195,7 @@ downButton.addEventListener('click', function() {
 }, false);
 ```
 
-ex-12
+ex-120
 
 If you want to set multiple options after it was constructed, using [`setOptions`](#setoptions) method instead of the properties may give better performance.
 
@@ -250,7 +255,7 @@ Default `animOptions`: `{duration: 300, timing: 'linear'}`
 - `draw`  
 Default `animOptions`: `{duration: 500, timing: [0.58, 0, 0.42, 1]}`
 
-ex-13
+ex-130
 
 #### <a name="methods-show-hide-animoptions"></a>`animOptions`
 
@@ -274,7 +279,7 @@ scrollableBox.addEventListener('scroll', AnimEvent.add(function() {
 }), false);
 ```
 
-ex-14
+ex-140
 
 If you want to disable the fixing the position automatically, set `LeaderLine.positionByWindowResize` to `false`.
 
@@ -302,7 +307,7 @@ line.end = document.getElementById('end-element');
 
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
 
-ex-15
+ex-150
 
 Note: if you want to handle elements in another window regardless of LeaderLine, you should understand about security.
 
@@ -319,7 +324,7 @@ A color (see [Color Value](#color-value)) of the leader line.
 line.color = 'rgba(30, 130, 250, 0.5)';
 ```
 
-ex-16
+ex-160
 
 ### <a name="options-size"></a>`size`
 
@@ -332,7 +337,7 @@ The width of the leader line, in pixels.
 line.size = 20;
 ```
 
-ex-17
+ex-170
 
 ### `path`
 
@@ -347,7 +352,7 @@ One of the following keywords to indicate how to draw the line:
 - `magnet`
 - `grid`
 
-ex-18
+ex-180
 
 ### `startSocket`, `endSocket`
 
@@ -360,7 +365,7 @@ The string to indicate which side of the element the leader line connects. It ca
 line.setOptions({startSocket: 'bottom', endSocket: 'top'});
 ```
 
-ex-19
+ex-190
 
 If `'auto'` is specified, the closest side is chosen automatically.
 
@@ -377,7 +382,7 @@ If a number is specified, the leader line is pulled in the direction of the sock
 line.startSocketGravity = 400;
 ```
 
-ex-20
+ex-200
 
 If an Array that is coordinates `[x, y]` is specified, the leader line is pulled in the direction of the coordinates. The distance between the coordinates and `[0, 0]` is pull strength.  
 For example, if `[50, -100]` is specified, it is pulled in the direction of the rightward and upward (The strength in the Y axis direction is larger than the X axis direction). If `[-50, 0]` is specified, it is pulled in the direction of the leftward (no strength in the Y axis direction).
@@ -391,7 +396,7 @@ line.setOptions({
 });
 ```
 
-ex-21
+ex-210
 
 If `'auto'` is specified, it is adjusted to gravity suitable for current [`path`](#path) option automatically.
 
@@ -421,7 +426,7 @@ One of the following keywords to indicate type of plug (symbol that is shown at 
 [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option is ignored  
 [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) option is ignored
 
-ex-22
+ex-220
 
 ### `startPlugColor`, `endPlugColor`
 
@@ -447,7 +452,7 @@ lineB.setOptions({ // element-3, element-4
 });
 ```
 
-ex-23
+ex-230
 
 If `'auto'` is specified, a value of `color` option is set synchronously (i.e. it is changed when `color` was changed).
 
@@ -479,7 +484,7 @@ new LeaderLine(element3, element4, {
 });
 ```
 
-ex-24
+ex-240
 
 ### `outline`
 
@@ -492,7 +497,7 @@ If `true` is specified, an outline of the leader line is enabled.
 line.outline = true;
 ```
 
-ex-25
+ex-250
 
 ### `outlineColor`
 
@@ -526,7 +531,7 @@ lineD.setOptions({ // element-7, element-8
 });
 ```
 
-ex-26
+ex-260
 
 ### `outlineSize`
 
@@ -552,7 +557,7 @@ lineB.setOptions({ // element-3, element-4
 });
 ```
 
-ex-27
+ex-270
 
 ### `startPlugOutline`, `endPlugOutline`
 
@@ -567,7 +572,7 @@ If `true` is specified, an outline of the plug is enabled.
 line.endPlugOutline = true;
 ```
 
-ex-28
+ex-280
 
 ### `startPlugOutlineColor`, `endPlugOutlineColor`
 
@@ -595,7 +600,7 @@ lineB.setOptions({ // element-3, element-4
 });
 ```
 
-ex-29
+ex-290
 
 If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) option is set synchronously (i.e. it is changed when `outlineColor` was changed).
 
@@ -629,7 +634,7 @@ lineB.setOptions({ // element-3, element-4
 });
 ```
 
-ex-30
+ex-300
 
 ### `startLabel`, `middleLabel`, `endLabel`
 
@@ -639,7 +644,14 @@ ex-30
 An additional label that is shown on the leader line.
 
 ```js
+new LeaderLine(startElement, endElement, {
+  startLabel: 'START',
+  middleLabel: 'MIDDLE',
+  endLabel: 'END'
+});
 ```
+
+ex-310
 
 Or you can specify an [attachment](#attachments) instead of a string.
 
@@ -650,6 +662,12 @@ Or you can specify an [attachment](#attachments) instead of a string.
 
 Enable the effect with specified Object that can have properties as the following options.  
 Or `true` to enable it with all default options.
+
+```js
+new LeaderLine(startElement, endElement, {dash: true});
+```
+
+ex-320
 
 #### `len`, `gap`
 
@@ -664,6 +682,19 @@ If `'auto'` is specified, the following each value is set synchronously (i.e. it
 `len`: [`size`](#options-size) * 2
 `gap`: `size`
 
+```js
+new LeaderLine(element1, element2, {
+  dash: {len: 4, gap: 24}
+});
+
+new LeaderLine(element3, element4, {
+  size: 8,
+  dash: true // len: 16, gap: 8
+});
+```
+
+ex-330
+
 #### `animation`
 
 *Type:* boolean or Object  
@@ -675,7 +706,10 @@ Or `true` to animate it with the following default options.
 Default Animation Options: `{duration: 1000, timing: 'linear'}`
 
 ```js
+new LeaderLine(startElement, endElement, {dash: {animation: true}});
 ```
+
+ex-340
 
 ### `gradient` (effect)
 
@@ -684,6 +718,12 @@ Default Animation Options: `{duration: 1000, timing: 'linear'}`
 
 Enable the effect with specified Object that can have properties as the following options.  
 Or `true` to enable it with all default options.
+
+```js
+new LeaderLine(startElement, endElement, {startPlugColor: '#a6f41d', gradient: true});
+```
+
+ex-350
 
 #### `startColor`, `endColor`
 
@@ -694,6 +734,24 @@ The start color (see [Color Value](#color-value)) and end color of the gradient.
 
 If `'auto'` is specified, each value of [`startPlugColor` and `endPlugColor`](#startplugcolor-endplugcolor) is set synchronously (i.e. it is changed when `startPlugColor`/`endPlugColor` was changed).
 
+```js
+lineA.setOptions({ // element-1, element-2
+  gradient: {
+    startColor: '#2e17c3',
+    endColor: '#1df3f9'
+  }
+});
+
+lineB.setOptions({ // element-3, element-4
+  gradient: {
+    startColor: 'rgba(17, 148, 51, 0.1)',
+    endColor: 'rgb(17, 148, 51)'
+  }
+});
+```
+
+ex-360
+
 ### `dropShadow` (effect)
 
 *Type:* boolean or Object  
@@ -702,12 +760,27 @@ If `'auto'` is specified, each value of [`startPlugColor` and `endPlugColor`](#s
 Enable the effect with specified Object that can have properties as the following options.  
 Or `true` to enable it with all default options.
 
+```js
+new LeaderLine(startElement, endElement, {dropShadow: true});
+```
+
+ex-370
+
 #### `dx`, `dy`
 
 *Type:* number  
 *Default:* `dx`: `2` | `dy`: `4`
 
 The offset X and offset Y of the drop shadow, in pixels.
+
+```js
+line.setOptions({
+  color: '#f7f5ee',
+  dropShadow: {dx: 0, dy: 3}
+});
+```
+
+ex-380
 
 #### `blur`
 
@@ -716,6 +789,18 @@ The offset X and offset Y of the drop shadow, in pixels.
 
 The standard deviation for the blur operation in the drop shadow.
 
+```js
+line.setOptions({
+  dropShadow: {
+    dx: 6,
+    dy: 8,
+    blur: 0.2
+  }
+});
+```
+
+ex-390
+
 #### <a name="options-dropshadow-color"></a>`color`
 
 *Type:* string  
@@ -723,6 +808,12 @@ The standard deviation for the blur operation in the drop shadow.
 
 A color (see [Color Value](#color-value)) of the drop shadow.  
 An alpha channel can be contained but [`opacity`](#opacity) option should be used instead.
+
+```js
+new LeaderLine(startElement, endElement, {dropShadow: {color: 'blue', dx: 0, dy: 0}});
+```
+
+ex-400
 
 #### `opacity`
 
@@ -767,6 +858,12 @@ attachment = LeaderLine.pointAnchor(element[, options])
 
 An attachment that is specified instead of an element for the [`start` or `end`](#start-end) option of the leader line, for indicating a point instead of the element.
 
+```js
+new LeaderLine(startElement, LeaderLine.pointAnchor(endElement));
+```
+
+ex-410
+
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `element` argument is shortcut to `options.element`. The following two codes work same.
@@ -787,6 +884,8 @@ This attachment can be shared between multiple leader lines.
 // A new attachment instance is shared between `line1` and `line2`.
 line1.end = line2.end = LeaderLine.pointAnchor(endElement);
 ```
+
+ex-420
 
 ```js
 line1.end = LeaderLine.pointAnchor(endElement);
