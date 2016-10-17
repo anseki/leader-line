@@ -2784,194 +2784,6 @@
   }
 
   /**
-   * @class
-   * @param {Element} [start] - Alternative to `options.start`.
-   * @param {Element} [end] - Alternative to `options.end`.
-   * @param {Object} [options] - Initial options.
-   */
-  function LeaderLine(start, end, options) {
-    var that = this,
-      props = {
-        // Initialize properties as array.
-        options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
-          plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: [], labelSEM: ['', '', '']},
-        optionIsAttach: {anchorSE: [false, false], labelSEM: [false, false, false]},
-        curStats: {}, aplStats: {}, attachments: [], events: {}, reflowTargets: []
-      };
-
-    function createSetter(propName) {
-      return function(value) {
-        var options = {};
-        options[propName] = value;
-        that.setOptions(options);
-      };
-    }
-
-    initStats(props.curStats, STATS);
-    initStats(props.aplStats, STATS);
-    Object.keys(EFFECTS).forEach(function(effectName) {
-      var effectStats = EFFECTS[effectName].stats;
-      initStats(props.curStats, effectStats);
-      initStats(props.aplStats, effectStats);
-      props.options[effectName] = false;
-    });
-    initStats(props.curStats, SHOW_STATS);
-    initStats(props.aplStats, SHOW_STATS);
-    props.curStats.show_effect = DEFAULT_SHOW_EFFECT;
-    props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
-
-    Object.defineProperty(that, '_id', {value: ++insId});
-    props._id = that._id;
-    insProps[that._id] = props;
-
-    if (arguments.length === 1) {
-      options = start;
-      start = null;
-    }
-    options = options || {};
-    if (start || end) {
-      options = copyTree(options);
-      if (start) { options.start = start; }
-      if (end) { options.end = end; }
-    }
-    props.isShown = props.aplStats.show_on = !options.hide; // isShown is applied in setOptions -> bindWindow
-    that.setOptions(options);
-
-    // Setup option accessor methods (direct)
-    [['start', 'anchorSE', 0], ['end', 'anchorSE', 1], ['color', 'lineColor'], ['size', 'lineSize'],
-        ['startSocketGravity', 'socketGravitySE', 0], ['endSocketGravity', 'socketGravitySE', 1],
-        ['startPlugColor', 'plugColorSE', 0], ['endPlugColor', 'plugColorSE', 1],
-        ['startPlugSize', 'plugSizeSE', 0], ['endPlugSize', 'plugSizeSE', 1],
-        ['outline', 'lineOutlineEnabled'],
-          ['outlineColor', 'lineOutlineColor'], ['outlineSize', 'lineOutlineSize'],
-        ['startPlugOutline', 'plugOutlineEnabledSE', 0], ['endPlugOutline', 'plugOutlineEnabledSE', 1],
-          ['startPlugOutlineColor', 'plugOutlineColorSE', 0], ['endPlugOutlineColor', 'plugOutlineColorSE', 1],
-          ['startPlugOutlineSize', 'plugOutlineSizeSE', 0], ['endPlugOutlineSize', 'plugOutlineSizeSE', 1]]
-      .forEach(function(conf) {
-        var propName = conf[0], optionName = conf[1], i = conf[2];
-        Object.defineProperty(that, propName, {
-          get: function() {
-            var value = // Don't use closure.
-              i != null ? insProps[that._id].options[optionName][i] :
-              optionName ? insProps[that._id].options[optionName] :
-              insProps[that._id].options[propName];
-            return value == null ? KEYWORD_AUTO : copyTree(value);
-          },
-          set: createSetter(propName),
-          enumerable: true
-        });
-      });
-    // Setup option accessor methods (key-to-id)
-    [['path', PATH_KEY_2_ID],
-        ['startSocket', SOCKET_KEY_2_ID, 'socketSE', 0], ['endSocket', SOCKET_KEY_2_ID, 'socketSE', 1],
-        ['startPlug', PLUG_KEY_2_ID, 'plugSE', 0], ['endPlug', PLUG_KEY_2_ID, 'plugSE', 1]]
-      .forEach(function(conf) {
-        var propName = conf[0], key2Id = conf[1], optionName = conf[2], i = conf[3];
-        Object.defineProperty(that, propName, {
-          get: function() {
-            var value = // Don't use closure.
-                i != null ? insProps[that._id].options[optionName][i] :
-                optionName ? insProps[that._id].options[optionName] :
-                insProps[that._id].options[propName],
-              key;
-            return !value ? KEYWORD_AUTO :
-              Object.keys(key2Id).some(function(optKey) {
-                if (key2Id[optKey] === value) { key = optKey; return true; }
-                return false;
-              }) ? key : new Error('It\'s broken');
-          },
-          set: createSetter(propName),
-          enumerable: true
-        });
-      });
-    // Setup option accessor methods (effect)
-    Object.keys(EFFECTS).forEach(function(effectName) {
-      var effectConf = EFFECTS[effectName];
-
-      function getOptions(optionValue) {
-        var effectOptions = effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
-          var optionClass = optionConf[0], propName = optionConf[1], key2Id = optionConf[2],
-            optionName = optionConf[3], i = optionConf[4],
-            value =
-              i != null ? optionValue[optionName][i] :
-              optionName ? optionValue[optionName] :
-              optionValue[propName],
-            key;
-          effectOptions[propName] = optionClass === 'id' ? (
-              !value ? KEYWORD_AUTO :
-              Object.keys(key2Id).some(function(optKey) {
-                if (key2Id[optKey] === value) { key = optKey; return true; }
-                return false;
-              }) ? key : new Error('It\'s broken')
-            ) : (value == null ? KEYWORD_AUTO : copyTree(value));
-          return effectOptions;
-        }, {});
-        if (effectConf.anim) {
-          effectOptions.animation = copyTree(optionValue.animation);
-        }
-        return effectOptions;
-      }
-
-      Object.defineProperty(that, effectName, {
-        get: function() {
-          var value = insProps[that._id].options[effectName];
-          return isObject(value) ? getOptions(value) : value;
-        },
-        set: createSetter(effectName),
-        enumerable: true
-      });
-    });
-    // Setup option accessor methods (label)
-    ['startLabel', 'endLabel', 'middleLabel'].forEach(function(propName, i) {
-      Object.defineProperty(that, propName, {
-        get: function() {
-          var props = insProps[that._id], options = props.options; // Don't use closure.
-          return options.labelSEM[i] && !props.optionIsAttach.labelSEM[i] ?
-            insAttachProps[options.labelSEM[i]._id].text : options.labelSEM[i] || '';
-        },
-        set: createSetter(propName),
-        enumerable: true
-      });
-    });
-  }
-
-  LeaderLine.prototype.setOptions = function(newOptions) {
-    setOptions(insProps[this._id], newOptions);
-    return this;
-  };
-
-  LeaderLine.prototype.position = function() {
-    update(insProps[this._id], {position: true});
-    return this;
-  };
-
-  LeaderLine.prototype.remove = function() {
-    var props = insProps[this._id], curStats = props.curStats;
-
-    Object.keys(EFFECTS).forEach(function(effectName) {
-      var keyAnimId = effectName + '_animId';
-      if (curStats[keyAnimId]) { anim.remove(curStats[keyAnimId]); }
-    });
-    if (curStats.show_animId) { anim.remove(curStats.show_animId); }
-    props.attachments.slice().forEach(function(attachProps) { unbindAttachment(props, attachProps); });
-
-    if (props.baseWindow && props.svg) {
-      props.baseWindow.document.body.removeChild(props.svg);
-    }
-    delete insProps[this._id];
-  };
-
-  LeaderLine.prototype.show = function(showEffectName, animOptions) {
-    show(insProps[this._id], true, showEffectName, animOptions);
-    return this;
-  };
-
-  LeaderLine.prototype.hide = function(showEffectName, animOptions) {
-    show(insProps[this._id], false, showEffectName, animOptions);
-    return this;
-  };
-
-  /**
    * @typedef {Array} EffectOptionConf - Args for checking ID or Type (or function)
    *    ['id', propName, key2Id, optionName, index, defaultValue] or
    *    ['type', propName, type, optionName, index, defaultValue, check, trim] or
@@ -3527,6 +3339,195 @@
     }
   };
   window.SHOW_EFFECTS = SHOW_EFFECTS; // [DEBUG/]
+
+  /**
+   * @class
+   * @param {Element} [start] - Alternative to `options.start`.
+   * @param {Element} [end] - Alternative to `options.end`.
+   * @param {Object} [options] - Initial options.
+   */
+  function LeaderLine(start, end, options) {
+    var props = {
+      // Initialize properties as array.
+      options: {anchorSE: [], socketSE: [], socketGravitySE: [], plugSE: [], plugColorSE: [], plugSizeSE: [],
+        plugOutlineEnabledSE: [], plugOutlineColorSE: [], plugOutlineSizeSE: [], labelSEM: ['', '', '']},
+      optionIsAttach: {anchorSE: [false, false], labelSEM: [false, false, false]},
+      curStats: {}, aplStats: {}, attachments: [], events: {}, reflowTargets: []
+    };
+
+    initStats(props.curStats, STATS);
+    initStats(props.aplStats, STATS);
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var effectStats = EFFECTS[effectName].stats;
+      initStats(props.curStats, effectStats);
+      initStats(props.aplStats, effectStats);
+      props.options[effectName] = false;
+    });
+    initStats(props.curStats, SHOW_STATS);
+    initStats(props.aplStats, SHOW_STATS);
+    props.curStats.show_effect = DEFAULT_SHOW_EFFECT;
+    props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
+
+    Object.defineProperty(this, '_id', {value: ++insId});
+    props._id = this._id;
+    insProps[this._id] = props;
+
+    if (arguments.length === 1) {
+      options = start;
+      start = null;
+    }
+    options = options || {};
+    if (start || end) {
+      options = copyTree(options);
+      if (start) { options.start = start; }
+      if (end) { options.end = end; }
+    }
+    props.isShown = props.aplStats.show_on = !options.hide; // isShown is applied in setOptions -> bindWindow
+    this.setOptions(options);
+  }
+
+  (function() {
+    function createSetter(propName) {
+      return function(value) {
+        var options = {};
+        options[propName] = value;
+        this.setOptions(options); // eslint-disable-line no-invalid-this
+      };
+    }
+
+    // Setup option accessor methods (direct)
+    [['start', 'anchorSE', 0], ['end', 'anchorSE', 1], ['color', 'lineColor'], ['size', 'lineSize'],
+        ['startSocketGravity', 'socketGravitySE', 0], ['endSocketGravity', 'socketGravitySE', 1],
+        ['startPlugColor', 'plugColorSE', 0], ['endPlugColor', 'plugColorSE', 1],
+        ['startPlugSize', 'plugSizeSE', 0], ['endPlugSize', 'plugSizeSE', 1],
+        ['outline', 'lineOutlineEnabled'],
+          ['outlineColor', 'lineOutlineColor'], ['outlineSize', 'lineOutlineSize'],
+        ['startPlugOutline', 'plugOutlineEnabledSE', 0], ['endPlugOutline', 'plugOutlineEnabledSE', 1],
+          ['startPlugOutlineColor', 'plugOutlineColorSE', 0], ['endPlugOutlineColor', 'plugOutlineColorSE', 1],
+          ['startPlugOutlineSize', 'plugOutlineSizeSE', 0], ['endPlugOutlineSize', 'plugOutlineSizeSE', 1]]
+      .forEach(function(conf) {
+        var propName = conf[0], optionName = conf[1], i = conf[2];
+        Object.defineProperty(LeaderLine.prototype, propName, {
+          get: function() {
+            var value = // Don't use closure.
+              i != null ? insProps[this._id].options[optionName][i] :
+              optionName ? insProps[this._id].options[optionName] :
+              insProps[this._id].options[propName];
+            return value == null ? KEYWORD_AUTO : copyTree(value);
+          },
+          set: createSetter(propName),
+          enumerable: true
+        });
+      });
+    // Setup option accessor methods (key-to-id)
+    [['path', PATH_KEY_2_ID],
+        ['startSocket', SOCKET_KEY_2_ID, 'socketSE', 0], ['endSocket', SOCKET_KEY_2_ID, 'socketSE', 1],
+        ['startPlug', PLUG_KEY_2_ID, 'plugSE', 0], ['endPlug', PLUG_KEY_2_ID, 'plugSE', 1]]
+      .forEach(function(conf) {
+        var propName = conf[0], key2Id = conf[1], optionName = conf[2], i = conf[3];
+        Object.defineProperty(LeaderLine.prototype, propName, {
+          get: function() {
+            var value = // Don't use closure.
+                i != null ? insProps[this._id].options[optionName][i] :
+                optionName ? insProps[this._id].options[optionName] :
+                insProps[this._id].options[propName],
+              key;
+            return !value ? KEYWORD_AUTO :
+              Object.keys(key2Id).some(function(optKey) {
+                if (key2Id[optKey] === value) { key = optKey; return true; }
+                return false;
+              }) ? key : new Error('It\'s broken');
+          },
+          set: createSetter(propName),
+          enumerable: true
+        });
+      });
+    // Setup option accessor methods (effect)
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var effectConf = EFFECTS[effectName];
+
+      function getOptions(optionValue) {
+        var effectOptions = effectConf.optionsConf.reduce(function(effectOptions, optionConf) {
+          var optionClass = optionConf[0], propName = optionConf[1], key2Id = optionConf[2],
+            optionName = optionConf[3], i = optionConf[4],
+            value =
+              i != null ? optionValue[optionName][i] :
+              optionName ? optionValue[optionName] :
+              optionValue[propName],
+            key;
+          effectOptions[propName] = optionClass === 'id' ? (
+              !value ? KEYWORD_AUTO :
+              Object.keys(key2Id).some(function(optKey) {
+                if (key2Id[optKey] === value) { key = optKey; return true; }
+                return false;
+              }) ? key : new Error('It\'s broken')
+            ) : (value == null ? KEYWORD_AUTO : copyTree(value));
+          return effectOptions;
+        }, {});
+        if (effectConf.anim) {
+          effectOptions.animation = copyTree(optionValue.animation);
+        }
+        return effectOptions;
+      }
+
+      Object.defineProperty(LeaderLine.prototype, effectName, {
+        get: function() {
+          var value = insProps[this._id].options[effectName];
+          return isObject(value) ? getOptions(value) : value;
+        },
+        set: createSetter(effectName),
+        enumerable: true
+      });
+    });
+    // Setup option accessor methods (label)
+    ['startLabel', 'endLabel', 'middleLabel'].forEach(function(propName, i) {
+      Object.defineProperty(LeaderLine.prototype, propName, {
+        get: function() {
+          var props = insProps[this._id], options = props.options; // Don't use closure.
+          return options.labelSEM[i] && !props.optionIsAttach.labelSEM[i] ?
+            insAttachProps[options.labelSEM[i]._id].text : options.labelSEM[i] || '';
+        },
+        set: createSetter(propName),
+        enumerable: true
+      });
+    });
+  })();
+
+  LeaderLine.prototype.setOptions = function(newOptions) {
+    setOptions(insProps[this._id], newOptions);
+    return this;
+  };
+
+  LeaderLine.prototype.position = function() {
+    update(insProps[this._id], {position: true});
+    return this;
+  };
+
+  LeaderLine.prototype.remove = function() {
+    var props = insProps[this._id], curStats = props.curStats;
+
+    Object.keys(EFFECTS).forEach(function(effectName) {
+      var keyAnimId = effectName + '_animId';
+      if (curStats[keyAnimId]) { anim.remove(curStats[keyAnimId]); }
+    });
+    if (curStats.show_animId) { anim.remove(curStats.show_animId); }
+    props.attachments.slice().forEach(function(attachProps) { unbindAttachment(props, attachProps); });
+
+    if (props.baseWindow && props.svg) {
+      props.baseWindow.document.body.removeChild(props.svg);
+    }
+    delete insProps[this._id];
+  };
+
+  LeaderLine.prototype.show = function(showEffectName, animOptions) {
+    show(insProps[this._id], true, showEffectName, animOptions);
+    return this;
+  };
+
+  LeaderLine.prototype.hide = function(showEffectName, animOptions) {
+    show(insProps[this._id], false, showEffectName, animOptions);
+    return this;
+  };
 
   /**
    * @param {attachProps} attachProps - `attachProps` of `LeaderLineAttachment` instance.
