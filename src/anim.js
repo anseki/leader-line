@@ -56,8 +56,6 @@ var anim =
     newAnimId = 0,
     requestID;
 
-  window.addReqFrameAnim2 = function(cb) { requestAnim = cb; }; // [DEBUG/]
-  window.delReqFrameAnim2 = function(cb) { cancelAnim = cb; }; // [DEBUG/]
   window.animTasks = tasks; // [DEBUG/]
   window.MSPF = MSPF; // [DEBUG/]
 

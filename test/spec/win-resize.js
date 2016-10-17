@@ -8,7 +8,7 @@ describe('window resize', function() {
   var window, document, traceLog, pageDone, frame, orgWidth, orgHeight, pathDataHasChanged,
     iframeDoc, ll1, ll2, ll3, ll4;
 
-  beforeAll(function loadBefore(beforeDone) {
+  beforeAll(function(beforeDone) {
     loadPage('spec/win-resize/page.html', function(frmWindow, frmDocument, body, done) {
       window = frmWindow;
       document = frmDocument;

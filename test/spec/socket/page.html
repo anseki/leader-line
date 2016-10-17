@@ -2,6 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <!-- Use setTimeout instead of requestAnimationFrame for animation. -->
+  <script>window.requestAnimationFrame = function(cb) { setTimeout(cb, 1000 / 60); };</script>
   <script src="/src/defs.js"></script>
   <script src="/src/anim.js"></script>
   <script src="/src/path-data-polyfill/path-data-polyfill.js"></script>

@@ -25,8 +25,6 @@ describe('attachment', function() {
   function loadBefore(beforeDone) {
     jasmine.addMatchers(customMatchers);
     loadPage('spec/common/page.html', function(frmWindow, frmDocument, body, done) {
-      // Use setTimeout instead of requestAnimationFrame for animation.
-      frmWindow.addReqFrameAnim2(function(cb) { setTimeout(cb, frmWindow.MSPF); });
       TOLERANCE = frmWindow.IS_WEBKIT ? 10 : frmWindow.IS_GECKO || frmWindow.IS_TRIDENT ? 5 : 1;
       IS_WEBKIT = frmWindow.IS_WEBKIT;
 

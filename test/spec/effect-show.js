@@ -15,9 +15,6 @@ describe('effect-show', function() {
   function loadBefore(beforeDone) {
     jasmine.addMatchers(customMatchers);
     loadPage('spec/common/page.html', function(frmWindow, frmDocument, body, done) {
-      // Use setTimeout instead of requestAnimationFrame for animation.
-      frmWindow.addReqFrameAnim2(function(cb) { setTimeout(cb, frmWindow.MSPF); });
-
       window = frmWindow;
       document = frmDocument;
       traceLog = window.traceLog;

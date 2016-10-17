@@ -14,7 +14,7 @@ describe('socket', function() {
   // ================ /context
   /* eslint-enable no-unused-vars, indent */
 
-  beforeAll(function loadBefore(beforeDone) {
+  beforeAll(function(beforeDone) {
     loadPage('spec/socket/page.html', function(frmWindow, frmDocument, body, done) {
       window = frmWindow;
       document = frmDocument;
