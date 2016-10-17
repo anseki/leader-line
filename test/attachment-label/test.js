@@ -19,7 +19,8 @@ window.addEventListener('load', function() {
   anchor1.addEventListener('mousedown', function(e) {
     var rectTarget = anchor1.getBoundingClientRect();
     activeMoving = moving;
-    activeMoving.offset = {x: rectTarget.left - e.pageX, y: rectTarget.top - e.pageY};
+    activeMoving.offset =
+      {x: rectTarget.left + window.pageXOffset - e.pageX, y: rectTarget.top + window.pageYOffset - e.pageY};
     body.className = CLASS_DRAGGING;
   }, false);
 
