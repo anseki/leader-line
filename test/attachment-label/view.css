@@ -23,36 +23,3 @@
   top: 0;
   background-color: rgba(255, 127, 205, 0.8);
 }
-
-/* draggable */
-
-body * {
-  /* stylelint-disable property-no-vendor-prefix */
-  -moz-user-select: -moz-none;
-  -ms-user-select: none;
-  -webkit-user-select: none;
-  user-select: none;
-  /* stylelint-enable property-no-vendor-prefix */
-}
-
-.draggable,
-.draggable * {
-  /* stylelint-disable value-no-vendor-prefix */
-  cursor: move;
-  cursor: -moz-grab;
-  cursor: -webkit-grab;
-  /* cursor: -o-grab;
-  cursor: -ms-grab; */
-  /* stylelint-enable value-no-vendor-prefix */
-}
-
-.dragging,
-.dragging * {
-  /* stylelint-disable value-no-vendor-prefix */
-  cursor: crosshair;
-  cursor: -moz-grabbing;
-  cursor: -webkit-grabbing;
-  /* cursor: -o-grabbing;
-  cursor: -ms-grabbing; */
-  /* stylelint-enable value-no-vendor-prefix */
-}
