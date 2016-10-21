@@ -279,6 +279,8 @@ scrollableBox.addEventListener('scroll', AnimEvent.add(function() {
 }), false);
 ```
 
+(The code above uses [AnimEvent](https://github.com/anseki/anim-event) for a better performance.)
+
 ex-140
 
 If you want to disable the fixing the position automatically, set `LeaderLine.positionByWindowResize` to `false`.
@@ -368,6 +370,8 @@ line.setOptions({startSocket: 'bottom', endSocket: 'top'});
 ex-190
 
 If `'auto'` is specified, the closest side is chosen automatically.
+
+ex-191
 
 ### `startSocketGravity`, `endSocketGravity`
 
@@ -751,6 +755,10 @@ lineB.setOptions({ // element-3, element-4
 ```
 
 ex-360
+
+Since the gradient is made from only two colors, it might be not beautiful.
+
+ex-361
 
 ### `dropShadow` (effect)
 
