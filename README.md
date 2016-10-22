@@ -919,8 +919,15 @@ You can specify a `<body>` element also. That is, you can make the leader line i
 *Default:* `'50%'`
 
 The X and Y coordinates of the point, in pixels, relative to the top-left corner of the specified element for [`element`](#attachments-pointanchor-element) option.  
-Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: '50%'}` indicates the center of the element, `{x: '100%', y: 0}` indicates the top-right corner.  
+Each value can be a percentage of the element's width or height. For example, `{x: '50%', y: '50%'}` (default) indicates the center of the element, `{x: '100%', y: 0}` indicates the top-right corner.  
 And also, each value can be a negative value or a value over the element's width or height, it indicates the outside of the element.
+
+```js
+new LeaderLine(element1, LeaderLine.pointAnchor(element3, {x: 10, y: 30}));
+new LeaderLine(element2, LeaderLine.pointAnchor(element3, {x: '100%', y: 0}));
+```
+
+ex-430
 
 ### `areaAnchor`
 
@@ -935,6 +942,12 @@ attachment = LeaderLine.areaAnchor(element[, shape][, options])
 ```
 
 An attachment that is specified instead of an element for the [`start` or `end`](#start-end) option of the leader line, for indicating an area instead of the element.
+
+```js
+new LeaderLine(startElement, LeaderLine.areaAnchor(endElement));
+```
+
+ex-440
 
 The `options` argument is an Object that can have properties as options that are described later.
 
@@ -974,6 +987,8 @@ One of the following keywords to indicate the shape of the area:
 - `circle`
 - `polygon`
 
+ex-450
+
 #### <a name="attachments-areaanchor-x-y"></a>`x`, `y`
 
 *Type:* number or string  
@@ -1005,6 +1020,14 @@ An option for when `rect` is specified for [`shape`](#shape) option.
 
 The radius to round corners of the area, in pixels.
 
+```js
+new LeaderLine(startElement,
+  LeaderLine.areaAnchor(endElement,
+    {x: '20%', y: '20%', width: '60%', height: '60%', radius: 10}));
+```
+
+ex-460
+
 #### `points`
 
 *Type:* Array  
@@ -1013,6 +1036,14 @@ An option for when `polygon` is specified for [`shape`](#shape) option.
 
 An Array that contains three or more points of the polygon. Each item that is a point is an Array that contains the X and Y coordinates for the point. That is, it is Array that contains Array, like `[[x1, y1], [x2, y2], ...]`.  
 The X and Y coordinates are handled as same as [`x` and `y`](#attachments-areaanchor-x-y) options.
+
+```js
+new LeaderLine(startElement,
+  LeaderLine.areaAnchor(endElement,
+    {shape: 'polygon', points: [[10, 15], ['90%', '70%'], [10, '80%']]}));
+```
+
+ex-470
 
 #### <a name="attachments-areaanchor-color"></a>`color`
 
@@ -1030,6 +1061,14 @@ By default, a value of [`color`](#options-color) option of the first leader line
 A fill-color (see [Color Value](#color-value)) of the area.  
 If it is not specified (default), the area is not painted. It is better than specifying `'rgba(0, 0, 0, 0)'`.
 
+```js
+new LeaderLine(startElement,
+  LeaderLine.areaAnchor(endElement,
+    {x: 14, y: 20, width: 42, height: 60, radius: 10, fillColor: '#f8cd1e'}));
+```
+
+ex-480
+
 #### <a name="attachments-areaanchor-size"></a>`size`
 
 *Type:* number  
@@ -1038,6 +1077,14 @@ If it is not specified (default), the area is not painted. It is better than spe
 The width of the border of the area, in pixels.  
 If `0` is specified, the border is not drawn.
 
+```js
+new LeaderLine(startElement,
+  LeaderLine.areaAnchor(endElement,
+    {shape: 'polygon', points: [[10, 15], [63, 70], [10, 80]], fillColor: '#f8cd1e', size: 0}));
+```
+
+ex-490
+
 #### <a name="attachments-areaanchor-dash"></a>`dash`
 
 *Type:* boolean or Object  
@@ -1045,6 +1092,14 @@ If `0` is specified, the border is not drawn.
 
 Enable "dashed line" effect to the border of the area with specified Object that can have properties as the following options.  
 Or `true` to enable it with all default options.
+
+```js
+new LeaderLine(startElement,
+  LeaderLine.areaAnchor(endElement,
+    {x: 14, y: 20, width: 42, height: 60, radius: 8, dash: true}));
+```
+
+ex-500
 
 ##### `len`, `gap`
 
@@ -1068,7 +1123,13 @@ attachment = LeaderLine.mouseHoverAnchor(element[, showEffectName][, options])
 
 An attachment that is specified instead of an element for the [`start` or `end`](#start-end) option of the leader line, for showing and hiding the leader line by the mouse hovering.  
 This is a convenient way to call [`show`](#show-hide) method when a mouse enters the element, and call [`hide`](#show-hide) method when a mouse leaves the element. Also, a small icon and some style are added to the element.  
-And also, it includes a polyfill for `mouseenter` and `mouseleave` events.
+And also, it includes a polyfill for `mouseenter` and `mouseleave` events that are not supported by some web browsers.
+
+```js
+new LeaderLine(LeaderLine.mouseHoverAnchor(startElement), endElement);
+```
+
+ex-510
 
 This is an attachment to provide a convenient way to do the behavior above. If you want more style or more custom behavior, you will use [`show`/`hide`](#show-hide) methods and your CSS code instead of this attachment.
 
@@ -1107,7 +1168,10 @@ An element that is a trigger for showing and hiding the leader line.
 A value that is passed to [`show`/`hide`](#show-hide) methods as its `showEffectName` argument.
 
 ```js
+new LeaderLine(LeaderLine.mouseHoverAnchor(startElement, 'draw'), endElement);
 ```
+
+ex-520
 
 #### `animOptions`
 
@@ -1151,6 +1215,16 @@ attachment = LeaderLine.captionLabel(text[, options])
 ```
 
 An attachment that is specified instead of a string for the [`startLabel`, `middleLabel` or `endLabel`](#startlabel-middlelabel-endlabel) option of the leader line, for showing a custom label on the leader line.
+
+```js
+new LeaderLine(startElement, endElement, {
+  startLabel: LeaderLine.captionLabel('START'),
+  middleLabel: LeaderLine.captionLabel('MIDDLE'),
+  endLabel: LeaderLine.captionLabel('END')
+});
+```
+
+ex-530
 
 The `options` argument is an Object that can have properties as options that are described later.
 
@@ -1200,6 +1274,14 @@ A string that is shown as a label.
 By default, a `captionLabel` attachment that is attached as `startLabel` is positioned near the socket (i.e. connecting point) that is decided by [`startSocket`](#startsocket-endsocket) option of the leader line. In like manner, attached one as `endLabel` is positioned near the socket that is decided by `endSocket` option. Those are calculated with the size of the leader line, the font size of the label, etc.  
 If an Array that is `[x, y]` in pixels is specified for `offset` option, the attachment is positioned at the specified coordinates relative to the decided socket.
 
+```js
+new LeaderLine(startElement, endElement, {
+  startLabel: LeaderLine.captionLabel('START', {color: 'blue', offset: [-20, 0]})
+});
+```
+
+ex-540
+
 #### `lineOffset`
 
 *Type:* number  
@@ -1207,6 +1289,8 @@ If an Array that is `[x, y]` in pixels is specified for `offset` option, the att
 
 By default, a `captionLabel` attachment that is attached as `middleLabel` is positioned at the middle point of the path of the leader line.  
 If a length in pixels is specified for `lineOffset` option, the attachment is positioned at the offset point from the middle point of the path. The length is distance along the path, a negative value makes it become close to the element as [`start`](#start-end) option.
+
+ex-550
 
 #### `color`
 
@@ -1332,4 +1416,4 @@ You can specify one of the following keywords also. These values mean [keywords 
 ## Color Value
 
 CSS color notations are accepted. A value might contain an alpha channel that specifies the transparency.  
-For example, `hsl(200, 70%, 58%)`, `rgba(73, 172, 223, 0.5)`, `#49acdf`, `skyblue`, etc. Some browsers support `hwb()`, `device-cmyk()` and `gray()` also.
+For example, `hsl(200, 70%, 58%)`, `rgba(73, 172, 223, 0.5)`, `#49acdf`, `skyblue`, etc. Some web browsers support `hwb()`, `device-cmyk()` and `gray()` also.
