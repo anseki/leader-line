@@ -369,7 +369,7 @@ line.setOptions({startSocket: 'bottom', endSocket: 'top'});
 
 ex-190
 
-If `'auto'` is specified, the closest side is chosen automatically.
+If `'auto'` (default) is specified, the closest side is chosen automatically.
 
 ex-191
 
@@ -402,7 +402,7 @@ line.setOptions({
 
 ex-210
 
-If `'auto'` is specified, it is adjusted to gravity suitable for current [`path`](#path) option automatically.
+If `'auto'` (default) is specified, it is adjusted to gravity suitable for current [`path`](#path) option automatically.
 
 ### `startPlug`, `endPlug`
 
@@ -458,7 +458,7 @@ lineB.setOptions({ // element-3, element-4
 
 ex-230
 
-If `'auto'` is specified, a value of `color` option is set synchronously (i.e. it is changed when `color` was changed).
+If `'auto'` (default) is specified, a value of `color` option is set synchronously (i.e. it is changed when `color` was changed).
 
 ### `startPlugSize`, `endPlugSize`
 
@@ -606,7 +606,7 @@ lineB.setOptions({ // element-3, element-4
 
 ex-290
 
-If `'auto'` is specified, a value of [`outlineColor`](#outlinecolor) option is set synchronously (i.e. it is changed when `outlineColor` was changed).
+If `'auto'` (default) is specified, a value of [`outlineColor`](#outlinecolor) option is set synchronously (i.e. it is changed when `outlineColor` was changed).
 
 ### `startPlugOutlineSize`, `endPlugOutlineSize`
 
@@ -681,7 +681,7 @@ ex-320
 The size of parts of the dashed line, in pixels.  
 `len` is length of drawn lines, `gap` is gap between drawn lines.
 
-If `'auto'` is specified, the following each value is set synchronously (i.e. it is changed when `size` was changed).
+If `'auto'` (default) is specified, the following each value is set synchronously (i.e. it is changed when `size` was changed).
 
 `len`: [`size`](#options-size) * 2
 `gap`: `size`
@@ -736,7 +736,7 @@ ex-350
 
 The start color (see [Color Value](#color-value)) and end color of the gradient.
 
-If `'auto'` is specified, each value of [`startPlugColor` and `endPlugColor`](#startplugcolor-endplugcolor) is set synchronously (i.e. it is changed when `startPlugColor`/`endPlugColor` was changed).
+If `'auto'` (default) is specified, each value of [`startPlugColor` and `endPlugColor`](#startplugcolor-endplugcolor) is set synchronously (i.e. it is changed when `startPlugColor`/`endPlugColor` was changed).
 
 ```js
 lineA.setOptions({ // element-1, element-2
@@ -1271,7 +1271,10 @@ A string that is shown as a label.
 *Type:* Array  
 *Default:* Calculated suitable position
 
-By default, a `captionLabel` attachment that is attached as `startLabel` is positioned near the socket (i.e. connecting point) that is decided by [`startSocket`](#startsocket-endsocket) option of the leader line. In like manner, attached one as `endLabel` is positioned near the socket that is decided by `endSocket` option. Those are calculated with the size of the leader line, the font size of the label, etc.  
+By default, a `captionLabel` attachment that is attached as `startLabel` is positioned near the socket (i.e. connecting point) that is decided by [`startSocket`](#startsocket-endsocket) option of the leader line. In like manner, attached one as `endLabel` is positioned near the socket that is decided by `endSocket` option. Those are calculated with the size of the leader line, the font size of the label, etc.
+
+ex-540
+
 If an Array that is `[x, y]` in pixels is specified for `offset` option, the attachment is positioned at the specified coordinates relative to the decided socket.
 
 ```js
@@ -1280,9 +1283,9 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-540
+ex-541
 
-#### `lineOffset`
+#### <a name="attachments-captionlabel-lineoffset"></a>`lineOffset`
 
 *Type:* number  
 *Default:* `0`
@@ -1300,7 +1303,7 @@ ex-550
 A color (see [Color Value](#color-value)) of the text.  
 By default, a value of [`color`](#options-color) option of the current attached leader line is set synchronously (i.e. it is changed when `color` of the leader line was changed).
 
-#### `outlineColor`
+#### <a name="attachments-captionlabel-outlinecolor"></a>`outlineColor`
 
 *Type:* string  
 *Default:* `'#fff'`
@@ -1308,6 +1311,8 @@ By default, a value of [`color`](#options-color) option of the current attached 
 A color (see [Color Value](#color-value)) of an outline of the text.  
 The outline makes the text avoid seeming to blend with a background.  
 If `''` is specified, the outline is not drawn. It is better than specifying `'rgba(0, 0, 0, 0)'`.
+
+ex-560
 
 #### <a name="attachments-captionlabel-other-style-properties"></a>Other Style Properties
 
@@ -1341,6 +1346,16 @@ attachment = LeaderLine.pathLabel(text[, options])
 
 An attachment that is specified instead of a string for the [`startLabel`, `middleLabel` or `endLabel`](#startlabel-middlelabel-endlabel) option of the leader line, for showing a label along the path of the leader line.
 
+```js
+new LeaderLine(startElement, endElement, {
+  startLabel: LeaderLine.pathLabel('START'),
+  middleLabel: LeaderLine.pathLabel('MIDDLE'),
+  endLabel: LeaderLine.pathLabel('END')
+});
+```
+
+ex-570
+
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `text` argument is shortcut to `options.text`. The following two codes work same.
@@ -1363,13 +1378,15 @@ This attachment can *not* be shared between multiple leader lines. See [`caption
 
 A string that is shown as a label.
 
-#### `lineOffset`
+#### <a name="attachments-pathlabel-lineoffset"></a>`lineOffset`
 
 *Type:* number  
 *Default:* `0`
 
 By default, a `pathLabel` attachment that is attached as `startLabel` is positioned near the element as [`start`](#start-end) option. In like manner, attached one as `endLabel` is positioned near the element as `end` option. And attached one as `middleLabel` is positioned at the middle point of the path of the leader line.  
 If a length in pixels is specified for `lineOffset` option, the attachment is positioned at the offset point from the position above. The length is distance along the path, a negative value makes it become close to the element as `start` option.
+
+ex-580
 
 #### `color`
 
@@ -1379,7 +1396,7 @@ If a length in pixels is specified for `lineOffset` option, the attachment is po
 A color (see [Color Value](#color-value)) of the text.  
 By default, a value of [`color`](#options-color) option of the current attached leader line is set synchronously (i.e. it is changed when `color` of the leader line was changed).
 
-#### `outlineColor`
+#### <a name="attachments-pathlabel-outlinecolor"></a>`outlineColor`
 
 *Type:* string  
 *Default:* `'#fff'`
@@ -1387,6 +1404,8 @@ By default, a value of [`color`](#options-color) option of the current attached 
 A color (see [Color Value](#color-value)) of an outline of the text.  
 The outline makes the text avoid seeming to blend with a background.  
 If `''` is specified, the outline is not drawn. It is better than specifying `'rgba(0, 0, 0, 0)'`.
+
+ex-590
 
 #### Other Style Properties
 
@@ -1400,11 +1419,39 @@ See the [option of `captionLabel`](#attachments-captionlabel-other-style-propert
 
 A number determining how long the animation will run.
 
+```js
+new LeaderLine(
+  LeaderLine.mouseHoverAnchor(startElement, 'draw', {
+    animOptions: {
+      duration: 3000
+    }
+  }),
+  endElement
+);
+```
+
+ex-600
+
 ### `timing`
 
 *Type:* Array or string
 
-An Array that is `[x1, y1, x2, y2]` as a "timing function" that indicates how to change the speed. It works same as that of [CSS animation](https://developer.mozilla.org/en/docs/Web/CSS/timing-function).  
+An Array that is `[x1, y1, x2, y2]` as a "timing function" that indicates how to change the speed. It works same as that of [CSS animation](https://developer.mozilla.org/en/docs/Web/CSS/timing-function).
+
+```js
+new LeaderLine(
+  LeaderLine.mouseHoverAnchor(startElement, 'draw', {
+    animOptions: {
+      duration: 3000,
+      timing: [0.5, 0, 1, 0.42]
+    }
+  }),
+  endElement
+);
+```
+
+ex-610
+
 You can specify one of the following keywords also. These values mean [keywords for common timing functions](https://developer.mozilla.org/en/docs/Web/CSS/timing-function#Keywords_for_common_timing-functions).
 
 - `ease`
@@ -1412,6 +1459,8 @@ You can specify one of the following keywords also. These values mean [keywords 
 - `ease-in`
 - `ease-out`
 - `ease-in-out`
+
+ex-620
 
 ## Color Value
 
