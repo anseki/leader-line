@@ -1,0 +1,253 @@
+.anchor, .anchor40, .anchor60, .anchor80-line, .anchor100-line, .anchor-text {
+  position: absolute;
+  background-color: #9ee7ea;
+  box-sizing: border-box;
+  padding: 5px 0;
+  font-size: 24px;
+  line-height: 1;
+  text-align: center;
+}
+
+.anchor40 {
+  width: 40px;
+  height: 40px;
+}
+
+.anchor60 {
+  width: 60px;
+  height: 60px;
+}
+
+.anchor80-line {
+  width: 80px;
+}
+
+.anchor100-line {
+  width: 100px;
+}
+
+.anchor-text {
+  font-size: 18px;
+}
+
+.stage {
+  position: relative;
+  margin-bottom: 1em;
+}
+
+.text-fill {
+  height: 100%;
+  overflow: hidden;
+  line-height: 1.1;
+  word-break: break-all;
+}
+
+.stage, .col, .leader-line {
+  font-family: Arial, sans-serif;
+}
+
+/* ==================================== ex-020 */
+#ex-020-frame {
+  position: absolute;
+  left: 620px;
+  top: 80px;
+  width: 160px;
+  height: 310px;
+  border: 1px solid #ccc;
+  overflow-y: scroll;
+}
+#ex-020-frame > div {
+  width: 100%;
+  height: 555px;
+  background-color: #f0f0f0;
+}
+#ex-020-frame p {
+  margin: 0;
+}
+
+/* ==================================== ex-030 */
+#ex-030-cols {
+  width: auto;
+}
+#ex-030-cols .col {
+  width: auto;
+}
+#ex-030-cols ul {
+  margin-top: 60px;
+}
+#ex-030-cols span {
+  display: inline-block;
+  margin-right: 60px;
+  padding-right: 15px;
+}
+
+/* ==================================== ex-031 */
+#ex-031-cols > .col:first-child span {
+  display: inline-block;
+  margin: 20px 0;
+  padding: 2px 5px;
+  background-color: #e8d749;
+}
+#ex-031-cols > .col:last-child {
+  text-align: right;
+}
+
+/* ==================================== ex-040 */
+#ex-040-cols {
+  width: auto;
+}
+#ex-040-cols .col {
+  width: 340px;
+}
+#ex-040-cols li {
+  margin-top: 10px;
+}
+
+#ex-040-stage {
+  width: auto;
+}
+#ex-040-stage svg {
+  background-color: #e6e6e6;
+}
+#ex-040-stage path {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+#ex-040-stage circle {
+  fill: #55a8db;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+
+/* ==================================== ex-120 */
+#ex-120-cols, #ex-120-cols > .col {
+  width: auto;
+}
+#ex-120-cols button {
+  display: block;
+  width: 100px;
+  min-width: 0;
+}
+#ex-120-cols .stage {
+  width: 400px;
+  height: 100px;
+}
+
+/* ==================================== ex-130 */
+#ex-130-cols, #ex-130-cols > .col {
+  width: auto;
+}
+#ex-130-cols button {
+  display: block;
+  width: 100px;
+  min-width: 0;
+}
+#ex-130-cols .stage {
+  width: 400px;
+  height: 100px;
+}
+
+/* ==================================== ex-140 */
+#ex-140-frame {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 398px;
+  height: 120px;
+  border: 1px solid #ccc;
+  overflow-x: scroll;
+}
+#ex-140-frame > div {
+  width: 700px;
+  height: 100%;
+  background-color: #f0f0f0;
+}
+#ex-140-frame p {
+  margin: 0;
+}
+
+/* ==================================== ex-150 */
+#ex-150-ul {
+  position: absolute;
+  left: 340px;
+  top: 0;
+}
+#ex-150-ul li {
+  padding: 5px 0;
+}
+
+#ex-150-iframe {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 160px;
+  height: 120px;
+}
+
+#ex-150-table td {
+  padding: 3px 5px;
+  border: 2px solid #999;
+  border-collapse: collapse;
+}
+
+#ex-150-input {
+  position: absolute;
+  left: 80px;
+  bottom: 0;
+  width: 320px;
+}
+
+/* ==================================== ex-191 */
+#ex-191-stage {
+  width: 600px;
+  height: 300px;
+  background-color: #ccc;
+}
+
+#ex-191-island {
+  width: 350px;
+  height: 100px;
+  position: absolute;
+  left: 125px;
+  top: 100px;
+  background-color: #f7f5ee;
+}
+
+#ex-191-0 {
+  left: 0;
+  top: 0;
+  background-color: #e3df74;
+}
+
+#ex-191-1 {
+  left: 280px;
+  top: 130px;
+}
+
+/* ==================================== ex-260 */
+#ex-260-stage {
+  width: 800px;
+  height: 150px;
+}
+#ex-260-stage .text-fill {
+  position: absolute;
+  top: 0;
+  width: 275px;
+}
+
+/* ==================================== ex-361 */
+.ex-361-range {
+  position: absolute;
+  width: 160px;
+  padding-bottom: 8px;
+  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuMCIgeTE9IjAuNSIgeDI9IjEuMCIgeTI9IjAuNSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmMDAwMCIvPjxzdG9wIG9mZnNldD0iMTIuNSUiIHN0b3AtY29sb3I9IiNmZmJmMDAiLz48c3RvcCBvZmZzZXQ9IjI1JSIgc3RvcC1jb2xvcj0iIzgwZmYwMCIvPjxzdG9wIG9mZnNldD0iMzcuNSUiIHN0b3AtY29sb3I9IiMwMGZmNDAiLz48c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzAwZmZmZiIvPjxzdG9wIG9mZnNldD0iNjIuNSUiIHN0b3AtY29sb3I9IiMwMDQwZmYiLz48c3RvcCBvZmZzZXQ9Ijc1JSIgc3RvcC1jb2xvcj0iIzdmMDBmZiIvPjxzdG9wIG9mZnNldD0iODcuNSUiIHN0b3AtY29sb3I9IiNmZjAwYmYiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjAwMDAiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyYWQpIiAvPjwvc3ZnPiA=');
+  background-size: 100%;
+  background-image: -webkit-gradient(linear, 0% 50%, 100% 50%, color-stop(0%, #ff0000), color-stop(12.5%, #ffbf00), color-stop(25%, #80ff00), color-stop(37.5%, #00ff40), color-stop(50%, #00ffff), color-stop(62.5%, #0040ff), color-stop(75%, #7f00ff), color-stop(87.5%, #ff00bf), color-stop(100%, #ff0000));
+  background-image: -moz-linear-gradient(left, #ff0000 0%, #ffbf00 12.5%, #80ff00 25%, #00ff40 37.5%, #00ffff 50%, #0040ff 62.5%, #7f00ff 75%, #ff00bf 87.5%, #ff0000 100%);
+  background-image: -webkit-linear-gradient(left, #ff0000 0%, #ffbf00 12.5%, #80ff00 25%, #00ff40 37.5%, #00ffff 50%, #0040ff 62.5%, #7f00ff 75%, #ff00bf 87.5%, #ff0000 100%);
+  background-image: linear-gradient(to right, #ff0000 0%, #ffbf00 12.5%, #80ff00 25%, #00ff40 37.5%, #00ffff 50%, #0040ff 62.5%, #7f00ff 75%, #ff00bf 87.5%, #ff0000 100%);
+}
+.ex-361-range input {
+  width: 100%;
+}

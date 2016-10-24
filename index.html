@@ -1,1 +1,3109 @@
-My GitHub Page
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Draw leader line in your web page.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/syntax.css">
+  <link rel="stylesheet" href="css/default.css">
+  <link rel="stylesheet" href="css/ex.css">
+  <script src="js/leader-line.min.js"></script>
+  <script src="js/anim-event.min.js"></script>
+  <script src="js/draggable.min.js"></script>
+
+  <title>LeaderLine</title>
+</head>
+<body>
+  <header>
+    <h1><a href="./">LeaderLine</a></h1>
+    <ul id="gh"><li><a href="https://github.com/anseki/leader-line/tarball/master">Download TAR.GZ</a></li><li><a href="https://github.com/anseki/leader-line/zipball/master">Download ZIP</a></li><li><a href="https://github.com/anseki/leader-line">View on GitHub</a></li></ul>
+  </header>
+  <main>
+
+<p>Draw a leader line in your web page.</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;start&quot;</span><span class="nt">&gt;</span>start<span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;end&quot;</span><span class="nt">&gt;</span>end<span class="nt">&lt;/div&gt;</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// Add new leader line from `start` to `end` (HTML/SVG elements, basically).</span>
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span>
+  <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">),</span>
+  <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-010.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-010-0" class="anchor80-line" style="left: 0; top: 0;">start</div>
+  <div id="ex-010-1" class="anchor80-line" style="right: 0; bottom: 0;">end</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-010-0'),
+    document.getElementById('ex-010-1')
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-010.html" -->
+
+<p>It supports options to customize.</p>
+
+<!-- include "ex-020.html" -->
+<!-- ================ ex -->
+<div id="ex-020" class="stage" style="width: 800px; height: 400px;">
+  <div id="ex-020-a" class="anchor40" style="left: 80px; top: 120px;"></div>
+  <div id="ex-020-b" class="anchor40" style="left: 360px; top: 0;"></div>
+  <div id="ex-020-c" class="anchor40" style="left: 300px; top: 160px;"></div>
+  <div id="ex-020-d" class="anchor40" style="left: 10px; top: 200px;"></div>
+  <div id="ex-020-e" class="anchor40" style="left: 80px; top: 320px;"></div>
+  <div id="ex-020-f" class="anchor40" style="left: 480px; top: 80px;"></div>
+  <div id="ex-020-g" class="anchor40" style="left: 720px; top: 10px;"></div>
+  <div id="ex-020-h" class="anchor40" style="left: 510px; top: 300px;"></div>
+  <div id="ex-020-frame">
+    <div>
+      <p style="padding: 5px; text-align: center;">Scroll this</p>
+      <div id="ex-020-i" class="anchor40" style="left: 70px; top: 250px;"></div>
+    </div>
+  </div>
+  <div id="ex-020-j" class="anchor40" style="left: 10px; top: 30px; width: auto; height: auto; font-size: 20px">Move mouse here</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-020-a'),
+    document.getElementById('ex-020-b'),
+    {
+      color: '#ef1e28',
+      startPlug: 'square',
+      endPlug: 'arrow2',
+      startPlugColor: '#43bc5b',
+      endPlugColor: '#1085e0',
+      startPlugSize: 1.5,
+      endPlugSize: 1.5,
+      dash: true,
+      endLabel: LeaderLine.pathLabel('This is additional label')
+    }
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-020-f'),
+    document.getElementById('ex-020-g'),
+    {
+      size: 8,
+      startPlugColor: '#ffff05',
+      endPlugColor: '#0c7d1a',
+      gradient: true
+    }
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-020-c'),
+    document.getElementById('ex-020-d'),
+    {
+      color: 'black',
+      startPlug: 'disc',
+      endPlug: 'hand',
+      path: 'grid'
+    }
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-020-h'),
+    document.getElementById('ex-020-f'),
+    {
+      size: 6,
+      outlineColor: '#1e71ef',
+      outline: true,
+      endPlugOutline: true,
+      dash: true,
+      path: 'arc',
+      startSocket: 'left',
+      endSocket: 'bottom'
+    }
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-020-e'),
+    document.getElementById('ex-020-c'),
+    {
+      color: '#ecf373',
+      dropShadow: true,
+      endSocket: 'bottom'
+    }
+  );
+
+  var lineC = new LeaderLine(
+    document.getElementById('ex-020-c'),
+    document.getElementById('ex-020-b'),
+    {
+      path: 'straight'
+      // dash: {animation: true}
+    }
+  );
+  inView('#ex-020')
+    .on('enter', function() { lineC.dash = {animation: true}; })
+    .on('exit', function() { lineC.dash = false; });
+
+  new LeaderLine(
+    document.getElementById('ex-020-f'),
+    document.getElementById('ex-020-c'),
+    {
+      startPlug: 'arrow1',
+      startSocket: 'left',
+      endSocket: 'right',
+      startSocketGravity: [-140, -80],
+      endSocketGravity: [220, 180]
+    }
+  );
+
+  var lineH = new LeaderLine(
+    document.getElementById('ex-020-h'),
+    document.getElementById('ex-020-i')
+  );
+  document.getElementById('ex-020-frame').addEventListener('scroll', AnimEvent.add(function() {
+    lineH.position();
+  }), false);
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-020-j'), 'draw', {style: {backgroundImage: null}}),
+    document.getElementById('ex-020-h'),
+    {color: 'rgba(255, 127, 80, 0.8)'}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-020.html" -->
+
+<p>Basically, it can indicate HTML/SVG elements such as <code>&lt;div&gt;</code>, <code>&lt;button&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;td&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;text&gt;</code>, etc.</p>
+
+<!-- include "ex-021.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-021-0" style="width: 200px; padding: 2px 5px; border: 1px solid #ccc;">Click this button after input the file name.</div>
+  <input id="ex-021-1" style="font-size: 24px; padding: 0 20px; position: absolute; right: 0; bottom: 0;" type="button" value="OK">
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-021-0'),
+    LeaderLine.pointAnchor(document.getElementById('ex-021-1'), {x: 10, y: '50%'}),
+    {endPlug: 'disc'}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-021.html" -->
+
+<p>It can indicate a part of an element also instead of the element.</p>
+
+<!-- include "ex-030.html" -->
+<!-- ================ ex -->
+<div id="ex-030-cols" class="cols2">
+  <div class="col">
+    <ul>
+      <li><span id="ex-030-a">Exposure compensation dial</span></li>
+      <li><span id="ex-030-b">AF-assist illuminator</span></li>
+      <li><span id="ex-030-c">Connector cover</span></li>
+      <li><span id="ex-030-d">Focus mode selector</span></li>
+    </ul>
+  </div>
+  <div class="col"><img id="ex-030-img" src="img/ex-030.jpg" width="300" height="300" alt="ex-030.jpg"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var COLOR = 'rgba(255, 159, 80, 0.8)',
+    img = document.getElementById('ex-030-img');
+
+  new LeaderLine(
+    document.getElementById('ex-030-a'),
+    LeaderLine.pointAnchor(img, {x: 85, y: 14}),
+    {
+      color: COLOR,
+      path: 'straight',
+      startPlug: 'disc',
+      endPlug: 'disc'
+    }
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-030-b'),
+    LeaderLine.pointAnchor(img, {x: 113, y: 74}),
+    {
+      color: COLOR,
+      path: 'straight',
+      startPlug: 'disc'
+    }
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-030-c'),
+    LeaderLine.areaAnchor(img, 'polygon',
+      {points: [[271, 156], [271, 219], [293, 197], [294, 137]]}),
+    {
+      color: COLOR,
+      path: 'straight',
+      startPlug: 'disc',
+      endPlug: 'behind'
+    }
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-030-d'),
+    LeaderLine.areaAnchor(img, 'circle', {x: 214, y: 192, width: 32, height: 32}),
+    {
+      color: COLOR,
+      path: 'straight',
+      startPlug: 'disc',
+      endPlug: 'behind'
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-030.html" -->
+
+<!-- include "ex-031.html" -->
+<!-- ================ ex -->
+<div id="ex-031-cols" class="cols2">
+  <div class="col">
+    <div><span id="ex-031-a">Monster is here!</span></div>
+    <div><span id="ex-031-b">Breakable floor</span></div>
+  </div>
+  <div class="col"><img id="ex-031-img" src="img/ex-031.jpg" width="566" height="300" alt="ex-031.jpg"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var COLOR = 'rgba(255, 80, 80, 0.7)',
+    img = document.getElementById('ex-031-img');
+
+  new LeaderLine(
+    document.getElementById('ex-031-a'),
+    LeaderLine.pointAnchor(img, {x: 350, y: 151}),
+    {
+      color: COLOR,
+      path: 'straight',
+      endPlug: 'crosshair'
+    }
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-031-b'),
+    LeaderLine.areaAnchor(img, 'polygon', {
+      points: [[196, 221], [252, 221], [217, 236], [313, 236], [271, 266], [67, 266]],
+      fillColor: COLOR,
+      size: 0
+    }),
+    {color: COLOR}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-031.html" -->
+
+<p>Also, it can indicate an element of another library.<br>For example, the following uses LeaderLine with <a href="https://d3js.org/">D3.js</a>. Move the mouse on the list.</p>
+
+<!-- include "ex-040.html" -->
+<!-- ================ ex -->
+<div id="ex-040-cols" class="cols2">
+  <div class="col">
+    <ul>
+      <li><span id="ex-040-a">I made it!</span></li>
+      <li><span id="ex-040-b">That happened...</span></li>
+      <li><span id="ex-040-c">I slumped...</span></li>
+      <li><span id="ex-040-d">I'm going up again!</span></li>
+    </ul>
+  </div>
+  <div id="ex-040-stage" class="col"></div>
+</div>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var DATA = [140, 163, 219, 440, 410, 40, 76, 14, 5, 12, 80, 100],
+    WIDTH = 500, HEIGHT = 200, PADDING = 20,
+    COLOR = 'rgba(255, 127, 80, 0.6)',
+
+    svg = d3.select('#ex-040-stage').append('svg').attr('width', WIDTH).attr('height', HEIGHT)
+      .append('g').attr('transform', 'translate(' + PADDING + ',' + PADDING + ')'),
+    x = d3.scaleLinear().range([0, WIDTH - PADDING * 2]),
+    y = d3.scaleLinear().range([HEIGHT - PADDING * 2, 0]),
+    dots;
+
+  x.domain([0, DATA.length - 1]);
+  y.domain([0, d3.max(DATA)]);
+
+  svg.append('path').data([DATA])
+    .attr('d', d3.line().x(function(d, i) { return x(i); }).y(function(d) { return y(d); }));
+  dots = svg.selectAll('dot').data(DATA)
+    .enter().append('circle').attr('r', 5)
+    .attr('cx', function(d, i) { return x(i); }).attr('cy', function(d) { return y(d); });
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-040-a')),
+    LeaderLine.areaAnchor(dots.nodes()[3], 'circle'), // D3 object
+    {
+      color: COLOR,
+      startPlug: 'disc'
+    }
+  );
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-040-b')),
+    LeaderLine.areaAnchor(document.querySelector('#ex-040-stage > svg'),
+      {x: 198, y: 0, width: 18, height: '100%', fillColor: COLOR, size: 0}),
+    {
+      color: COLOR,
+      startPlug: 'disc'
+    }
+  );
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-040-c')),
+    LeaderLine.areaAnchor(dots.nodes()[7], // D3 object
+      {x: -12, y: -6, width: 120, height: 24, radius: 10}),
+    {
+      color: COLOR,
+      startPlug: 'disc',
+      endPlug: 'behind'
+    }
+  );
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-040-d'), 'draw'),
+    dots.nodes()[11], // D3 object
+    {
+      color: COLOR,
+      startPlug: 'disc',
+      endSocket: 'bottom',
+      endSocketGravity: [-140, 148]
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-040.html" -->
+
+<h2 id="usage">Usage</h2>
+
+<p>Load only a file <code>leader-line.min.js</code> into your web page.</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;leader-line.min.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</code></pre></div>
+<p>Pass two HTML/SVG elements to <code>LeaderLine</code> constructor. Then a leader line is drawn between those elements.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span>
+  <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;element-1&#39;</span><span class="p">),</span>
+  <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;element-2&#39;</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-050.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-050-0" class="anchor" style="width: auto; height: auto; left: 0; top: 0;">element-1</div>
+  <div id="ex-050-1" class="anchor" style="width: auto; height: auto; right: 0; bottom: 0;">element-2</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-050-0'),
+    document.getElementById('ex-050-1')
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-050.html" -->
+
+<p>Any element that has bounding-box is accepted. For example, <code>&lt;div&gt;</code>, <code>&lt;button&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;td&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;text&gt;</code>, and also, elements in another window (i.e. <code>&lt;iframe&gt;</code>). (See <a href="#start-end"><code>start</code> and <code>end</code></a> option.)</p>
+
+<p>And, the constructor accepts options.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">startElement</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;element-1&#39;</span><span class="p">),</span>
+  <span class="nx">endElement</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;element-2&#39;</span><span class="p">);</span>
+
+<span class="c1">// New leader line has red color and size 8.</span>
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="nx">size</span><span class="o">:</span> <span class="mi">8</span><span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-060.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-060-0" class="anchor" style="width: auto; height: auto; left: 0; top: 0;">element-1</div>
+  <div id="ex-060-1" class="anchor" style="width: auto; height: auto; right: 0; bottom: 0;">element-2</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-060-0'),
+    document.getElementById('ex-060-1'),
+    {color: 'red', size: 8}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-060.html" -->
+
+<p>Also, the options can be accessed via properties of the instance (readable and writable).</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">line</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">);</span>
+<span class="nx">line</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">;</span> <span class="c1">// Change the color to red.</span>
+<span class="nx">line</span><span class="p">.</span><span class="nx">size</span><span class="o">++</span><span class="p">;</span> <span class="c1">// Up size.</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">line</span><span class="p">.</span><span class="nx">size</span><span class="p">);</span> <span class="c1">// Output current size.</span>
+</code></pre></div>
+<p>You can change the style of the leader line via <a href="#options-color"><code>color</code></a>, <a href="#options-size"><code>size</code></a>, <a href="#outlinecolor"><code>outlineColor</code></a>, and more <a href="#options">options</a>.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;#fff&#39;</span><span class="p">,</span>
+  <span class="nx">outline</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="nx">endPlugOutline</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="nx">endPlugSize</span><span class="o">:</span> <span class="mf">1.5</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-070.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-070-0" class="anchor" style="width: auto; height: auto; left: 0; top: 0;">element-1</div>
+  <div id="ex-070-1" class="anchor" style="width: auto; height: auto; right: 0; bottom: 0;">element-2</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-070-0'),
+    document.getElementById('ex-070-1'),
+    {
+      color: '#fff',
+      outline: true,
+      endPlugOutline: true,
+      endPlugSize: 1.5
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-070.html" -->
+
+<p>You can add effects to the leader line via some options.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element1</span><span class="p">,</span> <span class="nx">element2</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">startPlugColor</span><span class="o">:</span> <span class="s1">&#39;#1a6be0&#39;</span><span class="p">,</span>
+  <span class="nx">endPlugColor</span><span class="o">:</span> <span class="s1">&#39;#1efdaa&#39;</span><span class="p">,</span>
+  <span class="nx">gradient</span><span class="o">:</span> <span class="kc">true</span>
+<span class="p">});</span>
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element2</span><span class="p">,</span> <span class="nx">element3</span><span class="p">,</span> <span class="p">{</span><span class="nx">dash</span><span class="o">:</span> <span class="p">{</span><span class="nx">animation</span><span class="o">:</span> <span class="kc">true</span><span class="p">}});</span>
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element4</span><span class="p">,</span> <span class="nx">element5</span><span class="p">,</span> <span class="p">{</span><span class="nx">dropShadow</span><span class="o">:</span> <span class="kc">true</span><span class="p">});</span>
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element5</span><span class="p">,</span> <span class="nx">element6</span><span class="p">,</span> <span class="p">{</span><span class="nx">dash</span><span class="o">:</span> <span class="kc">true</span><span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-080.html" -->
+<!-- ================ ex -->
+<div id="ex-080" class="stage" style="width: 800px; height: 120px;">
+  <div id="ex-080-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-080-2" class="anchor40" style="left: 380px; bottom: 0;">2</div>
+  <div id="ex-080-3" class="anchor40" style="right: 0; top: 0;">3</div>
+  <div id="ex-080-4" class="anchor40" style="left: 0; bottom: 0;">4</div>
+  <div id="ex-080-5" class="anchor40" style="left: 380px; top: 0;">5</div>
+  <div id="ex-080-6" class="anchor40" style="right: 0; bottom: 0;">6</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var element1 = document.getElementById('ex-080-1'),
+    element2 = document.getElementById('ex-080-2'),
+    element3 = document.getElementById('ex-080-3'),
+    element4 = document.getElementById('ex-080-4'),
+    element5 = document.getElementById('ex-080-5'),
+    element6 = document.getElementById('ex-080-6');
+
+  new LeaderLine(element1, element2, {
+    startPlugColor: '#1a6be0',
+    endPlugColor: '#1efdaa',
+    gradient: true
+  });
+  new LeaderLine(element4, element5, {dropShadow: true});
+  new LeaderLine(element5, element6, {dash: true});
+
+  var line = new LeaderLine(element2, element3);
+  inView('#ex-080')
+    .on('enter', function() { line.dash = {animation: true}; })
+    .on('exit', function() { line.dash = false; });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-080.html" -->
+
+<p>You can change symbols that are shown at the end of the leader line via <a href="#startplug-endplug"><code>startPlug</code> and <code>endPlug</code></a> options.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">startPlug</span><span class="o">:</span> <span class="s1">&#39;square&#39;</span><span class="p">,</span>
+  <span class="nx">endPlug</span><span class="o">:</span> <span class="s1">&#39;hand&#39;</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-090.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-090-0" class="anchor80-line" style="left: 0; top: 0;">start</div>
+  <div id="ex-090-1" class="anchor80-line" style="right: 0; bottom: 0;">end</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-090-0'),
+    document.getElementById('ex-090-1'),
+    {
+      startPlug: 'square',
+      endPlug: 'hand'
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-090.html" -->
+
+<p>You can indicate a point or area of an element instead of the element via <a href="#pointanchor"><code>pointAnchor</code></a> or <a href="#areaanchor"><code>areaAnchor</code></a> attachment. You can indicate a point or area of the document also.</p>
+
+<p>You can specify additional labels via <a href="#startlabel-middlelabel-endlabel"><code>startLabel</code>, <code>middleLabel</code> and <code>endLabel</code></a> options. Also, <a href="#captionlabel"><code>captionLabel</code></a> and <a href="#pathlabel"><code>pathLabel</code></a> attachments can be specified as labels.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span>
+  <span class="nx">startElement1</span><span class="p">,</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">x</span><span class="o">:</span> <span class="mi">60</span><span class="p">,</span>
+    <span class="nx">y</span><span class="o">:</span> <span class="mi">20</span>
+  <span class="p">}),</span>
+  <span class="p">{</span><span class="nx">endLabel</span><span class="o">:</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">(</span><span class="s1">&#39;This is additional label&#39;</span><span class="p">)}</span>
+<span class="p">);</span>
+
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span>
+  <span class="nx">startElement2</span><span class="p">,</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">x</span><span class="o">:</span> <span class="mi">80</span><span class="p">,</span>
+    <span class="nx">y</span><span class="o">:</span> <span class="mi">60</span><span class="p">,</span>
+    <span class="nx">width</span><span class="o">:</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="nx">height</span><span class="o">:</span> <span class="mi">80</span><span class="p">,</span>
+  <span class="p">}),</span>
+  <span class="p">{</span><span class="nx">endLabel</span><span class="o">:</span> <span class="s1">&#39;This is additional label&#39;</span><span class="p">}</span>
+<span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-100.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 600px; height: 200px;">
+  <div id="ex-100-a" class="anchor" style="width: 180px; height: 180px; left: 210px; top: 10px;"></div>
+  <div id="ex-100-b" class="anchor40" style="left: 0; bottom: 0;"></div>
+  <div id="ex-100-c" class="anchor40" style="right: 0; top: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var endElement = document.getElementById('ex-100-a');
+
+  new LeaderLine(
+    document.getElementById('ex-100-b'),
+    LeaderLine.pointAnchor(endElement, {
+      x: 60,
+      y: 20
+    }),
+    {endLabel: LeaderLine.pathLabel('This is additional label')}
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-100-c'),
+    LeaderLine.areaAnchor(endElement, {
+      x: 80,
+      y: 60,
+      width: 50,
+      height: 80,
+    }),
+    {endLabel: 'This is additional label'}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-100.html" -->
+
+<p>You can show and hide the leader line with effects by <a href="#show-hide"><code>show</code> and <code>hide</code></a> methods.<br><a href="#mousehoveranchor"><code>mouseHoverAnchor</code></a> attachment allows it to implement showing and hiding with mouse moving, easily.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">startElement</span><span class="p">),</span> <span class="nx">endElement</span><span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-110.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-110-0" class="anchor-text" style="left: 0; top: 0;">Move mouse here</div>
+  <div id="ex-110-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-110-0')),
+    document.getElementById('ex-110-1')
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-110.html" -->
+
+<p>For more details, refer to the following.</p>
+
+<h2 id="constructor">Constructor</h2>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span>
+</code></pre></div>
+<p>Or</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">[,</span> <span class="nx">options</span><span class="p">])</span>
+</code></pre></div>
+<p>The <code>options</code> argument is an Object that can have properties as <a href="#options">options</a>. <a href="#hide-option"><code>hide</code></a> option also can be contained.</p>
+
+<p>The <code>start</code> and <code>end</code> arguments are shortcuts to <code>options.start</code> and <code>options.end</code>. The following two codes work same.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">({</span><span class="nx">start</span><span class="o">:</span> <span class="nx">element1</span><span class="p">,</span> <span class="nx">end</span><span class="o">:</span> <span class="nx">element2</span><span class="p">});</span>
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">({</span><span class="nx">start</span><span class="o">:</span> <span class="nx">element3</span><span class="p">,</span> <span class="nx">end</span><span class="o">:</span> <span class="nx">element4</span><span class="p">,</span> <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element1</span><span class="p">,</span> <span class="nx">element2</span><span class="p">);</span>
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element3</span><span class="p">,</span> <span class="nx">element4</span><span class="p">,</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+</code></pre></div>
+<p>The instance has properties that have the same name as each option to get or set those values (other than <a href="#hide-option"><code>hide</code></a> option).</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">line</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">);</span>
+
+<span class="nx">upButton</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">line</span><span class="p">.</span><span class="nx">size</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="p">{</span> <span class="nx">line</span><span class="p">.</span><span class="nx">size</span><span class="o">++</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
+
+<span class="nx">downButton</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">line</span><span class="p">.</span><span class="nx">size</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span> <span class="nx">line</span><span class="p">.</span><span class="nx">size</span><span class="o">--</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-120.html" -->
+<!-- ================ ex -->
+<div id="ex-120-cols" class="cols2">
+  <div class="col">
+    <button id="ex-120-btnUp">UP</button>
+    <button id="ex-120-btnDown">DOWN</button>
+  </div>
+  <div class="col">
+    <div class="stage">
+      <div id="ex-120-0" class="anchor40" style="left: 0; top: 0;"></div>
+      <div id="ex-120-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var line = new LeaderLine(document.getElementById('ex-120-0'), document.getElementById('ex-120-1'));
+
+  document.getElementById('ex-120-btnUp').addEventListener('click', function() {
+    if (line.size < 20) { line.size++; }
+  }, false);
+
+  document.getElementById('ex-120-btnDown').addEventListener('click', function() {
+    if (line.size > 4) { line.size--; }
+  }, false);
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-120.html" -->
+
+<p>If you want to set multiple options after it was constructed, using <a href="#setoptions"><code>setOptions</code></a> method instead of the properties may give better performance.</p>
+
+<h3 id="hide-option"><code>hide</code> option</h3>
+
+<p>Only the constructor accepts <code>hide</code> option. That is, the instance doesn&#39;t have <code>hide</code> property. (Note that the instance has <a href="#show-hide"><code>hide</code></a> method.)<br>If <code>true</code> is specified, the leader line is not shown, it is shown by <a href="#show-hide"><code>show</code></a> method.<br>This is used to hide it without using <a href="#show-hide"><code>hide</code></a> method, it is not shown at all until <code>show</code> method is called.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// The leader line is never shown until the button is clicked.</span>
+<span class="kd">var</span> <span class="nx">line</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span><span class="nx">hide</span><span class="o">:</span> <span class="kc">true</span><span class="p">});</span>
+<span class="nx">button</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">line</span><span class="p">.</span><span class="nx">show</span><span class="p">();</span> <span class="p">});</span>
+</code></pre></div>
+<h2 id="methods">Methods</h2>
+
+<h3 id="setoptions"><code>setOptions</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">self</span> <span class="o">=</span> <span class="nx">line</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span>
+</code></pre></div>
+<p>Set one or more options.<br>The <code>options</code> argument is an Object that can have properties as <a href="#options">options</a>.</p>
+
+<p>Since this method updates a view only once after it sets all specified options, it may give better performance than setting options via the properties when multiple options are set to the instance that already exists.</p>
+
+<h3 id="show,-hide"><code>show</code>, <code>hide</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">self</span> <span class="o">=</span> <span class="nx">line</span><span class="p">.</span><span class="nx">show</span><span class="p">([</span><span class="nx">showEffectName</span><span class="p">[,</span> <span class="nx">animOptions</span><span class="p">]])</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">self</span> <span class="o">=</span> <span class="nx">line</span><span class="p">.</span><span class="nx">hide</span><span class="p">([</span><span class="nx">showEffectName</span><span class="p">[,</span> <span class="nx">animOptions</span><span class="p">]])</span>
+</code></pre></div>
+<p>Show or hide the leader line.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">line</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span><span class="nx">hide</span><span class="o">:</span> <span class="kc">true</span><span class="p">});</span>
+<span class="nx">showButton</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">line</span><span class="p">.</span><span class="nx">show</span><span class="p">();</span> <span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
+<span class="nx">hideButton</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">line</span><span class="p">.</span><span class="nx">hide</span><span class="p">();</span> <span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
+</code></pre></div>
+<h4 id="methods-show-hide-showeffectname"><code>showEffectName</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> Value that was specified last time, or <code>fade</code> at first time</p>
+
+<p>One of the following keywords as effect:</p>
+
+<ul>
+<li><code>none</code></li>
+<li><code>fade</code><br>Default <code>animOptions</code>: <code>{duration: 300, timing: &#39;linear&#39;}</code></li>
+<li><code>draw</code><br>Default <code>animOptions</code>: <code>{duration: 500, timing: [0.58, 0, 0.42, 1]}</code></li>
+</ul>
+
+<!-- include "ex-130.html" -->
+<!-- ================ ex -->
+<div id="ex-130-cols" class="cols2">
+  <div class="col">
+    <select id="ex-130-showEffectName">
+      <option value="none">none</option>
+      <option value="fade">fade</option>
+      <option value="draw">draw</option>
+    </select>
+    <button id="ex-130-show">hide</button>
+  </div>
+  <div class="col">
+    <div class="stage">
+      <div id="ex-130-0" class="anchor40" style="left: 0; top: 0;"></div>
+      <div id="ex-130-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var line = new LeaderLine(document.getElementById('ex-130-0'), document.getElementById('ex-130-1')),
+    optShowEffectName = document.getElementById('ex-130-showEffectName'),
+    shown = true;
+
+  document.getElementById('ex-130-show').addEventListener('click', function(event) {
+    shown = !shown;
+    line[shown ? 'show' : 'hide'](optShowEffectName.value);
+    event.target.textContent = shown ? 'hide' : 'show';
+  }, false);
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-130.html" -->
+
+<h4 id="methods-show-hide-animoptions"><code>animOptions</code></h4>
+
+<p><em>Type:</em> Object<br><em>Default:</em> See above</p>
+
+<p>An Object that can have properties as <a href="#animation-options">Animation Options</a>.</p>
+
+<h3 id="position"><code>position</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">self</span> <span class="o">=</span> <span class="nx">line</span><span class="p">.</span><span class="nx">position</span><span class="p">()</span>
+</code></pre></div>
+<p>Re-position the leader line with current position and size of the elements as <a href="#start-end"><code>start</code> or <code>end</code></a> option.<br>By default, the position of each leader line is fixed automatically when the window that loads LeaderLine was resized. You should call <code>position</code> method if your web page moved or resized the elements without resizing the window. For example, animation, a box that was scrolled or <code>&lt;iframe&gt;</code> that was resized.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">scrollableBox</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;scroll&#39;</span><span class="p">,</span> <span class="nx">AnimEvent</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">line</span><span class="p">.</span><span class="nx">position</span><span class="p">();</span>
+<span class="p">}),</span> <span class="kc">false</span><span class="p">);</span>
+</code></pre></div>
+<p>(The code above uses <a href="https://github.com/anseki/anim-event">AnimEvent</a> for a better performance.)</p>
+
+<!-- include "ex-140.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 240px;">
+  <div id="ex-140-a" class="anchor40" style="left: 120px; top: 0;"></div>
+  <div id="ex-140-frame">
+    <div>
+      <p style="padding: 5px;">Scroll this</p>
+      <div id="ex-140-b" class="anchor40" style="left: 320px; top: 40px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var line = new LeaderLine(
+    document.getElementById('ex-140-a'),
+    document.getElementById('ex-140-b')
+  );
+
+  document.getElementById('ex-140-frame').addEventListener('scroll', AnimEvent.add(function() {
+    line.position();
+  }), false);
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-140.html" -->
+
+<p>If you want to disable the fixing the position automatically, set <code>LeaderLine.positionByWindowResize</code> to <code>false</code>.</p>
+
+<h3 id="remove"><code>remove</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">remove</span><span class="p">()</span>
+</code></pre></div>
+<p>Remove the leader line from the web page. It can&#39;t be used anymore.</p>
+
+<h2 id="options">Options</h2>
+
+<p>The following options are specified by <a href="#constructor">constructor</a> or <a href="#setoptions"><code>setOptions</code></a> method. And also, those are accessed via each property of instance.</p>
+
+<h3 id="start,-end"><code>start</code>, <code>end</code></h3>
+
+<p><em>Type:</em> HTML/SVG element or <a href="#attachments">Attachment</a></p>
+
+<p>The leader line is drawn from the <code>start</code> element to the <code>end</code> element.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">end</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;end-element&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p>Any element that has bounding-box is accepted. For example, <code>&lt;div&gt;</code>, <code>&lt;button&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;td&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;text&gt;</code>, and also, elements in another window (i.e. <code>&lt;iframe&gt;</code>).</p>
+
+<!-- include "ex-150.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 800px; height: 180px;">
+  <ul id="ex-150-ul">
+    <li id="ex-150-li">This is <code>ul &gt; li</code></li>
+  </ul>
+  <iframe id="ex-150-iframe" src="ex-150-iframe.html"></iframe>
+  <table id="ex-150-table">
+    <tr>
+      <td>This</td>
+      <td>is</td>
+      <td id="ex-150-td"><code>table</code></td>
+    </tr>
+  </table>
+  <input id="ex-150-input" type="text" value="This is `input[type=text]`">
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-150-td'),
+    document.getElementById('ex-150-input'),
+    {endSocket: 'top', startPlug: 'disc'}
+  );
+
+  new LeaderLine(
+    document.getElementById('ex-150-li'),
+    document.getElementById('ex-150-iframe').contentDocument.getElementById('ex-150-button'),
+    {startSocket: 'bottom', startPlug: 'disc'}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-150.html" -->
+
+<p>Note: if you want to handle elements in another window regardless of LeaderLine, you should understand about security.</p>
+
+<p>Or you can specify an <a href="#attachments">attachment</a> instead of HTML/SVG element to indicate something.</p>
+
+<h3 id="options-color"><code>color</code></h3>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;coral&#39;</code></p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of the leader line.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="s1">&#39;rgba(30, 130, 250, 0.5)&#39;</span><span class="p">;</span>
+</code></pre></div>
+<!-- include "ex-160.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 150px;">
+  <div class="text-fill" style="margin: 0 60px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>
+  <div id="ex-160-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-160-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-160-0'),
+    document.getElementById('ex-160-1'),
+    {color: 'rgba(30, 130, 250, 0.5)', size: 8}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-160.html" -->
+
+<h3 id="options-size"><code>size</code></h3>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>4</code></p>
+
+<p>The width of the leader line, in pixels.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">size</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
+</code></pre></div>
+<!-- include "ex-170.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-170-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-170-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-170-0'),
+    document.getElementById('ex-170-1'),
+    {size: 20}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-170.html" -->
+
+<h3 id="path"><code>path</code></h3>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;fluid&#39;</code></p>
+
+<p>One of the following keywords to indicate how to draw the line:</p>
+
+<ul>
+<li><code>straight</code></li>
+<li><code>arc</code></li>
+<li><code>fluid</code></li>
+<li><code>magnet</code></li>
+<li><code>grid</code></li>
+</ul>
+
+<!-- include "ex-180.html" -->
+<!-- ================ ex -->
+<div id="ex-180-stage" class="stage" style="width: 800px; height: 200px;">
+  <div id="ex-180-a" class="anchor100-line" style="left: 300px; top: 0;">straight</div>
+  <div id="ex-180-b" class="anchor100-line" style="left: 300px; top: 83px;">arc</div>
+  <div id="ex-180-c" class="anchor100-line" style="left: 300px; bottom: 0;">fluid</div>
+  <div id="ex-180-d" class="anchor100-line" style="right: 0; top: 0;">magnet</div>
+  <div id="ex-180-e" class="anchor100-line" style="right: 0; bottom: 0;">grid</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var point1 = LeaderLine.pointAnchor(document.getElementById('ex-180-stage'), {x: 18, y: 100}),
+    point2 = LeaderLine.pointAnchor(document.getElementById('ex-180-stage'), {x: 418, y: 100});
+
+  new LeaderLine(point1, document.getElementById('ex-180-a'), {path: 'straight', startPlug: 'disc', startPlugSize: 2});
+  new LeaderLine(point1, document.getElementById('ex-180-b'), {path: 'arc'});
+  new LeaderLine(point1, document.getElementById('ex-180-c'), {path: 'fluid'});
+  new LeaderLine(point2, document.getElementById('ex-180-d'), {path: 'magnet', startPlug: 'disc', startPlugSize: 2});
+  new LeaderLine(point2, document.getElementById('ex-180-e'), {path: 'grid'});
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-180.html" -->
+
+<h3 id="startsocket,-endsocket"><code>startSocket</code>, <code>endSocket</code></h3>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;auto&#39;</code></p>
+
+<p>The string to indicate which side of the element the leader line connects. It can be <code>&#39;top&#39;</code>, <code>&#39;right&#39;</code>, <code>&#39;bottom&#39;</code>, <code>&#39;left&#39;</code> or <code>&#39;auto&#39;</code>.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span><span class="nx">startSocket</span><span class="o">:</span> <span class="s1">&#39;bottom&#39;</span><span class="p">,</span> <span class="nx">endSocket</span><span class="o">:</span> <span class="s1">&#39;top&#39;</span><span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-190.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 200px; height: 100px;">
+  <div id="ex-190-0" class="anchor40" style="left: 0; top: 40px;"></div>
+  <div id="ex-190-1" class="anchor40" style="right: 0; top: 40px;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-190-0'),
+    document.getElementById('ex-190-1'),
+    {startSocket: 'bottom', endSocket: 'top'}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-190.html" -->
+
+<p>If <code>&#39;auto&#39;</code> (default) is specified, the closest side is chosen automatically.</p>
+
+<!-- include "ex-191.html" -->
+<!-- ================ ex -->
+<div id="ex-191-stage" class="stage">
+  <div id="ex-191-0" class="anchor60">Drag this</div>
+  <div id="ex-191-island"></div>
+  <div id="ex-191-1" class="anchor40"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var ELEMENT_SIZE = 60,
+    startElement = document.getElementById('ex-191-0'),
+    line = new LeaderLine(startElement, document.getElementById('ex-191-1'),
+      {startPlug: 'disc', endPlug: 'disc'}),
+    islandBBox = document.getElementById('ex-191-island').getBoundingClientRect();
+
+  islandBBox = {
+    left: islandBBox.left + window.pageXOffset - ELEMENT_SIZE,
+    top: islandBBox.top + window.pageYOffset - ELEMENT_SIZE,
+    right: islandBBox.right + window.pageXOffset,
+    bottom: islandBBox.bottom + window.pageYOffset
+  };
+
+  new Draggable(startElement, {
+    onDrag: function(moveTo, elementBBox) {
+      if (moveTo.x > islandBBox.left && moveTo.x < islandBBox.right &&
+          moveTo.y > islandBBox.top && moveTo.y < islandBBox.bottom) {
+        if (elementBBox.x <= islandBBox.left) {
+          moveTo.x = islandBBox.left;
+        } else if (elementBBox.x >= islandBBox.right) {
+          moveTo.x = islandBBox.right;
+        }
+        if (elementBBox.y <= islandBBox.top) {
+          moveTo.y = islandBBox.top;
+        } else if (elementBBox.y >= islandBBox.bottom) {
+          moveTo.y = islandBBox.bottom;
+        }
+      }
+    },
+    onMove: function() {
+      line.position();
+    },
+    ignoreZIndex: true
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-191.html" -->
+
+<h3 id="startsocketgravity,-endsocketgravity"><code>startSocketGravity</code>, <code>endSocketGravity</code></h3>
+
+<p><em>Type:</em> number, Array or string<br><em>Default:</em> <code>&#39;auto&#39;</code></p>
+
+<p>The force of gravity at a socket.</p>
+
+<p>If a number is specified, the leader line is pulled in the direction of the socket. The number is pull strength.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">startSocketGravity</span> <span class="o">=</span> <span class="mi">400</span><span class="p">;</span>
+</code></pre></div>
+<!-- include "ex-200.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-200-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-200-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-200-0'),
+    document.getElementById('ex-200-1'),
+    {startSocketGravity: 400}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-200.html" -->
+
+<p>If an Array that is coordinates <code>[x, y]</code> is specified, the leader line is pulled in the direction of the coordinates. The distance between the coordinates and <code>[0, 0]</code> is pull strength.<br>For example, if <code>[50, -100]</code> is specified, it is pulled in the direction of the rightward and upward (The strength in the Y axis direction is larger than the X axis direction). If <code>[-50, 0]</code> is specified, it is pulled in the direction of the leftward (no strength in the Y axis direction).</p>
+
+<p>For example, parabola:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span>
+  <span class="nx">startSocketGravity</span><span class="o">:</span> <span class="p">[</span><span class="mi">192</span><span class="p">,</span> <span class="o">-</span><span class="mi">172</span><span class="p">],</span>
+  <span class="nx">endSocketGravity</span><span class="o">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">192</span><span class="p">,</span> <span class="o">-</span><span class="mi">172</span><span class="p">]</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-210.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 800px; height: 320px;">
+  <img id="ex-210-0" src="img/ex-210-0.png" width="141" height="159" alt="ex-210-0.png"
+    style="position: absolute; left: 0; top: 161px">
+  <img id="ex-210-1" src="img/ex-210-1.png" width="78" height="63" alt="ex-210-1.png"
+    style="position: absolute; left: 722px; top: 156px">
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    LeaderLine.pointAnchor(document.getElementById('ex-210-0'), {x: '100%', y: -5}),
+    LeaderLine.pointAnchor(document.getElementById('ex-210-1'), {x: 0, y: 0}),
+    {
+      startSocketGravity: [192, -172],
+      endSocketGravity: [-192, -172],
+      color: '#d83256',
+      dash: {len: 18, gap: 6}
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-210.html" -->
+
+<p>If <code>&#39;auto&#39;</code> (default) is specified, it is adjusted to gravity suitable for current <a href="#path"><code>path</code></a> option automatically.</p>
+
+<h3 id="startplug,-endplug"><code>startPlug</code>, <code>endPlug</code></h3>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>startPlug</code>: <code>&#39;behind&#39;</code> | <code>endPlug</code>: <code>&#39;arrow1&#39;</code></p>
+
+<p>One of the following keywords to indicate type of plug (symbol that is shown at the end of the leader line):</p>
+
+<ul>
+<li><code>disc</code><br><code>outlineMax</code>: <code>4</code></li>
+<li><code>square</code><br><code>outlineMax</code>: <code>4</code></li>
+<li><code>arrow1</code><br><code>outlineMax</code>: <code>1.5</code></li>
+<li><code>arrow2</code><br><code>outlineMax</code>: <code>1.75</code></li>
+<li><code>arrow3</code><br><code>outlineMax</code>: <code>2.5</code></li>
+<li><code>hand</code><br><a href="#startplugoutline-endplugoutline"><code>startPlugOutline</code>/<code>endPlugOutline</code></a> option is ignored<br><a href="#startplugcolor-endplugcolor"><code>startPlugColor</code>/<code>endPlugColor</code></a> option is ignored</li>
+<li><code>crosshair</code><br><a href="#startplugoutline-endplugoutline"><code>startPlugOutline</code>/<code>endPlugOutline</code></a> option is ignored</li>
+<li><code>behind</code><br><a href="#startplugoutline-endplugoutline"><code>startPlugOutline</code>/<code>endPlugOutline</code></a> option is ignored<br><a href="#startplugcolor-endplugcolor"><code>startPlugColor</code>/<code>endPlugColor</code></a> option is ignored</li>
+</ul>
+
+<!-- include "ex-220.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 800px; height: 90px;">
+  <div id="ex-220-a" class="anchor100-line" style="left: 100px; top: 0;">disc</div>
+  <div id="ex-220-b" class="anchor100-line" style="left: 300px; top: 0;">square</div>
+  <div id="ex-220-c" class="anchor100-line" style="left: 500px; top: 0;">arrow1</div>
+  <div id="ex-220-d" class="anchor100-line" style="right: 0; top: 0;">arrow2</div>
+  <div id="ex-220-e" class="anchor100-line" style="left: 100px; bottom: 0;">arrow3</div>
+  <div id="ex-220-f" class="anchor100-line" style="left: 300px; bottom: 0;">hand</div>
+  <div id="ex-220-g" class="anchor100-line" style="left: 500px; bottom: 0; font-size: 22px; padding: 6px 4px;">crosshair</div>
+  <div id="ex-220-h" class="anchor100-line" style="right: 0; bottom: 0;">behind</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  [
+    ['ex-220-a', 'disc'],
+    ['ex-220-b', 'square'],
+    ['ex-220-c', 'arrow1'],
+    ['ex-220-d', 'arrow2'],
+    ['ex-220-e', 'arrow3'],
+    ['ex-220-f', 'hand'],
+    ['ex-220-g', 'crosshair', 0.4],
+    ['ex-220-h', 'behind']
+  ].forEach(function(idPlug) {
+    var id = idPlug[0], plug = idPlug[1], plugSize = idPlug[2] || 1,
+      element = document.getElementById(id);
+    new LeaderLine(LeaderLine.pointAnchor(element, {x: -80, y: '50%'}), element, {
+      endPlug: plug,
+      endPlugSize: plugSize,
+      gradient: {startColor: 'rgba(255, 127, 80, 0)'}
+    });
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-220.html" -->
+
+<h3 id="startplugcolor,-endplugcolor"><code>startPlugColor</code>, <code>endPlugColor</code></h3>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;auto&#39;</code></p>
+
+<p>Each option for when a plug that accepts this option is specified for <a href="#startplug-endplug"><code>startPlug</code>/<code>endPlug</code></a> option.</p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of a plug.<br>It is painted separately from the line (i.e. Those don&#39;t overlap each other). Therefore one of <a href="#options-color"><code>color</code></a> and <code>startPlugColor</code>/<code>endPlugColor</code> or both options can have an alpha channel.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">lineA</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-1, element-2</span>
+  <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;rgba(30, 130, 250, 0.5)&#39;</span><span class="p">,</span> <span class="c1">// translucent</span>
+  <span class="nx">startPlugColor</span><span class="o">:</span> <span class="s1">&#39;rgb(241, 76, 129)&#39;</span><span class="p">,</span>
+  <span class="nx">endPlugColor</span><span class="o">:</span> <span class="s1">&#39;rgba(241, 76, 129, 0.5)&#39;</span> <span class="c1">// translucent</span>
+<span class="p">});</span>
+
+<span class="nx">lineB</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-3, element-4</span>
+  <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;rgb(30, 130, 250)&#39;</span><span class="p">,</span>
+  <span class="nx">startPlugColor</span><span class="o">:</span> <span class="s1">&#39;rgb(241, 76, 129)&#39;</span><span class="p">,</span>
+  <span class="nx">endPlugColor</span><span class="o">:</span> <span class="s1">&#39;rgba(241, 76, 129, 0.5)&#39;</span> <span class="c1">// translucent</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-230.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 150px;">
+  <div class="text-fill" style="margin: 0 40px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>
+  <div id="ex-230-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-230-2" class="anchor40" style="right: 0; bottom: 0;">2</div>
+  <div id="ex-230-3" class="anchor40" style="left: 0; bottom: 0;">3</div>
+  <div id="ex-230-4" class="anchor40" style="right: 0; top: 0;">4</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-230-1'), document.getElementById('ex-230-2'), {
+    startPlug: 'arrow1',
+    size: 12,
+    color: 'rgba(30, 130, 250, 0.5)', // translucent
+    startPlugColor: 'rgb(241, 76, 129)',
+    endPlugColor: 'rgba(241, 76, 129, 0.5)' // translucent
+  });
+
+  new LeaderLine(document.getElementById('ex-230-3'), document.getElementById('ex-230-4'), {
+    startPlug: 'arrow1',
+    size: 12,
+    color: 'rgb(30, 130, 250)',
+    startPlugColor: 'rgb(241, 76, 129)',
+    endPlugColor: 'rgba(241, 76, 129, 0.5)' // translucent
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-230.html" -->
+
+<p>If <code>&#39;auto&#39;</code> (default) is specified, a value of <code>color</code> option is set synchronously (i.e. it is changed when <code>color</code> was changed).</p>
+
+<h3 id="startplugsize,-endplugsize"><code>startPlugSize</code>, <code>endPlugSize</code></h3>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>1</code></p>
+
+<p>Each option for when a value other than <code>behind</code> is specified for <a href="#startplug-endplug"><code>startPlug</code>/<code>endPlug</code></a> option.</p>
+
+<p>A multiplying factor of the size of a plug.<br>The plugs are resized synchronously, with the following options that contain <a href="#options-size"><code>size</code></a>:</p>
+
+<p>Plug Size: <code>size</code> * [default-plug-scale] * [<code>startPlugSize</code> or <code>endPlugSize</code>]</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element1</span><span class="p">,</span> <span class="nx">element2</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">startPlug</span><span class="o">:</span> <span class="s1">&#39;arrow1&#39;</span><span class="p">,</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="mi">4</span><span class="p">,</span>
+  <span class="nx">startPlugSize</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="nx">endPlugSize</span><span class="o">:</span> <span class="mi">2</span>
+<span class="p">});</span>
+
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element3</span><span class="p">,</span> <span class="nx">element4</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">startPlug</span><span class="o">:</span> <span class="s1">&#39;arrow1&#39;</span><span class="p">,</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="mi">8</span><span class="p">,</span>
+  <span class="nx">startPlugSize</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="nx">endPlugSize</span><span class="o">:</span> <span class="mi">2</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-240.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-240-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-240-2" class="anchor40" style="right: 0; bottom: 0;">2</div>
+  <div id="ex-240-3" class="anchor40" style="left: 0; bottom: 0;">3</div>
+  <div id="ex-240-4" class="anchor40" style="right: 0; top: 0;">4</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-240-1'), document.getElementById('ex-240-2'), {
+    startPlug: 'arrow1',
+    size: 4,
+    startPlugSize: 1,
+    endPlugSize: 2
+  });
+
+  new LeaderLine(document.getElementById('ex-240-3'), document.getElementById('ex-240-4'), {
+    startPlug: 'arrow1',
+    size: 8,
+    startPlugSize: 1,
+    endPlugSize: 2
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-240.html" -->
+
+<h3 id="outline"><code>outline</code></h3>
+
+<p><em>Type:</em> boolean<br><em>Default:</em> <code>false</code></p>
+
+<p>If <code>true</code> is specified, an outline of the leader line is enabled.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">outline</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</code></pre></div>
+<!-- include "ex-250.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-250-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-250-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-250-0'),
+    document.getElementById('ex-250-1'),
+    {size: 16, outline: true}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-250.html" -->
+
+<h3 id="outlinecolor"><code>outlineColor</code></h3>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;indianred&#39;</code></p>
+
+<p>An option for when <code>true</code> is specified for <a href="#outline"><code>outline</code></a> option.</p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of an outline of the leader line.<br>It is painted separately from inside of the line (i.e. Those don&#39;t overlap each other). Therefore one of <a href="#options-color"><code>color</code></a> and <code>outlineColor</code> or both options can have an alpha channel.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">lineA</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-1, element-2</span>
+  <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;rgb(248, 205, 30)&#39;</span><span class="p">,</span>
+  <span class="nx">outlineColor</span><span class="o">:</span> <span class="s1">&#39;rgb(30, 130, 250)&#39;</span>
+<span class="p">});</span>
+
+<span class="nx">lineB</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-3, element-4</span>
+  <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;rgba(248, 205, 30, 0.5)&#39;</span><span class="p">,</span> <span class="c1">// translucent</span>
+  <span class="nx">outlineColor</span><span class="o">:</span> <span class="s1">&#39;rgba(30, 130, 250, 0.5)&#39;</span> <span class="c1">// translucent</span>
+<span class="p">});</span>
+
+<span class="nx">lineC</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-5, element-6</span>
+  <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;rgba(248, 205, 30, 0.5)&#39;</span><span class="p">,</span> <span class="c1">// translucent</span>
+  <span class="nx">outlineColor</span><span class="o">:</span> <span class="s1">&#39;rgb(30, 130, 250)&#39;</span>
+<span class="p">});</span>
+
+<span class="nx">lineD</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-7, element-8</span>
+  <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;rgb(248, 205, 30)&#39;</span><span class="p">,</span>
+  <span class="nx">outlineColor</span><span class="o">:</span> <span class="s1">&#39;rgba(30, 130, 250, 0.5)&#39;</span> <span class="c1">// translucent</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-260.html" -->
+<!-- ================ ex -->
+<div id="ex-260-stage" class="stage">
+  <div class="text-fill" style="left: 60px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>
+  <div class="text-fill" style="left: 465px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>
+  <div id="ex-260-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-260-2" class="anchor40" style="left: 355px; bottom: 0;">2</div>
+  <div id="ex-260-3" class="anchor40" style="left: 0; bottom: 0;">3</div>
+  <div id="ex-260-4" class="anchor40" style="left: 355px; top: 0;">4</div>
+  <div id="ex-260-5" class="anchor40" style="left: 405px; top: 0;">5</div>
+  <div id="ex-260-6" class="anchor40" style="right: 0; bottom: 0;">6</div>
+  <div id="ex-260-7" class="anchor40" style="left: 405px; bottom: 0;">7</div>
+  <div id="ex-260-8" class="anchor40" style="right: 0; top: 0;">8</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-260-1'), document.getElementById('ex-260-2'), {
+    endPlug: 'behind',
+    size: 16,
+    outline: true,
+    color: 'rgb(248, 205, 30)',
+    outlineColor: 'rgb(30, 130, 250)'
+  });
+
+  new LeaderLine(document.getElementById('ex-260-3'), document.getElementById('ex-260-4'), {
+    endPlug: 'behind',
+    size: 16,
+    outline: true,
+    color: 'rgba(248, 205, 30, 0.5)', // translucent
+    outlineColor: 'rgba(30, 130, 250, 0.5)' // translucent
+  });
+
+  new LeaderLine(document.getElementById('ex-260-5'), document.getElementById('ex-260-6'), {
+    endPlug: 'behind',
+    size: 16,
+    outline: true,
+    color: 'rgba(248, 205, 30, 0.5)', // translucent
+    outlineColor: 'rgb(30, 130, 250)'
+  });
+
+  new LeaderLine(document.getElementById('ex-260-7'), document.getElementById('ex-260-8'), {
+    endPlug: 'behind',
+    size: 16,
+    outline: true,
+    color: 'rgb(248, 205, 30)',
+    outlineColor: 'rgba(30, 130, 250, 0.5)' // translucent
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-260.html" -->
+
+<h3 id="outlinesize"><code>outlineSize</code></h3>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>0.25</code></p>
+
+<p>An option for when <code>true</code> is specified for <a href="#outline"><code>outline</code></a> option.</p>
+
+<p>A multiplying factor of the size of an outline of the leader line, it is greater than <code>0</code> and is less than or equal to <code>0.48</code>.<br>The outline is resized synchronously, with the following options that contain <a href="#options-size"><code>size</code></a>:</p>
+
+<p>Outline Size: <code>size</code> * <code>outlineSize</code></p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">lineA</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-1, element-2</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="mi">12</span><span class="p">,</span>
+  <span class="nx">outlineSize</span><span class="o">:</span> <span class="mf">0.4</span>
+<span class="p">});</span>
+
+<span class="nx">lineB</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-3, element-4</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="mi">24</span><span class="p">,</span>
+  <span class="nx">outlineSize</span><span class="o">:</span> <span class="mf">0.08</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-270.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-270-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-270-2" class="anchor40" style="right: 0; bottom: 0;">2</div>
+  <div id="ex-270-3" class="anchor40" style="left: 0; bottom: 0;">3</div>
+  <div id="ex-270-4" class="anchor40" style="right: 0; top: 0;">4</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-270-1'), document.getElementById('ex-270-2'), {
+    endPlug: 'behind',
+    outline: true,
+    color: 'rgb(248, 205, 30)',
+    outlineColor: 'rgb(30, 130, 250)',
+    size: 12,
+    outlineSize: 0.4
+  });
+
+  new LeaderLine(document.getElementById('ex-270-3'), document.getElementById('ex-270-4'), {
+    endPlug: 'behind',
+    outline: true,
+    color: 'rgb(248, 205, 30)',
+    outlineColor: 'rgb(30, 130, 250)',
+    size: 24,
+    outlineSize: 0.08
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-270.html" -->
+
+<h3 id="startplugoutline,-endplugoutline"><code>startPlugOutline</code>, <code>endPlugOutline</code></h3>
+
+<p><em>Type:</em> boolean<br><em>Default:</em> <code>false</code></p>
+
+<p>Each option for when a plug that accepts this option is specified for <a href="#startplug-endplug"><code>startPlug</code>/<code>endPlug</code></a> option.</p>
+
+<p>If <code>true</code> is specified, an outline of the plug is enabled.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">endPlugOutline</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</code></pre></div>
+<!-- include "ex-280.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-280-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-280-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-280-0'),
+    document.getElementById('ex-280-1'),
+    {size: 16, endPlugOutline: true}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-280.html" -->
+
+<h3 id="startplugoutlinecolor,-endplugoutlinecolor"><code>startPlugOutlineColor</code>, <code>endPlugOutlineColor</code></h3>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;auto&#39;</code></p>
+
+<p>Each option for when <code>true</code> is specified for <a href="#startplugoutline-endplugoutline"><code>startPlugOutline</code>/<code>endPlugOutline</code></a> option.</p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of an outline of the plug.<br>It is painted separately from inside of the plug (i.e. Those don&#39;t overlap each other). Therefore one of <a href="#startplugcolor-endplugcolor"><code>startPlugColor</code>/<code>endPlugColor</code></a> and <code>startPlugOutlineColor</code>/<code>endPlugOutlineColor</code> or both options can have an alpha channel.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">lineA</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-1, element-2</span>
+  <span class="nx">startPlugColor</span><span class="o">:</span> <span class="s1">&#39;rgb(248, 205, 30)&#39;</span><span class="p">,</span>
+  <span class="nx">startPlugOutlineColor</span><span class="o">:</span> <span class="s1">&#39;rgb(30, 130, 250)&#39;</span><span class="p">,</span>
+  <span class="nx">endPlugColor</span><span class="o">:</span> <span class="s1">&#39;rgba(248, 205, 30, 0.5)&#39;</span><span class="p">,</span> <span class="c1">// translucent</span>
+  <span class="nx">endPlugOutlineColor</span><span class="o">:</span> <span class="s1">&#39;rgb(30, 130, 250)&#39;</span>
+<span class="p">});</span>
+
+<span class="nx">lineB</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-3, element-4</span>
+  <span class="nx">startPlugColor</span><span class="o">:</span> <span class="s1">&#39;rgb(248, 205, 30)&#39;</span><span class="p">,</span>
+  <span class="nx">startPlugOutlineColor</span><span class="o">:</span> <span class="s1">&#39;rgba(30, 130, 250, 0.5)&#39;</span><span class="p">,</span> <span class="c1">// translucent</span>
+  <span class="nx">endPlugColor</span><span class="o">:</span> <span class="s1">&#39;rgba(248, 205, 30, 0.5)&#39;</span><span class="p">,</span> <span class="c1">// translucent</span>
+  <span class="nx">endPlugOutlineColor</span><span class="o">:</span> <span class="s1">&#39;rgba(30, 130, 250, 0.5)&#39;</span> <span class="c1">// translucent</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-290.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 150px;">
+  <div class="text-fill" style="margin: 0 40px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>
+  <div id="ex-290-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-290-2" class="anchor40" style="right: 0; bottom: 0;">2</div>
+  <div id="ex-290-3" class="anchor40" style="left: 0; bottom: 0;">3</div>
+  <div id="ex-290-4" class="anchor40" style="right: 0; top: 0;">4</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-290-1'), document.getElementById('ex-290-2'), {
+    startPlug: 'arrow1',
+    startPlugSize: 4,
+    endPlugSize: 4,
+    startPlugOutline: true,
+    endPlugOutline: true,
+    startPlugColor: 'rgb(248, 205, 30)',
+    startPlugOutlineColor: 'rgb(30, 130, 250)',
+    endPlugColor: 'rgba(248, 205, 30, 0.5)', // translucent
+    endPlugOutlineColor: 'rgb(30, 130, 250)'
+  });
+
+  new LeaderLine(document.getElementById('ex-290-3'), document.getElementById('ex-290-4'), {
+    startPlug: 'arrow1',
+    startPlugSize: 4,
+    endPlugSize: 4,
+    startPlugOutline: true,
+    endPlugOutline: true,
+    startPlugColor: 'rgb(248, 205, 30)',
+    startPlugOutlineColor: 'rgba(30, 130, 250, 0.5)', // translucent
+    endPlugColor: 'rgba(248, 205, 30, 0.5)', // translucent
+    endPlugOutlineColor: 'rgba(30, 130, 250, 0.5)' // translucent
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-290.html" -->
+
+<p>If <code>&#39;auto&#39;</code> (default) is specified, a value of <a href="#outlinecolor"><code>outlineColor</code></a> option is set synchronously (i.e. it is changed when <code>outlineColor</code> was changed).</p>
+
+<h3 id="startplugoutlinesize,-endplugoutlinesize"><code>startPlugOutlineSize</code>, <code>endPlugOutlineSize</code></h3>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>1</code></p>
+
+<p>Each option for when <code>true</code> is specified for <a href="#startplugoutline-endplugoutline"><code>startPlugOutline</code>/<code>endPlugOutline</code></a> option.</p>
+
+<p>A multiplying factor of the size of an outline of the plug, it is greater than or equal to <code>1</code> and is less than or equal to <code>outlineMax</code> that is shown in <a href="#startplug-endplug"><code>startPlug</code>/<code>endPlug</code></a> option.<br>The outline is resized synchronously, with the following options that contain <a href="#options-size"><code>size</code></a>:</p>
+
+<p>Plug Outline Size: <code>size</code> * [default-plug-scale] * [<a href="#startplugsize-endplugsize"><code>startPlugSize</code> or <code>endPlugSize</code></a>] * [default-plug-outline-scale] * [<code>startPlugOutlineSize</code> or <code>endPlugOutlineSize</code>]</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">lineA</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-1, element-2</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="mi">4</span><span class="p">,</span>
+  <span class="nx">startPlugSize</span><span class="o">:</span> <span class="mf">1.5</span><span class="p">,</span>
+  <span class="nx">startPlugOutlineSize</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">,</span>
+  <span class="nx">endPlugSize</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span>
+  <span class="nx">endPlugOutlineSize</span><span class="o">:</span> <span class="mi">1</span>
+<span class="p">});</span>
+
+<span class="nx">lineB</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-3, element-4</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span>
+  <span class="nx">startPlugSize</span><span class="o">:</span> <span class="mf">1.5</span><span class="p">,</span>
+  <span class="nx">startPlugOutlineSize</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="nx">endPlugSize</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span>
+  <span class="nx">endPlugOutlineSize</span><span class="o">:</span> <span class="mf">2.5</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-300.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-300-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-300-2" class="anchor40" style="right: 0; bottom: 0;">2</div>
+  <div id="ex-300-3" class="anchor40" style="left: 0; bottom: 0;">3</div>
+  <div id="ex-300-4" class="anchor40" style="right: 0; top: 0;">4</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-300-1'), document.getElementById('ex-300-2'), {
+    startPlug: 'arrow3',
+    endPlug: 'arrow3',
+    startPlugOutline: true,
+    endPlugOutline: true,
+    startPlugColor: 'rgb(248, 205, 30)',
+    startPlugOutlineColor: 'rgb(30, 130, 250)',
+    endPlugColor: 'rgb(248, 205, 30)',
+    endPlugOutlineColor: 'rgb(30, 130, 250)',
+    size: 4,
+    startPlugSize: 1.5,
+    startPlugOutlineSize: 2.5,
+    endPlugSize: 3,
+    endPlugOutlineSize: 1
+  });
+
+  new LeaderLine(document.getElementById('ex-300-3'), document.getElementById('ex-300-4'), {
+    startPlug: 'arrow3',
+    endPlug: 'arrow3',
+    startPlugOutline: true,
+    endPlugOutline: true,
+    startPlugColor: 'rgb(248, 205, 30)',
+    startPlugOutlineColor: 'rgb(30, 130, 250)',
+    endPlugColor: 'rgb(248, 205, 30)',
+    endPlugOutlineColor: 'rgb(30, 130, 250)',
+    size: 10,
+    startPlugSize: 1.5,
+    startPlugOutlineSize: 1,
+    endPlugSize: 3,
+    endPlugOutlineSize: 2.5
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-300.html" -->
+
+<h3 id="startlabel,-middlelabel,-endlabel"><code>startLabel</code>, <code>middleLabel</code>, <code>endLabel</code></h3>
+
+<p><em>Type:</em> string or <a href="#attachments">Attachment</a><br><em>Default:</em> <code>&#39;&#39;</code></p>
+
+<p>An additional label that is shown on the leader line.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">startLabel</span><span class="o">:</span> <span class="s1">&#39;START&#39;</span><span class="p">,</span>
+  <span class="nx">middleLabel</span><span class="o">:</span> <span class="s1">&#39;MIDDLE&#39;</span><span class="p">,</span>
+  <span class="nx">endLabel</span><span class="o">:</span> <span class="s1">&#39;END&#39;</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-310.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-310-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-310-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-310-0'),
+    document.getElementById('ex-310-1'),
+    {startLabel: 'START', middleLabel: 'MIDDLE', endLabel: 'END'}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-310.html" -->
+
+<p>Or you can specify an <a href="#attachments">attachment</a> instead of a string.</p>
+
+<h3 id="options-dash"><code>dash</code> (effect)</h3>
+
+<p><em>Type:</em> boolean or Object<br><em>Default:</em> <code>false</code></p>
+
+<p>Enable the effect with specified Object that can have properties as the following options.<br>Or <code>true</code> to enable it with all default options.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span><span class="nx">dash</span><span class="o">:</span> <span class="kc">true</span><span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-320.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-320-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-320-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-320-0'),
+    document.getElementById('ex-320-1'),
+    {dash: true}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-320.html" -->
+
+<h4 id="len,-gap"><code>len</code>, <code>gap</code></h4>
+
+<p><em>Type:</em> number or string<br><em>Default:</em> <code>&#39;auto&#39;</code></p>
+
+<p>The size of parts of the dashed line, in pixels.<br><code>len</code> is length of drawn lines, <code>gap</code> is gap between drawn lines.</p>
+
+<p>If <code>&#39;auto&#39;</code> (default) is specified, the following each value is set synchronously (i.e. it is changed when <code>size</code> was changed).</p>
+
+<p><code>len</code>: <a href="#options-size"><code>size</code></a> * 2
+<code>gap</code>: <code>size</code></p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element1</span><span class="p">,</span> <span class="nx">element2</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">dash</span><span class="o">:</span> <span class="p">{</span><span class="nx">len</span><span class="o">:</span> <span class="mi">4</span><span class="p">,</span> <span class="nx">gap</span><span class="o">:</span> <span class="mi">24</span><span class="p">}</span>
+<span class="p">});</span>
+
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element3</span><span class="p">,</span> <span class="nx">element4</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="mi">8</span><span class="p">,</span>
+  <span class="nx">dash</span><span class="o">:</span> <span class="kc">true</span> <span class="c1">// len: 16, gap: 8</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-330.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-330-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-330-2" class="anchor40" style="right: 0; bottom: 0;">2</div>
+  <div id="ex-330-3" class="anchor40" style="left: 0; bottom: 0;">3</div>
+  <div id="ex-330-4" class="anchor40" style="right: 0; top: 0;">4</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-330-1'), document.getElementById('ex-330-2'), {
+    dash: {len: 4, gap: 24}
+  });
+
+  new LeaderLine(document.getElementById('ex-330-3'), document.getElementById('ex-330-4'), {
+    size: 8,
+    dash: true // len: 16, gap: 8
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-330.html" -->
+
+<h4 id="animation"><code>animation</code></h4>
+
+<p><em>Type:</em> boolean or Object<br><em>Default:</em> <code>false</code></p>
+
+<p>An Object that can have properties as <a href="#animation-options">Animation Options</a> to animate the effect.<br>Or <code>true</code> to animate it with the following default options.</p>
+
+<p>Default Animation Options: <code>{duration: 1000, timing: &#39;linear&#39;}</code></p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span><span class="nx">dash</span><span class="o">:</span> <span class="p">{</span><span class="nx">animation</span><span class="o">:</span> <span class="kc">true</span><span class="p">}});</span>
+</code></pre></div>
+<!-- include "ex-340.html" -->
+<!-- ================ ex -->
+<div id="ex-340" class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-340-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-340-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var line = new LeaderLine(
+    document.getElementById('ex-340-0'),
+    document.getElementById('ex-340-1')
+    // {dash: {animation: true}}
+  );
+  inView('#ex-340')
+    .on('enter', function() { line.dash = {animation: true}; })
+    .on('exit', function() { line.dash = false; });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-340.html" -->
+
+<h3 id="gradient-(effect)"><code>gradient</code> (effect)</h3>
+
+<p><em>Type:</em> boolean or Object<br><em>Default:</em> <code>false</code></p>
+
+<p>Enable the effect with specified Object that can have properties as the following options.<br>Or <code>true</code> to enable it with all default options.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span><span class="nx">startPlugColor</span><span class="o">:</span> <span class="s1">&#39;#a6f41d&#39;</span><span class="p">,</span> <span class="nx">gradient</span><span class="o">:</span> <span class="kc">true</span><span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-350.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-350-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-350-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-350-0'),
+    document.getElementById('ex-350-1'),
+    {startPlugColor: '#a6f41d', gradient: true}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-350.html" -->
+
+<h4 id="startcolor,-endcolor"><code>startColor</code>, <code>endColor</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;auto&#39;</code></p>
+
+<p>The start color (see <a href="#color-value">Color Value</a>) and end color of the gradient.</p>
+
+<p>If <code>&#39;auto&#39;</code> (default) is specified, each value of <a href="#startplugcolor-endplugcolor"><code>startPlugColor</code> and <code>endPlugColor</code></a> is set synchronously (i.e. it is changed when <code>startPlugColor</code>/<code>endPlugColor</code> was changed).</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">lineA</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-1, element-2</span>
+  <span class="nx">gradient</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">startColor</span><span class="o">:</span> <span class="s1">&#39;#2e17c3&#39;</span><span class="p">,</span>
+    <span class="nx">endColor</span><span class="o">:</span> <span class="s1">&#39;#1df3f9&#39;</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="nx">lineB</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span> <span class="c1">// element-3, element-4</span>
+  <span class="nx">gradient</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">startColor</span><span class="o">:</span> <span class="s1">&#39;rgba(17, 148, 51, 0.1)&#39;</span><span class="p">,</span>
+    <span class="nx">endColor</span><span class="o">:</span> <span class="s1">&#39;rgb(17, 148, 51)&#39;</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-360.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 150px;">
+  <div class="text-fill" style="margin: 0 60px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>
+  <div id="ex-360-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-360-2" class="anchor40" style="right: 0; bottom: 0;">2</div>
+  <div id="ex-360-3" class="anchor40" style="left: 0; bottom: 0;">3</div>
+  <div id="ex-360-4" class="anchor40" style="right: 0; top: 0;">4</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-360-1'), document.getElementById('ex-360-2'), {
+    endPlug: 'behind',
+    size: 8,
+    gradient: {
+      startColor: '#2e17c3',
+      endColor: '#1df3f9'
+    }
+  });
+
+  new LeaderLine(document.getElementById('ex-360-3'), document.getElementById('ex-360-4'), {
+    endPlug: 'behind',
+    size: 8,
+    gradient: {
+      startColor: 'rgba(17, 148, 51, 0.1)',
+      endColor: 'rgb(17, 148, 51)'
+    }
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-360.html" -->
+
+<p>Since the gradient is made from only two colors, it might be not beautiful.</p>
+
+<!-- include "ex-361.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 150px;">
+  <div id="ex-361-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-361-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+  <div class="ex-361-range" style="left: 0; top: 70px;">
+    <input id="ex-361-range-0" type="range" max="360" value="178">
+  </div>
+  <div class="ex-361-range" style="right: 0; bottom: 70px;">
+    <input id="ex-361-range-1" type="range" max="360" value="248">
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var startElement = document.getElementById('ex-361-0'),
+    endElement = document.getElementById('ex-361-1'),
+    startRange = document.getElementById('ex-361-range-0'),
+    endRange = document.getElementById('ex-361-range-1'),
+    line = new LeaderLine(startElement, endElement, {endPlug: 'behind', size: 8});
+
+  function update() {
+    var startColor = 'hsl(' + startRange.value + ', 100%, 50%)',
+      endColor = 'hsl(' + endRange.value + ', 100%, 50%)';
+    line.setOptions({gradient: {startColor: startColor, endColor: endColor}});
+    startElement.style.backgroundColor = startColor;
+    endElement.style.backgroundColor = endColor;
+  }
+
+  startRange.addEventListener('input', update, false);
+  startRange.addEventListener('change', update, false); // for Trident
+  endRange.addEventListener('input', update, false);
+  endRange.addEventListener('change', update, false); // for Trident
+
+  update();
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-361.html" -->
+
+<h3 id="dropshadow-(effect)"><code>dropShadow</code> (effect)</h3>
+
+<p><em>Type:</em> boolean or Object<br><em>Default:</em> <code>false</code></p>
+
+<p>Enable the effect with specified Object that can have properties as the following options.<br>Or <code>true</code> to enable it with all default options.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span><span class="nx">dropShadow</span><span class="o">:</span> <span class="kc">true</span><span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-370.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-370-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-370-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-370-0'),
+    document.getElementById('ex-370-1'),
+    {dropShadow: true}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-370.html" -->
+
+<h4 id="dx,-dy"><code>dx</code>, <code>dy</code></h4>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>dx</code>: <code>2</code> | <code>dy</code>: <code>4</code></p>
+
+<p>The offset X and offset Y of the drop shadow, in pixels.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span>
+  <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;#f7f5ee&#39;</span><span class="p">,</span>
+  <span class="nx">dropShadow</span><span class="o">:</span> <span class="p">{</span><span class="nx">dx</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">dy</span><span class="o">:</span> <span class="mi">3</span><span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-380.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-380-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-380-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-380-0'),
+    document.getElementById('ex-380-1'),
+    {
+      color: '#f7f5ee',
+      startPlug: 'arrow1',
+      dropShadow: {
+        dx: 0,
+        dy: 3
+      }
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-380.html" -->
+
+<h4 id="blur"><code>blur</code></h4>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>3</code></p>
+
+<p>The standard deviation for the blur operation in the drop shadow.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line</span><span class="p">.</span><span class="nx">setOptions</span><span class="p">({</span>
+  <span class="nx">dropShadow</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">dx</span><span class="o">:</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="nx">dy</span><span class="o">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="nx">blur</span><span class="o">:</span> <span class="mf">0.2</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-390.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-390-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-390-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-390-0'),
+    document.getElementById('ex-390-1'),
+    {
+      path: 'grid',
+      startPlug: 'arrow1',
+      dropShadow: {
+        dx: 6,
+        dy: 8,
+        blur: 0.2
+      }
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-390.html" -->
+
+<h4 id="options-dropshadow-color"><code>color</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;#000&#39;</code></p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of the drop shadow.<br>An alpha channel can be contained but <a href="#opacity"><code>opacity</code></a> option should be used instead.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span><span class="nx">dropShadow</span><span class="o">:</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="nx">dx</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">dy</span><span class="o">:</span> <span class="mi">0</span><span class="p">}});</span>
+</code></pre></div>
+<!-- include "ex-400.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-400-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-400-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-400-0'),
+    document.getElementById('ex-400-1'),
+    {dropShadow: {color: 'blue', dx: 0, dy: 0}}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-400.html" -->
+
+<h4 id="opacity"><code>opacity</code></h4>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>0.8</code></p>
+
+<p>A number ranging from <code>0</code> to <code>1</code> to indicate the transparency of the drop shadow.</p>
+
+<h2 id="attachments">Attachments</h2>
+
+<p>Attachments are passed to the leader line via some options, and those make that option have special behavior.</p>
+
+<p>You can get new attachment instance by individual static methods of <code>LeaderLine</code> (not instance methods).<br>For example, <code>LeaderLine.pointAnchor</code> method makes new <a href="#pointanchor"><code>pointAnchor</code></a> attachment instance. It is attached to the leader line via <a href="#start-end"><code>start</code> or <code>end</code></a> option of the leader line.<br>The following code pass a new <code>pointAnchor</code> attachment instance to <code>LeaderLine</code> constructor, via second argument as <code>end</code> option.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">));</span>
+</code></pre></div>
+<p>In the case of the plan to use the attachment afterward.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">);</span>
+
+<span class="kd">function</span> <span class="nx">attach</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">line</span><span class="p">.</span><span class="nx">end</span> <span class="o">=</span> <span class="nx">attachment</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="pointanchor"><code>pointAnchor</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span>
+</code></pre></div>
+<p>Or</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">element</span><span class="p">[,</span> <span class="nx">options</span><span class="p">])</span>
+</code></pre></div>
+<p>An attachment that is specified instead of an element for the <a href="#start-end"><code>start</code> or <code>end</code></a> option of the leader line, for indicating a point instead of the element.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">));</span>
+</code></pre></div>
+<!-- include "ex-410.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-410-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-410-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-410-0'),
+    LeaderLine.pointAnchor(document.getElementById('ex-410-1'))
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-410.html" -->
+
+<p>The <code>options</code> argument is an Object that can have properties as options that are described later.</p>
+
+<p>The <code>element</code> argument is shortcut to <code>options.element</code>. The following two codes work same.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element1</span><span class="p">});</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element2</span><span class="p">,</span> <span class="nx">x</span><span class="o">:</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">32</span><span class="p">});</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">element1</span><span class="p">);</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">element2</span><span class="p">,</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">32</span><span class="p">});</span>
+</code></pre></div>
+<p>This attachment can be shared between multiple leader lines.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// A new attachment instance is shared between `line1` and `line2`.</span>
+<span class="nx">line1</span><span class="p">.</span><span class="nx">end</span> <span class="o">=</span> <span class="nx">line2</span><span class="p">.</span><span class="nx">end</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-420.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 600px; height: 100px;">
+  <div id="ex-420-0" class="anchor40" style="left: 280px; bottom: 0;"></div>
+  <div id="ex-420-1" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-420-2" class="anchor40" style="right: 0; top: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var point = LeaderLine.pointAnchor(document.getElementById('ex-420-0'));
+  new LeaderLine(document.getElementById('ex-420-1'), point);
+  new LeaderLine(document.getElementById('ex-420-2'), point);
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-420.html" -->
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">line1</span><span class="p">.</span><span class="nx">end</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">);</span>
+
+<span class="kd">function</span> <span class="nx">share</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// The `line1`&#39;s attachment instance is shared with `line2`.</span>
+  <span class="nx">line2</span><span class="p">.</span><span class="nx">end</span> <span class="o">=</span> <span class="nx">line1</span><span class="p">.</span><span class="nx">end</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>After the attachment was attached by <code>start</code> or <code>end</code> option of the leader line, when something else is specified for that option, the leader line is detached from the attachment. When the last leader line is detached, the attachment is removed from the web page automatically, and it can&#39;t be used anymore.</p>
+
+<h4 id="attachments-pointanchor-element"><code>element</code></h4>
+
+<p><em>Type:</em> HTML/SVG element</p>
+
+<p>An element that is a base of the point. See <a href="#attachments-pointanchor-x-y"><code>x</code> and <code>y</code></a> options.<br>You can specify a <code>&lt;body&gt;</code> element also. That is, you can make the leader line indicate anywhere in the document.</p>
+
+<h4 id="attachments-pointanchor-x-y"><code>x</code>, <code>y</code></h4>
+
+<p><em>Type:</em> number or string<br><em>Default:</em> <code>&#39;50%&#39;</code></p>
+
+<p>The X and Y coordinates of the point, in pixels, relative to the top-left corner of the specified element for <a href="#attachments-pointanchor-element"><code>element</code></a> option.<br>Each value can be a percentage of the element&#39;s width or height. For example, <code>{x: &#39;50%&#39;, y: &#39;50%&#39;}</code> (default) indicates the center of the element, <code>{x: &#39;100%&#39;, y: 0}</code> indicates the top-right corner.<br>And also, each value can be a negative value or a value over the element&#39;s width or height, it indicates the outside of the element.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element1</span><span class="p">,</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">element3</span><span class="p">,</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">30</span><span class="p">}));</span>
+<span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">element2</span><span class="p">,</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">element3</span><span class="p">,</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="s1">&#39;100%&#39;</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">0</span><span class="p">}));</span>
+</code></pre></div>
+<!-- include "ex-430.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 600px; height: 100px;">
+  <div id="ex-430-1" class="anchor40" style="left: 0; top: 0;">1</div>
+  <div id="ex-430-2" class="anchor40" style="right: 0; top: 0;">2</div>
+  <div id="ex-430-3" class="anchor40" style="left: 280px; bottom: 0;">3</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var element3 = document.getElementById('ex-430-3');
+
+  new LeaderLine(document.getElementById('ex-430-1'),
+    LeaderLine.pointAnchor(element3, {x: 10, y: 30}));
+  new LeaderLine(document.getElementById('ex-430-2'),
+    LeaderLine.pointAnchor(element3, {x: '100%', y: 0}));
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-430.html" -->
+
+<h3 id="areaanchor"><code>areaAnchor</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span>
+</code></pre></div>
+<p>Or</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">element</span><span class="p">[,</span> <span class="nx">shape</span><span class="p">][,</span> <span class="nx">options</span><span class="p">])</span>
+</code></pre></div>
+<p>An attachment that is specified instead of an element for the <a href="#start-end"><code>start</code> or <code>end</code></a> option of the leader line, for indicating an area instead of the element.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">));</span>
+</code></pre></div>
+<!-- include "ex-440.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-440-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-440-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-440-0'),
+    LeaderLine.areaAnchor(document.getElementById('ex-440-1'))
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-440.html" -->
+
+<p>The <code>options</code> argument is an Object that can have properties as options that are described later.</p>
+
+<p>The <code>element</code> and <code>shape</code> arguments are shortcuts to <code>options.element</code> and <code>options.shape</code>. The following two codes work same.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element1</span><span class="p">});</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element2</span><span class="p">,</span> <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+<span class="nx">attachment3</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element3</span><span class="p">,</span> <span class="nx">shape</span><span class="o">:</span> <span class="s1">&#39;circle&#39;</span><span class="p">});</span>
+<span class="nx">attachment4</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element4</span><span class="p">,</span> <span class="nx">shape</span><span class="o">:</span> <span class="s1">&#39;circle&#39;</span><span class="p">,</span> <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">element1</span><span class="p">);</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">element2</span><span class="p">,</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+<span class="nx">attachment3</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">element3</span><span class="p">,</span> <span class="s1">&#39;circle&#39;</span><span class="p">);</span>
+<span class="nx">attachment4</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">element4</span><span class="p">,</span> <span class="s1">&#39;circle&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+</code></pre></div>
+<p>This attachment can be shared between multiple leader lines. See <a href="#pointanchor"><code>pointAnchor</code></a> attachment for the sharing and the life cycle.</p>
+
+<h4 id="attachments-areaanchor-element"><code>element</code></h4>
+
+<p><em>Type:</em> HTML/SVG element</p>
+
+<p>An element that is a base of the area. See <a href="#attachments-areaanchor-x-y"><code>x</code>, <code>y</code></a>, <a href="#width-height"><code>width</code> and <code>height</code></a> options.<br>You can specify a <code>&lt;body&gt;</code> element also. That is, any area in the document can be indicated.</p>
+
+<h4 id="shape"><code>shape</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;rect&#39;</code></p>
+
+<p>One of the following keywords to indicate the shape of the area:</p>
+
+<ul>
+<li><code>rect</code></li>
+<li><code>circle</code></li>
+<li><code>polygon</code></li>
+</ul>
+
+<!-- include "ex-450.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 200px;">
+  <div id="ex-450-0" class="anchor40" style="left: 0; top: 80px;"></div>
+  <div id="ex-450-1" class="anchor" style="width: 90px; height: 200px; right: 0; top: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var element0 = document.getElementById('ex-450-0'),
+    element1 = document.getElementById('ex-450-1');
+
+  new LeaderLine(element0,
+    LeaderLine.areaAnchor(element1, {x: 25, y: 10, width: 40, height: 40}),
+    {endLabel: 'rect'}
+  );
+  new LeaderLine(element0,
+    LeaderLine.areaAnchor(element1, {shape: 'circle', x: 30, y: 85, width: 30, height: 30}),
+    {endLabel: 'circle'}
+  );
+  new LeaderLine(element0,
+    LeaderLine.areaAnchor(element1, {shape: 'polygon', points: [[25, 150], [50, 155], [70, 145], [65, 180], [35, 190]]}),
+    {endLabel: 'polygon'}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-450.html" -->
+
+<h4 id="attachments-areaanchor-x-y"><code>x</code>, <code>y</code></h4>
+
+<p><em>Type:</em> number or string<br><em>Default:</em> <code>&#39;-5%&#39;</code></p>
+
+<p>An option for when <code>rect</code> or <code>circle</code> is specified for <a href="#shape"><code>shape</code></a> option.</p>
+
+<p>The X and Y coordinates for the top-left corner of the area, in pixels, relative to the top-left corner of the specified element for <a href="#attachments-areaanchor-element"><code>element</code></a> option.<br>Each value can be a percentage of the element&#39;s width or height. For example, <code>{x: &#39;50%&#39;, y: &#39;50%&#39;}</code> indicates the center of the element, <code>{x: &#39;100%&#39;, y: 0}</code> indicates the top-right corner.<br>And also, each value can be a negative value or a value over the element&#39;s width or height, it indicates the outside of the element.</p>
+
+<h4 id="width,-height"><code>width</code>, <code>height</code></h4>
+
+<p><em>Type:</em> number or string<br><em>Default:</em> <code>&#39;110%&#39;</code></p>
+
+<p>An option for when <code>rect</code> or <code>circle</code> is specified for <a href="#shape"><code>shape</code></a> option.</p>
+
+<p>The width and height of the area, in pixels.<br>Each value can be a percentage of the element&#39;s width or height. For example, <code>{x: &#39;50%&#39;, y: 0, width: &#39;50%&#39;, height: &#39;100%&#39;}</code> indicates the right half of the element.<br>And also, each value can be a value over the element&#39;s width or height.</p>
+
+<h4 id="radius"><code>radius</code></h4>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>0</code></p>
+
+<p>An option for when <code>rect</code> is specified for <a href="#shape"><code>shape</code></a> option.</p>
+
+<p>The radius to round corners of the area, in pixels.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">,</span>
+    <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="s1">&#39;20%&#39;</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="s1">&#39;20%&#39;</span><span class="p">,</span> <span class="nx">width</span><span class="o">:</span> <span class="s1">&#39;60%&#39;</span><span class="p">,</span> <span class="nx">height</span><span class="o">:</span> <span class="s1">&#39;60%&#39;</span><span class="p">,</span> <span class="nx">radius</span><span class="o">:</span> <span class="mi">10</span><span class="p">}));</span>
+</code></pre></div>
+<!-- include "ex-460.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-460-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-460-1" class="anchor" style="width: 70px; height: 100px; right: 0; top: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-460-0'),
+    LeaderLine.areaAnchor(document.getElementById('ex-460-1'),
+      {x: '20%', y: '20%', width: '60%', height: '60%', radius: 10}));
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-460.html" -->
+
+<h4 id="points"><code>points</code></h4>
+
+<p><em>Type:</em> Array  </p>
+
+<p>An option for when <code>polygon</code> is specified for <a href="#shape"><code>shape</code></a> option.</p>
+
+<p>An Array that contains three or more points of the polygon. Each item that is a point is an Array that contains the X and Y coordinates for the point. That is, it is Array that contains Array, like <code>[[x1, y1], [x2, y2], ...]</code>.<br>The X and Y coordinates are handled as same as <a href="#attachments-areaanchor-x-y"><code>x</code> and <code>y</code></a> options.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">,</span>
+    <span class="p">{</span><span class="nx">shape</span><span class="o">:</span> <span class="s1">&#39;polygon&#39;</span><span class="p">,</span> <span class="nx">points</span><span class="o">:</span> <span class="p">[[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;90%&#39;</span><span class="p">,</span> <span class="s1">&#39;70%&#39;</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;80%&#39;</span><span class="p">]]}));</span>
+</code></pre></div>
+<!-- include "ex-470.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-470-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-470-1" class="anchor" style="width: 70px; height: 100px; right: 0; top: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-470-0'),
+    LeaderLine.areaAnchor(document.getElementById('ex-470-1'),
+      {shape: 'polygon', points: [[10, 15], ['90%', '70%'], [10, '80%']]}));
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-470.html" -->
+
+<h4 id="attachments-areaanchor-color"><code>color</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <a href="#options-color"><code>color</code></a> of current first attached leader line (synchronously)</p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of the border of the area.<br>By default, a value of <a href="#options-color"><code>color</code></a> option of the first leader line in current attached leader lines is set synchronously (i.e. it is changed when <code>color</code> of the leader line was changed).</p>
+
+<h4 id="fillcolor"><code>fillColor</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;&#39;</code></p>
+
+<p>A fill-color (see <a href="#color-value">Color Value</a>) of the area.<br>If it is not specified (default), the area is not painted. It is better than specifying <code>&#39;rgba(0, 0, 0, 0)&#39;</code>.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">,</span>
+    <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">14</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">20</span><span class="p">,</span> <span class="nx">width</span><span class="o">:</span> <span class="mi">42</span><span class="p">,</span> <span class="nx">height</span><span class="o">:</span> <span class="mi">60</span><span class="p">,</span> <span class="nx">radius</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">fillColor</span><span class="o">:</span> <span class="s1">&#39;#f8cd1e&#39;</span><span class="p">}));</span>
+</code></pre></div>
+<!-- include "ex-480.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-480-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-480-1" class="anchor" style="width: 70px; height: 100px; right: 0; top: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-480-0'),
+    LeaderLine.areaAnchor(document.getElementById('ex-480-1'),
+      {x: 14, y: 20, width: 42, height: 60, radius: 10, fillColor: '#f8cd1e'}));
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-480.html" -->
+
+<h4 id="attachments-areaanchor-size"><code>size</code></h4>
+
+<p><em>Type:</em> number<br><em>Default:</em> <a href="#options-size"><code>size</code></a> of current first attached leader line (synchronously)</p>
+
+<p>The width of the border of the area, in pixels.<br>If <code>0</code> is specified, the border is not drawn.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">,</span>
+    <span class="p">{</span><span class="nx">shape</span><span class="o">:</span> <span class="s1">&#39;polygon&#39;</span><span class="p">,</span> <span class="nx">points</span><span class="o">:</span> <span class="p">[[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">],</span> <span class="p">[</span><span class="mi">63</span><span class="p">,</span> <span class="mi">70</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">80</span><span class="p">]],</span>
+      <span class="nx">fillColor</span><span class="o">:</span> <span class="s1">&#39;#f8cd1e&#39;</span><span class="p">,</span> <span class="nx">size</span><span class="o">:</span> <span class="mi">0</span><span class="p">}));</span>
+</code></pre></div>
+<!-- include "ex-490.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-490-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-490-1" class="anchor" style="width: 70px; height: 100px; right: 0; top: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-490-0'),
+    LeaderLine.areaAnchor(document.getElementById('ex-490-1'),
+      {shape: 'polygon', points: [[10, 15], [63, 70], [10, 80]],
+        fillColor: '#f8cd1e', size: 0}));
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-490.html" -->
+
+<h4 id="attachments-areaanchor-dash"><code>dash</code></h4>
+
+<p><em>Type:</em> boolean or Object<br><em>Default:</em> <code>false</code></p>
+
+<p>Enable &quot;dashed line&quot; effect to the border of the area with specified Object that can have properties as the following options.<br>Or <code>true</code> to enable it with all default options.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">areaAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">,</span>
+    <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">14</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">20</span><span class="p">,</span> <span class="nx">width</span><span class="o">:</span> <span class="mi">42</span><span class="p">,</span> <span class="nx">height</span><span class="o">:</span> <span class="mi">60</span><span class="p">,</span> <span class="nx">radius</span><span class="o">:</span> <span class="mi">8</span><span class="p">,</span> <span class="nx">dash</span><span class="o">:</span> <span class="kc">true</span><span class="p">}));</span>
+</code></pre></div>
+<!-- include "ex-500.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-500-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-500-1" class="anchor" style="width: 70px; height: 100px; right: 0; top: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(document.getElementById('ex-500-0'),
+    LeaderLine.areaAnchor(document.getElementById('ex-500-1'),
+      {x: 14, y: 20, width: 42, height: 60, radius: 8, dash: true}));
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-500.html" -->
+
+<h5 id="len,-gap"><code>len</code>, <code>gap</code></h5>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>len</code>: <a href="#attachments-areaanchor-size"><code>size</code></a> * 2 (synchronously) | <code>gap</code>: <code>size</code> (synchronously)</p>
+
+<p>The size of parts of the dashed line, in pixels.<br><code>len</code> is length of drawn lines, <code>gap</code> is gap between drawn lines.</p>
+
+<h3 id="mousehoveranchor"><code>mouseHoverAnchor</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span>
+</code></pre></div>
+<p>Or</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">element</span><span class="p">[,</span> <span class="nx">showEffectName</span><span class="p">][,</span> <span class="nx">options</span><span class="p">])</span>
+</code></pre></div>
+<p>An attachment that is specified instead of an element for the <a href="#start-end"><code>start</code> or <code>end</code></a> option of the leader line, for showing and hiding the leader line by the mouse hovering.<br>This is a convenient way to call <a href="#show-hide"><code>show</code></a> method when a mouse enters the element, and call <a href="#show-hide"><code>hide</code></a> method when a mouse leaves the element. Also, a small icon and some style are added to the element.<br>And also, it includes a polyfill for <code>mouseenter</code> and <code>mouseleave</code> events that are not supported by some web browsers.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">startElement</span><span class="p">),</span> <span class="nx">endElement</span><span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-510.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-510-0" class="anchor-text" style="left: 0; top: 0;">Move mouse here</div>
+  <div id="ex-510-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-510-0')),
+    document.getElementById('ex-510-1')
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-510.html" -->
+
+<p>This is an attachment to provide a convenient way to do the behavior above. If you want more style or more custom behavior, you will use <a href="#show-hide"><code>show</code>/<code>hide</code></a> methods and your CSS code instead of this attachment.</p>
+
+<p>The <code>options</code> argument is an Object that can have properties as options that are described later.</p>
+
+<p>The <code>element</code> and <code>showEffectName</code> arguments are shortcuts to <code>options.element</code> and <code>options.showEffectName</code>. The following two codes work same.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element1</span><span class="p">});</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element2</span><span class="p">,</span> <span class="nx">style</span><span class="o">:</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">}});</span>
+<span class="nx">attachment3</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">({</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element3</span><span class="p">,</span> <span class="nx">showEffectName</span><span class="o">:</span> <span class="s1">&#39;draw&#39;</span><span class="p">});</span>
+<span class="nx">attachment4</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span>
+  <span class="p">{</span><span class="nx">element</span><span class="o">:</span> <span class="nx">element4</span><span class="p">,</span> <span class="nx">showEffectName</span><span class="o">:</span> <span class="s1">&#39;draw&#39;</span><span class="p">,</span> <span class="nx">style</span><span class="o">:</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">}});</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">element1</span><span class="p">);</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">element2</span><span class="p">,</span> <span class="p">{</span><span class="nx">style</span><span class="o">:</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">}});</span>
+<span class="nx">attachment3</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">element3</span><span class="p">,</span> <span class="s1">&#39;draw&#39;</span><span class="p">);</span>
+<span class="nx">attachment4</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">element4</span><span class="p">,</span> <span class="s1">&#39;draw&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">style</span><span class="o">:</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">}});</span>
+</code></pre></div>
+<p>This attachment can be shared between multiple leader lines. See <a href="#pointanchor"><code>pointAnchor</code></a> attachment for the sharing and the life cycle.</p>
+
+<h4 id="attachments-mousehoveranchor-element"><code>element</code></h4>
+
+<p><em>Type:</em> HTML element</p>
+
+<p>An element that is a trigger for showing and hiding the leader line.</p>
+
+<h4 id="showeffectname"><code>showEffectName</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> Value that was specified last time, or <code>fade</code> at first time</p>
+
+<p>A value that is passed to <a href="#show-hide"><code>show</code>/<code>hide</code></a> methods as its <code>showEffectName</code> argument.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="s1">&#39;draw&#39;</span><span class="p">),</span> <span class="nx">endElement</span><span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-520.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-520-0" class="anchor-text" style="left: 0; top: 0;">Move mouse here</div>
+  <div id="ex-520-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-520-0'), 'draw'),
+    document.getElementById('ex-520-1')
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-520.html" -->
+
+<h4 id="animoptions"><code>animOptions</code></h4>
+
+<p><em>Type:</em> Object<br><em>Default:</em> See <a href="#methods-show-hide-showeffectname"><code>showEffectName</code></a> of <a href="#show-hide"><code>show</code>/<code>hide</code></a> methods</p>
+
+<p>A value that is passed to <a href="#show-hide"><code>show</code>/<code>hide</code></a> methods as its <code>animOptions</code> argument.</p>
+
+<h4 id="style"><code>style</code></h4>
+
+<p><em>Type:</em> Object<br><em>Default:</em> <code>undefined</code></p>
+
+<p>An Object that has additional style properties for the element.<br>You can specify <code>null</code> as a property to disable adding the style property. Note that it doesn&#39;t disable the style property. For example, if <code>{backgroundColor: null}</code> is specified, the attachment doesn&#39;t change current <code>backgroundColor</code> style property of the element.</p>
+
+<h4 id="hoverstyle"><code>hoverStyle</code></h4>
+
+<p><em>Type:</em> Object<br><em>Default:</em> <code>undefined</code></p>
+
+<p>This works same to <a href="#style"><code>style</code></a> option except that these style properties are added when a mouse enters the element.</p>
+
+<h4 id="onswitch"><code>onSwitch</code></h4>
+
+<p><em>Type:</em> function<br><em>Default:</em> <code>undefined</code></p>
+
+<p>A function that is called after <a href="#show-hide"><code>show</code>/<code>hide</code></a> method, with an <code>event</code> argument.</p>
+
+<h3 id="captionlabel"><code>captionLabel</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span>
+</code></pre></div>
+<p>Or</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="nx">text</span><span class="p">[,</span> <span class="nx">options</span><span class="p">])</span>
+</code></pre></div>
+<p>An attachment that is specified instead of a string for the <a href="#startlabel-middlelabel-endlabel"><code>startLabel</code>, <code>middleLabel</code> or <code>endLabel</code></a> option of the leader line, for showing a custom label on the leader line.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">startLabel</span><span class="o">:</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="s1">&#39;START&#39;</span><span class="p">),</span>
+  <span class="nx">middleLabel</span><span class="o">:</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="s1">&#39;MIDDLE&#39;</span><span class="p">),</span>
+  <span class="nx">endLabel</span><span class="o">:</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="s1">&#39;END&#39;</span><span class="p">)</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-530.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-530-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-530-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-530-0'),
+    document.getElementById('ex-530-1'),
+    {
+      startLabel: LeaderLine.captionLabel('START'),
+      middleLabel: LeaderLine.captionLabel('MIDDLE'),
+      endLabel: LeaderLine.captionLabel('END')
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-530.html" -->
+
+<p>The <code>options</code> argument is an Object that can have properties as options that are described later.</p>
+
+<p>The <code>text</code> argument is shortcut to <code>options.text</code>. The following two codes work same.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">({</span><span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;LABEL-1&#39;</span><span class="p">});</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">({</span><span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;LABEL-2&#39;</span><span class="p">,</span> <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="s1">&#39;LABEL-1&#39;</span><span class="p">);</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="s1">&#39;LABEL-2&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+</code></pre></div>
+<p>This attachment can <em>not</em> be shared between multiple leader lines.<br>When the attachment that was already attached is attached to another leader line, then, the former leader line is detached automatically. That is, the attachment moves from the leader line to another leader line.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// A new attachment instance is attached to `line1`.</span>
+<span class="nx">line1</span><span class="p">.</span><span class="nx">endLabel</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="s1">&#39;LABEL-1&#39;</span><span class="p">);</span>
+
+<span class="c1">// The attachment is attached to `line2`, then, `line1` is detached.</span>
+<span class="nx">line2</span><span class="p">.</span><span class="nx">endLabel</span> <span class="o">=</span> <span class="nx">line1</span><span class="p">.</span><span class="nx">endLabel</span><span class="p">;</span>
+</code></pre></div>
+<p>Also, it can move between labels of the same leader line.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// The attachment is moved from `endLabel` to `startLabel`.</span>
+<span class="nx">line1</span><span class="p">.</span><span class="nx">startLabel</span> <span class="o">=</span> <span class="nx">line1</span><span class="p">.</span><span class="nx">endLabel</span><span class="p">;</span>
+</code></pre></div>
+<p>When the leader line is detached from the attachment and any leader line is not attached, the attachment is removed from the web page automatically, and it can&#39;t be used anymore.</p>
+
+<h4 id="text"><code>text</code></h4>
+
+<p><em>Type:</em> string  </p>
+
+<p>A string that is shown as a label.</p>
+
+<h4 id="offset"><code>offset</code></h4>
+
+<p><em>Type:</em> Array<br><em>Default:</em> Calculated suitable position</p>
+
+<p>By default, a <code>captionLabel</code> attachment that is attached as <code>startLabel</code> is positioned near the socket (i.e. connecting point) that is decided by <a href="#startsocket-endsocket"><code>startSocket</code></a> option of the leader line. In like manner, attached one as <code>endLabel</code> is positioned near the socket that is decided by <code>endSocket</code> option. Those are calculated with the size of the leader line, the font size of the label, etc.</p>
+
+<!-- include "ex-540.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 600px; height: 200px;">
+  <div style="width: 100%; height: 100px; background-color: #ccc;">
+    <div id="ex-540-0" class="anchor60" style="background-color: #e3df74;">Drag this</div>
+  </div>
+  <div id="ex-540-1" class="anchor40" style="left: 280px; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var startElement = document.getElementById('ex-540-0'),
+    line = new LeaderLine(startElement, document.getElementById('ex-540-1'), {
+      startPlug: 'disc', endPlug: 'disc',
+      startLabel: LeaderLine.captionLabel('START', {color: 'blue'}),
+      middleLabel: LeaderLine.captionLabel('MIDDLE', {color: 'blue'}),
+      endLabel: LeaderLine.captionLabel('END', {color: 'blue'})
+    });
+
+  new Draggable(startElement, {
+    onMove: function() { line.position(); },
+    ignoreZIndex: true
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-540.html" -->
+
+<p>If an Array that is <code>[x, y]</code> in pixels is specified for <code>offset</code> option, the attachment is positioned at the specified coordinates relative to the decided socket.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">startLabel</span><span class="o">:</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">captionLabel</span><span class="p">(</span><span class="s1">&#39;START&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="nx">offset</span><span class="o">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">]})</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-541.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-541-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-541-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-541-0'),
+    document.getElementById('ex-541-1'),
+    {startLabel: LeaderLine.captionLabel('START', {color: 'blue', offset: [-20, 0]})}
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-541.html" -->
+
+<h4 id="attachments-captionlabel-lineoffset"><code>lineOffset</code></h4>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>0</code></p>
+
+<p>By default, a <code>captionLabel</code> attachment that is attached as <code>middleLabel</code> is positioned at the middle point of the path of the leader line.<br>If a length in pixels is specified for <code>lineOffset</code> option, the attachment is positioned at the offset point from the middle point of the path. The length is distance along the path, a negative value makes it become close to the element as <a href="#start-end"><code>start</code></a> option.</p>
+
+<!-- include "ex-550.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-550-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-550-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+  <input id="ex-550-range" type="range" min="-100" max="100" value="0" style="position: absolute; left: 0; top: 70px; width: 160px;">
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var range = document.getElementById('ex-550-range'),
+    line = new LeaderLine(document.getElementById('ex-550-0'), document.getElementById('ex-550-1'));
+
+  function update() {
+    var value = +range.value;
+    line.middleLabel = LeaderLine.captionLabel('lineOffset: ' + value, {color: 'blue', lineOffset: value});
+  }
+
+  range.addEventListener('input', update, false);
+  range.addEventListener('change', update, false); // for Trident
+
+  update();
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-550.html" -->
+
+<h4 id="color"><code>color</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <a href="#options-color"><code>color</code></a> of current attached leader line (synchronously)</p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of the text.<br>By default, a value of <a href="#options-color"><code>color</code></a> option of the current attached leader line is set synchronously (i.e. it is changed when <code>color</code> of the leader line was changed).</p>
+
+<h4 id="attachments-captionlabel-outlinecolor"><code>outlineColor</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;#fff&#39;</code></p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of an outline of the text.<br>The outline makes the text avoid seeming to blend with a background.<br>If <code>&#39;&#39;</code> is specified, the outline is not drawn. It is better than specifying <code>&#39;rgba(0, 0, 0, 0)&#39;</code>.</p>
+
+<!-- include "ex-560.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px; background-image: url(img/ex-560.jpg)">
+  <div id="ex-560-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-560-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-560-0'),
+    document.getElementById('ex-560-1'),
+    {
+      startLabel: LeaderLine.captionLabel('Blue Text',
+        {fontSize: '32px', offset: [0, 24], color: 'blue'}),
+      endLabel: LeaderLine.captionLabel('White Text',
+        {fontSize: '32px', offset: [-124, -72], color: 'white', outlineColor: 'blue'})
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-560.html" -->
+
+<h4 id="attachments-captionlabel-other-style-properties">Other Style Properties</h4>
+
+<p>You can specify the following CSS properties also:</p>
+
+<ul>
+<li><code>fontFamily</code></li>
+<li><code>fontStyle</code></li>
+<li><code>fontVariant</code></li>
+<li><code>fontWeight</code></li>
+<li><code>fontStretch</code></li>
+<li><code>fontSize</code></li>
+<li><code>fontSizeAdjust</code></li>
+<li><code>kerning</code></li>
+<li><code>letterSpacing</code></li>
+<li><code>wordSpacing</code></li>
+<li><code>textDecoration</code></li>
+</ul>
+
+<p>Note that some properties might not be supported by some web browsers, LeaderLine doesn&#39;t care for those.</p>
+
+<h3 id="pathlabel"><code>pathLabel</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span>
+</code></pre></div>
+<p>Or</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">(</span><span class="nx">text</span><span class="p">[,</span> <span class="nx">options</span><span class="p">])</span>
+</code></pre></div>
+<p>An attachment that is specified instead of a string for the <a href="#startlabel-middlelabel-endlabel"><code>startLabel</code>, <code>middleLabel</code> or <code>endLabel</code></a> option of the leader line, for showing a label along the path of the leader line.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">endElement</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">startLabel</span><span class="o">:</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">(</span><span class="s1">&#39;START&#39;</span><span class="p">),</span>
+  <span class="nx">middleLabel</span><span class="o">:</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">(</span><span class="s1">&#39;MIDDLE&#39;</span><span class="p">),</span>
+  <span class="nx">endLabel</span><span class="o">:</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">(</span><span class="s1">&#39;END&#39;</span><span class="p">)</span>
+<span class="p">});</span>
+</code></pre></div>
+<!-- include "ex-570.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-570-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-570-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-570-0'),
+    document.getElementById('ex-570-1'),
+    {
+      startLabel: LeaderLine.pathLabel('START'),
+      middleLabel: LeaderLine.pathLabel('MIDDLE'),
+      endLabel: LeaderLine.pathLabel('END')
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-570.html" -->
+
+<p>The <code>options</code> argument is an Object that can have properties as options that are described later.</p>
+
+<p>The <code>text</code> argument is shortcut to <code>options.text</code>. The following two codes work same.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">({</span><span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;LABEL-1&#39;</span><span class="p">});</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">({</span><span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;LABEL-2&#39;</span><span class="p">,</span> <span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">attachment1</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">(</span><span class="s1">&#39;LABEL-1&#39;</span><span class="p">);</span>
+<span class="nx">attachment2</span> <span class="o">=</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pathLabel</span><span class="p">(</span><span class="s1">&#39;LABEL-2&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;red&#39;</span><span class="p">});</span>
+</code></pre></div>
+<p>This attachment can <em>not</em> be shared between multiple leader lines. See <a href="#captionlabel"><code>captionLabel</code></a> attachment for the sharing and the life cycle.</p>
+
+<h4 id="text"><code>text</code></h4>
+
+<p><em>Type:</em> string  </p>
+
+<p>A string that is shown as a label.</p>
+
+<h4 id="attachments-pathlabel-lineoffset"><code>lineOffset</code></h4>
+
+<p><em>Type:</em> number<br><em>Default:</em> <code>0</code></p>
+
+<p>By default, a <code>pathLabel</code> attachment that is attached as <code>startLabel</code> is positioned near the element as <a href="#start-end"><code>start</code></a> option. In like manner, attached one as <code>endLabel</code> is positioned near the element as <code>end</code> option. And attached one as <code>middleLabel</code> is positioned at the middle point of the path of the leader line.<br>If a length in pixels is specified for <code>lineOffset</code> option, the attachment is positioned at the offset point from the position above. The length is distance along the path, a negative value makes it become close to the element as <code>start</code> option.</p>
+
+<!-- include "ex-580.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px;">
+  <div id="ex-580-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-580-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+  <input id="ex-580-range" type="range" min="-100" max="100" value="0" style="position: absolute; left: 0; top: 70px; width: 160px;">
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var range = document.getElementById('ex-580-range'),
+    line = new LeaderLine(document.getElementById('ex-580-0'), document.getElementById('ex-580-1'));
+
+  function update() {
+    var value = +range.value;
+    line.middleLabel = LeaderLine.pathLabel('lineOffset: ' + value, {color: 'blue', lineOffset: value});
+  }
+
+  range.addEventListener('input', update, false);
+  range.addEventListener('change', update, false); // for Trident
+
+  update();
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-580.html" -->
+
+<h4 id="color"><code>color</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <a href="#options-color"><code>color</code></a> of current attached leader line (synchronously)</p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of the text.<br>By default, a value of <a href="#options-color"><code>color</code></a> option of the current attached leader line is set synchronously (i.e. it is changed when <code>color</code> of the leader line was changed).</p>
+
+<h4 id="attachments-pathlabel-outlinecolor"><code>outlineColor</code></h4>
+
+<p><em>Type:</em> string<br><em>Default:</em> <code>&#39;#fff&#39;</code></p>
+
+<p>A color (see <a href="#color-value">Color Value</a>) of an outline of the text.<br>The outline makes the text avoid seeming to blend with a background.<br>If <code>&#39;&#39;</code> is specified, the outline is not drawn. It is better than specifying <code>&#39;rgba(0, 0, 0, 0)&#39;</code>.</p>
+
+<!-- include "ex-590.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 400px; height: 100px; background-image: url(img/ex-560.jpg)">
+  <div id="ex-590-0" class="anchor40" style="left: 0; top: 0;"></div>
+  <div id="ex-590-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    document.getElementById('ex-590-0'),
+    document.getElementById('ex-590-1'),
+    {
+      startLabel: LeaderLine.pathLabel('Blue Text',
+        {fontSize: '32px', color: 'blue'}),
+      endLabel: LeaderLine.pathLabel('White Text',
+        {fontSize: '32px', color: 'white', outlineColor: 'blue'})
+    }
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-590.html" -->
+
+<h4 id="other-style-properties">Other Style Properties</h4>
+
+<p>See the <a href="#attachments-captionlabel-other-style-properties">option of <code>captionLabel</code></a>.</p>
+
+<h2 id="animation-options">Animation Options</h2>
+
+<h3 id="duration"><code>duration</code></h3>
+
+<p><em>Type:</em> number</p>
+
+<p>A number determining how long the animation will run.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="s1">&#39;draw&#39;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">animOptions</span><span class="o">:</span> <span class="p">{</span>
+      <span class="nx">duration</span><span class="o">:</span> <span class="mi">3000</span>
+    <span class="p">}</span>
+  <span class="p">}),</span>
+  <span class="nx">endElement</span>
+<span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-600.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 600px; height: 100px;">
+  <div id="ex-600-0" class="anchor-text" style="left: 0; top: 0;">Move mouse here</div>
+  <div id="ex-600-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-600-0'), 'draw',
+      {animOptions: {duration: 3000}}),
+    document.getElementById('ex-600-1')
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-600.html" -->
+
+<h3 id="timing"><code>timing</code></h3>
+
+<p><em>Type:</em> Array or string</p>
+
+<p>An Array that is <code>[x1, y1, x2, y2]</code> as a &quot;timing function&quot; that indicates how to change the speed. It works same as that of <a href="https://developer.mozilla.org/en/docs/Web/CSS/timing-function">CSS animation</a>.</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span>
+  <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">mouseHoverAnchor</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="s1">&#39;draw&#39;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">animOptions</span><span class="o">:</span> <span class="p">{</span>
+      <span class="nx">duration</span><span class="o">:</span> <span class="mi">3000</span><span class="p">,</span>
+      <span class="nx">timing</span><span class="o">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.42</span><span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">}),</span>
+  <span class="nx">endElement</span>
+<span class="p">);</span>
+</code></pre></div>
+<!-- include "ex-610.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 600px; height: 100px;">
+  <div id="ex-610-0" class="anchor-text" style="left: 0; top: 0;">Move mouse here</div>
+  <div id="ex-610-1" class="anchor40" style="right: 0; bottom: 0;"></div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new LeaderLine(
+    LeaderLine.mouseHoverAnchor(document.getElementById('ex-610-0'), 'draw',
+      {animOptions: {duration: 3000, timing: [0.5, 0, 1, 0.42]}}),
+    document.getElementById('ex-610-1')
+  );
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-610.html" -->
+
+<p>You can specify one of the following keywords also. These values mean <a href="https://developer.mozilla.org/en/docs/Web/CSS/timing-function#Keywords_for_common_timing-functions">keywords for common timing functions</a>.</p>
+
+<ul>
+<li><code>ease</code></li>
+<li><code>linear</code></li>
+<li><code>ease-in</code></li>
+<li><code>ease-out</code></li>
+<li><code>ease-in-out</code></li>
+</ul>
+
+<!-- include "ex-620.html" -->
+<!-- ================ ex -->
+<div class="stage" style="width: 600px; height: 200px;">
+  <button id="ex-620-show" style="width: 100px; min-width: 0;">show</button>
+  <div id="ex-620-1" class="anchor-text" style="width: 110px; left: 105px; top: 0;">ease</div>
+  <div id="ex-620-2" class="anchor-text" style="width: 110px; left: 105px; top: 40px;">linear</div>
+  <div id="ex-620-3" class="anchor-text" style="width: 110px; left: 105px; top: 80px;">ease-in</div>
+  <div id="ex-620-4" class="anchor-text" style="width: 110px; left: 105px; top: 120px;">ease-out</div>
+  <div id="ex-620-5" class="anchor-text" style="width: 110px; left: 105px; top: 160px;">ease-in-out</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var lines = [
+      ['ex-620-1', 'ease'],
+      ['ex-620-2', 'linear'],
+      ['ex-620-3', 'ease-in'],
+      ['ex-620-4', 'ease-out'],
+      ['ex-620-5', 'ease-in-out']
+    ].map(function(idTiming) {
+      var element = document.getElementById(idTiming[0]),
+        timing = idTiming[1];
+      return (new LeaderLine(element, LeaderLine.pointAnchor(element, {x: 480}), {hide: true}))
+        .hide('draw', {duration: 2000, timing: timing});
+    }),
+    shown = false;
+
+  document.getElementById('ex-620-show').addEventListener('click', function(event) {
+    shown = !shown;
+    lines.forEach(function(line) { line[shown ? 'show' : 'hide'](); });
+    event.target.textContent = shown ? 'hide' : 'show';
+  }, false);
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-620.html" -->
+
+<h2 id="color-value">Color Value</h2>
+
+<p>CSS color notations are accepted. A value might contain an alpha channel that specifies the transparency.<br>For example, <code>hsl(200, 70%, 58%)</code>, <code>rgba(73, 172, 223, 0.5)</code>, <code>#49acdf</code>, <code>skyblue</code>, etc. Some web browsers support <code>hwb()</code>, <code>device-cmyk()</code> and <code>gray()</code> also.</p>
+
+<hr>
+
+<p>Thanks for images: <a href="http://brainandstorm.com/">Brain &amp; Storm</a>, <a href="https://pixabay.com/users/MichaelGaida-652234/">Michael Gaida</a>, <a href="http://www.cgvector.com/">CGvector</a></p>
+
+  </main>
+  <footer>
+    <p class="copyright">LeaderLine maintained by <a href="https://github.com/anseki">anseki</a></p>
+  </footer>
+  <script src="js/in-view.min.js"></script>
+
+</body>
+</html>
