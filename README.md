@@ -2,6 +2,8 @@
 
 Draw a leader line in your web page.
 
+**<a href="http://anseki.github.io/leader-line/">Document and Examples http://anseki.github.io/leader-line/</a>**
+
 ```html
 <div id="start">start</div>
 <div id="end">end</div>
@@ -15,25 +17,26 @@ new LeaderLine(
 );
 ```
 
-ex-010
+[![ex-010](img/ex-010.png)](http://anseki.github.io/leader-line/)
 
 It supports options to customize.
 
-ex-020
+[![ex-020](img/ex-020.gif)](http://anseki.github.io/leader-line/)
 
 Basically, it can indicate HTML/SVG elements such as `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, etc.
 
-ex-021
+[![ex-021](img/ex-021.png)](http://anseki.github.io/leader-line/)
 
 It can indicate a part of an element also instead of the element.
 
-ex-030
-ex-031
+[![ex-030](img/ex-030.png)](http://anseki.github.io/leader-line/)
+
+[![ex-031](img/ex-031.png)](http://anseki.github.io/leader-line/)
 
 Also, it can indicate an element of another library.  
 For example, the following uses LeaderLine with [D3.js](https://d3js.org/). Move the mouse on the list.
 
-ex-040
+[![ex-040](img/ex-040.gif)](http://anseki.github.io/leader-line/)
 
 ## Usage
 
@@ -52,7 +55,7 @@ new LeaderLine(
 );
 ```
 
-ex-050
+[![ex-050](img/ex-050.png)](http://anseki.github.io/leader-line/)
 
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`). (See [`start` and `end`](#start-end) option.)
 
@@ -66,7 +69,7 @@ var startElement = document.getElementById('element-1'),
 new LeaderLine(startElement, endElement, {color: 'red', size: 8});
 ```
 
-ex-060
+[![ex-060](img/ex-060.png)](http://anseki.github.io/leader-line/)
 
 Also, the options can be accessed via properties of the instance (readable and writable).
 
@@ -88,7 +91,7 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-070
+[![ex-070](img/ex-070.png)](http://anseki.github.io/leader-line/)
 
 You can add effects to the leader line via some options.
 
@@ -103,7 +106,7 @@ new LeaderLine(element4, element5, {dropShadow: true});
 new LeaderLine(element5, element6, {dash: true});
 ```
 
-ex-080
+[![ex-080](img/ex-080.gif)](http://anseki.github.io/leader-line/)
 
 You can change symbols that are shown at the end of the leader line via [`startPlug` and `endPlug`](#startplug-endplug) options.
 
@@ -114,7 +117,7 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-090
+[![ex-090](img/ex-090.png)](http://anseki.github.io/leader-line/)
 
 You can indicate a point or area of an element instead of the element via [`pointAnchor`](#pointanchor) or [`areaAnchor`](#areaanchor) attachment. You can indicate a point or area of the document also.
 
@@ -142,7 +145,7 @@ new LeaderLine(
 );
 ```
 
-ex-100
+[![ex-100](img/ex-100.png)](http://anseki.github.io/leader-line/)
 
 You can show and hide the leader line with effects by [`show` and `hide`](#show-hide) methods.  
 [`mouseHoverAnchor`](#mousehoveranchor) attachment allows it to implement showing and hiding with mouse moving, easily.
@@ -151,7 +154,7 @@ You can show and hide the leader line with effects by [`show` and `hide`](#show-
 new LeaderLine(LeaderLine.mouseHoverAnchor(startElement), endElement);
 ```
 
-ex-110
+[![ex-110](img/ex-110.gif)](http://anseki.github.io/leader-line/)
 
 For more details, refer to the following.
 
@@ -194,8 +197,6 @@ downButton.addEventListener('click', function() {
   if (line.size > 4) { line.size--; }
 }, false);
 ```
-
-ex-120
 
 If you want to set multiple options after it was constructed, using [`setOptions`](#setoptions) method instead of the properties may give better performance.
 
@@ -255,8 +256,6 @@ Default `animOptions`: `{duration: 300, timing: 'linear'}`
 - `draw`  
 Default `animOptions`: `{duration: 500, timing: [0.58, 0, 0.42, 1]}`
 
-ex-130
-
 #### <a name="methods-show-hide-animoptions"></a>`animOptions`
 
 *Type:* Object  
@@ -280,8 +279,6 @@ scrollableBox.addEventListener('scroll', AnimEvent.add(function() {
 ```
 
 (The code above uses [AnimEvent](https://github.com/anseki/anim-event) for a better performance.)
-
-ex-140
 
 If you want to disable the fixing the position automatically, set `LeaderLine.positionByWindowResize` to `false`.
 
@@ -309,8 +306,6 @@ line.end = document.getElementById('end-element');
 
 Any element that has bounding-box is accepted. For example, `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, and also, elements in another window (i.e. `<iframe>`).
 
-ex-150
-
 Note: if you want to handle elements in another window regardless of LeaderLine, you should understand about security.
 
 Or you can specify an [attachment](#attachments) instead of HTML/SVG element to indicate something.
@@ -326,8 +321,6 @@ A color (see [Color Value](#color-value)) of the leader line.
 line.color = 'rgba(30, 130, 250, 0.5)';
 ```
 
-ex-160
-
 ### <a name="options-size"></a>`size`
 
 *Type:* number  
@@ -338,8 +331,6 @@ The width of the leader line, in pixels.
 ```js
 line.size = 20;
 ```
-
-ex-170
 
 ### `path`
 
@@ -354,7 +345,7 @@ One of the following keywords to indicate how to draw the line:
 - `magnet`
 - `grid`
 
-ex-180
+[![ex-180](img/ex-180.png)](http://anseki.github.io/leader-line/)
 
 ### `startSocket`, `endSocket`
 
@@ -367,11 +358,7 @@ The string to indicate which side of the element the leader line connects. It ca
 line.setOptions({startSocket: 'bottom', endSocket: 'top'});
 ```
 
-ex-190
-
 If `'auto'` (default) is specified, the closest side is chosen automatically.
-
-ex-191
 
 ### `startSocketGravity`, `endSocketGravity`
 
@@ -386,8 +373,6 @@ If a number is specified, the leader line is pulled in the direction of the sock
 line.startSocketGravity = 400;
 ```
 
-ex-200
-
 If an Array that is coordinates `[x, y]` is specified, the leader line is pulled in the direction of the coordinates. The distance between the coordinates and `[0, 0]` is pull strength.  
 For example, if `[50, -100]` is specified, it is pulled in the direction of the rightward and upward (The strength in the Y axis direction is larger than the X axis direction). If `[-50, 0]` is specified, it is pulled in the direction of the leftward (no strength in the Y axis direction).
 
@@ -399,8 +384,6 @@ line.setOptions({
   endSocketGravity: [-192, -172]
 });
 ```
-
-ex-210
 
 If `'auto'` (default) is specified, it is adjusted to gravity suitable for current [`path`](#path) option automatically.
 
@@ -430,7 +413,7 @@ One of the following keywords to indicate type of plug (symbol that is shown at 
 [`startPlugOutline`/`endPlugOutline`](#startplugoutline-endplugoutline) option is ignored  
 [`startPlugColor`/`endPlugColor`](#startplugcolor-endplugcolor) option is ignored
 
-ex-220
+[![ex-220](img/ex-220.png)](http://anseki.github.io/leader-line/)
 
 ### `startPlugColor`, `endPlugColor`
 
@@ -455,8 +438,6 @@ lineB.setOptions({ // element-3, element-4
   endPlugColor: 'rgba(241, 76, 129, 0.5)' // translucent
 });
 ```
-
-ex-230
 
 If `'auto'` (default) is specified, a value of `color` option is set synchronously (i.e. it is changed when `color` was changed).
 
@@ -488,8 +469,6 @@ new LeaderLine(element3, element4, {
 });
 ```
 
-ex-240
-
 ### `outline`
 
 *Type:* boolean  
@@ -500,8 +479,6 @@ If `true` is specified, an outline of the leader line is enabled.
 ```js
 line.outline = true;
 ```
-
-ex-250
 
 ### `outlineColor`
 
@@ -535,8 +512,6 @@ lineD.setOptions({ // element-7, element-8
 });
 ```
 
-ex-260
-
 ### `outlineSize`
 
 *Type:* number  
@@ -561,8 +536,6 @@ lineB.setOptions({ // element-3, element-4
 });
 ```
 
-ex-270
-
 ### `startPlugOutline`, `endPlugOutline`
 
 *Type:* boolean  
@@ -575,8 +548,6 @@ If `true` is specified, an outline of the plug is enabled.
 ```js
 line.endPlugOutline = true;
 ```
-
-ex-280
 
 ### `startPlugOutlineColor`, `endPlugOutlineColor`
 
@@ -603,8 +574,6 @@ lineB.setOptions({ // element-3, element-4
   endPlugOutlineColor: 'rgba(30, 130, 250, 0.5)' // translucent
 });
 ```
-
-ex-290
 
 If `'auto'` (default) is specified, a value of [`outlineColor`](#outlinecolor) option is set synchronously (i.e. it is changed when `outlineColor` was changed).
 
@@ -638,8 +607,6 @@ lineB.setOptions({ // element-3, element-4
 });
 ```
 
-ex-300
-
 ### `startLabel`, `middleLabel`, `endLabel`
 
 *Type:* string or [Attachment](#attachments)  
@@ -655,8 +622,6 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-310
-
 Or you can specify an [attachment](#attachments) instead of a string.
 
 ### <a name="options-dash"></a>`dash` (effect)
@@ -670,8 +635,6 @@ Or `true` to enable it with all default options.
 ```js
 new LeaderLine(startElement, endElement, {dash: true});
 ```
-
-ex-320
 
 #### `len`, `gap`
 
@@ -697,8 +660,6 @@ new LeaderLine(element3, element4, {
 });
 ```
 
-ex-330
-
 #### `animation`
 
 *Type:* boolean or Object  
@@ -713,8 +674,6 @@ Default Animation Options: `{duration: 1000, timing: 'linear'}`
 new LeaderLine(startElement, endElement, {dash: {animation: true}});
 ```
 
-ex-340
-
 ### `gradient` (effect)
 
 *Type:* boolean or Object  
@@ -726,8 +685,6 @@ Or `true` to enable it with all default options.
 ```js
 new LeaderLine(startElement, endElement, {startPlugColor: '#a6f41d', gradient: true});
 ```
-
-ex-350
 
 #### `startColor`, `endColor`
 
@@ -754,11 +711,7 @@ lineB.setOptions({ // element-3, element-4
 });
 ```
 
-ex-360
-
 Since the gradient is made from only two colors, it might be not beautiful.
-
-ex-361
 
 ### `dropShadow` (effect)
 
@@ -771,8 +724,6 @@ Or `true` to enable it with all default options.
 ```js
 new LeaderLine(startElement, endElement, {dropShadow: true});
 ```
-
-ex-370
 
 #### `dx`, `dy`
 
@@ -787,8 +738,6 @@ line.setOptions({
   dropShadow: {dx: 0, dy: 3}
 });
 ```
-
-ex-380
 
 #### `blur`
 
@@ -807,8 +756,6 @@ line.setOptions({
 });
 ```
 
-ex-390
-
 #### <a name="options-dropshadow-color"></a>`color`
 
 *Type:* string  
@@ -820,8 +767,6 @@ An alpha channel can be contained but [`opacity`](#opacity) option should be use
 ```js
 new LeaderLine(startElement, endElement, {dropShadow: {color: 'blue', dx: 0, dy: 0}});
 ```
-
-ex-400
 
 #### `opacity`
 
@@ -870,8 +815,6 @@ An attachment that is specified instead of an element for the [`start` or `end`]
 new LeaderLine(startElement, LeaderLine.pointAnchor(endElement));
 ```
 
-ex-410
-
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `element` argument is shortcut to `options.element`. The following two codes work same.
@@ -892,8 +835,6 @@ This attachment can be shared between multiple leader lines.
 // A new attachment instance is shared between `line1` and `line2`.
 line1.end = line2.end = LeaderLine.pointAnchor(endElement);
 ```
-
-ex-420
 
 ```js
 line1.end = LeaderLine.pointAnchor(endElement);
@@ -927,8 +868,6 @@ new LeaderLine(element1, LeaderLine.pointAnchor(element3, {x: 10, y: 30}));
 new LeaderLine(element2, LeaderLine.pointAnchor(element3, {x: '100%', y: 0}));
 ```
 
-ex-430
-
 ### `areaAnchor`
 
 ```js
@@ -946,8 +885,6 @@ An attachment that is specified instead of an element for the [`start` or `end`]
 ```js
 new LeaderLine(startElement, LeaderLine.areaAnchor(endElement));
 ```
-
-ex-440
 
 The `options` argument is an Object that can have properties as options that are described later.
 
@@ -987,7 +924,7 @@ One of the following keywords to indicate the shape of the area:
 - `circle`
 - `polygon`
 
-ex-450
+[![ex-450](img/ex-450.png)](http://anseki.github.io/leader-line/)
 
 #### <a name="attachments-areaanchor-x-y"></a>`x`, `y`
 
@@ -1026,8 +963,6 @@ new LeaderLine(startElement,
     {x: '20%', y: '20%', width: '60%', height: '60%', radius: 10}));
 ```
 
-ex-460
-
 #### `points`
 
 *Type:* Array  
@@ -1042,8 +977,6 @@ new LeaderLine(startElement,
   LeaderLine.areaAnchor(endElement,
     {shape: 'polygon', points: [[10, 15], ['90%', '70%'], [10, '80%']]}));
 ```
-
-ex-470
 
 #### <a name="attachments-areaanchor-color"></a>`color`
 
@@ -1067,8 +1000,6 @@ new LeaderLine(startElement,
     {x: 14, y: 20, width: 42, height: 60, radius: 10, fillColor: '#f8cd1e'}));
 ```
 
-ex-480
-
 #### <a name="attachments-areaanchor-size"></a>`size`
 
 *Type:* number  
@@ -1080,10 +1011,9 @@ If `0` is specified, the border is not drawn.
 ```js
 new LeaderLine(startElement,
   LeaderLine.areaAnchor(endElement,
-    {shape: 'polygon', points: [[10, 15], [63, 70], [10, 80]], fillColor: '#f8cd1e', size: 0}));
+    {shape: 'polygon', points: [[10, 15], [63, 70], [10, 80]],
+      fillColor: '#f8cd1e', size: 0}));
 ```
-
-ex-490
 
 #### <a name="attachments-areaanchor-dash"></a>`dash`
 
@@ -1098,8 +1028,6 @@ new LeaderLine(startElement,
   LeaderLine.areaAnchor(endElement,
     {x: 14, y: 20, width: 42, height: 60, radius: 8, dash: true}));
 ```
-
-ex-500
 
 ##### `len`, `gap`
 
@@ -1128,8 +1056,6 @@ And also, it includes a polyfill for `mouseenter` and `mouseleave` events that a
 ```js
 new LeaderLine(LeaderLine.mouseHoverAnchor(startElement), endElement);
 ```
-
-ex-510
 
 This is an attachment to provide a convenient way to do the behavior above. If you want more style or more custom behavior, you will use [`show`/`hide`](#show-hide) methods and your CSS code instead of this attachment.
 
@@ -1170,8 +1096,6 @@ A value that is passed to [`show`/`hide`](#show-hide) methods as its `showEffect
 ```js
 new LeaderLine(LeaderLine.mouseHoverAnchor(startElement, 'draw'), endElement);
 ```
-
-ex-520
 
 #### `animOptions`
 
@@ -1224,8 +1148,6 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-530
-
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `text` argument is shortcut to `options.text`. The following two codes work same.
@@ -1273,8 +1195,6 @@ A string that is shown as a label.
 
 By default, a `captionLabel` attachment that is attached as `startLabel` is positioned near the socket (i.e. connecting point) that is decided by [`startSocket`](#startsocket-endsocket) option of the leader line. In like manner, attached one as `endLabel` is positioned near the socket that is decided by `endSocket` option. Those are calculated with the size of the leader line, the font size of the label, etc.
 
-ex-540
-
 If an Array that is `[x, y]` in pixels is specified for `offset` option, the attachment is positioned at the specified coordinates relative to the decided socket.
 
 ```js
@@ -1283,8 +1203,6 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-541
-
 #### <a name="attachments-captionlabel-lineoffset"></a>`lineOffset`
 
 *Type:* number  
@@ -1292,8 +1210,6 @@ ex-541
 
 By default, a `captionLabel` attachment that is attached as `middleLabel` is positioned at the middle point of the path of the leader line.  
 If a length in pixels is specified for `lineOffset` option, the attachment is positioned at the offset point from the middle point of the path. The length is distance along the path, a negative value makes it become close to the element as [`start`](#start-end) option.
-
-ex-550
 
 #### `color`
 
@@ -1311,8 +1227,6 @@ By default, a value of [`color`](#options-color) option of the current attached 
 A color (see [Color Value](#color-value)) of an outline of the text.  
 The outline makes the text avoid seeming to blend with a background.  
 If `''` is specified, the outline is not drawn. It is better than specifying `'rgba(0, 0, 0, 0)'`.
-
-ex-560
 
 #### <a name="attachments-captionlabel-other-style-properties"></a>Other Style Properties
 
@@ -1354,8 +1268,6 @@ new LeaderLine(startElement, endElement, {
 });
 ```
 
-ex-570
-
 The `options` argument is an Object that can have properties as options that are described later.
 
 The `text` argument is shortcut to `options.text`. The following two codes work same.
@@ -1386,8 +1298,6 @@ A string that is shown as a label.
 By default, a `pathLabel` attachment that is attached as `startLabel` is positioned near the element as [`start`](#start-end) option. In like manner, attached one as `endLabel` is positioned near the element as `end` option. And attached one as `middleLabel` is positioned at the middle point of the path of the leader line.  
 If a length in pixels is specified for `lineOffset` option, the attachment is positioned at the offset point from the position above. The length is distance along the path, a negative value makes it become close to the element as `start` option.
 
-ex-580
-
 #### `color`
 
 *Type:* string  
@@ -1404,8 +1314,6 @@ By default, a value of [`color`](#options-color) option of the current attached 
 A color (see [Color Value](#color-value)) of an outline of the text.  
 The outline makes the text avoid seeming to blend with a background.  
 If `''` is specified, the outline is not drawn. It is better than specifying `'rgba(0, 0, 0, 0)'`.
-
-ex-590
 
 #### Other Style Properties
 
@@ -1430,8 +1338,6 @@ new LeaderLine(
 );
 ```
 
-ex-600
-
 ### `timing`
 
 *Type:* Array or string
@@ -1450,8 +1356,6 @@ new LeaderLine(
 );
 ```
 
-ex-610
-
 You can specify one of the following keywords also. These values mean [keywords for common timing functions](https://developer.mozilla.org/en/docs/Web/CSS/timing-function#Keywords_for_common_timing-functions).
 
 - `ease`
@@ -1460,9 +1364,11 @@ You can specify one of the following keywords also. These values mean [keywords 
 - `ease-out`
 - `ease-in-out`
 
-ex-620
-
 ## Color Value
 
 CSS color notations are accepted. A value might contain an alpha channel that specifies the transparency.  
 For example, `hsl(200, 70%, 58%)`, `rgba(73, 172, 223, 0.5)`, `#49acdf`, `skyblue`, etc. Some web browsers support `hwb()`, `device-cmyk()` and `gray()` also.
+
+---
+
+Thanks for images: [Brain & Storm](http://brainandstorm.com/), [Michael Gaida](https://pixabay.com/users/MichaelGaida-652234/), [CGvector](http://www.cgvector.com/)
