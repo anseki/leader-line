@@ -1,0 +1,72 @@
+/* line 4, leader-line.scss */
+.leader-line {
+  position: absolute;
+  overflow: visible !important;
+  pointer-events: none !important;
+  font-size: 16px;
+}
+
+/* line 11, leader-line.scss */
+#leader-line-defs {
+  width: 0;
+  height: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* line 19, leader-line.scss */
+.leader-line-line-path {
+  fill: none;
+}
+
+/* line 23, leader-line.scss */
+.leader-line-mask-bg-rect {
+  fill: white;
+}
+
+/* line 27, leader-line.scss */
+.leader-line-caps-mask-anchor,
+.leader-line-caps-mask-marker-shape {
+  fill: black;
+}
+
+/* line 32, leader-line.scss */
+.leader-line-caps-mask-anchor {
+  stroke: black;
+}
+
+/* line 37, leader-line.scss */
+.leader-line-caps-mask-line,
+.leader-line-plugs-face {
+  stroke: transparent;
+  /* `transparent` might not be supported */
+}
+
+/* line 43, leader-line.scss */
+.leader-line-line-mask-shape {
+  stroke: white;
+}
+
+/* line 47, leader-line.scss */
+.leader-line-line-outline-mask-shape {
+  stroke: black;
+}
+
+/* line 51, leader-line.scss */
+.leader-line-plug-mask-shape {
+  fill: white;
+  stroke: black;
+}
+
+/* line 56, leader-line.scss */
+.leader-line-plug-outline-mask-shape {
+  fill: black;
+  stroke: white;
+}
+
+/* line 61, leader-line.scss */
+.leader-line-areaAnchor {
+  position: absolute;
+  overflow: visible !important;
+}
