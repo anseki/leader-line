@@ -1,0 +1,44 @@
+function(socketGravitySE) {
+            var cx = [], cy = [];
+            curSocketXYSE.forEach(function(socketXY, i) {
+              var gravity = socketGravitySE[i], offset, anotherSocketXY, overhead, minGravity, len;
+              if (Array.isArray(gravity)) { // offset
+                offset = {x: gravity[0], y: gravity[1]};
+              } else if (typeof gravity === 'number') { // distance
+                offset =
+                  socketXY.socketId === SOCKET_TOP ? {x: 0, y: -gravity} :
+                  socketXY.socketId === SOCKET_RIGHT ? {x: gravity, y: 0} :
+                  socketXY.socketId === SOCKET_BOTTOM ? {x: 0, y: gravity} :
+                                      /* SOCKET_LEFT */ {x: -gravity, y: 0};
+              } else { // auto
+                anotherSocketXY = curSocketXYSE[i ? 0 : 1];
+                overhead = curStats.position_plugOverheadSE[i];
+                minGravity = overhead > 0 ?
+                  MIN_OH_GRAVITY + (overhead > MIN_OH_GRAVITY_OH ?
+                    (overhead - MIN_OH_GRAVITY_OH) * MIN_OH_GRAVITY_R : 0) :
+                  MIN_GRAVITY + (curStats.position_lineStrokeWidth > MIN_GRAVITY_SIZE ?
+                    (curStats.position_lineStrokeWidth - MIN_GRAVITY_SIZE) * MIN_GRAVITY_R : 0);
+                if (socketXY.socketId === SOCKET_TOP) {
+                  len = (socketXY.y - anotherSocketXY.y) / 2;
+                  if (len < minGravity) { len = minGravity; }
+                  offset = {x: 0, y: -len};
+                } else if (socketXY.socketId === SOCKET_RIGHT) {
+                  len = (anotherSocketXY.x - socketXY.x) / 2;
+                  if (len < minGravity) { len = minGravity; }
+                  offset = {x: len, y: 0};
+                } else if (socketXY.socketId === SOCKET_BOTTOM) {
+                  len = (anotherSocketXY.y - socketXY.y) / 2;
+                  if (len < minGravity) { len = minGravity; }
+                  offset = {x: 0, y: len};
+                } else { // SOCKET_LEFT
+                  len = (socketXY.x - anotherSocketXY.x) / 2;
+                  if (len < minGravity) { len = minGravity; }
+                  offset = {x: -len, y: 0};
+                }
+              }
+              cx[i] = socketXY.x + offset.x;
+              cy[i] = socketXY.y + offset.y;
+            });
+            pathList.push([socketXY2Point(curSocketXYSE[0]),
+              {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(curSocketXYSE[1])]);
+          }
