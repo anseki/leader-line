@@ -2112,7 +2112,7 @@ window.addEventListener('load', function() {
 
 <p>Attachments are passed to the leader line via some options, and those make that option have special behavior.</p>
 
-<p>You can get new attachment instance by individual static methods of <code>LeaderLine</code> (not instance methods).<br>For example, <code>LeaderLine.pointAnchor</code> method makes new <a href="#pointanchor"><code>pointAnchor</code></a> attachment instance. It is attached to the leader line via <a href="#start-end"><code>start</code> or <code>end</code></a> option of the leader line.<br>The following code pass a new <code>pointAnchor</code> attachment instance to <code>LeaderLine</code> constructor, via second argument as <code>end</code> option.</p>
+<p>You can get new attachment instance by individual static methods of <code>LeaderLine</code> (not instance methods).<br>For example, <code>LeaderLine.pointAnchor</code> method makes new <a href="#pointanchor"><code>pointAnchor</code></a> attachment instance. It is attached to the leader line via <a href="#start-end"><code>start</code> or <code>end</code></a> option of the leader line.<br>The following code passes a new <code>pointAnchor</code> attachment instance to <code>LeaderLine</code> constructor, via second argument as <code>end</code> option.</p>
 <div class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span><span class="nx">startElement</span><span class="p">,</span> <span class="nx">LeaderLine</span><span class="p">.</span><span class="nx">pointAnchor</span><span class="p">(</span><span class="nx">endElement</span><span class="p">));</span>
 </code></pre></div>
 <p>In the case of the plan to use the attachment afterward.</p>
