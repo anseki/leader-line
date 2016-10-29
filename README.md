@@ -781,7 +781,7 @@ Attachments are passed to the leader line via some options, and those make that 
 
 You can get new attachment instance by individual static methods of `LeaderLine` (not instance methods).  
 For example, `LeaderLine.pointAnchor` method makes new [`pointAnchor`](#pointanchor) attachment instance. It is attached to the leader line via [`start` or `end`](#start-end) option of the leader line.  
-The following code pass a new `pointAnchor` attachment instance to `LeaderLine` constructor, via second argument as `end` option.
+The following code passes a new `pointAnchor` attachment instance to `LeaderLine` constructor, via second argument as `end` option.
 
 ```js
 new LeaderLine(startElement, LeaderLine.pointAnchor(endElement));
