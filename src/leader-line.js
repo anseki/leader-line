@@ -2,7 +2,7 @@
  * LeaderLine
  * https://github.com/anseki/leader-line
  *
- * Copyright (c) 2016 anseki
+ * Copyright (c) 2017 anseki
  * Licensed under the MIT license.
  */
 
