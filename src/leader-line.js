@@ -2611,7 +2611,7 @@
     [newOptions.startSocketGravity, newOptions.endSocketGravity].forEach(function(newOption, i) {
 
       function matchArray(array1, array2) {
-        return array1.legth === array2.legth &&
+        return array1.length === array2.length &&
           array1.every(function(value1, i) { return value1 === array2[i]; });
       }
 
