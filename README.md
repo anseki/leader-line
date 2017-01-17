@@ -1325,7 +1325,7 @@ See the [option of `captionLabel`](#attachments-captionlabel-other-style-propert
 
 *Type:* number
 
-A number determining how long the animation will run.
+A number determining how long (milliseconds) the animation will run.
 
 ```js
 new LeaderLine(

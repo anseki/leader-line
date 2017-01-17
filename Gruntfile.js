@@ -28,9 +28,11 @@ module.exports = grunt => {
     DEFAULT_LINE_SIZE = 4, // DEFAULT_OPTIONS.lineSize
     DEFINED_VAR = {
       PLUG_BEHIND: 'behind'
-    };
+    },
 
-  var code = {},
+    PKG = require('./package');
+
+  let code = {},
     definedVar = Object.keys(DEFINED_VAR).reduce((definedVar, varName) => {
       definedVar[varName] = `\f${varName}\x07`;
       return definedVar;
@@ -56,8 +58,8 @@ module.exports = grunt => {
       getSvgDefs: {
         options: {
           handlerByContent: content => {
-            let cheerio = require('cheerio');
-            var $ = cheerio.load(content), defsSrc = '',
+            const cheerio = require('cheerio');
+            let $ = cheerio.load(content), defsSrc = '',
               codeSrc = {
                 SYMBOLS: {},
                 PLUG_KEY_2_ID: {behind: definedVar.PLUG_BEHIND},
@@ -65,7 +67,7 @@ module.exports = grunt => {
               }, cssSrc;
 
             function getCode(value) {
-              var matches;
+              let matches;
               return typeof value === 'object' ?
                   `{${Object.keys(value).map(prop => `${prop}:${getCode(value[prop])}`).join(',')}}` :
                 typeof value === 'string' ? (
@@ -75,7 +77,7 @@ module.exports = grunt => {
             }
 
             $('svg').each((i, elm) => {
-              var symbol = $('.symbol', elm), size = $('.size', elm),
+              let symbol = $('.symbol', elm), size = $('.size', elm),
                 id, elmId, props, bBox, noOverhead, outlineBase, outlineMax;
               if (symbol.length && size.length && (id = symbol.attr('id'))) {
 
@@ -85,7 +87,7 @@ module.exports = grunt => {
 
                 codeSrc.SYMBOLS[id] = {elmId: elmId};
                 props.forEach(prop => {
-                  var matches;
+                  let matches;
                   if ((matches = prop.match(/prop\-([^\s]+)/))) {
                     codeSrc.SYMBOLS[id][matches[1]] = true;
                   } else if ((matches = prop.match(/varId\-([^\s]+)/))) {
@@ -148,7 +150,7 @@ module.exports = grunt => {
           handlerByContent: content => {
             content.replace(/@EXPORT\[file:([^\n]+?)\]@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@/g,
               (s, file, content) => {
-                var path = pathUtil.join(SRC_DIR_PATH, file);
+                const path = pathUtil.join(SRC_DIR_PATH, file);
                 grunt.file.write(path, content);
                 grunt.log.writeln(`File "${path}" created.`);
               });
@@ -162,13 +164,14 @@ module.exports = grunt => {
       packJs: {
         options: {
           handlerByContent: content => {
-            var reEXPORT = /^[\s\S]*?@EXPORT@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@[\s\S]*$/;
+            const reEXPORT = /^[\s\S]*?@EXPORT@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@[\s\S]*$/;
             PACK_LIBS.forEach(keyPath => {
               code[keyPath[0]] = fs.readFileSync(pathUtil.join(SRC_DIR_PATH, keyPath[1]), {encoding: 'utf8'})
                 .replace(reEXPORT, '$1');
             });
 
-            return minJs(productSrc(
+            const banner = `/*! ${PKG.title || PKG.name} v${PKG.version} (c) ${PKG.author.name} ${PKG.homepage} */\n`;
+            return banner + minJs(productSrc(
               content.replace(/@INCLUDE\[code:([^\n]+?)\]@/g,
                 (s, codeKey) => {
                   if (typeof code[codeKey] !== 'string') {
