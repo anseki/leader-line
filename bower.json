@@ -14,7 +14,7 @@
     "svg"
   ],
   "main": "leader-line.min.js",
-  "homepage": "http://anseki.github.io/leader-line/",
+  "homepage": "https://anseki.github.io/leader-line/",
   "repository": {
     "type": "git",
     "url": "git://github.com/anseki/leader-line.git"
