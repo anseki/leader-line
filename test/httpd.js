@@ -10,8 +10,6 @@ const
   staticAlias = require('node-static-alias'),
   log4js = require('log4js');
 
-var logger;
-
 log4js.configure({
   appenders: [
     {
@@ -23,7 +21,7 @@ log4js.configure({
     }
   ]
 });
-logger = log4js.getLogger('node-static-alias');
+let logger = log4js.getLogger('node-static-alias');
 logger.setLevel(log4js.levels.INFO);
 
 http.createServer((request, response) => {
@@ -31,16 +29,13 @@ http.createServer((request, response) => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
       alias: [
+        // node_modules
         {
-          match: '/test-page-loader.js',
-          serve: '../node_modules/test-page-loader/test-page-loader.js',
+          match: /^\/(?:jasmine-core|test-page-loader|anim-event)\/.+/,
+          serve: '../node_modules<% reqPath %>',
           allowOutside: true
         },
-        {
-          match: '/anim-event.min.js',
-          serve: '../node_modules/anim-event/anim-event.min.js',
-          allowOutside: true
-        },
+
         {
           match: /^\/src/,
           serve: '..<% reqPath %>',
