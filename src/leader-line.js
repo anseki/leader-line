@@ -215,7 +215,7 @@
         (isObject(b) ? 'obj' : Array.isArray(b) ? 'array' : '') ||
       (
         typeA === 'obj' ?
-          hasChanged((keysA = Object.keys(a)), Object.keys(b)) ||
+          hasChanged((keysA = Object.keys(a).sort()), Object.keys(b).sort()) ||
             keysA.some(function(prop) { return hasChanged(a[prop], b[prop]); }) :
         typeA === 'array' ?
           a.length !== b.length || a.some(function(aVal, i) { return hasChanged(aVal, b[i]); }) :
