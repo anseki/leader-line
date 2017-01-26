@@ -1,6 +1,6 @@
 /*
  * LeaderLine
- * https://github.com/anseki/leader-line
+ * https://anseki.github.io/leader-line/
  *
  * Copyright (c) 2017 anseki
  * Licensed under the MIT license.
