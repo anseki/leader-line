@@ -72,7 +72,7 @@ describe('window resize', function() {
     traceLog.clear();
     document.getElementById('iframe1').style.width = '50%';
     setTimeout(function() {
-      expect(traceLog.getTaggedLog('positionByWindowResize') == null).toEqual(true);
+      expect(traceLog.getTaggedLog('positionByWindowResize') == null).toBe(true);
       expect(pathDataHasChanged(pathData1, window.insProps[ll1._id].linePath.getPathData())).toBe(false);
       expect(pathDataHasChanged(pathData2, window.insProps[ll2._id].linePath.getPathData())).toBe(false);
       expect(pathDataHasChanged(pathData3, window.insProps[ll3._id].linePath.getPathData())).toBe(false);
