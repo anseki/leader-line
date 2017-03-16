@@ -42,7 +42,7 @@ For example, the following uses LeaderLine with [D3.js](https://d3js.org/). Move
 
 ## Usage
 
-Load only a file `leader-line.min.js` into your web page.
+Load LeaderLine into your web page.
 
 ```html
 <script src="leader-line.min.js"></script>

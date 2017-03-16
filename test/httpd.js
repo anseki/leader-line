@@ -28,6 +28,7 @@ http.createServer((request, response) => {
   request.addListener('end', () => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
+      headers: {'Cache-Control': 'no-cache, must-revalidate'},
       alias: [
         // node_modules
         {
