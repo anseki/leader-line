@@ -29,14 +29,14 @@
   "devDependencies": {
     "anim-event": "0.0.2",
     "cheerio": "^0.22.0",
-    "clean-css": "^4.0.9",
+    "clean-css": "^4.0.11",
     "grunt": "^1.0.1",
     "grunt-task-helper": "^0.3.9",
-    "htmlclean": "^2.7.10",
+    "htmlclean": "^3.0.2",
     "jasmine-core": "^2.5.2",
     "log4js": "^1.1.1",
     "node-static-alias": "^1.0.0",
     "test-page-loader": "1.0.1",
-    "uglify-js": "^2.8.12"
+    "uglify-js": "^2.8.21"
   }
 }
