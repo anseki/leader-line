@@ -237,7 +237,7 @@
   /**
    * Parse and get an alpha channel in color notation.
    * @param {string} color - A color notation such as `'rgba(10, 20, 30, 0.6)'`.
-   * @returns {Array} - Alpha channel ([0, 1]) such as `0.6`, and base color. e.g. [0.6, 'rgb(10, 20, 30)']
+   * @returns {Array} Alpha channel ([0, 1]) such as `0.6`, and base color. e.g. [0.6, 'rgb(10, 20, 30)']
    */
   function getAlpha(color) {
     var matches, func, args, alpha = 1, baseColor = (color = (color + '').trim());
@@ -295,7 +295,7 @@
    * @param {Element} element - Target element.
    * @param {Function} enter - Event listener.
    * @param {Function} leave - Event listener.
-   * @returns {Function} remover - Function that removes the added listeners.
+   * @returns {Function} Function that removes the added listeners.
    */
   function mouseEnterLeave(element, enter, leave) {
     var over, out;
@@ -351,7 +351,7 @@
    * Get an element's bounding-box that contains coordinates relative to the element's document or window.
    * @param {Element} element - Target element.
    * @param {boolean} [relWindow] - Whether it's relative to the element's window, or document (i.e. `<html>`).
-   * @returns {(BBox|null)} - A bounding-box or null when failed.
+   * @returns {(BBox|null)} A bounding-box or null when failed.
    */
   function getBBox(element, relWindow) {
     var bBox = {}, rect, prop, doc, win;
@@ -385,7 +385,7 @@
   /**
    * Get distance between an element's bounding-box and its content (`<iframe>` element and its document).
    * @param {Element} element - Target element.
-   * @returns {{left: number, top: number}} - An object has `left` and `top`.
+   * @returns {{left: number, top: number}} An object has `left` and `top`.
    */
   function getContentOffset(element) {
     var styles = element.ownerDocument.defaultView.getComputedStyle(element, '');
@@ -399,7 +399,7 @@
    * Get `<iframe>` elements in path to an element.
    * @param {Element} element - Target element.
    * @param {Window} [baseWindow] - Start searching at this window. This is excluded from result.
-   * @returns {(Element[]|null)} - An array of `<iframe>` elements or null when `baseWindow` was not found in the path.
+   * @returns {(Element[]|null)} An array of `<iframe>` elements or null when `baseWindow` was not found in the path.
    */
   function getFrames(element, baseWindow) {
     var frames = [], curElement = element, doc, win;
@@ -427,7 +427,7 @@
    * Get an element's bounding-box that contains coordinates relative to document of specified window.
    * @param {Element} element - Target element.
    * @param {Window} [baseWindow] - Window that is base of coordinates.
-   * @returns {(BBox|null)} - A bounding-box or null when failed.
+   * @returns {(BBox|null)} A bounding-box or null when failed.
    */
   function getBBoxNest(element, baseWindow) {
     var left = 0, top = 0, bBox, frames;
@@ -457,7 +457,7 @@
    * Get a common ancestor window.
    * @param {Element} elm1 - A contained element.
    * @param {Element} elm2 - A contained element.
-   * @returns {Window} - A common ancestor window.
+   * @returns {Window} A common ancestor window.
    */
   function getCommonWindow(elm1, elm2) {
     var frames1, frames2, commonWindow;
@@ -802,7 +802,7 @@
   /**
    * @param {Document} document - document
    * @param {string} id - id
-   * @returns {Object} - {elmFilter, elmOffset, elmBlur, styleFlood, elmsAppend}
+   * @returns {Object} {elmFilter, elmOffset, elmBlur, styleFlood, elmsAppend}
    */
   function newDropShadow(document, id) {
     var dropShadow = {}, filter, element;
@@ -869,7 +869,7 @@
   /**
    * Get distance between `window` and its `<body>`.
    * @param {Window} window - Target `window`.
-   * @returns {{x: number, y: number}} - Length.
+   * @returns {{x: number, y: number}} Length.
    */
   function getBodyOffset(window) {
     function sumProps(value, addValue) { return (value += parseFloat(addValue)); }
@@ -1124,7 +1124,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updateLine(props) {
     traceLog.add('<updateLine>'); // [DEBUG/]
@@ -1143,7 +1143,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updatePlug(props) {
     traceLog.add('<updatePlug>'); // [DEBUG/]
@@ -1212,7 +1212,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updateLineOutline(props) {
     traceLog.add('<updateLineOutline>'); // [DEBUG/]
@@ -1242,7 +1242,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updatePlugOutline(props) {
     traceLog.add('<updatePlugOutline>'); // [DEBUG/]
@@ -1289,7 +1289,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updateFaces(props) {
     traceLog.add('<updateFaces>'); // [DEBUG/]
@@ -1481,7 +1481,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updatePosition(props) {
     traceLog.add('<updatePosition>'); // [DEBUG/]
@@ -1996,7 +1996,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updatePath(props) {
     traceLog.add('<updatePath>'); // [DEBUG/]
@@ -2045,7 +2045,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updateViewBox(props) {
     traceLog.add('<updateViewBox>'); // [DEBUG/]
@@ -2087,7 +2087,7 @@
 
   /**
    * @param {props} props - `props` of `LeaderLine` instance.
-   * @returns {boolean} - `true` if it was changed.
+   * @returns {boolean} `true` if it was changed.
    */
   function updateMask(props) {
     traceLog.add('<updateMask>'); // [DEBUG/]
@@ -2434,7 +2434,7 @@
    * @param {props} props - `props` of `LeaderLine` instance.
    * @param {attachProps} attachProps - `attachProps` of `LeaderLineAttachment` instance.
    * @param {string} optionName - Name of bound option.
-   * @returns {boolean} - `true` when binding succeeded.
+   * @returns {boolean} `true` when binding succeeded.
    */
   function bindAttachment(props, attachProps, optionName) {
     var bindTarget = {props: props, optionName: optionName};
@@ -3617,7 +3617,7 @@
   /**
    * @param {any} obj - An object to be checked.
    * @param {string} [type] - A required type of LeaderLineAttachment.
-   * @returns {(boolean|null)} - true: Enabled LeaderLineAttachment, false: Not instance, null: Disabled it
+   * @returns {(boolean|null)} true: Enabled LeaderLineAttachment, false: Not instance, null: Disabled it
    */
   isAttachment = function(obj, type) {
     return !(obj instanceof LeaderLineAttachment) ? false :
@@ -4552,7 +4552,7 @@
        * @param {SVGSVGElement} svg - Parent `<svg>` element.
        * @param {string} id - ID for `href`.
        * @param {boolean} [stroke] - Setup for `stroke`.
-       * @returns {Object} - {elmPosition, styleText, styleFill, styleStroke, styleShow, elmsAppend}
+       * @returns {Object} {elmPosition, styleText, styleFill, styleStroke, styleShow, elmsAppend}
        */
       newText: function(text, document, svg, id, stroke) {
         var elmText, elmG, elmDefs, elmUseFill, elmUseStroke, style;
@@ -4975,7 +4975,7 @@
        * @param {Document} document - Document that contains `<svg>`.
        * @param {string} id - ID for `href`.
        * @param {boolean} [stroke] - Setup for `stroke`.
-       * @returns {Object} - {elmPosition, elmPath, elmOffset,
+       * @returns {Object} {elmPosition, elmPath, elmOffset,
        *    styleText, styleFill, styleStroke, styleShow, elmsAppend}
        */
       newText: function(text, document, id, stroke) {

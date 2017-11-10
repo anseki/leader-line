@@ -22,7 +22,7 @@ var polygon2PathList = (function() {
 
   /**
    * @param {VPoint[]} vPoints - All points of polygon.
-   * @returns {Array} - pathList
+   * @returns {Array} pathList
    */
   function polygon2PathList(vPoints) {
     var isAbs;

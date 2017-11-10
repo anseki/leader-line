@@ -6,7 +6,7 @@
    * @param {Array} log - `traceLog.log`.
    * @param {(string|string[])[]} keys - Each key is `'<setOptions>', '<position>'` or
    *    `['<updateLine>', 'lineColor']` to check the sequence.
-   * @returns {boolean} - `true` if all `keys` are contained.
+   * @returns {boolean} `true` if all `keys` are contained.
    */
   function toContainAll(log, keys) {
     var logSeq;
@@ -32,7 +32,7 @@
   /**
    * @param {Array} log - `traceLog.log`.
    * @param {string[]} keys - Each key is `'<setOptions>', '<position>'`.
-   * @returns {boolean} - `true` if all `keys` are not contained.
+   * @returns {boolean} `true` if all `keys` are not contained.
    */
   function toNotContainAny(log, keys) {
     return Array.isArray(log) && Array.isArray(keys) &&
