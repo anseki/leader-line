@@ -10,6 +10,7 @@ module.exports = grunt => {
     htmlclean = require('htmlclean'),
     CleanCSS = require('clean-css'),
     uglify = require('uglify-js'),
+    preProc = require('pre-proc'),
 
     ROOT_PATH = __dirname,
     SRC_DIR_PATH = pathUtil.join(ROOT_PATH, 'src'),
@@ -37,13 +38,6 @@ module.exports = grunt => {
       definedVar[varName] = `\f${varName}\x07`;
       return definedVar;
     }, {});
-
-  function productSrc(content) {
-    return content
-      .replace(/[^\n]*\[DEBUG\/\][^\n]*\n?/g, '')
-      .replace(/\/\*\s*\[DEBUG\]\s*\*\/[\s\S]*?\/\*\s*\[\/DEBUG\]\s*\*\//g, '')
-      .replace(/[^\n]*\[DEBUG\][\s\S]*?\[\/DEBUG\][^\n]*\n?/g, '');
-  }
 
   function minCss(content) {
     return (new CleanCSS({keepSpecialComments: 0})).minify(content).styles;
@@ -171,7 +165,7 @@ module.exports = grunt => {
             });
 
             const banner = `/*! ${PKG.title || PKG.name} v${PKG.version} (c) ${PKG.author.name} ${PKG.homepage} */\n`;
-            return banner + minJs(productSrc(
+            return banner + minJs(preProc.removeTag('DEBUG',
               content.replace(/@INCLUDE\[code:([^\n]+?)\]@/g,
                 (s, codeKey) => {
                   if (typeof code[codeKey] !== 'string') {

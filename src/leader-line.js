@@ -1232,7 +1232,7 @@
     updated = setStat(props, curStats, 'lineOutline_inStrokeWidth',
       curStats.lineOutline_colorTra ?
         curStats.lineOutline_strokeWidth + SHAPE_GAP * 2 :
-        curStats.line_strokeWidth - outlineWidth // half
+        curStats.line_strokeWidth - outlineWidth /* half */
       /* [DEBUG] */, null, 'lineOutline_inStrokeWidth%_'/* [/DEBUG] */) || updated;
 
     if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
@@ -1258,7 +1258,7 @@
         options.plugOutlineEnabledSE[i] &&
           // `curStats.plug_enabled` might be independent of `curStats.plug_enabledSE` in future version.
           curStats.plug_enabled && curStats.plug_enabledSE[i] &&
-          !!symbolConf && !!symbolConf.outlineBase // Not depend on `curStats.plug_enabledSE`
+          !!symbolConf && !!symbolConf.outlineBase /* Not depend on `curStats.plug_enabledSE` */
         /* [DEBUG] */, null, 'plugOutline_enabledSE[' + i + ']=%s'/* [/DEBUG] */) || updated;
       updated = setStat(props, curStats.plugOutline_colorSE, i,
         (value = options.plugOutlineColorSE[i] || curStats.lineOutline_color)
@@ -1277,7 +1277,7 @@
           curStats.plugOutline_colorTraSE[i] ?
             value - SHAPE_GAP / (curStats.line_strokeWidth / DEFAULT_OPTIONS.lineSize) /
               options.plugSizeSE[i] * 2 :
-            value / 2 // half
+            value / 2 /* half */
           /* [DEBUG] */, null, 'plugOutline_inStrokeWidthSE[' + i + ']%_'/* [/DEBUG] */) || updated;
       }
     });

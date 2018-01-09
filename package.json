@@ -36,6 +36,7 @@
     "jasmine-core": "^2.5.2",
     "log4js": "^1.1.1",
     "node-static-alias": "^1.0.0",
+    "pre-proc": "^0.2.7",
     "test-page-loader": "1.0.1",
     "uglify-js": "^2.8.21"
   }
