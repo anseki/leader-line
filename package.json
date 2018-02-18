@@ -32,17 +32,17 @@
     "url": "https://github.com/anseki"
   },
   "devDependencies": {
-    "anim-event": "0.0.2",
-    "cheerio": "^0.22.0",
-    "clean-css": "^4.0.11",
-    "grunt": "^1.0.1",
+    "anim-event": "1.0.12",
+    "cheerio": "^1.0.0-rc.2",
+    "clean-css": "^4.1.9",
+    "grunt": "^1.0.2",
     "grunt-task-helper": "^0.3.9",
-    "htmlclean": "^3.0.2",
-    "jasmine-core": "^2.5.2",
-    "log4js": "^1.1.1",
+    "htmlclean": "^3.0.8",
+    "jasmine-core": "^2.99.1",
+    "log4js": "^2.5.3",
     "node-static-alias": "^1.0.0",
-    "pre-proc": "^0.2.7",
-    "test-page-loader": "1.0.1",
-    "uglify-js": "^2.8.21"
+    "pre-proc": "^0.2.8",
+    "test-page-loader": "1.0.7",
+    "uglify-js": "^3.3.11"
   }
 }
