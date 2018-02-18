@@ -36,7 +36,7 @@
     "cheerio": "^1.0.0-rc.2",
     "clean-css": "^4.1.9",
     "grunt": "^1.0.2",
-    "grunt-task-helper": "^0.3.9",
+    "grunt-task-helper": "^0.3.10",
     "htmlclean": "^3.0.8",
     "jasmine-core": "^2.99.1",
     "log4js": "^2.5.3",
