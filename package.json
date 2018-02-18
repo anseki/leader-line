@@ -15,6 +15,11 @@
     "svg"
   ],
   "main": "leader-line.min.js",
+  "files": [
+    "leader-line.min.js",
+    "bower.json",
+    "LICENSE-MIT"
+  ],
   "homepage": "https://anseki.github.io/leader-line/",
   "repository": {
     "type": "git",
