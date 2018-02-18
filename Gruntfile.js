@@ -20,7 +20,7 @@ module.exports = grunt => {
     PACK_LIBS = [
       ['anim', 'anim.js'],
       ['pathDataPolyfill', 'path-data-polyfill/path-data-polyfill.js'],
-      ['AnimEvent', '../node_modules/anim-event/anim-event.js']
+      ['AnimEvent', '../node_modules/anim-event/anim-event.min.js', /^[^]*?var\s+AnimEvent\s*=\s*([^]*)\s*;\s*$/]
     ],
 
     // from leader-line.js
@@ -44,7 +44,7 @@ module.exports = grunt => {
   }
 
   function minJs(content) {
-    return uglify.minify(content, {fromString: true}).code;
+    return uglify.minify(content).code;
   }
 
   grunt.initConfig({
@@ -122,6 +122,8 @@ module.exports = grunt => {
             cssSrc = minCss(
               fs.readFileSync(CSS_PATH, {encoding: 'utf8'}).trim().replace(/^\s*@charset\s+[^;]+;/gm, ''));
 
+            // some version of cheerio have problem: <tag></tag> -> <tag/>
+            defsSrc = defsSrc.replace(/<([^>\s]+)([^>]*)><\/\1>/g, '<$1$2/>');
             code.DEFS_HTML = '\'' +
               htmlclean(`<svg xmlns="http://www.w3.org/2000/svg" version="1.1" id="${DEFS_ID}">` +
                   `<style><![CDATA[${cssSrc}]]></style><defs>${defsSrc}</defs></svg>`)
@@ -161,7 +163,7 @@ module.exports = grunt => {
             const reEXPORT = /^[\s\S]*?@EXPORT@\s*(?:\*\/\s*)?([\s\S]*?)\s*(?:\/\*\s*|\/\/\s*)?@\/EXPORT@[\s\S]*$/;
             PACK_LIBS.forEach(keyPath => {
               code[keyPath[0]] = fs.readFileSync(pathUtil.join(SRC_DIR_PATH, keyPath[1]), {encoding: 'utf8'})
-                .replace(reEXPORT, '$1');
+                .replace(keyPath[2] || reEXPORT, '$1');
             });
 
             const banner = `/*! ${PKG.title || PKG.name} v${PKG.version} (c) ${PKG.author.name} ${PKG.homepage} */\n`;
