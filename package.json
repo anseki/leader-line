@@ -17,8 +17,7 @@
   "main": "leader-line.min.js",
   "files": [
     "leader-line.min.js",
-    "bower.json",
-    "LICENSE-MIT"
+    "bower.json"
   ],
   "homepage": "https://anseki.github.io/leader-line/",
   "repository": {
