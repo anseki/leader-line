@@ -19,17 +19,6 @@
     "leader-line.min.js",
     "bower.json"
   ],
-  "homepage": "https://anseki.github.io/leader-line/",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/anseki/leader-line.git"
-  },
-  "bugs": "https://github.com/anseki/leader-line/issues",
-  "license": "MIT",
-  "author": {
-    "name": "anseki",
-    "url": "https://github.com/anseki"
-  },
   "devDependencies": {
     "anim-event": "1.0.12",
     "cheerio": "^1.0.0-rc.2",
@@ -40,8 +29,20 @@
     "jasmine-core": "^2.99.1",
     "log4js": "^2.5.3",
     "node-static-alias": "^1.0.0",
+    "plain-draggable": "^2.0.23",
     "pre-proc": "^0.2.8",
     "test-page-loader": "1.0.7",
     "uglify-js": "^3.3.11"
+  },
+  "homepage": "https://anseki.github.io/leader-line/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/anseki/leader-line.git"
+  },
+  "bugs": "https://github.com/anseki/leader-line/issues",
+  "license": "MIT",
+  "author": {
+    "name": "anseki",
+    "url": "https://github.com/anseki"
   }
 }

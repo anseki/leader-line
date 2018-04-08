@@ -1,4 +1,4 @@
-/* global LeaderLine:false, Draggable:false */
+/* global LeaderLine:false, PlainDraggable:false */
 
 window.traceLog.enabled = true;
 window.addEventListener('load', function() {
@@ -9,9 +9,9 @@ window.addEventListener('load', function() {
       color: 'rgba(255, 0, 0, 0.5)', endPlug: 'disc', endPlugSize: 4
     });
 
-  new Draggable(anchor1, { // eslint-disable-line no-new
+  new PlainDraggable(anchor1, { // eslint-disable-line no-new
     onMove: function() { ll.position(); },
-    ignoreZIndex: true
+    zIndex: false
   });
 
   // switcher - label

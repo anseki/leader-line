@@ -8,7 +8,14 @@ const
 
   http = require('http'),
   staticAlias = require('node-static-alias'),
-  log4js = require('log4js');
+  log4js = require('log4js'),
+
+  MODULE_PACKAGES = [
+    'jasmine-core',
+    'test-page-loader',
+    'anim-event',
+    'plain-draggable'
+  ];
 
 log4js.configure({
   appenders: {
@@ -29,20 +36,19 @@ http.createServer((request, response) => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
       headers: {'Cache-Control': 'no-cache, must-revalidate'},
-      alias: [
-        // node_modules
-        {
-          match: /^\/(?:jasmine-core|test-page-loader|anim-event)\/.+/,
-          serve: '../node_modules<% reqPath %>',
+      alias: MODULE_PACKAGES.map(packageName => (
+        { // node_modules
+          match: new RegExp(`^/${packageName}/.+`),
+          serve: `${require.resolve(packageName).replace(
+            new RegExp(`^(.*[/\\\\]node_modules)[/\\\\]${packageName}[/\\\\].*$`), '$1')}<% reqPath %>`,
           allowOutside: true
-        },
-
-        {
-          match: /^\/src/,
-          serve: '..<% reqPath %>',
-          allowOutside: true
-        }
-      ],
+        })).concat([
+          {
+            match: /^\/src/,
+            serve: '..<% reqPath %>',
+            allowOutside: true
+          }
+        ]),
       logger: logger
     }))
     .serve(request, response, e => {
