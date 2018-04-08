@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="css/ex.css">
   <script src="js/leader-line.min.js"></script>
   <script src="js/anim-event.min.js"></script>
-  <script src="js/draggable.min.js"></script>
+  <script src="js/plain-draggable.min.js"></script>
 
   <title>LeaderLine</title>
 </head>
@@ -346,7 +346,9 @@ window.addEventListener('load', function() {
   'use strict';
 
   var DATA = [140, 163, 219, 440, 410, 40, 76, 14, 5, 12, 80, 100],
-    WIDTH = 500, HEIGHT = 200, PADDING = 20,
+    WIDTH = 500,
+    HEIGHT = 200,
+    PADDING = 20,
     COLOR = 'rgba(255, 127, 80, 0.6)',
 
     svg = d3.select('#ex-040-stage').append('svg').attr('width', WIDTH).attr('height', HEIGHT)
@@ -412,7 +414,7 @@ window.addEventListener('load', function() {
 
 <h2 id="usage">Usage</h2>
 
-<p>Load only a file <code>leader-line.min.js</code> into your web page.</p>
+<p>Load LeaderLine into your web page.</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;leader-line.min.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 </code></pre></div>
 <p>Pass two HTML/SVG elements to <code>LeaderLine</code> constructor. Then a leader line is drawn between those elements.</p>
@@ -647,7 +649,7 @@ window.addEventListener('load', function() {
       x: 80,
       y: 60,
       width: 50,
-      height: 80,
+      height: 80
     }),
     {endLabel: 'This is additional label'}
   );
@@ -1067,6 +1069,8 @@ window.addEventListener('load', function() {
   <div id="ex-191-1" class="anchor40"></div>
 </div>
 
+<p>The element is draggable by <a href="https://anseki.github.io/plain-draggable/">PlainDraggable</a>.</p>
+
 <script>
 window.addEventListener('load', function() {
   'use strict';
@@ -1084,26 +1088,26 @@ window.addEventListener('load', function() {
     bottom: islandBBox.bottom + window.pageYOffset
   };
 
-  new Draggable(startElement, {
-    onDrag: function(moveTo, elementBBox) {
-      if (moveTo.x > islandBBox.left && moveTo.x < islandBBox.right &&
-          moveTo.y > islandBBox.top && moveTo.y < islandBBox.bottom) {
-        if (elementBBox.x <= islandBBox.left) {
-          moveTo.x = islandBBox.left;
-        } else if (elementBBox.x >= islandBBox.right) {
-          moveTo.x = islandBBox.right;
+  new PlainDraggable(startElement, {
+    onDrag: function(newPosition) {
+      if (newPosition.left > islandBBox.left && newPosition.left < islandBBox.right &&
+          newPosition.top > islandBBox.top && newPosition.top < islandBBox.bottom) {
+        if (this.left <= islandBBox.left) {
+          newPosition.left = islandBBox.left;
+        } else if (this.left >= islandBBox.right) {
+          newPosition.left = islandBBox.right;
         }
-        if (elementBBox.y <= islandBBox.top) {
-          moveTo.y = islandBBox.top;
-        } else if (elementBBox.y >= islandBBox.bottom) {
-          moveTo.y = islandBBox.bottom;
+        if (this.top <= islandBBox.top) {
+          newPosition.top = islandBBox.top;
+        } else if (this.top >= islandBBox.bottom) {
+          newPosition.top = islandBBox.bottom;
         }
       }
     },
     onMove: function() {
       line.position();
     },
-    ignoreZIndex: true
+    zIndex: false
   });
 
 });
@@ -1225,7 +1229,9 @@ window.addEventListener('load', function() {
     ['ex-220-g', 'crosshair', 0.4],
     ['ex-220-h', 'behind']
   ].forEach(function(idPlug) {
-    var id = idPlug[0], plug = idPlug[1], plugSize = idPlug[2] || 1,
+    var id = idPlug[0],
+      plug = idPlug[1],
+      plugSize = idPlug[2] || 1,
       element = document.getElementById(id);
     new LeaderLine(LeaderLine.pointAnchor(element, {x: -80, y: '50%'}), element, {
       endPlug: plug,
@@ -2692,6 +2698,8 @@ window.addEventListener('load', function() {
   <div id="ex-540-1" class="anchor40" style="left: 280px; bottom: 0;"></div>
 </div>
 
+<p>The element is draggable by <a href="https://anseki.github.io/plain-draggable/">PlainDraggable</a>.</p>
+
 <script>
 window.addEventListener('load', function() {
   'use strict';
@@ -2704,9 +2712,9 @@ window.addEventListener('load', function() {
       endLabel: LeaderLine.captionLabel('END', {color: 'blue'})
     });
 
-  new Draggable(startElement, {
+  new PlainDraggable(startElement, {
     onMove: function() { line.position(); },
-    ignoreZIndex: true
+    zIndex: false
   });
 
 });
