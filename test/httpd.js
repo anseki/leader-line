@@ -37,14 +37,16 @@ http.createServer((request, response) => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
       headers: {'Cache-Control': 'no-cache, must-revalidate'},
-      alias: MODULE_PACKAGES.map(packageName => (
-        { // node_modules
-          match: new RegExp(`^/${packageName}/.+`),
-          serve: `${require.resolve(packageName).replace(
-            // Include `packageName` for nested `node_modules`
-            new RegExp(`^(.*[/\\\\]node_modules)[/\\\\]${packageName}[/\\\\].*$`), '$1')}<% reqPath %>`,
-          allowOutside: true
-        })).concat([
+      alias:
+        MODULE_PACKAGES.map(packageName =>
+          ({ // node_modules
+            match: new RegExp(`^/${packageName}/.+`),
+            serve: `${require.resolve(packageName).replace(
+              // Include `packageName` for nested `node_modules`
+              new RegExp(`^(.*[/\\\\]node_modules)[/\\\\]${packageName}[/\\\\].*$`), '$1')}<% reqPath %>`,
+            allowOutside: true
+          })
+        ).concat([
           {
             match: /^\/src/,
             serve: '..<% reqPath %>',
