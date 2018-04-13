@@ -34,6 +34,9 @@
     "test-page-loader": "1.0.7",
     "uglify-js": "^3.3.11"
   },
+  "scripts": {
+    "test": "node ./test/httpd"
+  },
   "homepage": "https://anseki.github.io/leader-line/",
   "repository": {
     "type": "git",
