@@ -20,7 +20,7 @@
     "bower.json"
   ],
   "devDependencies": {
-    "anim-event": "1.0.12",
+    "anim-event": "^1.0.15",
     "cheerio": "^1.0.0-rc.2",
     "clean-css": "^4.1.9",
     "grunt": "^1.0.2",
