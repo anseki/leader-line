@@ -29,7 +29,7 @@
     "jasmine-core": "^2.99.1",
     "log4js": "^2.5.3",
     "node-static-alias": "^1.0.0",
-    "plain-draggable": "^2.0.23",
+    "plain-draggable": "^2.0.24",
     "pre-proc": "^0.2.8",
     "test-page-loader": "1.0.7",
     "uglify-js": "^3.3.11"
