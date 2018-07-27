@@ -319,7 +319,7 @@ describe('effect', function() {
       expect(props.aplStats.dash_enabled).toBe(true);
       // `animation` is `dash_animOptions`
       expect(props.curStats.dash_options).toEqual({animation: {duration: 1000, timing: 'linear'}});
-      expect(props.aplStats.dash_options).toEqual( {animation: {duration: 1000, timing: 'linear'}});
+      expect(props.aplStats.dash_options).toEqual({animation: {duration: 1000, timing: 'linear'}});
       expect(props.curStats.dash_animOptions).toEqual({duration: 1000, timing: 'linear'}); // optimized
       expect(props.aplStats.dash_animOptions).toEqual({duration: 1000, timing: 'linear'}); // optimized
       expect(ll.dash).toEqual(
