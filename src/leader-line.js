@@ -94,12 +94,15 @@
     RE_PERCENT = /^\s*(\-?[\d\.]+)\s*(\%)?\s*$/,
     SVG_NS = 'http://www.w3.org/2000/svg',
 
-    IS_TRIDENT = !!document.uniqueID,
-    IS_BLINK = !!(window.chrome && window.chrome.webstore),
-    IS_GECKO = 'MozAppearance' in document.documentElement.style,
     IS_EDGE = '-ms-scroll-limit' in document.documentElement.style &&
       '-ms-ime-align' in document.documentElement.style && !window.navigator.msPointerEnabled,
-    IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
+    IS_TRIDENT = !IS_EDGE && !!document.uniqueID, // Future Edge might support `document.uniqueID`.
+    IS_GECKO = 'MozAppearance' in document.documentElement.style,
+    IS_BLINK = !IS_EDGE && !IS_GECKO && // Edge has `window.chrome`, and future Gecko might have that.
+      !!window.chrome && !!window.CSS,
+    IS_WEBKIT = !IS_EDGE && !IS_TRIDENT &&
+      !IS_GECKO && !IS_BLINK && // Some engines support `webkit-*` properties.
+      !window.chrome && 'WebkitAppearance' in document.documentElement.style,
 
     SHAPE_GAP = IS_TRIDENT || IS_EDGE ? 0.2 : 0.1,
 

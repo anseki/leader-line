@@ -1,3 +1,7 @@
 {
-  "env": {"browser": true}
+  "env": {"browser": true},
+  "rules": {
+    "no-var": "off",
+    "prefer-arrow-callback": "off"
+  }
 }
