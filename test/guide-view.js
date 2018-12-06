@@ -36,7 +36,9 @@ var guideView = (function() {
 
   var SVG_NS = 'http://www.w3.org/2000/svg',
     PATH_C_SIZE = 5,
-    IS_TRIDENT = !!document.uniqueID,
+    IS_EDGE = '-ms-scroll-limit' in document.documentElement.style &&
+      '-ms-ime-align' in document.documentElement.style && !window.navigator.msPointerEnabled,
+    IS_TRIDENT = !IS_EDGE && !!document.uniqueID, // Future Edge might support `document.uniqueID`.
     guideElements = [];
 
   function addXMarker(point, pathSegs) {
