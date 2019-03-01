@@ -1286,6 +1286,8 @@ attachment2 = LeaderLine.pathLabel('LABEL-2', {color: 'red'});
 
 This attachment can *not* be shared between multiple leader lines. See [`captionLabel`](#captionlabel) attachment for the sharing and the life cycle.
 
+Note that the characters are put along the path of the leader line from the [`start`](#start-end) element toward the [`end`](#start-end) element even if the path curves sharply or it is drawn toward the left. If you have to avoid those cases for important text, use [`captionLabel`](#captionlabel) instead.
+
 #### `text`
 
 *Type:* string  
