@@ -12,7 +12,7 @@ Draw a leader line in your web page.
 ```
 
 ```js
-// Add new leader line from `start` to `end` (HTML/SVG elements, basically).
+// Add new leader line from `start` to `end` (HTML/SVG element, basically).
 new LeaderLine(
   document.getElementById('start'),
   document.getElementById('end')
@@ -25,7 +25,7 @@ It supports options to customize.
 
 [![ex-020](img/ex-020.gif)](https://anseki.github.io/leader-line/)
 
-Basically, it can indicate HTML/SVG elements such as `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, etc.
+Basically, it can indicate HTML/SVG element such as `<div>`, `<button>`, `<ul>`, `<td>`, `<circle>`, `<text>`, etc.
 
 [![ex-021](img/ex-021.png)](https://anseki.github.io/leader-line/)
 
