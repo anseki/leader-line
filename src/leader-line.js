@@ -5185,3 +5185,7 @@
 
   return LeaderLine;
 })();
+
+if (module && module.exports) {
+  module.exports = LeaderLine
+}
