@@ -3496,6 +3496,10 @@
     });
   })();
 
+  LeaderLine.prototype.getProps = function() {
+    return insProps[this._id];
+  };
+
   LeaderLine.prototype.setOptions = function(newOptions) {
     setOptions(insProps[this._id], newOptions);
     return this;
