@@ -3521,7 +3521,10 @@
     props.attachments.slice().forEach(function(attachProps) { unbindAttachment(props, attachProps); });
 
     if (props.baseWindow && props.svg) {
-      props.baseWindow.document.body.removeChild(props.svg);
+      var bodyEl = props.baseWindow.document.body;
+      if (props.svg.parentNode == bodyEl) {
+        bodyEl.removeChild(props.svg);
+      }
     }
     delete insProps[this._id];
   };
