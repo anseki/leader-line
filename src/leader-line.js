@@ -2351,7 +2351,10 @@
     if (needs.path || updated.position) {
       updated.path = updatePath(props);
     }
-    updated.viewBox = updateViewBox(props);
+    if (!props.disableViewBox) {
+      updated.viewBox = updateViewBox(props);
+    }
+
     updated.mask = updateMask(props);
     if (needs.effect) {
       setEffect(props);
@@ -2567,6 +2570,10 @@
     }
 
     newOptions = newOptions || {};
+
+    if (typeof(newOptions.disableViewBox) !== 'undefined') {
+      props.disableViewBox = newOptions.disableViewBox;
+    }
 
     // anchorSE
     ['start', 'end'].forEach(function(optionName, i) {
