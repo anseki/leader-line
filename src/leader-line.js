@@ -962,15 +962,23 @@
       }
     });
 
-    if (props.baseWindow && props.svg) {
-      props.baseWindow.document.body.removeChild(props.svg);
+    if (props.customSvg) {
+      props.svg = svg = props.customSvg;
+      while (svg.firstChild) {
+        svg.removeChild(svg.firstChild);
+      }
     }
+    else {
+      if (props.svg && props.baseWindow)
+        props.baseWindow.document.body.removeChild(props.svg);
+      props.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
+    }
+
     props.baseWindow = newWindow;
     setupWindow(newWindow);
     props.bodyOffset = getBodyOffset(newWindow); // Get `bodyOffset`
 
     // Main SVG
-    props.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
     svg.className.baseVal = APP_ID;
     if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
     props.defs = defs = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'defs'));
@@ -1110,7 +1118,9 @@
       svg.style.visibility = 'hidden';
     }
 
-    baseDocument.body.appendChild(svg);
+    if (!props.customSvg) {
+      baseDocument.body.appendChild(svg);
+    }
 
     // label (after appendChild(svg), bBox is used)
     [0, 1, 2].forEach(function(i) {
@@ -2596,6 +2606,10 @@
     });
     if (!options.anchorSE[0] || !options.anchorSE[1] || options.anchorSE[0] === options.anchorSE[1]) {
       throw new Error('`start` and `end` are required.');
+    }
+
+    if (typeof(newOptions.svg)) {
+      props.customSvg = newOptions.svg;
     }
 
     // Check window.
