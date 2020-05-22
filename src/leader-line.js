@@ -3371,7 +3371,7 @@
     props.curStats.show_effect = DEFAULT_SHOW_EFFECT;
     props.curStats.show_animOptions = copyTree(SHOW_EFFECTS[DEFAULT_SHOW_EFFECT].defaultAnimOptions);
 
-    Object.defineProperty(this, '_id', {value: ++insId});
+    this._id = ++insId;
     props._id = this._id;
     insProps[this._id] = props;
 
