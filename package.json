@@ -1,6 +1,6 @@
 {
   "name": "leader-line",
-  "version": "1.0.5",
+  "version": "1.1.5",
   "title": "LeaderLine",
   "description": "Draw a leader line in your web page.",
   "keywords": [
@@ -15,6 +15,7 @@
     "svg"
   ],
   "main": "leader-line.min.js",
+  "types": "types/index.d.ts",
   "files": [
     "leader-line.min.js",
     "bower.json"
