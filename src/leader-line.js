@@ -1599,6 +1599,112 @@
           }
         });
       }
+
+    // let-line-go-through-element-center
+      function calConnectedPoints(shapeA, shapeB) {
+        var _ref = [shapeA.l, shapeA.t, shapeA.w, shapeA.h],
+          x1 = _ref[0],
+          y1 = _ref[1],
+          w1 = _ref[2],
+          h1 = _ref[3];
+        var a1 = w1 / 2,
+          b1 = h1 / 2,
+          ox1 = x1 + a1,
+          oy1 = y1 + b1;
+        var _ref2 = [shapeB.l, shapeB.t, shapeB.w, shapeB.h],
+          x2 = _ref2[0],
+          y2 = _ref2[1],
+          w2 = _ref2[2],
+          h2 = _ref2[3];
+        var a2 = w2 / 2,
+          b2 = h2 / 2,
+          ox2 = x2 + a2,
+          oy2 = y2 + b2;
+
+        if (Math.abs(ox1 - ox2) < 20) {
+          if (oy1 > oy2) {
+            return [[ox1, oy1 - b1], [ox2, oy2 + b2]];
+          } else {
+            return [[ox1, oy1 + b1], [ox2, oy2 - b2]];
+          }
+        }
+
+        if (Math.abs(oy1 - oy2) < 20) {
+          if (ox1 > ox2) {
+            return [[ox1 - a1, oy1], [ox2 + a2, oy2]];
+          } else {
+            return [[ox1 + a1, oy1], [ox2 - a2, oy2]];
+          }
+        }
+
+        var result = [];
+
+        if (ox1 < ox2) {
+          for (var i = ox1 + a1; i > ox1; i--) {
+            var j = (oy2 - oy1) / (ox2 - ox1) * (i - ox1) + oy1;
+            var temp = (i - ox1) ** 2 / a1 ** 2 + (j - oy1) ** 2 / b1 ** 2;
+
+            if (temp <= 1) {
+              result.push([i, j]);
+              break;
+            }
+          }
+
+          for (var _i = ox2 - a2; _i < ox2; _i++) {
+            var _j = (oy2 - oy1) / (ox2 - ox1) * (_i - ox1) + oy1;
+
+            var _temp = (_i - ox2) ** 2 / a2 ** 2 + (_j - oy2) ** 2 / b2 ** 2;
+
+            if (_temp <= 1) {
+              result.push([_i, _j]);
+              break;
+            }
+          }
+        } else {
+          for (var _i2 = ox1 - a1; _i2 < ox1; _i2++) {
+            var _j2 = (oy2 - oy1) / (ox2 - ox1) * (_i2 - ox1) + oy1;
+
+            var _temp2 = (_i2 - ox1) ** 2 / a1 ** 2 + (_j2 - oy1) ** 2 / b1 ** 2;
+
+            if (_temp2 <= 1) {
+              result.push([_i2, _j2]);
+              break;
+            }
+          }
+
+          for (var _i3 = ox2 + a2; _i3 > ox2; _i3--) {
+            var _j3 = (oy2 - oy1) / (ox2 - ox1) * (_i3 - ox1) + oy1;
+
+            var _temp3 = (_i3 - ox2) ** 2 / a2 ** 2 + (_j3 - oy2) ** 2 / b2 ** 2;
+
+            if (_temp3 <= 1) {
+              result.push([_i3, _j3]);
+              break;
+            }
+          }
+        }
+
+        return result;
+      }
+      var box0 = anchorBBoxSE[0];
+      var box1 = anchorBBoxSE[1];
+      var A = {
+        l: box0.left,
+        t: box0.top,
+        w: box0.width,
+        h: box0.height,
+      };
+      var B = {
+        l: box1.left,
+        t: box1.top,
+        w: box1.width,
+        h: box1.height,
+      };
+      var ret = calConnectedPoints(A, B);
+      curSocketXYSE[0].x = ret[0][0]
+      curSocketXYSE[0].y = ret[0][1]
+      curSocketXYSE[1].x = ret[1][0]
+      curSocketXYSE[1].y = ret[1][1]
     })();
 
     // [DEBUG]
