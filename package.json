@@ -31,7 +31,7 @@
     "node-static-alias": "^1.0.0",
     "plain-draggable": "^2.0.24",
     "pre-proc": "^0.2.8",
-    "test-page-loader": "1.0.7",
+    "test-page-loader": "^1.0.8",
     "uglify-js": "^3.3.11"
   },
   "scripts": {
