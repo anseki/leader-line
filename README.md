@@ -202,6 +202,22 @@ downButton.addEventListener('click', function() {
 
 If you want to set multiple options after it was constructed, using [`setOptions`](#setoptions) method instead of the properties may give better performance.
 
+When you will do something about HTML document regardless of the LeaderLine, you typically do that after the HTML document is ready (i.e. the HTML document has been loaded and parsed by web browser).  
+For example:
+
+```js
+// Wait for HTML document to get ready
+window.addEventListener('load', function() { // NOT `DOMContentLoaded`
+  // Do something about HTML document
+  var line = new LeaderLine(
+    document.getElementById('start'),
+    document.getElementById('end')
+  );
+});
+```
+
+If you don't wait for HTML document to be ready, you might not be able to get a target element yet, or problems with incomplete layout may occur. Also, you should do so asynchronous like the above for the performance because synchronous code blocks parsing HTML.
+
 ### `hide` option
 
 Only the constructor accepts `hide` option. That is, the instance doesn't have `hide` property. (Note that the instance has [`hide`](#show-hide) method.)  
