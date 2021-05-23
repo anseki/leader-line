@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/syntax.css">
   <link rel="stylesheet" href="css/default.css">
   <link rel="stylesheet" href="css/ex.css">
-  <script src="js/libs-9dcf00b-210514200009.js"></script>
+  <script src="js/libs-685762f-210523194423.js"></script>
 
   <title>LeaderLine</title>
 </head>
@@ -743,6 +743,18 @@ window.addEventListener('load', function() {
 <!-- /include "ex-120.html" -->
 
 <p>If you want to set multiple options after it was constructed, using <a href="#setoptions"><code>setOptions</code></a> method instead of the properties may give better performance.</p>
+
+<p>When you will do something about HTML document regardless of the LeaderLine, you typically do that after the HTML document is ready (i.e. the HTML document has been loaded and parsed by web browser).<br>For example:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// Wait for HTML document to get ready</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;load&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// NOT `DOMContentLoaded`</span>
+  <span class="c1">// Do something about HTML document</span>
+  <span class="kd">var</span> <span class="nx">line</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">LeaderLine</span><span class="p">(</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">),</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">)</span>
+  <span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div>
+<p>If you don&#39;t wait for HTML document to be ready, you might not be able to get a target element yet, or problems with incomplete layout may occur. Also, you should do so asynchronous like the above for the performance because synchronous code blocks parsing HTML.</p>
 
 <h3 id="hide-option"><code>hide</code> option</h3>
 
