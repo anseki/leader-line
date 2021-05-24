@@ -27,7 +27,7 @@
     "grunt-task-helper": "^0.3.10",
     "htmlclean": "^3.0.8",
     "jasmine-core": "^3.7.1",
-    "log4js": "^2.5.3",
+    "log4js": "^6.3.0",
     "node-static-alias": "^1.1.2",
     "plain-draggable": "^2.5.12",
     "pre-proc": "^1.0.2",
