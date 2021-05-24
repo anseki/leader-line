@@ -20,19 +20,19 @@
     "bower.json"
   ],
   "devDependencies": {
-    "anim-event": "^1.0.15",
-    "cheerio": "^1.0.0-rc.2",
-    "clean-css": "^4.1.9",
+    "anim-event": "^1.0.16",
+    "cheerio": "^1.0.0-rc.9",
+    "clean-css": "^5.1.2",
     "grunt": "^1.4.0",
     "grunt-task-helper": "^0.3.10",
     "htmlclean": "^3.0.8",
-    "jasmine-core": "^2.99.1",
+    "jasmine-core": "^3.7.1",
     "log4js": "^2.5.3",
-    "node-static-alias": "^1.0.0",
-    "plain-draggable": "^2.0.24",
-    "pre-proc": "^0.2.8",
+    "node-static-alias": "^1.1.2",
+    "plain-draggable": "^2.5.12",
+    "pre-proc": "^1.0.2",
     "test-page-loader": "^1.0.8",
-    "uglify-js": "^3.3.11"
+    "uglify-js": "^3.13.7"
   },
   "scripts": {
     "test": "node ./test/httpd"
