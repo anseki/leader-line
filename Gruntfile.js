@@ -40,7 +40,7 @@ module.exports = grunt => {
     }, {});
 
   function minCss(content) {
-    return (new CleanCSS({keepSpecialComments: 0})).minify(content).styles;
+    return (new CleanCSS({level: {1: {specialComments: 0}}})).minify(content).styles;
   }
 
   function minJs(content) {

@@ -23,7 +23,7 @@
     "anim-event": "^1.0.16",
     "cheerio": "^1.0.0-rc.9",
     "clean-css": "^5.1.2",
-    "grunt": "^1.4.0",
+    "grunt": "^1.4.1",
     "grunt-task-helper": "^0.3.10",
     "htmlclean": "^3.0.8",
     "jasmine-core": "^3.7.1",
