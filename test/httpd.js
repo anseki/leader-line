@@ -18,16 +18,8 @@ const
   ],
 
   logger = (() => {
-    log4js.configure({
-      appenders: {
-        out: {
-          type: 'console',
-          layout: {
-            type: 'pattern',
-            pattern: '%[[%r]%] %m' // Super simple format
-          }
-        }
-      },
+    log4js.configure({ // Super simple format
+      appenders: {out: {type: 'stdout', layout: {type: 'pattern', pattern: '%[[%r]%] %m'}}},
       categories: {default: {appenders: ['out'], level: 'info'}}
     });
     return log4js.getLogger('node-static-alias');
