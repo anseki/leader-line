@@ -5055,7 +5055,12 @@
         text.elmsAppend.forEach(function(elm) { props.svg.appendChild(elm); });
         // Get size in straight
         text.elmPath.setPathData([{type: 'M', values: [0, 100]}, {type: 'h', values: [100]}]);
+        // [BLINK] getBBox() produces incorrect results for transformed children
+        // https://bugs.chromium.org/p/chromium/issues/detail?id=377665
+        var hrefSave = text.elmOffset.href.baseVal;
+        text.elmOffset.href.baseVal = '';
         bBox = text.elmPosition.getBBox();
+        text.elmOffset.href.baseVal = hrefSave;
         // textAnchor and startOffset might affect the size.
         text.styleText.textAnchor = ['start', 'end', 'middle'][attachProps.semIndex];
         if (attachProps.semIndex === 2 && !attachProps.lineOffset) { // The position never change.
