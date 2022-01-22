@@ -116,7 +116,8 @@
       lineOutlineColor: 'indianred',
       lineOutlineSize: 0.25,
       plugOutlineEnabledSE: [false, false],
-      plugOutlineSizeSE: [1, 1]
+      plugOutlineSizeSE: [1, 1],
+      lineId: '',
     },
 
     isObject = (function() {
@@ -1152,6 +1153,8 @@
     traceLog.add('<updatePlug>'); // [DEBUG/]
     var options = props.options, curStats = props.curStats, events = props.events,
       updated = false;
+
+    props.svg.id = props.options.lineId;
 
     [0, 1].forEach(function(i) {
       var plugId = options.plugSE[i], symbolConf,
@@ -2668,6 +2671,9 @@
       null, 'lineOutlineSize', null, DEFAULT_OPTIONS.lineOutlineSize,
       function(value) { return value > 0 && value <= 0.48; }) || needs.lineOutline;
 
+    needs.lineId = setValidType(options, newOptions, 'lineId',
+      null, 'lineId', null, DEFAULT_OPTIONS.lineId, null, true) || needs.lineId;
+
     // PlugOutline
     ['startPlugOutline', 'endPlugOutline'].forEach(function(propName, i) {
       needs.plugOutline = setValidType(options, newOptions, propName,
@@ -3404,11 +3410,11 @@
         ['startPlugColor', 'plugColorSE', 0], ['endPlugColor', 'plugColorSE', 1],
         ['startPlugSize', 'plugSizeSE', 0], ['endPlugSize', 'plugSizeSE', 1],
         ['outline', 'lineOutlineEnabled'],
-          ['outlineColor', 'lineOutlineColor'], ['outlineSize', 'lineOutlineSize'],
+        ['outlineColor', 'lineOutlineColor'], ['outlineSize', 'lineOutlineSize'],
         ['startPlugOutline', 'plugOutlineEnabledSE', 0], ['endPlugOutline', 'plugOutlineEnabledSE', 1],
-          ['startPlugOutlineColor', 'plugOutlineColorSE', 0], ['endPlugOutlineColor', 'plugOutlineColorSE', 1],
-          ['startPlugOutlineSize', 'plugOutlineSizeSE', 0], ['endPlugOutlineSize', 'plugOutlineSizeSE', 1]]
-      .forEach(function(conf) {
+        ['startPlugOutlineColor', 'plugOutlineColorSE', 0], ['endPlugOutlineColor', 'plugOutlineColorSE', 1],
+        ['startPlugOutlineSize', 'plugOutlineSizeSE', 0], ['endPlugOutlineSize', 'plugOutlineSizeSE', 1]]
+        .forEach(function(conf) {
         var propName = conf[0], optionName = conf[1], i = conf[2];
         Object.defineProperty(LeaderLine.prototype, propName, {
           get: function() {
