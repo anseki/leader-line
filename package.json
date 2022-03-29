@@ -15,8 +15,10 @@
     "svg"
   ],
   "main": "leader-line.min.js",
+  "types": "leader-line.d.ts",
   "files": [
     "leader-line.min.js",
+    "leader-line.d.ts",
     "bower.json"
   ],
   "devDependencies": {
