@@ -8,7 +8,7 @@
 
 /* exported pathDataPolyfill */
 
-function pathDataPolyfill(window) {
+function pathDataPolyfill(window, IS_GECKO) {
   'use strict';
 
 // @info
@@ -23,7 +23,7 @@ function pathDataPolyfill(window) {
 //   Jarosław Foksa
 // @license
 //   MIT License
-if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.prototype.setPathData) {
+if (!window.SVGPathElement.prototype.getPathData || !window.SVGPathElement.prototype.setPathData || IS_GECKO) {
   (function() {
     var commandsMap = {
       "Z":"Z", "M":"M", "L":"L", "C":"C", "Q":"Q", "A":"A", "H":"H", "V":"V", "S":"S", "T":"T",
